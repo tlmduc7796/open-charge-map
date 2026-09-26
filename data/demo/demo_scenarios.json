@@ -1,0 +1,126 @@
+[
+  {
+    "scenario_id": "SCN_NORMAL",
+    "name": "Normal journey",
+    "vehicle_id": "EV_VF7_ECO",
+    "initial_soc": 0.55,
+    "target_soc": 0.8,
+    "origin": {
+      "lat": 10.7075,
+      "lon": 106.705,
+      "label": "Nguyen Huu Tho - Phuoc Kien"
+    },
+    "destination": {
+      "lat": 10.806,
+      "lon": 106.687,
+      "label": "Phu Nhuan"
+    },
+    "departure_at": "2026-09-25T18:00:00+07:00",
+    "preference": {
+      "wait_weight": 0.4,
+      "detour_weight": 0.25,
+      "charging_time_weight": 0.25,
+      "soc_risk_weight": 0.1
+    },
+    "event_ids": [],
+    "route_ids": [
+      "ROUTE_BASE_DIRECT",
+      "ROUTE_VIA_LAVIDA",
+      "ROUTE_VIA_DEUTSCHES_HAUS"
+    ]
+  },
+  {
+    "scenario_id": "SCN_LOW_SOC",
+    "name": "Low-SOC journey",
+    "vehicle_id": "EV_VF5_PLUS",
+    "initial_soc": 0.14,
+    "target_soc": 0.8,
+    "origin": {
+      "lat": 10.7075,
+      "lon": 106.705,
+      "label": "Nguyen Huu Tho - Phuoc Kien"
+    },
+    "destination": {
+      "lat": 10.806,
+      "lon": 106.687,
+      "label": "Phu Nhuan"
+    },
+    "departure_at": "2026-09-25T18:00:00+07:00",
+    "preference": {
+      "wait_weight": 0.4,
+      "detour_weight": 0.25,
+      "charging_time_weight": 0.25,
+      "soc_risk_weight": 0.1
+    },
+    "event_ids": [],
+    "route_ids": [
+      "ROUTE_BASE_DIRECT",
+      "ROUTE_VIA_LAVIDA",
+      "ROUTE_VIA_DEUTSCHES_HAUS"
+    ]
+  },
+  {
+    "scenario_id": "SCN_CONGESTION_REROUTE",
+    "name": "Congestion triggers reranking",
+    "vehicle_id": "EV_VF7_ECO",
+    "initial_soc": 0.32,
+    "target_soc": 0.8,
+    "origin": {
+      "lat": 10.7075,
+      "lon": 106.705,
+      "label": "Nguyen Huu Tho - Phuoc Kien"
+    },
+    "destination": {
+      "lat": 10.806,
+      "lon": 106.687,
+      "label": "Phu Nhuan"
+    },
+    "departure_at": "2026-09-25T18:00:00+07:00",
+    "preference": {
+      "wait_weight": 0.4,
+      "detour_weight": 0.25,
+      "charging_time_weight": 0.25,
+      "soc_risk_weight": 0.1
+    },
+    "event_ids": [
+      "EVT_CONGEST_DEUTSCHES"
+    ],
+    "route_ids": [
+      "ROUTE_BASE_DIRECT",
+      "ROUTE_VIA_LAVIDA",
+      "ROUTE_VIA_DEUTSCHES_HAUS"
+    ]
+  },
+  {
+    "scenario_id": "SCN_PORT_OUTAGE_REROUTE",
+    "name": "Lavida outage triggers reroute",
+    "vehicle_id": "EV_VF5_PLUS",
+    "initial_soc": 0.22,
+    "target_soc": 0.8,
+    "origin": {
+      "lat": 10.7075,
+      "lon": 106.705,
+      "label": "Nguyen Huu Tho - Phuoc Kien"
+    },
+    "destination": {
+      "lat": 10.806,
+      "lon": 106.687,
+      "label": "Phu Nhuan"
+    },
+    "departure_at": "2026-09-25T18:00:00+07:00",
+    "preference": {
+      "wait_weight": 0.4,
+      "detour_weight": 0.25,
+      "charging_time_weight": 0.25,
+      "soc_risk_weight": 0.1
+    },
+    "event_ids": [
+      "EVT_OUTAGE_LAVIDA"
+    ],
+    "route_ids": [
+      "ROUTE_BASE_DIRECT",
+      "ROUTE_VIA_LAVIDA",
+      "ROUTE_VIA_DEUTSCHES_HAUS"
+    ]
+  }
+]

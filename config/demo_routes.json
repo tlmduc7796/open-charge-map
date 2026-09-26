@@ -1,0 +1,26 @@
+{
+  "origin": {
+    "lat": 10.7075,
+    "lon": 106.705,
+    "label": "Nguyen Huu Tho - Phuoc Kien"
+  },
+  "destination": {
+    "lat": 10.806,
+    "lon": 106.687,
+    "label": "Phu Nhuan"
+  },
+  "routes": [
+    {
+      "route_id": "ROUTE_BASE_DIRECT",
+      "waypoint_station_ids": []
+    },
+    {
+      "route_id": "ROUTE_VIA_LAVIDA",
+      "waypoint_station_ids": ["ST_EVO_LAVIDA_Q7"]
+    },
+    {
+      "route_id": "ROUTE_VIA_DEUTSCHES_HAUS",
+      "waypoint_station_ids": ["ST_EVO_DEUTSCHES_HAUS"]
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "generated_at": "2026-09-25T16:52:03+07:00",
+  "demo_bounds": {
+    "south": 10.7,
+    "west": 106.65,
+    "north": 10.82,
+    "east": 106.75
+  },
+  "providers_requested": [],
+  "providers_run": [
+    "existing_master"
+  ],
+  "warnings": [],
+  "candidates": [
+    {
+      "candidate_id": "CAND_1E8EB75E0C0D",
+      "name": "EV ONE – Audi Hồ Chí Minh",
+      "address": "6B Tôn Đức Thắng, Phường Sài Gòn, TP.HCM",
+      "location": {
+        "lat": 10.7850877,
+        "lon": 106.7035683
+      },
+      "operator": "EV ONE",
+      "access": "private",
+      "technical": {
+        "total_ports": 4,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 180,
+            "count": 2,
+            "source": "synthetic"
+          },
+          {
+            "type": "Type2",
+            "current": "AC",
+            "max_power_kw": 11,
+            "count": 2,
+            "source": "synthetic"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "existing_master",
+          "provider_id": "ST_EVO_AUDI_HCM",
+          "source_url": null
+        }
+      ],
+      "source_attributes": {
+        "existing_master": {
+          "source_provider": "ev_one_official+osm_nominatim+manual_verification"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [],
+      "matched_station_id": "ST_EVO_AUDI_HCM"
+    },
+    {
+      "candidate_id": "CAND_0FE7BAFEDB21",
+      "name": "EV ONE – Deutsches Haus Ho Chi Minh City",
+      "address": "Tầng B3, 33 Lê Duẩn, Phường Sài Gòn, TP.HCM",
+      "location": {
+        "lat": 10.7818088,
+        "lon": 106.7006195
+      },
+      "operator": "EV ONE",
+      "access": "public",
+      "technical": {
+        "total_ports": 4,
+        "connectors": [
+          {
+            "type": "Type2",
+            "current": "AC",
+            "max_power_kw": 22,
+            "count": 4,
+            "source": "synthetic"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "existing_master",
+          "provider_id": "ST_EVO_DEUTSCHES_HAUS",
+          "source_url": null
+        }
+      ],
+      "source_attributes": {
+        "existing_master": {
+          "source_provider": "ev_one_official+osm_nominatim"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [],
+      "matched_station_id": "ST_EVO_DEUTSCHES_HAUS"
+    },
+    {
+      "candidate_id": "CAND_97B37DD56BCF",
+      "name": "EV ONE – Lavida Quận 7",
+      "address": "Khu dân cư Lavida, Phường Tân Hưng, TP.HCM",
+      "location": {
+        "lat": 10.7271154,
+        "lon": 106.7016553
+      },
+      "operator": "EV ONE",
+      "access": "public",
+      "technical": {
+        "total_ports": 1,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 160,
+            "count": 1,
+            "source": "synthetic"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "existing_master",
+          "provider_id": "ST_EVO_LAVIDA_Q7",
+          "source_url": null
+        }
+      ],
+      "source_attributes": {
+        "existing_master": {
+          "source_provider": "ev_one_official+osm_nominatim"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [],
+      "matched_station_id": "ST_EVO_LAVIDA_Q7"
+    }
+  ]
+}

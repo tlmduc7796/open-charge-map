@@ -1,120 +1,228 @@
-# Open Charge Map
+# Smart EV Journey
 
-Nền tảng bản đồ số hỗ trợ giao thông xanh, được xây dựng trên lớp bản đồ và dịch vụ bản đồ của [Goong](https://goong.io/). Dự án tập trung vào việc giúp người dùng, đơn vị vận hành và nhà quy hoạch ra quyết định tốt hơn về phương tiện điện, hạ tầng sạc và các hình thức di chuyển phát thải thấp.
+MVP đề xuất trạm sạc phù hợp cho hành trình EV dựa trên compatibility, reachability, occupancy forecast, estimated wait và detour.
 
-## Mục tiêu
+Phase 00–02 cung cấp dữ liệu và skeleton chạy được. Trên nhánh demo backend-first,
+Phase 05 đã bổ sung domain core cho compatibility, reachability và charging estimate;
+Phase 06 đã bổ sung persistence occupancy forecast và Erlang C wait estimator.
+Phase 07 đã bổ sung route cache/Goong/OSRM, recommendation, runtime events,
+planned-arrival lifecycle và backend demo APIs.
+Phase 08 đã bổ sung frontend dùng API thật, Goong Maps chính với Leaflet/OSM fallback,
+journey controls, station details, recommendation, route và event/model indicators.
+Phase 09 đã hoàn thiện journey tích hợp: Goong Places, origin/destination động, live/cache
+routing, route geometry trong recommendation và planned-arrival commit/cancel.
+Phase 03–04 vẫn deferred và chưa được đánh dấu hoàn thành, vì vậy Phase 06 chỉ đạt
+demo gate chứ chưa đạt release gate.
 
-Open Charge Map hướng tới một lớp ứng dụng web có thể:
+## Yêu cầu
 
-- Hiển thị vị trí và trạng thái hoạt động của các trạm sạc.
-- Ước tính thời gian chờ, công suất khả dụng và nhu cầu sạc theo khu vực.
-- Đề xuất trạm sạc phù hợp dựa trên hành trình, quãng đường, loại đầu sạc và mức pin.
-- Phân tích các khu vực còn thiếu hạ tầng sạc để hỗ trợ quy hoạch mở rộng.
-- Dự báo mức tiêu thụ pin hoặc năng lượng theo tuyến đường, tình trạng giao thông và địa hình.
-- Tính toán, so sánh lượng phát thải CO₂ giữa các phương án di chuyển.
-- Gợi ý lựa chọn phát thải thấp như xe điện, xe buýt, đi bộ, xe đạp hoặc kết hợp nhiều phương thức.
+- Python 3.12
+- Node.js 20.19+ hoặc 22.12+
+- pnpm 11.19+
 
-## Các lớp dữ liệu chính
+## Cài đặt backend
 
-Ứng dụng được thiết kế theo mô hình các lớp bản đồ có thể bật/tắt độc lập:
+PowerShell:
 
-| Lớp | Nội dung |
-| --- | --- |
-| Bản đồ nền | Bản đồ Goong, địa điểm, địa chỉ, tìm kiếm và chỉ đường |
-| Trạm sạc | Vị trí, loại đầu nối, công suất, giá, giờ hoạt động và trạng thái |
-| Tình trạng sạc | Số cổng trống, cổng đang sử dụng, thời gian chờ dự kiến và hàng đợi |
-| Nhu cầu | Mật độ yêu cầu sạc, thời điểm cao điểm và dự báo quá tải |
-| Năng lượng | Mức tiêu thụ dự kiến theo tuyến, độ dốc, giao thông và điều kiện vận hành |
-| Phát thải | CO₂ ước tính theo phương tiện, nhiên liệu và quãng đường |
-| Quy hoạch | Khu vực ưu tiên phát triển trạm sạc dựa trên nhu cầu và độ phủ hiện tại |
-| Di chuyển xanh | Tuyến đi bộ, xe đạp, giao thông công cộng và phương án kết hợp |
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r backend\requirements-dev.txt
+Copy-Item .env.example .env
+```
 
-## Luồng sử dụng tiêu biểu
+Nếu chưa có UrbanEV raw archive:
 
-1. Người dùng nhập điểm đi, điểm đến và thông tin phương tiện.
-2. Hệ thống tính các tuyến khả thi dựa trên bản đồ, giao thông và địa hình.
-3. Bộ phân tích ước tính mức tiêu thụ pin, thời gian di chuyển và nguy cơ thiếu năng lượng.
-4. Hệ thống đề xuất các trạm sạc phù hợp trên hành trình, có tính đến thời gian chờ.
-5. Người dùng so sánh chi phí, thời gian, năng lượng và phát thải CO₂ trước khi chọn tuyến.
+```powershell
+python scripts\acquire_urbanev.py
+```
 
-## Kiến trúc đề xuất
+Kiểm tra toàn bộ input Phase 0–1:
+
+```powershell
+python scripts\check_data_paths.py
+```
+
+Chạy backend:
+
+```powershell
+python -m uvicorn backend.app.main:app --reload
+```
+
+Health endpoint: `http://127.0.0.1:8000/health`
+
+Các demo endpoints và interactive schema:
 
 ```text
-Người dùng / Dashboard
-				|
-Web map UI - Goong Maps SDK/API
-				|
-API ứng dụng
-	|        |         |
-Trạm sạc  Tuyến đi  Phân tích năng lượng & CO2
-	|
-CSDL không gian + dữ liệu thời gian thực + dữ liệu giao thông
+http://127.0.0.1:8000/docs
+POST /journey/recommend
+POST /route
+POST /demo/events/{event_id}/apply
+POST /demo/reset
+GET  /model/status
+GET  /demo/scenarios
+GET  /geocoding/autocomplete
+GET  /geocoding/details/{place_id}
+POST /planned-arrivals/commit
 ```
 
-Các thành phần có thể được triển khai độc lập:
+## Cài đặt frontend
 
-- **Map layer:** hiển thị bản đồ Goong, marker, vùng nhiệt và tuyến đường.
-- **Charging service:** quản lý trạm sạc, đầu nối, công suất và trạng thái cổng.
-- **Routing service:** tìm tuyến và chèn các điểm sạc vào hành trình.
-- **Energy model:** ước tính tiêu thụ theo loại xe, tốc độ, độ dốc, tải và điều hòa.
-- **Emission model:** quy đổi năng lượng hoặc nhiên liệu thành CO₂ tương đương để so sánh.
-- **Planning analytics:** xác định khu vực có nhu cầu cao nhưng độ phủ trạm thấp.
+Kiểm tra `pnpm` trước:
 
-## Dữ liệu và tích hợp
-
-Ứng dụng cần kết nối các nhóm dữ liệu sau:
-
-- **Goong:** bản đồ nền, geocoding, tìm kiếm địa điểm, ma trận khoảng cách và chỉ đường theo gói dịch vụ phù hợp.
-- **Trạm sạc:** dữ liệu vị trí, loại cổng, công suất, giá và trạng thái theo thời gian thực.
-- **Giao thông:** tốc độ hoặc thời gian di chuyển theo thời điểm.
-- **Địa hình:** độ cao, độ dốc và hướng di chuyển trên tuyến.
-- **Phương tiện:** dung lượng pin, hiệu suất tiêu thụ và giới hạn sạc.
-- **Phát thải:** hệ số phát thải theo loại nhiên liệu, nguồn điện và phương thức di chuyển.
-
-Thông tin xác thực và khóa API không được commit vào repository. Khi triển khai, hãy cấu hình chúng bằng biến môi trường, ví dụ:
-
-```env
-GOONG_API_KEY=your_goong_api_key
-GOONG_MAP_STYLE=your_map_style
-CHARGING_DATA_URL=https://example.com/charging-data
+```powershell
+pnpm --version
 ```
 
-## Trạng thái dự án
+Nếu PowerShell báo `pnpm is not recognized`, cài đúng phiên bản dùng cho project rồi
+đóng và mở lại terminal:
 
-Đây là dự án đang phát triển. Các giai đoạn dự kiến:
-
-- [ ] Xây dựng giao diện bản đồ nền với Goong.
-- [ ] Chuẩn hóa mô hình dữ liệu trạm sạc và trạng thái cổng.
-- [ ] Hiển thị bộ lọc, chi tiết trạm và thời gian chờ dự kiến.
-- [ ] Tích hợp tìm tuyến và đề xuất điểm sạc.
-- [ ] Xây dựng mô hình tiêu thụ pin theo tuyến đường.
-- [ ] Bổ sung tính toán CO₂ và so sánh phương án di chuyển.
-- [ ] Xây dựng lớp phân tích nhu cầu và hỗ trợ quy hoạch.
-- [ ] Bổ sung kiểm thử, giám sát dữ liệu và triển khai production.
-
-## Phát triển cục bộ
-
-Repository hiện được tổ chức để có thể bổ sung frontend, backend và các mô hình phân tích độc lập. Khi các thành phần chạy được được thêm vào, cập nhật phần này với lệnh cài đặt, biến môi trường bắt buộc và lệnh khởi động tương ứng.
-
-Quy trình cơ bản:
-
-```bash
-git clone https://github.com/<owner>/open-charge-map.git
-cd open-charge-map
+```powershell
+npm install --global pnpm@11.19.0
+pnpm --version
 ```
 
-## Nguyên tắc thiết kế
+Sau đó chạy:
 
-- Ưu tiên dữ liệu gần thời gian thực và hiển thị rõ độ tin cậy của dự báo.
-- Tách dữ liệu quan sát được khỏi dữ liệu ước tính hoặc mô phỏng.
-- Cho phép giải thích vì sao một trạm sạc hoặc tuyến đường được đề xuất.
-- Bảo vệ khóa API và dữ liệu vị trí nhạy cảm.
-- Để người dùng so sánh nhiều tiêu chí thay vì tối ưu duy nhất theo thời gian.
+```powershell
+Set-Location frontend
+pnpm install --frozen-lockfile
+pnpm dev
+```
 
-## Đóng góp
+Frontend mặc định chạy tại `http://127.0.0.1:5173`.
 
-Issue và pull request nên mô tả rõ phạm vi thay đổi, nguồn dữ liệu sử dụng, giả định của mô hình và cách kiểm thử kết quả. Với các thay đổi liên quan đến bản đồ hoặc dự báo, nên kèm một ví dụ dữ liệu hoặc ảnh chụp màn hình minh họa.
+## Chạy và kiểm tra demo
 
-## Giấy phép
+Hướng dẫn chi tiết và expected result: [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md).
 
-Giấy phép của dự án sẽ được bổ sung khi phạm vi mã nguồn và các nguồn dữ liệu bên thứ ba được xác định đầy đủ.
+### 1. Chuẩn bị environment
+
+Chạy tại repository root:
+
+```powershell
+Copy-Item .env.example .env
+Copy-Item frontend\.env.example frontend\.env.local
+```
+
+Điền hai key khác nhau:
+
+- `.env` → `GOONG_API_KEY`: REST key dùng cho Places và Directions ở backend.
+- `frontend/.env.local` → `VITE_GOONG_MAPTILES_KEY`: Maptiles key dùng để render Goong map.
+
+Không dùng REST key cho biến `VITE_*` và không commit hai file environment này.
+
+### 2. Khởi động hai service
+
+Terminal 1 — backend:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Terminal 2 — frontend, chạy từ repository root:
+
+```powershell
+pnpm --dir frontend dev --host 127.0.0.1
+```
+
+Nếu terminal đang đứng sẵn trong thư mục `frontend`, dùng lệnh tương đương sau (không
+thêm `--dir frontend` lần nữa):
+
+```powershell
+pnpm dev --host 127.0.0.1
+```
+
+Fallback tạm thời khi chưa cài được `pnpm` nhưng đã có Node.js/npm:
+
+```powershell
+npm --prefix frontend install --no-package-lock
+npm --prefix frontend run dev -- --host 127.0.0.1
+```
+
+Project vẫn ưu tiên `pnpm` để cài dependency đúng theo `frontend/pnpm-lock.yaml`.
+
+Mở:
+
+- Frontend: `http://127.0.0.1:5173`
+- Backend health: `http://127.0.0.1:8000/health`
+- API documentation: `http://127.0.0.1:8000/docs`
+
+Phải dùng cùng hostname `127.0.0.1`; nếu mở frontend bằng `localhost`, cập nhật
+`CORS_ORIGINS` tương ứng rồi restart backend.
+
+### 3. Smoke test đề xuất
+
+1. **Normal journey:** giữ nguyên scenario, nhấn **Tìm trạm phù hợp**. Kiểm tra có ranked
+   candidates, route trên map và station detail.
+2. **Địa điểm động:** nhập `Cho Ben Thanh`, chọn một gợi ý Goong rồi tìm lại. Kiểm tra route
+   và detour thay đổi; request live có thể cần vài giây.
+3. **Low-SOC:** chọn `Low-SOC journey`. Kiểm tra arrival SOC không thấp hơn reserve; có thể
+   giảm SOC gần mức reserve để xem lý do `Không đủ SOC dự phòng`.
+4. **Port outage:** chọn `Lavida outage triggers reroute`, bật event rồi tìm. Lavida phải bị
+   loại vì offline và Deutsches Haus trở thành candidate đầu tiên.
+5. **Planned arrival:** chọn một recommendation, nhấn **Xác nhận tuyến đến trạm**, kiểm tra ETA
+   xuất hiện, sau đó thử **Hủy planned arrival**.
+6. Nhấn **Reset demo** trước khi chạy lại scenario để xóa event và planned-arrival runtime.
+
+Banner `persistence fallback` là trạng thái dự kiến vì Phase 04 chưa có model artifact, không
+phải lỗi khởi động. Nếu thiếu Maptiles key hoặc Goong map lỗi lúc load, frontend tự chuyển sang
+Leaflet + OpenStreetMap. Fixed demo scenarios vẫn dùng route cache khi REST key/routing live lỗi.
+
+## Kiểm tra
+
+Từ repository root:
+
+```powershell
+pytest
+ruff check backend
+python scripts\validate_static_data.py
+python scripts\validate_phase1_data.py
+```
+
+Backend hiện có unit tests cho schema/repository và các phép tính Phase 05. Dữ liệu domain
+được validate khi FastAPI application khởi tạo; sai capacity hoặc thiếu runtime status sẽ làm
+backend fail sớm.
+
+Từ `frontend/`:
+
+```powershell
+pnpm lint
+pnpm test
+pnpm build
+```
+
+Phase 08 dùng backend thật khi chạy ứng dụng; API chỉ được mock trong unit/component tests.
+Origin/destination có thể chọn từ Goong Places. Tọa độ của demo scenario vẫn dùng route cache;
+tuyến tùy chọn dùng Goong Directions và tự fallback sang OSRM.
+
+## Cấu hình
+
+Sao chép `.env.example` thành `.env`. Không commit `.env` hoặc API key thật.
+
+- `GOONG_API_KEY`: REST key đặt trong `.env` ở repository root; Phase 7 dùng cho
+  Directions/Distance Matrix và collector dùng cho Places. Không đưa key này vào biến `VITE_*`.
+- `DATA_DIR`: thư mục data, mặc định `data`.
+- `MODEL_ARTIFACT_PATH`: model occupancy, chưa tồn tại trước Phase 04.
+- `MODEL_PREPROCESSOR_PATH`, `MODEL_META_PATH`: artifact phụ của Phase 04.
+- `WAIT_SCORING_CAP_MIN`: wait hữu hạn dùng để score station overload/offline.
+- `ROUTING_TIMEOUT_S`: timeout cho Goong/OSRM live routing.
+- `RECOMMEND_MAX_*`, `RECOMMEND_SOC_RISK_BUFFER`: fixed normalization thresholds;
+  recommendation không dùng min-max theo candidate set.
+- `DEMO_MODE`: bật dữ liệu/scenario demo.
+
+Frontend dùng file riêng vì Vite không đọc `.env` ở repository root:
+
+```powershell
+Copy-Item frontend\.env.example frontend\.env.local
+```
+
+- `VITE_API_BASE_URL`: backend URL dùng cho frontend.
+- `VITE_GOONG_MAPTILES_KEY`: Maptiles Key hiển thị Goong map; key này được gửi tới browser
+  và phải giới hạn theo domain. Nó không thay thế `GOONG_API_KEY` của backend.
+
+## Khi bổ sung trạm
+
+Sau khi promote candidate vào `stations.geojson`, cập nhật/tái sinh runtime và queue assumptions; chỉ cache route cho trạm thực sự tham gia recommendation hoặc demo. Chạy lại static validator và Phase 01 validator trước khi tiếp tục.

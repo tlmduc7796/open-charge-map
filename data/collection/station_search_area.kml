@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Smart EV Journey station search area</name>
+    <Style id="search-area">
+      <LineStyle><color>ff0078ff</color><width>3</width></LineStyle>
+      <PolyStyle><color>330078ff</color></PolyStyle>
+    </Style>
+    <Style id="station">
+      <IconStyle><color>ff00a545</color><scale>1.1</scale></IconStyle>
+    </Style>
+    <Placemark>
+      <name>Collector search bounds</name>
+      <styleUrl>#search-area</styleUrl>
+      <Polygon><outerBoundaryIs><LinearRing>
+        <coordinates>106.65,10.7,0 106.75,10.7,0 106.75,10.82,0 106.65,10.82,0 106.65,10.7,0</coordinates>
+      </LinearRing></outerBoundaryIs></Polygon>
+    </Placemark>
+    <Placemark>
+      <name>EV ONE – Audi Hồ Chí Minh</name>
+      <description>Access: private | Review: verified | Address: 6B Tôn Đức Thắng, Phường Sài Gòn, TP.HCM</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.7035683,10.7850877,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>EV ONE – Deutsches Haus Ho Chi Minh City</name>
+      <description>Access: public | Review: verified | Address: Tầng B3, 33 Lê Duẩn, Phường Sài Gòn, TP.HCM</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.7006195,10.7818088,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>EV ONE – Lavida Quận 7</name>
+      <description>Access: public | Review: verified | Address: Khu dân cư Lavida, Phường Tân Hưng, TP.HCM</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.7016553,10.7271154,0</coordinates>
+      </Point>
+    </Placemark>
+  </Document>
+</kml>

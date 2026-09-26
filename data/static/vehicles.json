@@ -1,0 +1,82 @@
+[
+  {
+    "vehicle_id": "EV_VF5_PLUS",
+    "make": "VinFast",
+    "model": "VF 5",
+    "variant": "Plus",
+    "battery_capacity_kwh": 37.23,
+    "usable_battery_kwh": 37.23,
+    "max_ac_power_kw": 6.6,
+    "max_dc_power_kw": 50,
+    "ac_connectors": ["Type2"],
+    "dc_connectors": ["CCS2"],
+    "consumption_wh_km": 124.1,
+    "reserve_soc": 0.1,
+    "default_target_soc": 0.8,
+    "charging_efficiency": 0.9,
+    "source": "https://vinfastauto.com/vn_vi/cau-hoi-thuong-gap/cau-hoi-xe-o-to/san-pham/vf-5",
+    "is_synthetic": false,
+    "synthetic_fields": [
+      "battery_capacity_kwh",
+      "reserve_soc",
+      "default_target_soc",
+      "charging_efficiency"
+    ]
+  },
+  {
+    "vehicle_id": "EV_VF7_ECO",
+    "make": "VinFast",
+    "model": "VF 7",
+    "variant": "Eco",
+    "battery_capacity_kwh": 59.6,
+    "usable_battery_kwh": 59.6,
+    "max_ac_power_kw": 7.2,
+    "max_dc_power_kw": 100,
+    "ac_connectors": ["Type2"],
+    "dc_connectors": ["CCS2"],
+    "consumption_wh_km": 118.2,
+    "reserve_soc": 0.1,
+    "default_target_soc": 0.8,
+    "charging_efficiency": 0.9,
+    "source": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw8e23886a/Document/VF7_Brochure_25.10.pdf",
+    "is_synthetic": false,
+    "synthetic_fields": [
+      "battery_capacity_kwh",
+      "reserve_soc",
+      "default_target_soc",
+      "charging_efficiency"
+    ]
+  },
+  {
+    "vehicle_id": "EV_GBT_CITY_DEMO",
+    "make": "Demo",
+    "model": "GB/T City EV",
+    "variant": null,
+    "battery_capacity_kwh": 45,
+    "usable_battery_kwh": 42,
+    "max_ac_power_kw": 7,
+    "max_dc_power_kw": 60,
+    "ac_connectors": ["GB/T AC"],
+    "dc_connectors": ["GB/T DC"],
+    "consumption_wh_km": 145,
+    "reserve_soc": 0.12,
+    "default_target_soc": 0.8,
+    "charging_efficiency": 0.9,
+    "source": "project_synthetic",
+    "is_synthetic": true,
+    "synthetic_fields": [
+      "make",
+      "model",
+      "battery_capacity_kwh",
+      "usable_battery_kwh",
+      "max_ac_power_kw",
+      "max_dc_power_kw",
+      "ac_connectors",
+      "dc_connectors",
+      "consumption_wh_km",
+      "reserve_soc",
+      "default_target_soc",
+      "charging_efficiency"
+    ]
+  }
+]

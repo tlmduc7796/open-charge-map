@@ -1,0 +1,30 @@
+{
+  "demo_bounds": {
+    "south": 10.70,
+    "west": 106.65,
+    "north": 10.82,
+    "east": 106.75
+  },
+  "dedup_distance_m": 80,
+  "http_timeout_s": 30,
+  "user_agent": "SmartEVJourneyHackathon/0.1 (station data collector)",
+  "providers": ["evone", "osm", "goong"],
+  "evone_url": "https://www.ev1.vn/tin-tuc/he-thong-tram-sac-cong-cong-ev-one",
+  "nominatim_url": "https://nominatim.openstreetmap.org/search",
+  "overpass_url": "https://overpass.kumi.systems/api/interpreter",
+  "goong_autocomplete_url": "https://rsapi.goong.io/Place/AutoComplete",
+  "goong_detail_url": "https://rsapi.goong.io/Place/Detail",
+  "search_terms": [
+    "trạm sạc ô tô điện",
+    "EV charging station",
+    "EV ONE",
+    "VinFast charging station"
+  ],
+  "search_centers": [
+    {"lat": 10.7769, "lon": 106.7009},
+    {"lat": 10.7500, "lon": 106.7000},
+    {"lat": 10.8050, "lon": 106.6900}
+  ],
+  "goong_max_details": 30
+}
+

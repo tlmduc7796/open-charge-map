@@ -1,0 +1,30 @@
+{
+  "planned_arrival_window_min": 15,
+  "station_rates": [
+    {
+      "station_id": "ST_EVO_AUDI_HCM",
+      "baseline_arrival_rate_per_hour": 0.4
+    },
+    {
+      "station_id": "ST_EVO_DEUTSCHES_HAUS",
+      "baseline_arrival_rate_per_hour": 1.4
+    },
+    {
+      "station_id": "ST_EVO_LAVIDA_Q7",
+      "baseline_arrival_rate_per_hour": 0.6
+    }
+  ],
+  "scenario_overrides": [
+    {
+      "scenario_id": "SCN_CONGESTION_REROUTE",
+      "station_id": "ST_EVO_DEUTSCHES_HAUS",
+      "baseline_arrival_rate_per_hour": 2.8
+    },
+    {
+      "scenario_id": "SCN_PORT_OUTAGE_REROUTE",
+      "station_id": "ST_EVO_DEUTSCHES_HAUS",
+      "baseline_arrival_rate_per_hour": 2.0
+    }
+  ],
+  "data_source": "synthetic"
+}

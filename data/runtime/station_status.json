@@ -1,0 +1,41 @@
+[
+  {
+    "station_id": "ST_EVO_AUDI_HCM",
+    "timestamp": "2026-09-25T18:00:00+07:00",
+    "total_ports": 4,
+    "operational_ports": 3,
+    "occupied_ports": 1,
+    "available_ports": 2,
+    "offline_ports": 1,
+    "occupancy_ratio": 0.3333333333333333,
+    "queue_length": 0,
+    "avg_session_duration_min": 35.0,
+    "data_source": "synthetic"
+  },
+  {
+    "station_id": "ST_EVO_DEUTSCHES_HAUS",
+    "timestamp": "2026-09-25T18:00:00+07:00",
+    "total_ports": 4,
+    "operational_ports": 4,
+    "occupied_ports": 3,
+    "available_ports": 1,
+    "offline_ports": 0,
+    "occupancy_ratio": 0.75,
+    "queue_length": 1,
+    "avg_session_duration_min": 50.0,
+    "data_source": "synthetic"
+  },
+  {
+    "station_id": "ST_EVO_LAVIDA_Q7",
+    "timestamp": "2026-09-25T18:00:00+07:00",
+    "total_ports": 1,
+    "operational_ports": 1,
+    "occupied_ports": 0,
+    "available_ports": 1,
+    "offline_ports": 0,
+    "occupancy_ratio": 0.0,
+    "queue_length": 0,
+    "avg_session_duration_min": 30.0,
+    "data_source": "synthetic"
+  }
+]
