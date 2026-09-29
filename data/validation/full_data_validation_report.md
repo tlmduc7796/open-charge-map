@@ -8,12 +8,12 @@
 
 ## Checks
 
-- PASS — Runtime capacity invariants checked for 3 stations
-- PASS — Validated 3 routing API cache files
+- PASS — Runtime capacity invariants checked for 16 stations
+- PASS — Validated 16 routing API cache files
 - PASS — Referential and temporal checks completed for 4 planned-arrival records
 - PASS — All 4 required event types are present and capacity-safe
 - PASS — Validated 4 deterministic demo scenarios
-- PASS — Validated one baseline arrival rate for each of 3 stations
+- PASS — Validated one baseline arrival rate for each of 16 stations
 - PASS — UrbanEV archive verified: 647305188 bytes, SHA-256 matched
 
 ## Errors

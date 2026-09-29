@@ -1,4 +1,5 @@
 import type { DemoScenario, GeoPoint, Vehicle } from "../types";
+import { fullRangeKm, rangeKmToSoc, socToRangeKm } from "../vehicleRange";
 import LocationInput from "./LocationInput";
 
 interface JourneyFormProps {
@@ -7,7 +8,6 @@ interface JourneyFormProps {
   scenario: DemoScenario;
   vehicleId: string;
   initialSoc: number;
-  targetSoc: number;
   applyEvents: boolean;
   origin: GeoPoint;
   destination: GeoPoint;
@@ -16,7 +16,6 @@ interface JourneyFormProps {
   onScenarioChange: (scenarioId: string) => void;
   onVehicleChange: (vehicleId: string) => void;
   onInitialSocChange: (soc: number) => void;
-  onTargetSocChange: (soc: number) => void;
   onApplyEventsChange: (enabled: boolean) => void;
   onOriginChange: (point: GeoPoint) => void;
   onDestinationChange: (point: GeoPoint) => void;
@@ -27,6 +26,7 @@ interface JourneyFormProps {
 }
 
 export default function JourneyForm(props: JourneyFormProps) {
+  const vehicle = props.vehicles.find((item) => item.vehicle_id === props.vehicleId) ?? props.vehicles[0];
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     props.onSubmit();
@@ -88,34 +88,22 @@ export default function JourneyForm(props: JourneyFormProps) {
         </select>
       </label>
 
-      <div className="soc-grid">
+      {vehicle && (
         <label>
-          SOC hiện tại
+          Quãng đường tối đa EV có thể đi
           <div className="soc-input">
             <input
+              aria-label="Quãng đường tối đa EV có thể đi"
               type="range"
-              min="1"
-              max="100"
-              value={Math.round(props.initialSoc * 100)}
-              onChange={(event) => props.onInitialSocChange(Number(event.target.value) / 100)}
+              min="0"
+              max={Math.round(fullRangeKm(vehicle))}
+              value={Math.round(socToRangeKm(props.initialSoc, vehicle))}
+              onChange={(event) => props.onInitialSocChange(rangeKmToSoc(Number(event.target.value), vehicle))}
             />
-            <strong>{Math.round(props.initialSoc * 100)}%</strong>
+            <strong>{Math.round(socToRangeKm(props.initialSoc, vehicle))} km</strong>
           </div>
         </label>
-        <label>
-          SOC mục tiêu
-          <div className="soc-input">
-            <input
-              type="range"
-              min="1"
-              max="100"
-              value={Math.round(props.targetSoc * 100)}
-              onChange={(event) => props.onTargetSocChange(Number(event.target.value) / 100)}
-            />
-            <strong>{Math.round(props.targetSoc * 100)}%</strong>
-          </div>
-        </label>
-      </div>
+      )}
 
       <label className="event-toggle">
         <input

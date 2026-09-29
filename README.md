@@ -11,8 +11,11 @@ Phase 08 đã bổ sung frontend dùng API thật, Goong Maps chính với Leafl
 journey controls, station details, recommendation, route và event/model indicators.
 Phase 09 đã hoàn thiện journey tích hợp: Goong Places, origin/destination động, live/cache
 routing, route geometry trong recommendation và planned-arrival commit/cancel.
+Phase 10 đã khóa bốn scenario deterministic, route cache cho toàn bộ 15 trạm public,
+reset/replay và API regression tests cho low-SOC, congestion và outage reranking.
 Phase 03–04 vẫn deferred và chưa được đánh dấu hoàn thành, vì vậy Phase 06 chỉ đạt
-demo gate chứ chưa đạt release gate.
+demo gate chứ chưa đạt release gate. Bản demo không claim đã có occupancy ML artifact:
+`prediction_source=persistence` là trạng thái chủ động và được hiển thị trên UI.
 
 ## Yêu cầu
 
@@ -159,13 +162,15 @@ Phải dùng cùng hostname `127.0.0.1`; nếu mở frontend bằng `localhost`,
    candidates, route trên map và station detail.
 2. **Địa điểm động:** nhập `Cho Ben Thanh`, chọn một gợi ý Goong rồi tìm lại. Kiểm tra route
    và detour thay đổi; request live có thể cần vài giây.
-3. **Low-SOC:** chọn `Low-SOC journey`. Kiểm tra arrival SOC không thấp hơn reserve; có thể
-   giảm SOC gần mức reserve để xem lý do `Không đủ SOC dự phòng`.
-4. **Port outage:** chọn `Lavida outage triggers reroute`, bật event rồi tìm. Lavida phải bị
-   loại vì offline và Deutsches Haus trở thành candidate đầu tiên.
-5. **Planned arrival:** chọn một recommendation, nhấn **Xác nhận tuyến đến trạm**, kiểm tra ETA
+3. **Low-SOC:** chọn `Low-SOC journey`. Kiểm tra vẫn có candidate an toàn và danh sách loại
+   có lý do phương tiện không đủ pin để tới.
+4. **Congestion:** chọn `Congestion triggers reranking`, chạy một lần khi chưa bật event, sau đó
+   bật event và chạy lại. La Vela phải mất hạng đầu vì thời gian chờ tăng.
+5. **Port outage:** reset, chọn `La Vela outage triggers reroute`, bật event rồi tìm. La Vela
+   phải bị loại vì offline và recommendation đầu tiên phải đổi.
+6. **Planned arrival:** chọn một recommendation, nhấn **Xác nhận tuyến đến trạm**, kiểm tra ETA
    xuất hiện, sau đó thử **Hủy planned arrival**.
-6. Nhấn **Reset demo** trước khi chạy lại scenario để xóa event và planned-arrival runtime.
+7. Nhấn **Reset demo** trước khi chạy lại scenario để xóa event và planned-arrival runtime.
 
 Banner `persistence fallback` là trạng thái dự kiến vì Phase 04 chưa có model artifact, không
 phải lỗi khởi động. Nếu thiếu Maptiles key hoặc Goong map lỗi lúc load, frontend tự chuyển sang
@@ -225,4 +230,7 @@ Copy-Item frontend\.env.example frontend\.env.local
 
 ## Khi bổ sung trạm
 
-Sau khi promote candidate vào `stations.geojson`, cập nhật/tái sinh runtime và queue assumptions; chỉ cache route cho trạm thực sự tham gia recommendation hoặc demo. Chạy lại static validator và Phase 01 validator trước khi tiếp tục.
+Sau khi promote candidate vào `stations.geojson`, cập nhật/tái sinh runtime và queue assumptions,
+thêm route của mọi trạm public vào `config/demo_routes.json`, rồi chạy lại
+`scripts/cache_demo_routes.py`. Static validator và Phase 01 validator sẽ fail nếu fixed
+scenario không còn đủ route coverage.

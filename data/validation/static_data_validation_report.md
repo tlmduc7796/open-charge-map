@@ -2,7 +2,7 @@
 
 **Result:** `PASS`
 
-- Stations checked: 3
+- Stations checked: 16
 - Vehicles checked: 3
 - Errors: 0
 - Warnings: 3

@@ -95,7 +95,6 @@ button { cursor: pointer; }
 .location-suggestions small { grid-column: 2; grid-row: 1 / 3; align-self: center; color: #4e7d72; font-size: 7px; }
 .route-arrow { display: grid; place-items: center; height: 43px; color: #5b796f; }
 .field-note { margin: -8px 0 15px; color: #869790; font-size: 10px; }
-.soc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .soc-input { height: 43px; padding: 0 10px; display: flex; gap: 9px; align-items: center; border: 1px solid #cedbd4; border-radius: 10px; background: #fbfdfb; }
 .soc-input input { min-width: 0; accent-color: #1e705d; }
 .soc-input strong { min-width: 34px; color: #173d35; font-size: 12px; text-align: right; }
@@ -168,7 +167,6 @@ button { cursor: pointer; }
 .access-private { color: #991b1b; background: #fee2e2; }
 .access-customers, .access-unknown { color: #92400e; background: #fef3c7; }
 .availability-dot { flex: 0 0 auto; margin-top: 4px; box-shadow: 0 0 0 4px #eef4f0; }
-.notice { margin-top: 13px; padding: 10px; border-left: 3px solid #f59e0b; background: #fffbeb; color: #7c5b18; font-size: 10px; }
 .detail-grid { margin-top: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 .detail-grid div { min-width: 0; }
 .detail-grid span, .detail-grid strong { display: block; }
@@ -215,7 +213,7 @@ button { cursor: pointer; }
   .section-heading h1 { font-size: 28px; }
   .route-inputs { grid-template-columns: 1fr; }
   .route-arrow { display: none; }
-  .soc-grid, .detail-grid { grid-template-columns: 1fr 1fr; }
+  .detail-grid { grid-template-columns: 1fr 1fr; }
   .form-actions { flex-direction: column; }
   .map-frame { min-height: 330px; }
 }

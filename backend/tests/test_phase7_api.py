@@ -34,14 +34,14 @@ def test_station_vehicle_route_and_model_endpoints() -> None:
 
     responses = asyncio.run(run_requests())
     assert all(response.status_code == 200 for response in responses)
-    assert len(responses[0].json()) == 3
+    assert len(responses[0].json()) == 16
     assert len(responses[3].json()) == 3
     assert len(responses[4].json()) == 4
     assert responses[5].json()["resolution_source"] == "cache"
     assert responses[6].json()["prediction_source"] == "persistence"
 
 
-def test_two_end_to_end_recommendation_scenarios() -> None:
+def test_required_end_to_end_recommendation_scenarios() -> None:
     async def run_scenarios():
         await _request("POST", "/demo/reset")
         normal = await _request(
@@ -52,6 +52,26 @@ def test_two_end_to_end_recommendation_scenarios() -> None:
                 "origin": {"lat": 10.7075, "lon": 106.705},
                 "destination": {"lat": 10.806, "lon": 106.687},
                 "departure_at": "2026-09-26T18:00:00+07:00",
+            },
+        )
+        await _request("POST", "/demo/reset")
+        low_soc = await _request(
+            "POST",
+            "/journey/recommend",
+            json={"scenario_id": "SCN_LOW_SOC"},
+        )
+        await _request("POST", "/demo/reset")
+        congestion_before = await _request(
+            "POST",
+            "/journey/recommend",
+            json={"scenario_id": "SCN_CONGESTION_REROUTE"},
+        )
+        congestion_after = await _request(
+            "POST",
+            "/journey/recommend",
+            json={
+                "scenario_id": "SCN_CONGESTION_REROUTE",
+                "apply_scenario_events": True,
             },
         )
         await _request("POST", "/demo/reset")
@@ -68,19 +88,39 @@ def test_two_end_to_end_recommendation_scenarios() -> None:
                 "apply_scenario_events": True,
             },
         )
-        return normal, outage_before, outage_after
+        return normal, low_soc, congestion_before, congestion_after, outage_before, outage_after
 
-    normal, before, after = asyncio.run(run_scenarios())
-    assert normal.status_code == before.status_code == after.status_code == 200
+    normal, low_soc, congestion_before, congestion_after, outage_before, outage_after = (
+        asyncio.run(run_scenarios())
+    )
+    assert all(
+        response.status_code == 200
+        for response in (
+            normal,
+            low_soc,
+            congestion_before,
+            congestion_after,
+            outage_before,
+            outage_after,
+        )
+    )
     assert normal.json()["recommendations"][0]["route"]["geometry"]["type"] == (
         "LineString"
     )
     assert normal.json()["recommendations"][0]["energy_to_add_kwh"] > 0
-    assert normal.json()["recommendations"][0]["station_id"] == "ST_EVO_LAVIDA_Q7"
-    assert before.json()["recommendations"][0]["station_id"] == "ST_EVO_LAVIDA_Q7"
-    assert after.json()["recommendations"][0]["station_id"] == (
-        "ST_EVO_DEUTSCHES_HAUS"
+    assert normal.json()["recommendations"][0]["station_id"] == "ST_VF_LA_VELA"
+    assert any(
+        "INSUFFICIENT_SOC_RESERVE" in item["reason_codes"]
+        for item in low_soc.json()["excluded_candidates"]
     )
+    assert congestion_before.json()["recommendations"][0]["station_id"] == (
+        "ST_VF_LA_VELA"
+    )
+    assert congestion_after.json()["recommendations"][0]["station_id"] != (
+        "ST_VF_LA_VELA"
+    )
+    assert outage_before.json()["recommendations"][0]["station_id"] == "ST_VF_LA_VELA"
+    assert outage_after.json()["recommendations"][0]["station_id"] != "ST_VF_LA_VELA"
 
 
 def test_planned_arrival_api_lifecycle() -> None:

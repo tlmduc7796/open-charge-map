@@ -114,6 +114,11 @@ def validate_all() -> None:
         if isinstance(item, dict) and isinstance(item.get("properties"), dict) and item["properties"].get("station_id")
     }
     station_ids = set(station_by_id)
+    public_station_ids = {
+        station_id
+        for station_id, feature in station_by_id.items()
+        if feature["properties"].get("access") == "public"
+    }
     vehicle_ids = unique_ids(vehicles, "vehicle_id", "vehicles")
     status_ids = unique_ids(statuses, "station_id", "station_status")
     arrival_ids = unique_ids(arrivals, "arrival_id", "planned_arrivals")
@@ -293,9 +298,28 @@ def validate_all() -> None:
         if not isinstance(route_ids, list) or not route_ids:
             error(f"{context}: route_ids must be a non-empty array")
         else:
+            cached_station_ids: set[str] = set()
+            has_direct_route = False
             for route_id in route_ids:
                 if route_id not in route_by_id:
                     error(f"{context}: unknown route_id {route_id}")
+                    continue
+                waypoints = route_by_id[route_id].get("waypoints", [])
+                if not waypoints:
+                    has_direct_route = True
+                cached_station_ids.update(
+                    waypoint.get("station_id")
+                    for waypoint in waypoints
+                    if waypoint.get("station_id")
+                )
+            if not has_direct_route:
+                error(f"{context}: route cache must include a direct route")
+            if cached_station_ids != public_station_ids:
+                error(
+                    f"{context}: route cache coverage differs from public stations: "
+                    f"missing={sorted(public_station_ids-cached_station_ids)}, "
+                    f"extra={sorted(cached_station_ids-public_station_ids)}"
+                )
         parse_datetime(scenario.get("departure_at"), f"{context}.departure_at")
     checked(f"Validated {len(scenarios)} deterministic demo scenarios")
 

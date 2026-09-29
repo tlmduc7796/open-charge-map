@@ -1,9 +1,11 @@
-import type { CandidateExclusion, RecommendationItem, Station } from "../types";
+import type { CandidateExclusion, RecommendationItem, Station, Vehicle } from "../types";
+import { socToRangeKm } from "../vehicleRange";
 
 interface RecommendationListProps {
   items: RecommendationItem[];
   exclusions: CandidateExclusion[];
   stations: Station[];
+  vehicle: Vehicle | null;
   selectedStationId: string | null;
   hasRun: boolean;
   onSelect: (item: RecommendationItem) => void;
@@ -13,7 +15,7 @@ const reasonLabels: Record<string, string> = {
   NON_PUBLIC_ACCESS: "Trạm hạn chế truy cập",
   STATION_OFFLINE: "Trạm đang offline",
   NO_COMPATIBLE_CONNECTOR: "Không tương thích đầu sạc",
-  INSUFFICIENT_SOC_RESERVE: "Không đủ SOC dự phòng để tới trạm",
+  INSUFFICIENT_SOC_RESERVE: "Phương tiện không đủ pin để tới",
   ROUTE_NOT_AVAILABLE: "Chưa có tuyến đường phù hợp",
 };
 
@@ -54,7 +56,9 @@ export default function RecommendationList(props: RecommendationListProps) {
                 <span><b>{minutes(item.estimated_wait_min)}</b> chờ</span>
                 <span><b>{minutes(item.estimated_charge_min)}</b> sạc</span>
                 <span><b>+{item.detour_min.toFixed(1)} phút</b> detour</span>
-                <span><b>{Math.round(item.arrival_soc * 100)}%</b> SOC tới</span>
+                <span>
+                  <b>{props.vehicle ? `${Math.round(socToRangeKm(item.arrival_soc, props.vehicle))} km` : "—"}</b> còn lại khi tới
+                </span>
               </span>
             </span>
             <span className="score">{Math.round(item.final_score * 100)}</span>

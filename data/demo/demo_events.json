@@ -1,29 +1,29 @@
 [
   {
-    "event_id": "EVT_CONGEST_DEUTSCHES",
+    "event_id": "EVT_CONGEST_LA_VELA",
     "event_type": "congestion",
-    "station_id": "ST_EVO_DEUTSCHES_HAUS",
+    "station_id": "ST_VF_LA_VELA",
     "start_at": "2026-09-25T18:12:00+07:00",
     "end_at": "2026-09-25T18:42:00+07:00",
     "severity": "high",
     "effects": {
       "queue_length_delta": 2,
-      "occupied_ports_delta": 1
+      "occupied_ports_delta": 2
     },
-    "description": "Deutsches Haus reaches full occupancy and gains a queue.",
+    "description": "La Vela reaches full occupancy and gains a queue.",
     "is_synthetic": true
   },
   {
-    "event_id": "EVT_OUTAGE_LAVIDA",
+    "event_id": "EVT_OUTAGE_LA_VELA",
     "event_type": "port_outage",
-    "station_id": "ST_EVO_LAVIDA_Q7",
+    "station_id": "ST_VF_LA_VELA",
     "start_at": "2026-09-25T18:10:00+07:00",
     "end_at": "2026-09-25T18:35:00+07:00",
     "severity": "high",
     "effects": {
-      "offline_ports_delta": 1
+      "offline_ports_delta": 2
     },
-    "description": "The only Lavida charging port becomes unavailable.",
+    "description": "Both La Vela charging ports become unavailable.",
     "is_synthetic": true
   },
   {
