@@ -26,6 +26,12 @@ Never train a deployable model with a profile that cannot be reproduced at API
 inference time. The `data_gap_analysis.md` priorities therefore remain the
 release gate for temporal/context models.
 
+Before enabling any DL profile, read [`DATA_HANDOFF.md`](DATA_HANDOFF.md) and
+review [`config/domain_schema.draft.json`](config/domain_schema.draft.json). The
+draft is the explicit handoff surface for later agents: it lists candidate
+domains/features, their join keys and why LSTM, Transformer and foundation
+fine-tuning are disabled today.
+
 ## Commands
 
 Run from the repository root. These commands write artifacts only when told to;
@@ -50,6 +56,10 @@ none starts model training by default.
 
 # LSTM + Markov experiment: plan only until data gates are approved.
 .\.venv\Scripts\python.exe ml\src\train_lstm_markov.py
+
+# Transformer and foundation-model review plans; neither trains by default.
+.\.venv\Scripts\python.exe ml\src\train_transformer.py
+.\.venv\Scripts\python.exe ml\src\train_foundation.py --provider chronos
 ```
 
 For a local smoke run after approval, add `--max-train-rows 100000`. Do not use
@@ -119,6 +129,8 @@ This prevents accidental online learning, leakage and poisoned observations.
 | `train_occupancy.py` | XGBoost multi-horizon baseline and backend release bundle | Phase 04; opt-in |
 | `markov_wait.py` | probability transition → wait distribution mathematics | Phase 04/Markov layer |
 | `train_lstm_markov.py` | LSTM + transition heads, experimental artifact only | Phase 2; opt-in |
+| `train_transformer.py` | generic multi-domain Transformer, driven by reviewed schema | Phase 3; disabled draft |
+| `train_foundation.py` | Chronos/TimesFM data/licence/GPU gate and provider handoff | Phase 4; research-only |
 
 `ml/notebooks/` intentionally contains notebook guidance rather than duplicated
 code. Add notebook outputs there only when they call these modules.

@@ -1,0 +1,82 @@
+{
+  "schema_version": "draft-1",
+  "purpose": "Review contract only. Do not enable training until team approval.",
+  "deployment_region": "UNRESOLVED",
+  "canonical_keys": ["timestamp", "entity_id", "split"],
+  "target": {
+    "name": "occupancy_ratio",
+    "availability": "approved_for_pipeline_only",
+    "note": "UrbanEV target is suitable for pipeline validation, not Vietnamese production claims."
+  },
+  "domains": {
+    "occupancy": {
+      "status": "approved_for_pipeline_only",
+      "join_keys": ["entity_id", "timestamp"],
+      "features": ["occupancy_ratio", "occupied_ports", "total_ports"],
+      "note": "Must come from append-only validated station telemetry in production."
+    },
+    "temporal_calendar": {
+      "status": "candidate",
+      "join_keys": ["timestamp"],
+      "features": ["hour_sin", "hour_cos", "dow_sin", "dow_cos", "is_weekend", "is_public_holiday"],
+      "note": "Region-specific holiday calendar; German and Vietnam calendars must never be mixed."
+    },
+    "weather": {
+      "status": "candidate",
+      "join_keys": ["timestamp", "station_region"],
+      "features": ["temperature_2m", "relative_humidity_2m", "precipitation", "wind_speed_10m", "is_raining"],
+      "note": "Needs station-local historical and real-time source, freshness policy and missing-value strategy."
+    },
+    "poi_spatial": {
+      "status": "candidate",
+      "join_keys": ["entity_id"],
+      "features": ["location_type", "poi_count_500m", "competitor_count_2km", "road_class"],
+      "note": "Static station context; version whenever OSM/provider snapshot changes."
+    },
+    "traffic": {
+      "status": "candidate",
+      "join_keys": ["entity_id", "timestamp"],
+      "features": ["congestion_level", "mean_speed_kmh"],
+      "note": "Needs licensed/live source and leakage audit. Do not replace it with an undocumented synthetic proxy."
+    },
+    "charging_sessions": {
+      "status": "candidate",
+      "join_keys": ["entity_id", "timestamp"],
+      "features": ["arrival_rate_per_hour", "session_duration_min", "soc_on_arrival", "vehicle_segment"],
+      "note": "Sensitive operational data; define consent, retention and aggregation before use."
+    }
+  },
+  "model_profiles": {
+    "xgboost_baseline": {
+      "enabled": true,
+      "sequence_features": ["occupancy_ratio"],
+      "context_features": [],
+      "serving_status": "backend_supported"
+    },
+    "lstm_markov": {
+      "enabled": false,
+      "sequence_features": ["occupancy_ratio"],
+      "context_features": ["hour_sin", "hour_cos", "dow_sin", "dow_cos", "is_weekend", "is_public_holiday", "location_type"],
+      "serving_status": "experimental"
+    },
+    "transformer": {
+      "enabled": false,
+      "sequence_features": ["occupancy_ratio", "temperature_2m", "precipitation", "congestion_level"],
+      "context_features": ["hour_sin", "hour_cos", "dow_sin", "dow_cos", "is_weekend", "location_type", "poi_count_500m"],
+      "serving_status": "experimental"
+    },
+    "foundation_finetune": {
+      "enabled": false,
+      "sequence_features": ["occupancy_ratio"],
+      "context_features": [],
+      "serving_status": "research_only"
+    }
+  },
+  "handoff_checklist": [
+    "Replace UNRESOLVED deployment_region with the actual station region.",
+    "For every candidate domain, approve/remove fields, source, granularity, timezone, freshness and missing-value handling.",
+    "Build a versioned enriched dataset and verify that every selected field is available at inference time.",
+    "Change only the relevant model profile enabled flag after data and privacy review.",
+    "Run temporal backtest, calibration, capacity and fairness checks before production promotion."
+  ]
+}

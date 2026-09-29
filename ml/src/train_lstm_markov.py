@@ -16,6 +16,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+try:
+    from .domain_schema import DEFAULT_SCHEMA_PATH, load_domain_schema
+except ImportError:  # pragma: no cover - direct script invocation.
+    from domain_schema import DEFAULT_SCHEMA_PATH, load_domain_schema
+
 ROOT_DIR = Path(__file__).resolve().parents[2]
 
 
@@ -195,8 +200,11 @@ def main() -> None:
     parser.add_argument("--batch-size", type=int, default=512)
     parser.add_argument("--learning-rate", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA_PATH)
     parser.add_argument("--execute", action="store_true")
     args = parser.parse_args()
+    schema = load_domain_schema(args.schema)
+    plan = schema.training_requirements("lstm_markov")
     if not args.execute:
         print(
             json.dumps(
@@ -204,11 +212,16 @@ def main() -> None:
                     "will_train": False,
                     "profile": "LSTM + Markov head",
                     "next_step": "Review data gates, then add --execute.",
+                    **plan,
                 },
                 indent=2,
             )
         )
         return
+    if not schema.profile("lstm_markov").enabled:
+        raise ValueError(
+            "LSTM-Markov profile is disabled; complete DATA_HANDOFF.md before enabling it"
+        )
     print(
         json.dumps(
             run_training(
