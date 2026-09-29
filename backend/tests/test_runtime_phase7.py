@@ -9,18 +9,18 @@ from backend.app.domain.runtime import PlannedArrivalStore, RuntimeStateStore
 def test_event_engine_updates_runtime_without_mutating_static_data() -> None:
     data = load_domain_data(load_settings().data_dir)
     runtime = RuntimeStateStore(data.station_statuses, data.demo_events)
-    static_status = data.station_statuses.get("ST_EVO_LAVIDA_Q7")
+    static_status = data.station_statuses.get("ST_VF_LA_VELA")
 
-    updated = runtime.apply("EVT_OUTAGE_LAVIDA")
+    updated = runtime.apply("EVT_OUTAGE_LA_VELA")
 
     assert updated.operational_ports == 0
-    assert updated.offline_ports == 1
-    assert static_status.operational_ports == 1
+    assert updated.offline_ports == 2
+    assert static_status.operational_ports == 2
     assert static_status.offline_ports == 0
-    assert runtime.active_event_ids() == ("EVT_OUTAGE_LAVIDA",)
+    assert runtime.active_event_ids() == ("EVT_OUTAGE_LA_VELA",)
 
     runtime.reset()
-    assert runtime.get("ST_EVO_LAVIDA_Q7") == static_status
+    assert runtime.get("ST_VF_LA_VELA") == static_status
     assert runtime.active_event_ids() == ()
 
 

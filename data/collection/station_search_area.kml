@@ -40,5 +40,181 @@
         <coordinates>106.7016553,10.7271154,0</coordinates>
       </Point>
     </Placemark>
+    <Placemark>
+      <name>EV ONE Trạm sạc điện</name>
+      <description>Access: unknown | Review: verified | Address: EV ONE Trạm sạc điện, 75 Đ. Trần Khánh Dư, Phường Tân Định, Quận 1, Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.6874054,10.7936968,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm Sạc Điện Ô Tô Vinfast Trung Tâm Thương Mại Vinhomes Landmark 81</name>
+      <description>Access: unknown | Review: verified | Address: Trạm Sạc Điện Ô Tô Vinfast Trung Tâm Thương Mại Vinhomes Landmark 81, 208 Đường Trần Trọng Kim, Phường 22, Quận Bình Thạnh, Thành Phố Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.722328,10.794891,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc EV ONE</name>
+      <description>Access: unknown | Review: rejected | Address: Trạm sạc EV ONE, 33 Lê Duẩn, Bến Nghé, Quận 1, Thành phố Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.7003116,10.782166,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc EV ONE</name>
+      <description>Access: unknown | Review: verified | Address: Trạm sạc EV ONE, 18 Nguyễn Cư Trinh, P, Quận 1, Thành phố Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.6921292,10.7648308,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc VinFast</name>
+      <description>Access: unknown | Review: pending | Address: Trạm sạc VinFast, 84 Nguyễn Thị Thập, Tân Hưng, Quận 7, Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.69676660300007,10.741179265000028,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc VinFast</name>
+      <description>Access: unknown | Review: verified | Address: Trạm sạc VinFast, 6 Huyền Trân Công Chúa, Phường Bến Thành, Quận 1, Thành phố Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.693804,10.7766951,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc VinFast</name>
+      <description>Access: unknown | Review: verified | Address: 3-5 Đường Số 81, Tân Hưng, Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.7078448,10.7399577,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc VinFast</name>
+      <description>Access: unknown | Review: verified | Address: 147 Đ. Ngô Quyền, Chợ Lớn, Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.6654643,10.7590498,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc VinFast</name>
+      <description>Access: unknown | Review: verified | Address: Hầm B5-B6, Trung tâm Thương mại Vincom, Đồng Khởi/72 Lê Thánh Tôn, Sài Gòn, Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.7020535,10.7779375,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc VinFast</name>
+      <description>Access: unknown | Review: verified | Address: Trạm sạc VinFast, 55 QL13, Phường 26, Bình Thạnh, Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.712302,10.812013,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc VinFast</name>
+      <description>Access: unknown | Review: verified | Address: Trạm sạc VinFast, Phường 4, Tân Bình, Thành phố Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.6592203,10.8006382,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc VinFast</name>
+      <description>Access: public | Review: verified | Address: 427 Phạm Hữu Lầu, Nhà Bè, Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.7198716,10.701131,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc VinFast - Cty Sơn TBSG</name>
+      <description>Access: unknown | Review: pending | Address: Trạm sạc VinFast - Cty Sơn TBSG, KDC Nhà Máy X51, Đường số 5/01 Phạm Hữu Lầu, Tân Phú, Quận 7, Thành phố Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.719914,10.7361541,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc Vinfast</name>
+      <description>Access: unknown | Review: verified | Address: 103 Lý Chính Thắng, Xuân Hòa, Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.6854854,10.788882,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc Vinfast</name>
+      <description>Access: unknown | Review: pending | Address: Trạm sạc Vinfast, Khu đô thị Phú Mỹ Hưng, Quận 7, Thành phố Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.7197118,10.7301437,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc Vinfast</name>
+      <description>Access: unknown | Review: verified | Address: 323 Đ. Bùi Hữu Nghĩa, Gia Định, Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.6993053,10.8001021,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc Vinfast Tạ Quang Bửu</name>
+      <description>Access: unknown | Review: verified | Address: Trạm sạc Vinfast Tạ Quang Bửu, 23/20 Tạ Quang Bửu, Phường 4, Quận 8, Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.674506,10.739156,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc vinfast</name>
+      <description>Access: unknown | Review: pending | Address: Trạm sạc vinfast, 76 Hoàng Quốc Việt, Phú Mỹ, Quận 7, Thành phố Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.7412946,10.7132495,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc ô tô điện</name>
+      <description>Access: unknown | Review: pending | Address: Trạm sạc ô tô điện, Bến Nghé, Quận 1, Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.70177500000005,10.778628000000026,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm sạc ô tô điện</name>
+      <description>Access: unknown | Review: pending | Address: Trạm sạc ô tô điện, An Khánh, Thủ Đức, Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.72914077100006,10.788252536000073,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm đổi PIN XMĐ Vinfast</name>
+      <description>Access: unknown | Review: rejected | Address: 88 Nguyễn Gia Trí, Thạnh Mỹ Tây, Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.715977,10.803668,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Trạm đổi PIN XMĐ Vinfast</name>
+      <description>Access: unknown | Review: rejected | Address: 262 Huỳnh Văn Bánh, Phú Nhuận, Hồ Chí Minh</description>
+      <styleUrl>#station</styleUrl>
+      <Point>
+        <coordinates>106.674672,10.791831,0</coordinates>
+      </Point>
+    </Placemark>
   </Document>
 </kml>

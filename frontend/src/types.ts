@@ -43,6 +43,8 @@ export interface Vehicle {
   model: string;
   variant: string | null;
   battery_capacity_kwh: number;
+  usable_battery_kwh: number;
+  consumption_wh_km: number;
   max_ac_power_kw: number;
   max_dc_power_kw: number;
   reserve_soc: number;

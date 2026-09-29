@@ -45,6 +45,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
 
   const scenario = scenarios.find((item) => item.scenario_id === scenarioId) ?? scenarios[0];
+  const selectedVehicle = vehicles.find((item) => item.vehicle_id === vehicleId) ?? vehicles[0] ?? null;
 
   const refreshStatuses = useCallback(async (stationList: Station[]) => {
     const records = await Promise.all(
@@ -266,7 +267,6 @@ export default function App() {
             scenario={scenario}
             vehicleId={vehicleId}
             initialSoc={initialSoc}
-            targetSoc={targetSoc}
             applyEvents={applyEvents}
             origin={origin ?? scenario.origin}
             destination={destination ?? scenario.destination}
@@ -275,7 +275,6 @@ export default function App() {
             onScenarioChange={changeScenario}
             onVehicleChange={setVehicleId}
             onInitialSocChange={setInitialSoc}
-            onTargetSocChange={setTargetSoc}
             onApplyEventsChange={setApplyEvents}
             onOriginChange={setOrigin}
             onDestinationChange={setDestination}
@@ -288,6 +287,7 @@ export default function App() {
             items={recommendation?.recommendations ?? []}
             exclusions={recommendation?.excluded_candidates ?? []}
             stations={stations}
+            vehicle={selectedVehicle}
             selectedStationId={selectedStationId}
             hasRun={recommendation !== null}
             onSelect={(item) => void selectRecommendation(item)}

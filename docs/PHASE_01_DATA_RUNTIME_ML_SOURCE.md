@@ -162,4 +162,5 @@ data/
 - UrbanEV official archive: `647,305,188` bytes, `3,138` members, SHA-256 `9d3f0aec34434546d082509efcdeeaea116eaa841701cc5854a9b62a27881a79`.
 - Archive chứa `1,429` CSV station-processed và `1,682` CSV station-level raw 5-minute; Phase 03 không cần resample dữ liệu zone-level 1 giờ.
 - Route cache OSRM: direct `14,037 m`, via Lavida `15,655 m`, via Deutsches Haus `15,128 m`.
-- Runtime/demo: 3 station states, 4 planned-arrival records, 4 event types, 4 fixed scenarios và arrival-rate assumptions cho đủ 3 station.
+- Runtime/demo: 16 station states, 4 planned-arrival records, 4 event types, 4 fixed scenarios,
+  arrival-rate assumptions cho đủ 16 station và route cache cho toàn bộ 15 station public.

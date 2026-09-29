@@ -15,6 +15,16 @@
   "goong_autocomplete_url": "https://rsapi.goong.io/Place/AutoComplete",
   "goong_detail_url": "https://rsapi.goong.io/Place/Detail",
   "search_terms": [
+    "trạm sạc VinFast Hồ Chí Minh",
+    "trạm sạc VinFast Quận 1",
+    "trạm sạc VinFast Quận 3",
+    "trạm sạc VinFast Quận 4",
+    "trạm sạc VinFast Quận 5",
+    "trạm sạc VinFast Quận 7",
+    "trạm sạc VinFast Quận 10",
+    "trạm sạc VinFast Bình Thạnh",
+    "trạm sạc VinFast Phú Nhuận",
+    "trạm sạc VinFast Tân Bình",
     "trạm sạc ô tô điện",
     "EV charging station",
     "EV ONE",
@@ -25,6 +35,6 @@
     {"lat": 10.7500, "lon": 106.7000},
     {"lat": 10.8050, "lon": 106.6900}
   ],
-  "goong_max_details": 30
+  "goong_max_details": 60
 }
 

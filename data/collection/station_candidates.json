@@ -1,14 +1,17 @@
 {
-  "generated_at": "2026-09-25T16:52:03+07:00",
+  "generated_at": "2026-09-27T11:30:52+07:00",
   "demo_bounds": {
     "south": 10.7,
     "west": 106.65,
     "north": 10.82,
     "east": 106.75
   },
-  "providers_requested": [],
+  "providers_requested": [
+    "goong"
+  ],
   "providers_run": [
-    "existing_master"
+    "existing_master",
+    "goong"
   ],
   "warnings": [],
   "candidates": [
@@ -122,16 +125,931 @@
           "provider": "existing_master",
           "provider_id": "ST_EVO_LAVIDA_Q7",
           "source_url": null
+        },
+        {
+          "provider": "goong_places",
+          "provider_id": "peiWcoPMd6FE1EkTkmx3c23UZAiT75Ned79jHV5wn9Qq1qB0TV6f4VHWaDS5WJ_gQo1dUKVwj9V5sj0voFmhyarWaA2ViWG7qg7NFUZNjk_p2m1YFpQW_iXSDXi6TBJPT",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
         }
       ],
       "source_attributes": {
         "existing_master": {
           "source_provider": "ev_one_official+osm_nominatim"
+        },
+        "goong_places": {
+          "description": "EV ONE Trạm sạc điện, 1182 Đường Nguyễn Văn Linh, Tân Phong, Quận 7, Thành phố Hồ Chí Minh"
         }
       },
       "review_status": "verified",
       "review_notes": [],
       "matched_station_id": "ST_EVO_LAVIDA_Q7"
+    },
+    {
+      "candidate_id": "CAND_93D119003ADF",
+      "name": "EV ONE Trạm sạc điện",
+      "address": "EV ONE Trạm sạc điện, 75 Đ. Trần Khánh Dư, Phường Tân Định, Quận 1, Hồ Chí Minh",
+      "location": {
+        "lat": 10.7936968,
+        "lon": 106.6874054
+      },
+      "operator": "EV ONE",
+      "access": "public",
+      "technical": {
+        "total_ports": 1,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 1,
+            "source": "synthetic"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "a_CSbLqsWqBcI1GEvkGAT228UaCKfoONW05VZF4oZlIhyk3xOuXOEiF01a62MGoDnbUECGrxBoYxaXXc1i0Wi7l6TtSK5RnfIaKy-Tox8jOVolkkauhqcjGm-QTGMG_fM",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "EV ONE Trạm sạc điện, 75 Đ. Trần Khánh Dư, Phường Tân Định, Quận 1, Hồ Chí Minh"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [
+        "Verified 2026-09-27 against Google Maps: exact EV charging-station listing at 75 Trần Khánh Dư."
+      ],
+      "matched_station_id": "ST_EVO_TRAN_KHANH_DU"
+    },
+    {
+      "candidate_id": "CAND_677B53ED7A8A",
+      "name": "Trạm Sạc Điện Ô Tô Vinfast Trung Tâm Thương Mại Vinhomes Landmark 81",
+      "address": "Trạm Sạc Điện Ô Tô Vinfast Trung Tâm Thương Mại Vinhomes Landmark 81, 208 Đường Trần Trọng Kim, Phường 22, Quận Bình Thạnh, Thành Phố Hồ Chí Minh",
+      "location": {
+        "lat": 10.794891,
+        "lon": 106.722328
+      },
+      "operator": "VinFast",
+      "access": "public",
+      "technical": {
+        "total_ports": 8,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 2,
+            "source": "real"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 30,
+            "count": 2,
+            "source": "real"
+          },
+          {
+            "type": "Type2",
+            "current": "AC",
+            "max_power_kw": 11,
+            "count": 4,
+            "source": "real"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "dqYxCa2cg1p42UYltn692XuRUjKhfZzXYb5SHJlWs39hsWQkrpq9fEm_VgCZVJPYT4Z4AZpUn_l5rjUjtJQuPm2KAVgmhCLHse7-XXZ8mn0l6qfZvhQmPn3ipUiKfCOTf",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm Sạc Điện Ô Tô Vinfast Trung Tâm Thương Mại Vinhomes Landmark 81, 208 Đường Trần Trọng Kim, Phường 22, Quận Bình Thạnh, Thành Phố Hồ Chí Minh"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [
+        "Verified 2026-09-27 against Google Maps and a published HCMC station list: EV charging-station listing at 208 Trần Trọng Kim within the Landmark 81 complex."
+      ],
+      "matched_station_id": "ST_VF_LANDMARK_81"
+    },
+    {
+      "candidate_id": "CAND_E59E5C0294E9",
+      "name": "Trạm sạc EV ONE",
+      "address": "Trạm sạc EV ONE, 33 Lê Duẩn, Bến Nghé, Quận 1, Thành phố Hồ Chí Minh",
+      "location": {
+        "lat": 10.782166,
+        "lon": 106.7003116
+      },
+      "operator": null,
+      "access": "unknown",
+      "technical": {
+        "total_ports": null,
+        "connectors": []
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "fTRsW5WS1K5krHZMp3K771ttWC2jrKfNQEddSb8a8vJlvmlPixuF0iqFcEq9fbS0b8QiTotEl69alaFisxq3z12-Kw2-coKM1aa1bT419jeRol0gbuxudjWq_QDCNGvbN",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc EV ONE, 33 Lê Duẩn, Bến Nghé, Quận 1, Thành phố Hồ Chí Minh"
+        }
+      },
+      "review_status": "rejected",
+      "review_notes": [
+        "Rejected 2026-09-27 as a duplicate of CAND_0FE7BAFEDB21 (EV ONE – Deutsches Haus): same 33 Lê Duẩn site, approximately 52 m apart."
+      ],
+      "matched_station_id": null
+    },
+    {
+      "candidate_id": "CAND_049DE288F11D",
+      "name": "Trạm sạc EV ONE",
+      "address": "Trạm sạc EV ONE, 18 Nguyễn Cư Trinh, P, Quận 1, Thành phố Hồ Chí Minh",
+      "location": {
+        "lat": 10.7648308,
+        "lon": 106.6921292
+      },
+      "operator": "EV ONE",
+      "access": "public",
+      "technical": {
+        "total_ports": 1,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 1,
+            "source": "synthetic"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "lgiocaiwea5ggCdbrnye_3S9BSutU4acT5BEWpl9fupOvTVceppsmHqiaQLDCaDpe9mnJ1NTcf5-h6MCvAiOI_HmGbVy0YY7Wer5Isqhunvd7XFuEngiOnnmsUyOeCeXe",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc EV ONE, 18 Nguyễn Cư Trinh, P, Quận 1, Thành phố Hồ Chí Minh"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [
+        "Verified 2026-09-27 against Google Maps: exact EV charging-station listing at 18 Nguyễn Cư Trinh."
+      ],
+      "matched_station_id": "ST_EVO_NGUYEN_CU_TRINH"
+    },
+    {
+      "candidate_id": "CAND_2462BDF181CE",
+      "name": "Trạm sạc VinFast",
+      "address": "Trạm sạc VinFast, 84 Nguyễn Thị Thập, Tân Hưng, Quận 7, Hồ Chí Minh",
+      "location": {
+        "lat": 10.741179265000028,
+        "lon": 106.69676660300007
+      },
+      "operator": null,
+      "access": "unknown",
+      "technical": {
+        "total_ports": null,
+        "connectors": []
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "vm64b_P7Rb9YuF5PUkKUz6RYVU27RPvulpF4TogchOBiqyY6jR_7_3WkvghSeIhoXqi5BWyP82qJuE0KgB26dHXORTz_Qqbhb4KheSoh4iOExkk1tvh6YiB66sTWIH0XI",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc VinFast, 84 Nguyễn Thị Thập, Tân Hưng, Quận 7, Hồ Chí Minh"
+        }
+      },
+      "review_status": "pending",
+      "review_notes": [
+        "Checked 2026-09-27: Goong lists this candidate, but Google Maps returned no charging-station listing at the exact address or coordinates; independent confirmation is still required."
+      ],
+      "matched_station_id": null
+    },
+    {
+      "candidate_id": "CAND_88315EBD787C",
+      "name": "Trạm sạc VinFast",
+      "address": "Trạm sạc VinFast, 6 Huyền Trân Công Chúa, Phường Bến Thành, Quận 1, Thành phố Hồ Chí Minh",
+      "location": {
+        "lat": 10.7766951,
+        "lon": 106.693804
+      },
+      "operator": "VinFast",
+      "access": "public",
+      "technical": {
+        "total_ports": 4,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 120,
+            "count": 4,
+            "source": "real"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "7Z5VT8Go2XlJ2UQen2GeqGDZaQXiU46nlrJuEK19nnqS20Bcm1OSeieyS-x-tJJOPoBQXVV9gth0vzAirVOsxGPbVACIvZbLneo5IXJ5uvvd7hFsIqAiOnnmsUyOeCeXe",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc VinFast, 6 Huyền Trân Công Chúa, Phường Bến Thành, Quận 1, Thành phố Hồ Chí Minh"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [
+        "Verified 2026-09-27 against Google Maps and Thanh Niên: exact V-Green/VinFast charging-station listing at 6 Huyền Trân Công Chúa."
+      ],
+      "matched_station_id": "ST_VF_HUYEN_TRAN_CONG_CHUA"
+    },
+    {
+      "candidate_id": "CAND_59E681E6FE0C",
+      "name": "Trạm sạc VinFast",
+      "address": "3-5 Đường Số 81, Tân Hưng, Hồ Chí Minh",
+      "location": {
+        "lat": 10.7399577,
+        "lon": 106.7078448
+      },
+      "operator": "VinFast",
+      "access": "public",
+      "technical": {
+        "total_ports": 32,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 120,
+            "count": 12,
+            "source": "real"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 8,
+            "source": "real"
+          },
+          {
+            "type": "Type2",
+            "current": "AC",
+            "max_power_kw": 7,
+            "count": 12,
+            "source": "real"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "SIaXnUQaujxvYcswo3Kk62p6QwL2RLyOZL9APP5BvslmpCryyUC-T2u-J4-OlUO1JWq5sfiK_vd1YyGxLlWy-9lrJIws",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        },
+        {
+          "provider": "goong_places",
+          "provider_id": "g3iPtV6pfJsjeDMT55q-m3qFezEKbpzEfIVzXqIJ5p51vFUnlFW6mnuGtM7AlVqL8exNr69tBlOB2vVETtnNR2nnYsqoAVVWZeLxKrJxsnPV5hlkKqgqMnHuuUSGcpQvc",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc VinFast, 3-5 Đường Số 81, Tân Hưng, Quận 7, Thành phố Hồ Chí Minh"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [
+        "Verified 2026-09-27 against Google Maps and EVCS: exact public EV charging-station listing at 3-5 Đường Số 81."
+      ],
+      "matched_station_id": "ST_VF_FGW_Q7"
+    },
+    {
+      "candidate_id": "CAND_683090C8E351",
+      "name": "Trạm sạc VinFast",
+      "address": "147 Đ. Ngô Quyền, Chợ Lớn, Hồ Chí Minh",
+      "location": {
+        "lat": 10.7590498,
+        "lon": 106.6654643
+      },
+      "operator": "VinFast",
+      "access": "public",
+      "technical": {
+        "total_ports": 1,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 1,
+            "source": "synthetic"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "QJmNpqaN6nl302Iool4TkUSNfjWrAtGWfKdYJKRZs_BF0XJTpliKlXObdDCVZpaRULZCOqdcasV00IVTpXRQ7PkJbO9E",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        },
+        {
+          "provider": "goong_places",
+          "provider_id": "tU6WXbUul15AmUmSWhiu6H2hpFK2Wuztfn9sJpdak9V2058svnWlQmmnlRGnW6nxcNO7EZB2n9BHc4gLvQKXd1pqb1SnyI9ac7dBVZdnl_5yjVIBoQGHl3ClWiqXAROzX",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc VinFast, 147 Đường Ngô Quyền, Phường 12, Quận 5, Thành phố Hồ Chí Minh"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [
+        "Verified 2026-09-27 against Google Maps: exact EV charging-station listing at 147 Ngô Quyền."
+      ],
+      "matched_station_id": "ST_VF_NGO_QUYEN"
+    },
+    {
+      "candidate_id": "CAND_AD117DEC7C84",
+      "name": "Trạm sạc VinFast",
+      "address": "Hầm B5-B6, Trung tâm Thương mại Vincom, Đồng Khởi/72 Lê Thánh Tôn, Sài Gòn, Hồ Chí Minh",
+      "location": {
+        "lat": 10.7779375,
+        "lon": 106.7020535
+      },
+      "operator": "VinFast",
+      "access": "public",
+      "technical": {
+        "total_ports": 73,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 80,
+            "count": 2,
+            "source": "real"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 38,
+            "source": "real"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 30,
+            "count": 11,
+            "source": "real"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 20,
+            "count": 16,
+            "source": "real"
+          },
+          {
+            "type": "Type2",
+            "current": "AC",
+            "max_power_kw": 3.5,
+            "count": 6,
+            "source": "real"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "ZUq3ZrXyIk1mwnM5s4aMd8W6oWkC3h6JNt21JNa7vjPu2ipxDaE5Wd3imggn7gIdNZadRK7bUlGVTwUFCtP-ce1PAKgI",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc VinFast, Trung tâm Thương mại Vincom, Đường Đồng Khởi Lê Thánh Tôn, Sài Gòn, Hồ Chí Minh"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [
+        "Verified 2026-09-27 against Google Maps and a published HCMC station list: EV charging station inside Vincom Center Đồng Khởi at 72 Lê Thánh Tôn."
+      ],
+      "matched_station_id": "ST_VF_VINCOM_DONG_KHOI"
+    },
+    {
+      "candidate_id": "CAND_D1B866A61B5D",
+      "name": "Trạm sạc VinFast",
+      "address": "Trạm sạc VinFast, 55 QL13, Phường 26, Bình Thạnh, Hồ Chí Minh",
+      "location": {
+        "lat": 10.812013,
+        "lon": 106.712302
+      },
+      "operator": "VinFast",
+      "access": "public",
+      "technical": {
+        "total_ports": 30,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 120,
+            "count": 4,
+            "source": "real"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 26,
+            "source": "real"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "jufJsItojjVpyFc0p2-syHCAQyOwbI24Z68ghsZHo2A1wrHWIv22SQ2ms3iCIRbd5bpdpEIteguhFvyQyNxqeinORR6QYGaCiav1YTI5-jmqulEsYuBiea2m8QzOOGfXO",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc VinFast, 55 QL13, Phường 26, Bình Thạnh, Hồ Chí Minh"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [
+        "Verified 2026-09-27 against Google Maps: exact EV charging-station listing and coordinates at 55 QL13."
+      ],
+      "matched_station_id": "ST_VF_QL13_BINH_THANH"
+    },
+    {
+      "candidate_id": "CAND_7742D8253CB7",
+      "name": "Trạm sạc VinFast",
+      "address": "Trạm sạc VinFast, Phường 4, Tân Bình, Thành phố Hồ Chí Minh",
+      "location": {
+        "lat": 10.8006382,
+        "lon": 106.6592203
+      },
+      "operator": "VinFast",
+      "access": "public",
+      "technical": {
+        "total_ports": 29,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 250,
+            "count": 1,
+            "source": "real"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 28,
+            "source": "real"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "pormlo-90opmy1Y1h0KhvmuXd0jJQ6bHbrwhTG-Ii7ZZlkIKfBnwn1iQWhSmbGvNqTZZy7FwaKNfj1Y3zuUOQAGrJKQ2_RIdCa6_XTY9_j1lqlUoZuRmfj2i9QjKPGPTP",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc VinFast, Phường 4, Tân Bình, Thành phố Hồ Chí Minh"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [
+        "Verified 2026-09-27 against Google Maps: EV charging-station listing at the exact candidate coordinates in Phường 4, Tân Bình."
+      ],
+      "matched_station_id": "ST_VF_VINCOM_CONG_HOA"
+    },
+    {
+      "candidate_id": "CAND_0F18A1ECBD2F",
+      "name": "Trạm sạc VinFast",
+      "address": "427 Phạm Hữu Lầu, Nhà Bè, Hồ Chí Minh",
+      "location": {
+        "lat": 10.701131,
+        "lon": 106.7198716
+      },
+      "operator": "VinFast",
+      "access": "public",
+      "technical": {
+        "total_ports": 19,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 150,
+            "count": 2,
+            "source": "synthetic"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 120,
+            "count": 16,
+            "source": "synthetic"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 30,
+            "count": 1,
+            "source": "synthetic"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "Z4a3P1OcZLGWwHE7tUtRtIrcXzAtqEW9LuLSFSPNMb7Gdefk3ccNhtYVPhQeCdVG0lqVTKdZPZ7aew0NA_WdRtZ7CKAA",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc VinFast, 427 Phạm Hữu Lầu, Nhà Bè, Hồ Chí Minh"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [
+        "Verified 2026-09-27 against Google Maps: exact EV charging-station listing at 427 Phạm Hữu Lầu."
+      ],
+      "matched_station_id": "ST_VF_PHAM_HUU_LAU"
+    },
+    {
+      "candidate_id": "CAND_4809F9693190",
+      "name": "Trạm sạc VinFast - Cty Sơn TBSG",
+      "address": "Trạm sạc VinFast - Cty Sơn TBSG, KDC Nhà Máy X51, Đường số 5/01 Phạm Hữu Lầu, Tân Phú, Quận 7, Thành phố Hồ Chí Minh",
+      "location": {
+        "lat": 10.7361541,
+        "lon": 106.719914
+      },
+      "operator": null,
+      "access": "unknown",
+      "technical": {
+        "total_ports": null,
+        "connectors": []
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "YlRAnbSwsRRrsyQitU7962O7egKzYYzqrlMpR4VIgoCOnSEw5smD9wGvGWEGrYaT2VDtTsrRxgYJQOFhFhWOkx2iheU-CT6zgZqJAirRyglRnZkfrghSSgphlTz-CFfnC",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc VinFast - Cty Sơn TBSG, KDC Nhà Máy X51, Đường số 5/01 Phạm Hữu Lầu, Tân Phú, Quận 7, Thành phố Hồ Chí Minh"
+        }
+      },
+      "review_status": "pending",
+      "review_notes": [
+        "Checked 2026-09-27: Goong lists this candidate, but Google Maps returned no charging-station listing at the exact name, address, or coordinates; independent confirmation is still required."
+      ],
+      "matched_station_id": null
+    },
+    {
+      "candidate_id": "CAND_02B04E38E813",
+      "name": "Trạm sạc Vinfast",
+      "address": "103 Lý Chính Thắng, Xuân Hòa, Hồ Chí Minh",
+      "location": {
+        "lat": 10.788882,
+        "lon": 106.6854854
+      },
+      "operator": "VinFast",
+      "access": "public",
+      "technical": {
+        "total_ports": 2,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 150,
+            "count": 2,
+            "source": "real"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "lQw7WH-Qjd2F00NN6aaHod6W6a08rZJpbWqTgpada6ThrJ-ibpGe0R0GmkhOlZZVDjrXGOaRfQVOG0-1QpneOOEHS6RA",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc Vinfast, Lý Chính Thắng, Xuân Hòa, Hồ Chí Minh"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [
+        "Verified 2026-09-27 against Google Maps: exact EV charging-station listing at 103 Lý Chính Thắng, located in La Vela Saigon Hotel."
+      ],
+      "matched_station_id": "ST_VF_LA_VELA"
+    },
+    {
+      "candidate_id": "CAND_54F5E142898C",
+      "name": "Trạm sạc Vinfast",
+      "address": "Trạm sạc Vinfast, Khu đô thị Phú Mỹ Hưng, Quận 7, Thành phố Hồ Chí Minh",
+      "location": {
+        "lat": 10.7301437,
+        "lon": 106.7197118
+      },
+      "operator": null,
+      "access": "unknown",
+      "technical": {
+        "total_ports": null,
+        "connectors": []
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "EWMDbIa_jp5XulMatE282VeZYTOwd470V8J6S4d5pPyqewhpAgGWkxrrBWEK3TLj4e2ZIQLVnwts_hn17tluNzQamcT-wW4qFYqZQRIZ2hu9jnEMQsGKWhhC0SzuGYf3G",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        },
+        {
+          "provider": "goong_places",
+          "provider_id": "m7VzLg0-yuX1lgFAmmFSFZ3-Dai2rVInDS4NMI3mzt-evuJEYfmnqVA-g-xSoaoHqSJVuG5h5lZpUgX0ArlOr30SHRDSeaoHufSBPuZlpmfB8W1wPrw-JmX6rVCSZDuLZ",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc ô tô điện, Tân Phú, Quận 7, Hồ Chí Minh"
+        }
+      },
+      "review_status": "pending",
+      "review_notes": [
+        "Checked 2026-09-27: the generic Goong candidate did not resolve to a charging-station listing at the exact coordinates on Google Maps; independent confirmation is still required."
+      ],
+      "matched_station_id": null
+    },
+    {
+      "candidate_id": "CAND_46BA3E40AB83",
+      "name": "Trạm sạc Vinfast",
+      "address": "323 Đ. Bùi Hữu Nghĩa, Gia Định, Hồ Chí Minh",
+      "location": {
+        "lat": 10.8001021,
+        "lon": 106.6993053
+      },
+      "operator": "VinFast",
+      "access": "public",
+      "technical": {
+        "total_ports": 1,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 1,
+            "source": "synthetic"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "Qkqul254m3-0wXA6ZUyf47DDaweBCtJ_Bbkv4Nmu1pUp5nrYJwmeD3mCmbCa0dEmDUKRmhLVOKNdSwmZBt2af_FDDKQE",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc Vinfast, Đường Bùi Hữu Nghĩa, Gia Định, Hồ Chí Minh"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [
+        "Verified 2026-09-27 against Google Maps: exact VinFast charging-station listing at 323 Bùi Hữu Nghĩa with VinFast website reference."
+      ],
+      "matched_station_id": "ST_VF_BUI_HUU_NGHIA"
+    },
+    {
+      "candidate_id": "CAND_6760DDFFB6FF",
+      "name": "Trạm sạc Vinfast Tạ Quang Bửu",
+      "address": "Trạm sạc Vinfast Tạ Quang Bửu, 23/20 Tạ Quang Bửu, Phường 4, Quận 8, Hồ Chí Minh",
+      "location": {
+        "lat": 10.739156,
+        "lon": 106.674506
+      },
+      "operator": "VinFast",
+      "access": "public",
+      "technical": {
+        "total_ports": 1,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 1,
+            "source": "synthetic"
+          }
+        ]
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "crceeVQfW4p3k34GpXaKiG25Zgmlaaf6X6oiBLRFgYlvl78MQETzibCRuWmgNVnht5YveaBrksBez20Nu0W7ikCXbi-PMKfObalfeIlLieBsk0wfv0SZiW67HzSJR5PLJ",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc Vinfast Tạ Quang Bửu, 23/20 Tạ Quang Bửu, Phường 4, Quận 8, Hồ Chí Minh"
+        }
+      },
+      "review_status": "verified",
+      "review_notes": [
+        "Verified 2026-09-27 against Google Maps: exact VinFast charging-station listing at 23/20 Tạ Quang Bửu."
+      ],
+      "matched_station_id": "ST_VF_TA_QUANG_BUU"
+    },
+    {
+      "candidate_id": "CAND_9DDB5B025E58",
+      "name": "Trạm sạc vinfast",
+      "address": "Trạm sạc vinfast, 76 Hoàng Quốc Việt, Phú Mỹ, Quận 7, Thành phố Hồ Chí Minh",
+      "location": {
+        "lat": 10.7132495,
+        "lon": 106.7412946
+      },
+      "operator": null,
+      "access": "unknown",
+      "technical": {
+        "total_ports": null,
+        "connectors": []
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "U-Bt-4mpT9YwpWiriR0KinfMeqePHxeBaZdcq7tEMsttuXKziGgPsGDPbs2MRAmvbZdM-rR7S9Roz0SRuGsG9VlpR5_a4l7-lbY5fiUt5H0Vsk0yZvx80iW67RPKJHkTJ",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc vinfast, 76 Hoàng Quốc Việt, Phú Mỹ, Quận 7, Thành phố Hồ Chí Minh"
+        }
+      },
+      "review_status": "pending",
+      "review_notes": [
+        "Checked 2026-09-27: Google Maps confirms a charging station at the candidate coordinates but reports 126 Hoàng Quốc Việt, not 76; resolve the address mismatch before verification."
+      ],
+      "matched_station_id": null
+    },
+    {
+      "candidate_id": "CAND_3C773DA5CFA0",
+      "name": "Trạm sạc ô tô điện",
+      "address": "Trạm sạc ô tô điện, Bến Nghé, Quận 1, Hồ Chí Minh",
+      "location": {
+        "lat": 10.778628000000026,
+        "lon": 106.70177500000005
+      },
+      "operator": null,
+      "access": "unknown",
+      "technical": {
+        "total_ports": null,
+        "connectors": []
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "2CasgYCHMKl7f2WnrqwrnE4ncX60naTnYHFTHZ-ykXrVCHECloFTm3yotywLeVP_fEINHfp4FgtZ0bXG_qNi8909-NFuvvp2dem5IXJ6Envd7CFsIqKyOnnkJUyOesuXe",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc ô tô điện, Phường Bến Nghé, Quận 1, Thành phố Hồ Chí Minh"
+        }
+      },
+      "review_status": "pending",
+      "review_notes": [
+        "Checked 2026-09-27: no independent charging-station listing resolved at the exact coordinates; this generic record may duplicate the nearby Vincom Đồng Khởi candidate and needs manual confirmation."
+      ],
+      "matched_station_id": null
+    },
+    {
+      "candidate_id": "CAND_85B486638BD9",
+      "name": "Trạm sạc ô tô điện",
+      "address": "Trạm sạc ô tô điện, An Khánh, Thủ Đức, Hồ Chí Minh",
+      "location": {
+        "lat": 10.788252536000073,
+        "lon": 106.72914077100006
+      },
+      "operator": null,
+      "access": "unknown",
+      "technical": {
+        "total_ports": null,
+        "connectors": []
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "fFGDuvQYWZR1UbAcognv2U1aOgOuCSWcTK2wh5lVE-BMYL0kq0GGAxWGDZymrQbLmeoRveK4lsqp9vUlV_FCQr3aGZFm3f5_XeLylXpxsSvV5hpwKqgqMnHuuUSGcC-fc",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm sạc ô tô điện, Phường An Khánh, Thành phố Thủ Đức, Thành phố Hồ Chí Minh"
+        }
+      },
+      "review_status": "pending",
+      "review_notes": [
+        "Checked 2026-09-27: Google Maps returned nearby charging stations but none at the exact candidate coordinates; independent confirmation is still required."
+      ],
+      "matched_station_id": null
+    },
+    {
+      "candidate_id": "CAND_2E776BE6F914",
+      "name": "Trạm đổi PIN XMĐ Vinfast",
+      "address": "88 Nguyễn Gia Trí, Thạnh Mỹ Tây, Hồ Chí Minh",
+      "location": {
+        "lat": 10.803668,
+        "lon": 106.715977
+      },
+      "operator": null,
+      "access": "unknown",
+      "technical": {
+        "total_ports": null,
+        "connectors": []
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "p5dZ70F4cFh20owpo-uyY3bSRRKmk4OjSfaZZJaVYtdyM0DomoQGn_ed-dQmnZ6aQXbdDO6Zda1p10VHEpIR1UkPQOhI",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm đổi PIN XMĐ Vinfast, Nguyễn Gia Trí, Thạnh Mỹ Tây, Hồ Chí Minh"
+        }
+      },
+      "review_status": "rejected",
+      "review_notes": [
+        "Rejected 2026-09-27: exact listing is a VinFast electric-motorcycle battery-swap point, not an EV charging station."
+      ],
+      "matched_station_id": null
+    },
+    {
+      "candidate_id": "CAND_715529AD37B8",
+      "name": "Trạm đổi PIN XMĐ Vinfast",
+      "address": "262 Huỳnh Văn Bánh, Phú Nhuận, Hồ Chí Minh",
+      "location": {
+        "lat": 10.791831,
+        "lon": 106.674672
+      },
+      "operator": null,
+      "access": "unknown",
+      "technical": {
+        "total_ports": null,
+        "connectors": []
+      },
+      "provider_refs": [
+        {
+          "provider": "goong_places",
+          "provider_id": "T2-1UdZAnq9kwHE7sUya5bVXQwGwS47AqrRLNA_lM9bdWt2kng0unzUinIG-1Z4VqdaWCebQpnlNnw0MLtmeW_VHCKAA",
+          "source_url": "https://rsapi.goong.io/Place/Detail"
+        }
+      ],
+      "source_attributes": {
+        "goong_places": {
+          "description": "Trạm đổi PIN XMĐ Vinfast, Đường Huỳnh Văn Bánh, Phú Nhuận, Hồ Chí Minh"
+        }
+      },
+      "review_status": "rejected",
+      "review_notes": [
+        "Rejected 2026-09-27: exact listing is a VinFast electric-motorcycle battery-swap point, not an EV charging station."
+      ],
+      "matched_station_id": null
     }
   ]
 }

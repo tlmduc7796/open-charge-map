@@ -55,6 +55,30 @@ class StationCollectorTests(unittest.TestCase):
         self.assertEqual(result[0]["review_status"], "verified")
         self.assertEqual(len(result[0]["provider_refs"]), 2)
 
+    def test_deduplicate_keeps_same_name_at_different_locations(self):
+        first = make_candidate(
+            provider="goong_places",
+            provider_id="vinfast-q1",
+            name="Trạm sạc VinFast",
+            address="Quận 1, Hồ Chí Minh",
+            lat=10.775,
+            lon=106.700,
+            operator=None,
+        )
+        second = make_candidate(
+            provider="goong_places",
+            provider_id="vinfast-q7",
+            name="Trạm sạc VinFast",
+            address="Quận 7, Hồ Chí Minh",
+            lat=10.735,
+            lon=106.705,
+            operator=None,
+        )
+
+        result = deduplicate([first, second], 80)
+
+        self.assertEqual(len(result), 2)
+
     def test_preserve_manual_review(self):
         candidate = make_candidate(
             provider="osm_overpass",

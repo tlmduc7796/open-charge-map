@@ -159,7 +159,7 @@ def test_planned_arrivals_can_be_toggled_and_trigger_overload(
 def test_scenario_override_applies_only_to_requested_station(
     domain_data: DomainData, estimator: WaitEstimator
 ) -> None:
-    status = domain_data.station_statuses.get("ST_EVO_DEUTSCHES_HAUS")
+    status = domain_data.station_statuses.get("ST_VF_LA_VELA")
     forecast = OccupancyForecastService().forecast_occupancy(status, horizon_min=5)
 
     result = estimator.estimate_wait(

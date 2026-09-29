@@ -1,6 +1,6 @@
 # Smart EV Journey — Demo Guide
 
-Hướng dẫn này áp dụng cho trạng thái sau Phase 09 trên nhánh `demo/backend-first`.
+Hướng dẫn này áp dụng cho demo gate sau Phase 10 trên nhánh `demo/backend-first`.
 Occupancy forecast hiện dùng persistence fallback vì Phase 03–04 chưa hoàn thành.
 
 ## 1. Điều kiện cần
@@ -71,9 +71,9 @@ pnpm --dir frontend test
 pnpm --dir frontend build
 ```
 
-Baseline sau Phase 09:
+Baseline sau Phase 10:
 
-- backend: 47 tests pass;
+- backend: 51 tests pass;
 - frontend: 8 tests pass;
 - Ruff, ESLint, TypeScript và Vite build pass.
 
@@ -136,11 +136,12 @@ Mở `http://127.0.0.1:5173`. Không đổi sang `localhost` trừ khi đã thê
 
 Expected:
 
-- Lavida và Deutsches Haus là ranked candidates trong trạng thái mặc định;
+- 15 trạm public là ranked candidates trong trạng thái mặc định;
+- La Vela là candidate đầu tiên với snapshot demo hiện tại;
 - Audi bị loại vì private access;
-- map có route geometry và ba station markers;
+- map có route geometry và 16 station markers;
 - station detail hiển thị connector, capacity, queue, occupancy, wait và charging time;
-- route có flag/cache source ở API; demo không cần live routing cho tọa độ scenario.
+- mọi trạm public có route cache; demo không cần live routing cho tọa độ scenario.
 
 ### B. Địa điểm tùy chọn qua Goong
 
@@ -168,31 +169,44 @@ Live result có thể thay đổi khi routing data thay đổi; không dùng cá
 
 1. Chọn `Low-SOC journey`.
 2. Nhấn **Tìm trạm phù hợp**.
-3. Giảm SOC hiện tại gần mức reserve và chạy lại nếu muốn kiểm tra no-reachable.
+3. Mở danh sách **trạm đã bị loại**.
 4. Chọn `Demo GB/T City EV` nếu muốn kiểm tra no-compatible.
-5. Mở danh sách **trạm đã bị loại**.
 
 Expected:
 
 - candidate chỉ tồn tại khi arrival SOC không vi phạm reserve;
+- snapshot mặc định vẫn có lựa chọn an toàn và loại một số trạm bằng lý do thiếu pin;
 - GB/T vehicle không được ghép với trạm chỉ có CCS2/Type2;
 - UI hiển thị lý do loại thay vì lỗi trắng hoặc recommendation không an toàn.
 
-### D. Port outage và reranking
+### D. Congestion và reranking
 
 1. Nhấn **Reset demo**.
-2. Chọn `Lavida outage triggers reroute`.
+2. Chọn `Congestion triggers reranking` và chạy khi chưa bật event.
+3. Ghi nhận La Vela đứng đầu và thời gian chờ bằng 0.
+4. Bật **Áp dụng event của kịch bản** rồi chạy lại.
+
+Expected:
+
+- La Vela chuyển sang full occupancy, có queue và thời gian chờ tăng;
+- La Vela mất hạng đầu;
+- UI cập nhật recommendation mà không reload toàn trang.
+
+### E. Port outage và reranking
+
+1. Nhấn **Reset demo**.
+2. Chọn `La Vela outage triggers reroute`.
 3. Bật **Áp dụng event của kịch bản**.
 4. Nhấn **Tìm trạm phù hợp**.
 
 Expected:
 
-- marker/status Lavida chuyển offline;
-- Lavida xuất hiện trong exclusions với lý do offline;
-- Deutsches Haus trở thành recommendation đầu tiên;
+- marker/status La Vela chuyển offline;
+- La Vela xuất hiện trong exclusions với lý do offline;
+- recommendation đầu tiên đổi sang một trạm còn hoạt động;
 - UI refresh mà không reload toàn trang.
 
-### E. Planned arrival
+### F. Planned arrival
 
 1. Chọn một recommendation.
 2. Nhấn **Xác nhận tuyến đến trạm**.

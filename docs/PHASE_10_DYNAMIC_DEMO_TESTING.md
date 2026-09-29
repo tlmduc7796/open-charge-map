@@ -17,40 +17,42 @@ Biến các dataset demo thành testable scenarios có expected behavior cụ th
 
 Expected:
 
-- có nhiều candidate;
-- ít nhất một station compatible/reachable;
-- recommendation trả rank.
+- 15 trạm public có cached route và được xếp hạng;
+- La Vela đứng đầu với snapshot mặc định;
+- Audi bị loại vì private access.
 
 ### Scenario B — Low SOC
 
 Expected:
 
-- station ngoài khả năng tới bị loại;
-- arrival SOC không vi phạm reserve.
+- vẫn có station an toàn để đề xuất;
+- các station ngoài khả năng tới bị loại bằng `INSUFFICIENT_SOC_RESERVE`;
+- mọi arrival SOC được trả về đều không vi phạm reserve.
 
 ### Scenario C — Queue congestion
 
 Expected:
 
-- event tăng queue;
-- estimated wait tăng;
-- recommendation có thể đổi nếu station khác tốt hơn.
+- event làm La Vela full occupancy và tăng queue;
+- estimated wait của La Vela tăng từ 0;
+- La Vela mất hạng đầu.
 
 ### Scenario D — Port outage
 
 Expected:
 
-- operational capacity giảm;
+- hai port La Vela chuyển offline;
 - occupancy ratio/effective availability cập nhật;
 - projected wait không giảm vô lý;
-- reroute có thể xảy ra.
+- La Vela bị loại và recommendation đầu tiên đổi.
 
 ### Scenario E — Routing API failure
 
 Expected:
 
 - cache được dùng;
-- demo vẫn hoàn thành.
+- cả 15 trạm public có route cache;
+- demo vẫn hoàn thành khi không có Goong REST key.
 
 ## 3. Testing
 
@@ -71,12 +73,14 @@ Expected:
 
 ## 5. Exit Gate
 
-- [ ] Tất cả required scenarios có expected-result document.
-- [ ] Mỗi scenario chạy lặp lại được từ reset state.
-- [ ] Congestion và outage làm state thay đổi đúng.
-- [ ] Dynamic recommendation/reroute có ít nhất một scenario demonstrable.
-- [ ] Test suite không có failing test blocker.
-- [ ] Không cần chỉnh tay JSON giữa lúc demo.
-- [ ] Có script `reset_demo` hoặc equivalent.
+- [x] Tất cả required scenarios có expected-result document.
+- [x] Mỗi scenario chạy lặp lại được từ reset state.
+- [x] Congestion và outage làm state thay đổi đúng.
+- [x] Dynamic recommendation/reroute có ít nhất một scenario demonstrable.
+- [x] Test suite không có failing test blocker.
+- [x] Không cần chỉnh tay JSON giữa lúc demo.
+- [x] Có `POST /demo/reset` và nút **Reset demo** tương đương.
 
-**Exit Gate result:** `PASS / FAIL`
+**Exit Gate result:** `PASS` — 2026-09-27. Backend regression tests chạy cả bốn
+scenario; UI dry-run và kết quả chi tiết được lưu tại
+`data/validation/phase10_dynamic_demo_report.md`.

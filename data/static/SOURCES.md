@@ -14,6 +14,12 @@ Demo area: central and central-south Ho Chi Minh City.
 
 EV ONE does not publish a connector standard and does not always publish the number of DC ports. Those values, and inferred amenities, are listed in each station's `synthetic_fields`.
 
+- EVCS station directory and detail records: <https://evcs.vn/>
+  - Supplies the published charger power and count for the promoted VinFast stations at Landmark 81 (HCM0031), Huyền Trân Công Chúa (HCM0653), FGW Đường số 81 (HCM1345), Vincom Đồng Khởi B5/B6 (HCM0030/HCM0160), Quốc lộ 13 (HCM0618), Vincom Cộng Hòa (HCM0038), and La Vela (HCM0462).
+  - DC power entries are represented as CCS2 and AC power entries as Type2, following the VinFast charging-standard source listed below.
+
+Where EVCS did not expose an exact matching inventory, `total_ports` and `connectors` remain explicit project assumptions and are listed in `synthetic_fields`; no EVCS port count was inferred from a nearby station.
+
 The Audi Ho Chi Minh station was manually verified on `2026-09-25` as having four ports and restricted internal access for Audi vehicles. Its `access` and `notes` fields prevent it from being recommended as a public charging stop.
 
 ## Vehicles

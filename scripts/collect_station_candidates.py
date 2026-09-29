@@ -444,11 +444,9 @@ def is_duplicate(first: dict[str, Any], second: dict[str, Any], distance_m: floa
         return True
     first_name = normalize_text(first.get("name"))
     second_name = normalize_text(second.get("name"))
-    if first_name and first_name == second_name:
-        return True
     first_location, second_location = first.get("location"), second.get("location")
     if not first_location or not second_location:
-        return False
+        return bool(first_name and first_name == second_name)
     distance = haversine_m(first_location, second_location)
     similarity = SequenceMatcher(None, first_name, second_name).ratio()
     return distance <= 25 or (distance <= distance_m and similarity >= 0.55)

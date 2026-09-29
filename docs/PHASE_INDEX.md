@@ -33,7 +33,8 @@ backend và frontend demo sớm. Các giới hạn bắt buộc:
 - khi Phase 06 cần forecast, chỉ dùng predictor persistence/runtime có
   `prediction_source=persistence` cho đến khi artifact Phase 04 được tích hợp;
 - Phase 08 phải hiển thị đúng `prediction_source=persistence`, không giả lập model đã train;
-- trước release phải quay lại hoàn thành Phase 03–04 và chạy lại integration gate.
+- Phase 10–11 có thể đạt `DEMO PASS` với persistence fallback, nhưng không được ghi
+  `RELEASE PASS` cho đến khi Phase 03–04 hoàn thành và integration gate được chạy lại.
 
 ## Scope guard
 
