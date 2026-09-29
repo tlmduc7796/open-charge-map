@@ -39,7 +39,7 @@ Copy-Item .env.example .env
 Nếu chưa có UrbanEV raw archive:
 
 ```powershell
-python scripts\acquire_urbanev.py
+python ml\src\acquire_urbanev.py
 ```
 
 Kiểm tra toàn bộ input Phase 0–1:

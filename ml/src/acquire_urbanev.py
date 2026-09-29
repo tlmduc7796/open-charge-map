@@ -9,11 +9,10 @@ import json
 import shutil
 import urllib.request
 import zipfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
-
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 URBANEVDIR = ROOT / "data" / "ml" / "urbanev"
 RAW_DIR = URBANEVDIR / "raw"
 ARCHIVE = RAW_DIR / "UrbanEVDataset.zip"
@@ -40,7 +39,9 @@ def download(destination: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--force", action="store_true", help="Download again even when the archive exists")
+    parser.add_argument(
+        "--force", action="store_true", help="Download again even when the archive exists"
+    )
     args = parser.parse_args()
 
     RAW_DIR.mkdir(parents=True, exist_ok=True)
@@ -54,7 +55,7 @@ def main() -> None:
             raise RuntimeError(f"Corrupt ZIP member: {bad_member}")
         member_names = [member.filename for member in members]
 
-    acquired_at = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
+    acquired_at = datetime.now(UTC).astimezone().isoformat(timespec="seconds")
     checksum = sha256(ARCHIVE)
     station_processed_prefix = "UrbanEVDataset/20220901-20230228_station-processed/"
     station_raw_prefix = "UrbanEVDataset/20220901-20230228_station-raw/charge_5min/"
@@ -82,7 +83,8 @@ def main() -> None:
         "zip_test": "PASS",
         "station_level_member_hints": station_level_hints,
         "station_processed_csv_count": sum(
-            name.startswith(station_processed_prefix) and name.endswith(".csv") for name in member_names
+            name.startswith(station_processed_prefix) and name.endswith(".csv")
+            for name in member_names
         ),
         "station_raw_5min_csv_count": sum(
             name.startswith(station_raw_prefix) and name.endswith(".csv") for name in member_names
@@ -92,7 +94,10 @@ def main() -> None:
     (URBANEVDIR / "source_manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
-    hints = "\n".join(f"- `{name}`" for name in station_level_hints) or "- Không phát hiện theo tên file; kiểm tra ở Phase 03."
+    hints = (
+        "\n".join(f"- `{name}`" for name in station_level_hints)
+        or "- Không phát hiện theo tên file; kiểm tra ở Phase 03."
+    )
     (URBANEVDIR / "source_manifest.md").write_text(
         "# UrbanEV source manifest\n\n"
         f"- Nguồn chính thức: {LANDING_PAGE}\n"
@@ -102,13 +107,15 @@ def main() -> None:
         f"- SHA-256: `{checksum}`\n"
         f"- ZIP integrity: `PASS` ({len(member_names)} members)\n"
         "- License theo upstream: `CC0-1.0`\n"
-        "- Chính sách raw: không chỉnh sửa thủ công archive; mọi biến đổi được thực hiện ở Phase 03.\n\n"
+        "- Chính sách raw: không chỉnh sửa thủ công archive; "
+        "mọi biến đổi được thực hiện ở Phase 03.\n\n"
         "## File có dấu hiệu station-level / 5-minute\n\n"
         f"{hints}\n",
         encoding="utf-8",
     )
     print(
-        f"UrbanEV ready: {manifest['size_bytes']} bytes, {manifest['zip_member_count']} ZIP members, "
+        "UrbanEV ready: "
+        f"{manifest['size_bytes']} bytes, {manifest['zip_member_count']} ZIP members, "
         f"SHA-256 {manifest['sha256']}"
     )
 

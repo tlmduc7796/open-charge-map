@@ -1,10 +1,11 @@
 # ML pipeline — data-first, cloud-ready
 
-This directory keeps executable ML logic in Python modules, not notebooks. That
-makes every run reproducible locally, in Google Colab, and in Kaggle. A notebook
-is still useful for EDA, charts and explaining an experiment, but it must call
-these scripts rather than becoming the source of truth for preprocessing or
-training.
+This directory contains every ML-specific executable. `scripts/` at repository
+root is reserved for application/static-data tooling; UrbanEV acquisition, data
+preparation, feature construction, training and Markov post-processing all live
+under `ml/src/`. A notebook is useful for EDA, charts and explaining an
+experiment, but it must call these scripts rather than becoming the source of
+truth for preprocessing or training.
 
 ## Current state
 
@@ -32,6 +33,7 @@ none starts model training by default.
 
 ```powershell
 # Phase 03 is already available, but can be regenerated from raw source.
+.\.venv\Scripts\python.exe ml\src\acquire_urbanev.py
 .\.venv\Scripts\python.exe ml\src\preprocess_urbanev.py
 
 # Build supervised, leakage-safe rows for the baseline contract.
@@ -45,6 +47,9 @@ none starts model training by default.
 
 # Explicitly train only after data review and approval.
 .\.venv\Scripts\python.exe ml\src\train_occupancy.py --execute
+
+# LSTM + Markov experiment: plan only until data gates are approved.
+.\.venv\Scripts\python.exe ml\src\train_lstm_markov.py
 ```
 
 For a local smoke run after approval, add `--max-train-rows 100000`. Do not use
@@ -102,6 +107,21 @@ the frontend will show the fallback state.
 5. Manually approve/canary the bundle; retain the previous release for rollback.
 
 This prevents accidental online learning, leakage and poisoned observations.
+
+## ML source map
+
+| Module | Responsibility | Phase/status |
+|---|---|---|
+| `acquire_urbanev.py` | download, fingerprint and manifest immutable raw source | Phase 01 |
+| `preprocess_urbanev.py` | station-level canonical dataset and temporal split | Phase 03 |
+| `collect_weather.py`, `generate_calendar.py` | reproducible external/derived features | data-gap preparation |
+| `feature_contract.py`, `build_feature_dataset.py`, `validate_ml_inputs.py` | feature profiles, leakage-safe supervised rows and gates | Phase 04 |
+| `train_occupancy.py` | XGBoost multi-horizon baseline and backend release bundle | Phase 04; opt-in |
+| `markov_wait.py` | probability transition → wait distribution mathematics | Phase 04/Markov layer |
+| `train_lstm_markov.py` | LSTM + transition heads, experimental artifact only | Phase 2; opt-in |
+
+`ml/notebooks/` intentionally contains notebook guidance rather than duplicated
+code. Add notebook outputs there only when they call these modules.
 
 ## Keys and external services
 

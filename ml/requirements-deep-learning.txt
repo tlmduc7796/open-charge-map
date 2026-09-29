@@ -1,0 +1,3 @@
+# Install on a CUDA/Colab/Kaggle runtime when running the LSTM-Markov experiment.
+-r requirements.txt
+torch>=2.2.0
