@@ -129,6 +129,9 @@ export interface ModelStatus {
   model_adapter_loaded: boolean;
   release_ready: boolean;
   flags: string[];
+  model_version?: string | null;
+  model_profile?: string | null;
+  serving_reason?: string | null;
 }
 
 export interface JourneyRequest {

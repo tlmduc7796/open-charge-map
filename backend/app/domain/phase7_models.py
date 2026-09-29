@@ -234,3 +234,6 @@ class ModelStatus(DomainModel):
     model_adapter_loaded: bool
     release_ready: bool
     flags: tuple[str, ...]
+    model_version: str | None = None
+    model_profile: str | None = None
+    serving_reason: str | None = None

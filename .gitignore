@@ -11,3 +11,6 @@ frontend/dist/
 ml/artifacts/*.joblib
 data/ml/urbanev/raw/*.zip
 data/ml/urbanev/raw/*.part
+data/ml/urbanev/raw/*
+!data/ml/urbanev/raw/.gitkeep
+Reference/

@@ -14,6 +14,10 @@ routing, route geometry trong recommendation và planned-arrival commit/cancel.
 Phase 03–04 vẫn deferred và chưa được đánh dấu hoàn thành, vì vậy Phase 06 chỉ đạt
 demo gate chứ chưa đạt release gate.
 
+ML pipeline, feature contracts và hướng dẫn chạy cloud: [`ml/README.md`](ml/README.md).
+Phase 04 chưa có model release; không đưa UrbanEV/model artifact vào production trước khi
+đội chốt dữ liệu thật theo data-gap analysis và đánh giá temporal backtest.
+
 ## Yêu cầu
 
 - Python 3.12

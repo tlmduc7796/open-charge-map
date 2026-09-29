@@ -237,13 +237,14 @@ def model_status(request: Request) -> ModelStatus:
     preprocessor_available = settings.model_preprocessor_path.is_file()
     metadata_available = settings.model_meta_path.is_file()
     model_loaded = request.app.state.occupancy_forecast_service.model_loaded
+    metadata = request.app.state.model_metadata
     artifacts_available = model_available and preprocessor_available and metadata_available
     release_ready = artifacts_available and model_loaded
     flags: tuple[str, ...] = ()
     if not artifacts_available:
-        flags = ("PHASE_04_ARTIFACTS_UNAVAILABLE",)
+        flags = (request.app.state.model_load_error or "PHASE_04_ARTIFACTS_UNAVAILABLE",)
     elif not model_loaded:
-        flags = ("MODEL_ADAPTER_NOT_LOADED",)
+        flags = (request.app.state.model_load_error or "MODEL_ADAPTER_NOT_LOADED",)
     return ModelStatus(
         prediction_source="model" if model_loaded else "persistence",
         model_artifact_available=model_available,
@@ -252,4 +253,11 @@ def model_status(request: Request) -> ModelStatus:
         model_adapter_loaded=model_loaded,
         release_ready=release_ready,
         flags=flags,
+        model_version=metadata.get("format_version") if metadata else None,
+        model_profile=metadata.get("profile") if metadata else None,
+        serving_reason=(
+            "Validated model release loaded"
+            if metadata
+            else "No approved ML release deployed"
+        ),
     )

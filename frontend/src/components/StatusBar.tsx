@@ -11,7 +11,7 @@ export default function StatusBar({ model, mapProvider, activeEvents }: StatusBa
     <div className="status-bar" aria-label="Trạng thái demo">
       <span><i className="status-light online" />Backend API</span>
       <span><i className={`status-light ${mapProvider === "goong" ? "online" : "fallback"}`} />Map: {mapProvider === "goong" ? "Goong" : "OSM fallback"}</span>
-      <span><i className={`status-light ${model?.prediction_source === "model" ? "online" : "fallback"}`} />Forecast: {model?.prediction_source ?? "đang tải"}</span>
+      <span title={model?.serving_reason ?? undefined}><i className={`status-light ${model?.prediction_source === "model" ? "online" : "fallback"}`} />Forecast: {model?.prediction_source ?? "đang tải"}{model?.model_profile ? ` · ${model.model_profile}` : ""}</span>
       <span><i className={`status-light ${activeEvents.length ? "event" : "online"}`} />Event: {activeEvents.length ? activeEvents.join(", ") : "none"}</span>
     </div>
   );

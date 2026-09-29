@@ -13,6 +13,7 @@ from backend.app.config import load_settings
 from backend.app.domain import load_domain_data
 from backend.app.domain.forecasting import OccupancyForecastService
 from backend.app.domain.geocoding import GeocodingService, GoongGeocodingProvider
+from backend.app.domain.model_artifacts import ArtifactValidationError, JoblibOccupancyPredictor
 from backend.app.domain.recommendation import (
     RecommendationService,
     RecommendationThresholds,
@@ -40,7 +41,31 @@ app.add_middleware(
 )
 app.state.settings = settings
 app.state.domain_data = load_domain_data(settings.data_dir)
-app.state.occupancy_forecast_service = OccupancyForecastService()
+app.state.model_metadata = None
+app.state.model_load_error = None
+try:
+    predictor, metadata = JoblibOccupancyPredictor.from_files(
+        settings.model_artifact_path,
+        settings.model_preprocessor_path,
+        settings.model_meta_path,
+    )
+    app.state.occupancy_forecast_service = OccupancyForecastService(predictor)
+    app.state.model_metadata = metadata
+    logger.info("occupancy_model_loaded profile=%s", metadata.get("profile"))
+except (ArtifactValidationError, FileNotFoundError):
+    app.state.occupancy_forecast_service = OccupancyForecastService()
+    if all(
+        path.is_file()
+        for path in (
+            settings.model_artifact_path,
+            settings.model_preprocessor_path,
+            settings.model_meta_path,
+        )
+    ):
+        app.state.model_load_error = "MODEL_RELEASE_INVALID"
+        logger.warning("occupancy model artifacts exist but failed validation")
+    else:
+        app.state.model_load_error = "PHASE_04_ARTIFACTS_UNAVAILABLE"
 app.state.wait_estimator = WaitEstimator(
     app.state.domain_data.queue_assumptions,
     scoring_wait_cap_min=settings.wait_scoring_cap_min,

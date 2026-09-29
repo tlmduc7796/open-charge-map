@@ -1,0 +1,27 @@
+{
+  "version": "1.0.0",
+  "created_at": "2026-09-27T04:56:26.577578+00:00",
+  "elapsed_seconds": 13.34,
+  "parquet_file": "urbanev_processed.parquet",
+  "parquet_size_bytes": 12246337,
+  "parquet_sha256": "5b50f00f9f9abbbcf920cfa56692654b3ae79d8053854cffdf21b3c3f8714398",
+  "canonical_columns": [
+    "timestamp",
+    "entity_id",
+    "entity_level",
+    "interval_min",
+    "total_ports",
+    "occupied_ports",
+    "occupancy_ratio",
+    "split",
+    "data_source"
+  ],
+  "config": {
+    "num_stations": 50,
+    "train_end": "2023-01-15 23:55:00",
+    "val_start": "2023-01-16 00:00:00",
+    "val_end": "2023-01-31 23:55:00",
+    "test_start": "2023-02-01 00:00:00",
+    "test_end": "2023-02-28 23:55:00"
+  }
+}
