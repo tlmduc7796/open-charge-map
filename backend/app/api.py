@@ -16,6 +16,11 @@ from backend.app.domain.phase7_models import (
     RouteRequest,
     RouteResult,
 )
+from backend.app.domain.realtime import (
+    DESWaitRequest,
+    DESWaitResult,
+    StationTelemetrySnapshot,
+)
 
 router = APIRouter()
 
@@ -135,7 +140,61 @@ def apply_event(event_id: str, request: Request):
 def reset_demo(request: Request) -> dict[str, str]:
     request.app.state.runtime_state.reset()
     request.app.state.planned_arrival_store.reset()
+    request.app.state.realtime_telemetry_store.reset()
     return {"status": "reset"}
+
+
+@router.put(
+    "/realtime/stations/{station_id}/telemetry",
+    response_model=StationTelemetrySnapshot,
+    tags=["realtime"],
+)
+def upsert_station_telemetry(
+    station_id: str,
+    payload: StationTelemetrySnapshot,
+    request: Request,
+) -> StationTelemetrySnapshot:
+    """Adapter endpoint for the future frontend simulator or station provider."""
+    try:
+        request.app.state.domain_data.stations.get(station_id)
+        if payload.station_id != station_id:
+            raise ValueError("path station_id does not match telemetry station_id")
+        return request.app.state.realtime_telemetry_store.upsert(payload)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="station not found") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.get(
+    "/realtime/stations/{station_id}/telemetry",
+    response_model=StationTelemetrySnapshot,
+    tags=["realtime"],
+)
+def station_telemetry(station_id: str, request: Request) -> StationTelemetrySnapshot:
+    try:
+        return request.app.state.realtime_telemetry_store.get(station_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="telemetry snapshot not found") from exc
+
+
+@router.post(
+    "/realtime/stations/{station_id}/simulate-wait",
+    response_model=DESWaitResult,
+    tags=["realtime"],
+)
+def simulate_realtime_wait(
+    station_id: str,
+    payload: DESWaitRequest,
+    request: Request,
+) -> DESWaitResult:
+    try:
+        snapshot = request.app.state.realtime_telemetry_store.get(station_id)
+        return request.app.state.des_wait_simulator.estimate(snapshot, payload)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="telemetry snapshot not found") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.get("/planned-arrivals", tags=["planned-arrivals"])

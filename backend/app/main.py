@@ -14,6 +14,11 @@ from backend.app.domain import load_domain_data
 from backend.app.domain.forecasting import OccupancyForecastService
 from backend.app.domain.geocoding import GeocodingService, GoongGeocodingProvider
 from backend.app.domain.model_artifacts import ArtifactValidationError, JoblibOccupancyPredictor
+from backend.app.domain.realtime import (
+    DiscreteEventWaitSimulator,
+    RealtimeTelemetryStore,
+    ResidualDurationService,
+)
 from backend.app.domain.recommendation import (
     RecommendationService,
     RecommendationThresholds,
@@ -77,6 +82,10 @@ app.state.runtime_state = RuntimeStateStore(
 app.state.planned_arrival_store = PlannedArrivalStore(
     app.state.domain_data.planned_arrivals
 )
+# No residual-duration artifact is loaded yet.  The simulator therefore accepts
+# provider-reported remaining durations only, and fails closed if they are absent.
+app.state.realtime_telemetry_store = RealtimeTelemetryStore()
+app.state.des_wait_simulator = DiscreteEventWaitSimulator(ResidualDurationService())
 goong_geocoding_provider = (
     GoongGeocodingProvider(
         settings.goong_api_key, timeout_s=settings.routing_timeout_s

@@ -148,3 +148,53 @@ def test_commit_arrival_and_timezone_validation() -> None:
     assert committed.json()["eta_at"] == "2099-01-01T10:10:00+07:00"
     assert committed.json()["route_id"] == "LIVE_GOONG_DEMO"
     assert cancelled.json()["status"] == "cancelled"
+
+
+def test_simulated_realtime_telemetry_can_drive_des_wait_endpoint() -> None:
+    snapshot = {
+        "station_id": "ST_EVO_DEUTSCHES_HAUS",
+        "observed_at": "2026-09-26T10:00:00+07:00",
+        "data_source": "simulated",
+        "ports": [
+            {
+                "port_id": "A",
+                "connector_types": ["CCS2"],
+                "state": "charging",
+                "session_id": "SESSION_A",
+                "reported_remaining_charge_min": 8,
+            },
+            {
+                "port_id": "B",
+                "connector_types": ["CCS2"],
+                "state": "available",
+            },
+        ],
+        "queue": [
+            {
+                "queue_id": "Q1",
+                "queue_position": 1,
+                "entered_queue_at": "2026-09-26T09:55:00+07:00",
+                "compatible_connector_types": ["CCS2"],
+                "expected_charge_duration_min": 20,
+            }
+        ],
+    }
+
+    async def run():
+        await _request("POST", "/demo/reset")
+        saved = await _request(
+            "PUT", "/realtime/stations/ST_EVO_DEUTSCHES_HAUS/telemetry", json=snapshot
+        )
+        result = await _request(
+            "POST", "/realtime/stations/ST_EVO_DEUTSCHES_HAUS/simulate-wait",
+            json={
+                "evaluation_at": "2026-09-26T10:00:00+07:00",
+                "compatible_connector_types": ["CCS2"],
+            },
+        )
+        return saved, result
+
+    saved, result = asyncio.run(run())
+    assert saved.status_code == result.status_code == 200
+    assert result.json()["method"] == "discrete_event_simulation"
+    assert result.json()["estimated_wait_min"] == 8

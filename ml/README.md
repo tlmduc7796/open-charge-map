@@ -60,6 +60,7 @@ none starts model training by default.
 # Transformer and foundation-model review plans; neither trains by default.
 .\.venv\Scripts\python.exe ml\src\train_transformer.py
 .\.venv\Scripts\python.exe ml\src\train_foundation.py --provider chronos
+.\.venv\Scripts\python.exe ml\src\train_residual_duration.py
 ```
 
 For a local smoke run after approval, add `--max-train-rows 100000`. Do not use
@@ -131,9 +132,14 @@ This prevents accidental online learning, leakage and poisoned observations.
 | `train_lstm_markov.py` | LSTM + transition heads, experimental artifact only | Phase 2; opt-in |
 | `train_transformer.py` | generic multi-domain Transformer, driven by reviewed schema | Phase 3; disabled draft |
 | `train_foundation.py` | Chronos/TimesFM data/licence/GPU gate and provider handoff | Phase 4; research-only |
+| `train_residual_duration.py` | session-duration data gate for future DES residual-duration model | telemetry-gated; disabled draft |
 
 `ml/notebooks/` intentionally contains notebook guidance rather than duplicated
 code. Add notebook outputs there only when they call these modules.
+
+For the DES/RDM backend contract, reliability limits, and the final
+recommendation output assembled from all model layers, read
+[`DES_RDM_INTEGRATION.md`](DES_RDM_INTEGRATION.md).
 
 ## Keys and external services
 
