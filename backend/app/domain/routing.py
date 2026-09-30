@@ -11,6 +11,7 @@ import httpx
 from backend.app.domain.phase7_models import (
     GeoPoint,
     LineStringGeometry,
+    RouteLeg,
     RouteResult,
     RouteWaypoint,
 )
@@ -93,8 +94,15 @@ class GoongRoutingProvider:
             raise RuntimeError("Goong returned no route")
         route = routes[0]
         legs = route.get("legs", [])
-        distance_m = sum(float(leg["distance"]["value"]) for leg in legs)
-        duration_s = sum(float(leg["duration"]["value"]) for leg in legs)
+        route_legs = tuple(
+            RouteLeg(
+                distance_m=float(leg["distance"]["value"]),
+                duration_s=float(leg["duration"]["value"]),
+            )
+            for leg in legs
+        )
+        distance_m = sum(leg.distance_m for leg in route_legs)
+        duration_s = sum(leg.duration_s for leg in route_legs)
         encoded = route.get("overview_polyline", {}).get("points")
         if not encoded:
             raise RuntimeError("Goong route has no overview polyline")
@@ -111,6 +119,7 @@ class GoongRoutingProvider:
             ),
             distance_m=distance_m,
             duration_s=duration_s,
+            legs=route_legs,
             flags=(),
         )
 
@@ -151,6 +160,10 @@ class OsrmRoutingProvider:
             geometry=LineStringGeometry.model_validate(route["geometry"]),
             distance_m=route["distance"],
             duration_s=route["duration"],
+            legs=tuple(
+                RouteLeg(distance_m=leg["distance"], duration_s=leg["duration"])
+                for leg in route.get("legs", [])
+            ),
             flags=("OSRM_FALLBACK",),
         )
 
@@ -237,12 +250,31 @@ class RoutingService:
 
 
 def route_metrics_to_station(route: RouteResult, station_id: str) -> tuple[float, float]:
-    waypoint = next(
-        (waypoint for waypoint in route.waypoints if waypoint.station_id == station_id),
+    """Return (distance_m, duration_s) from the origin to the station waypoint.
+
+    Live routes carry one leg per segment (origin -> waypoint 1 -> ... -> destination),
+    so the exact metrics are the cumulative sum of legs up to the waypoint. Cached
+    routes only store totals; for those the metrics are interpolated from the share
+    of geometry length up to the vertex nearest to the waypoint (demo approximation).
+    """
+    waypoint_index = next(
+        (
+            index
+            for index, waypoint in enumerate(route.waypoints)
+            if waypoint.station_id == station_id
+        ),
         None,
     )
-    if waypoint is None:
+    if waypoint_index is None:
         raise ValueError(f"route {route.route_id} has no waypoint for {station_id}")
+    waypoint = route.waypoints[waypoint_index]
+
+    if len(route.legs) == len(route.waypoints) + 1:
+        legs_to_station = route.legs[: waypoint_index + 1]
+        return (
+            sum(leg.distance_m for leg in legs_to_station),
+            sum(leg.duration_s for leg in legs_to_station),
+        )
 
     coordinates = route.geometry.coordinates
     nearest_index = min(

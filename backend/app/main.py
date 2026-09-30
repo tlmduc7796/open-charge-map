@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from time import perf_counter
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.api import router
@@ -24,6 +24,7 @@ from backend.app.domain.routing import (
 )
 from backend.app.domain.runtime import PlannedArrivalStore, RuntimeStateStore
 from backend.app.domain.wait_estimation import WaitEstimator
+from backend.app.health import run_startup_checks
 from backend.app.logging_config import configure_logging
 
 settings = load_settings()
@@ -89,6 +90,25 @@ app.state.recommendation_service = RecommendationService(
 app.include_router(router)
 
 
+def _log_startup_checks() -> None:
+    report = run_startup_checks(
+        settings, app.state.domain_data, app.state.occupancy_forecast_service
+    )
+    logger.info("startup_checks status=%s", report["status"])
+    for check in report["checks"]:
+        level = logging.INFO if check["status"] == "ok" else logging.WARNING
+        logger.log(
+            level,
+            "startup_check name=%s status=%s detail=%s",
+            check["name"],
+            check["status"],
+            check["detail"],
+        )
+
+
+_log_startup_checks()
+
+
 @app.middleware("http")
 async def integration_request_log(request, call_next):
     started_at = perf_counter()
@@ -115,3 +135,13 @@ def health() -> dict[str, str | bool]:
         "environment": settings.app_env,
         "demo_mode": settings.demo_mode,
     }
+
+
+@app.get("/health/checks", tags=["system"])
+def health_checks(response: Response) -> dict[str, object]:
+    report = run_startup_checks(
+        settings, app.state.domain_data, app.state.occupancy_forecast_service
+    )
+    if report["status"] == "fail":
+        response.status_code = 503
+    return report

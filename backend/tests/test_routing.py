@@ -2,6 +2,7 @@ from backend.app.config import load_settings
 from backend.app.domain.phase7_models import (
     GeoPoint,
     LineStringGeometry,
+    RouteLeg,
     RouteResult,
     RouteWaypoint,
 )
@@ -115,3 +116,64 @@ def test_goong_serializes_waypoint_as_intermediate_destination() -> None:
     assert "waypoints" not in client.params
     assert result.distance_m == 1500
     assert result.duration_s == 180
+    assert [(leg.distance_m, leg.duration_s) for leg in result.legs] == [
+        (600, 80),
+        (900, 100),
+    ]
+
+
+def test_route_metrics_use_exact_legs_when_available() -> None:
+    provider = GoongRoutingProvider("test-key", client=CapturingClient())
+    result = provider.route(
+        GeoPoint(lat=10.7, lon=106.7),
+        GeoPoint(lat=10.8, lon=106.8),
+        (RouteWaypoint(lat=10.75, lon=106.75, station_id="ST_TEST"),),
+    )
+
+    distance, duration = route_metrics_to_station(result, "ST_TEST")
+
+    assert distance == 600
+    assert duration == 80
+
+
+def test_route_metrics_pick_the_matching_leg_for_multiple_waypoints() -> None:
+    route = RouteResult(
+        route_id="LIVE_MULTI",
+        provider="goong",
+        resolution_source="live",
+        origin=GeoPoint(lat=10.0, lon=106.0),
+        destination=GeoPoint(lat=10.3, lon=106.3),
+        waypoints=(
+            RouteWaypoint(lat=10.1, lon=106.1, station_id="ST_A"),
+            RouteWaypoint(lat=10.2, lon=106.2, station_id="ST_B"),
+        ),
+        geometry=LineStringGeometry(
+            type="LineString", coordinates=((106.0, 10.0), (106.3, 10.3))
+        ),
+        distance_m=600,
+        duration_s=60,
+        legs=(
+            RouteLeg(distance_m=100, duration_s=10),
+            RouteLeg(distance_m=200, duration_s=20),
+            RouteLeg(distance_m=300, duration_s=30),
+        ),
+    )
+
+    assert route_metrics_to_station(route, "ST_A") == (100, 10)
+    assert route_metrics_to_station(route, "ST_B") == (300, 30)
+
+
+def test_route_metrics_fall_back_to_interpolation_when_legs_do_not_match() -> None:
+    data = load_domain_data(load_settings().data_dir)
+    cached = RoutingService(data.routes, goong=None, osrm=None).cached_route(
+        "ROUTE_VIA_LAVIDA"
+    )
+    assert cached.legs == ()
+
+    exact_shape = cached.model_copy(
+        update={"legs": (RouteLeg(distance_m=1, duration_s=1),)}
+    )
+
+    assert route_metrics_to_station(exact_shape, "ST_EVO_LAVIDA_Q7") == (
+        route_metrics_to_station(cached, "ST_EVO_LAVIDA_Q7")
+    )
