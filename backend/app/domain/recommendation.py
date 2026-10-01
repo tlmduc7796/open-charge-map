@@ -182,7 +182,9 @@ class RecommendationService:
             eta_at = scenario.departure_at + timedelta(seconds=duration_to_station_s)
             horizon_min = max(1, round(duration_to_station_s / 60))
             forecast = self._forecasting.forecast_occupancy(
-                status, horizon_min=horizon_min
+                status,
+                horizon_min=horizon_min,
+                observed_at=scenario.departure_at,
             )
             wait = self._wait_estimator.estimate_wait(
                 status,

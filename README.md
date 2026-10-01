@@ -210,7 +210,8 @@ Sao chép `.env.example` thành `.env`. Không commit `.env` hoặc API key th�
 - `GOONG_API_KEY`: REST key đặt trong `.env` ở repository root; Phase 7 dùng cho
   Directions/Distance Matrix và collector dùng cho Places. Không đưa key này vào biến `VITE_*`.
 - `DATA_DIR`: thư mục data, mặc định `data`.
-- `MODEL_ARTIFACT_PATH`: model occupancy, chưa tồn tại trước Phase 04.
+- `MODEL_ARTIFACT_PATH`: model occupancy, chưa tồn tại trước Phase 04. Định dạng artifact và
+  cách bàn giao: [`docs/ML_INTEGRATION.md`](docs/ML_INTEGRATION.md).
 - `MODEL_PREPROCESSOR_PATH`, `MODEL_META_PATH`: artifact phụ của Phase 04.
 - `WAIT_SCORING_CAP_MIN`: wait hữu hạn dùng để score station overload/offline.
 - `ROUTING_TIMEOUT_S`: timeout cho Goong/OSRM live routing.

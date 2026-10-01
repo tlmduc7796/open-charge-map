@@ -3,13 +3,19 @@
 from __future__ import annotations
 
 import math
+from datetime import datetime
 from typing import Protocol
 
 from backend.app.domain.models import OccupancyForecastResult, StationStatus
 
 
 class OccupancyPredictor(Protocol):
-    """Adapter contract for the future Phase 04 model artifact."""
+    """Adapter contract for the Phase 04 model (see ``occupancy_model.py``).
+
+    ``predict`` gets 12 occupancy ratios (oldest first) and a horizon of 5, 10 or 15
+    minutes. A predictor whose features include time-of-day sets ``uses_timestamp = True``
+    and must then also accept ``observed_at`` (the time of the newest observation).
+    """
 
     def predict(self, occupancy_history: tuple[float, ...], horizon_min: int) -> float: ...
 
@@ -38,6 +44,7 @@ class OccupancyForecastService:
         *,
         horizon_min: int,
         occupancy_history: tuple[float, ...] | None = None,
+        observed_at: datetime | None = None,
     ) -> OccupancyForecastResult:
         if horizon_min <= 0:
             raise ValueError("horizon_min must be positive")
@@ -66,7 +73,7 @@ class OccupancyForecastService:
             if occupancy_history is None:
                 flags.append("SYNTHETIC_HISTORY")
             try:
-                raw_prediction = float(self._predictor.predict(history, used_horizon))
+                raw_prediction = float(self._call_predictor(history, used_horizon, observed_at))
                 if not math.isfinite(raw_prediction):
                     raise ValueError("model prediction must be finite")
                 prediction = min(1.0, max(0.0, float(raw_prediction)))
@@ -92,6 +99,20 @@ class OccupancyForecastService:
             "persistence",
             flags,
         )
+
+    def _call_predictor(
+        self,
+        history: tuple[float, ...],
+        horizon_min: int,
+        observed_at: datetime | None,
+    ) -> float:
+        assert self._predictor is not None
+        if getattr(self._predictor, "uses_timestamp", False):
+            if observed_at is None:
+                raise ValueError("this model needs observed_at for its time features")
+            predict = self._predictor.predict
+            return predict(history, horizon_min, observed_at=observed_at)  # type: ignore[call-arg]
+        return self._predictor.predict(history, horizon_min)
 
     def _aligned_horizon(self, requested_horizon_min: int) -> int:
         if requested_horizon_min <= 5:

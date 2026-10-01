@@ -13,6 +13,7 @@ from backend.app.config import load_settings
 from backend.app.domain import load_domain_data
 from backend.app.domain.forecasting import OccupancyForecastService
 from backend.app.domain.geocoding import GeocodingService, GoongGeocodingProvider
+from backend.app.domain.occupancy_model import load_occupancy_model
 from backend.app.domain.recommendation import (
     RecommendationService,
     RecommendationThresholds,
@@ -41,7 +42,10 @@ app.add_middleware(
 )
 app.state.settings = settings
 app.state.domain_data = load_domain_data(settings.data_dir)
-app.state.occupancy_forecast_service = OccupancyForecastService()
+app.state.model_load = load_occupancy_model(settings)
+app.state.occupancy_forecast_service = OccupancyForecastService(
+    app.state.model_load.predictor
+)
 app.state.wait_estimator = WaitEstimator(
     app.state.domain_data.queue_assumptions,
     scoring_wait_cap_min=settings.wait_scoring_cap_min,
@@ -92,7 +96,10 @@ app.include_router(router)
 
 def _log_startup_checks() -> None:
     report = run_startup_checks(
-        settings, app.state.domain_data, app.state.occupancy_forecast_service
+        settings,
+        app.state.domain_data,
+        app.state.occupancy_forecast_service,
+        model_load_error=app.state.model_load.error,
     )
     logger.info("startup_checks status=%s", report["status"])
     for check in report["checks"]:
@@ -140,7 +147,10 @@ def health() -> dict[str, str | bool]:
 @app.get("/health/checks", tags=["system"])
 def health_checks(response: Response) -> dict[str, object]:
     report = run_startup_checks(
-        settings, app.state.domain_data, app.state.occupancy_forecast_service
+        settings,
+        app.state.domain_data,
+        app.state.occupancy_forecast_service,
+        model_load_error=app.state.model_load.error,
     )
     if report["status"] == "fail":
         response.status_code = 503

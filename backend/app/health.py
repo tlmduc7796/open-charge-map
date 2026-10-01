@@ -73,7 +73,11 @@ def _check_route_cache(data: DomainData) -> CheckResult:
     )
 
 
-def _check_model(settings: Settings, forecasting: OccupancyForecastService) -> CheckResult:
+def _check_model(
+    settings: Settings,
+    forecasting: OccupancyForecastService,
+    load_error: str | None,
+) -> CheckResult:
     artifacts = {
         "model": settings.model_artifact_path.is_file(),
         "preprocessor": settings.model_preprocessor_path.is_file(),
@@ -88,10 +92,12 @@ def _check_model(settings: Settings, forecasting: OccupancyForecastService) -> C
             ("PHASE_04_ARTIFACTS_UNAVAILABLE",),
         )
     if not forecasting.model_loaded:
+        reason = f": {load_error}" if load_error else ""
         return CheckResult(
             "occupancy_model",
             "warn",
-            "artifacts present but no model adapter is loaded; using persistence forecast",
+            "artifacts present but the model was not loaded; using persistence forecast"
+            + reason,
             ("MODEL_ADAPTER_NOT_LOADED",),
         )
     return CheckResult("occupancy_model", "ok", "model adapter loaded")
@@ -112,11 +118,13 @@ def run_startup_checks(
     settings: Settings,
     data: DomainData,
     forecasting: OccupancyForecastService,
+    *,
+    model_load_error: str | None = None,
 ) -> dict[str, object]:
     checks = (
         _check_data_files(settings),
         _check_route_cache(data),
-        _check_model(settings, forecasting),
+        _check_model(settings, forecasting, model_load_error),
         _check_goong(settings),
     )
     overall: OverallStatus

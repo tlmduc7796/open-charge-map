@@ -237,6 +237,8 @@ def model_status(request: Request) -> ModelStatus:
     preprocessor_available = settings.model_preprocessor_path.is_file()
     metadata_available = settings.model_meta_path.is_file()
     model_loaded = request.app.state.occupancy_forecast_service.model_loaded
+    load = request.app.state.model_load
+    meta = load.predictor.meta if load.predictor is not None else None
     artifacts_available = model_available and preprocessor_available and metadata_available
     release_ready = artifacts_available and model_loaded
     flags: tuple[str, ...] = ()
@@ -252,4 +254,7 @@ def model_status(request: Request) -> ModelStatus:
         model_adapter_loaded=model_loaded,
         release_ready=release_ready,
         flags=flags,
+        model_name=meta.model_name if meta else None,
+        model_version=meta.model_version if meta else None,
+        load_error=load.error,
     )

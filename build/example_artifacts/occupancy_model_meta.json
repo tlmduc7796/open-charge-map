@@ -1,0 +1,33 @@
+{
+  "model_name": "example_persistence",
+  "model_version": "0.0.0",
+  "task": "occupancy_forecasting",
+  "training_dataset": "UrbanEV",
+  "training_level": "station",
+  "temporal_resolution_min": 5,
+  "lookback_steps": 12,
+  "forecast_steps": 3,
+  "features": [
+    "lag_12",
+    "lag_11",
+    "lag_10",
+    "lag_9",
+    "lag_8",
+    "lag_7",
+    "lag_6",
+    "lag_5",
+    "lag_4",
+    "lag_3",
+    "lag_2",
+    "lag_1"
+  ],
+  "target": "occupancy_ratio",
+  "metrics": {
+    "mae": null,
+    "rmse": null
+  },
+  "notes": [
+    "Example only; not trained.",
+    "Station IDs are not features."
+  ]
+}
