@@ -3,6 +3,8 @@ import type {
   JourneyRecommendation,
   JourneyRequest,
   ModelStatus,
+  QueueLabRequest,
+  QueueLabResult,
   GeocodedPlace,
   PlaceSuggestion,
   PlannedArrival,
@@ -56,6 +58,12 @@ export const api = {
       }),
     }),
   resetDemo: () => requestJson<{ status: string }>("/demo/reset", { method: "POST" }),
+  queueLabScenario: () => requestJson<QueueLabRequest>("/queue-lab/default-scenario"),
+  simulateQueueLab: (payload: QueueLabRequest) =>
+    requestJson<QueueLabResult>("/queue-lab/simulate", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   commitArrival: (payload: {
     station_id: string;
     vehicle_id: string;

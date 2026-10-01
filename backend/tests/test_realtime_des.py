@@ -20,11 +20,11 @@ def _snapshot() -> StationTelemetrySnapshot:
         ports=(
             ChargingPortTelemetry(
                 port_id="A", connector_types=("CCS2",), state="charging",
-                session_id="SESSION_A", reported_remaining_charge_min=8,
+                session_id="SESSION_A", reported_remaining_port_release_min=8,
             ),
             ChargingPortTelemetry(
                 port_id="B", connector_types=("CCS2",), state="charging",
-                session_id="SESSION_B", reported_remaining_charge_min=25,
+                session_id="SESSION_B", reported_remaining_port_release_min=25,
             ),
         ),
         queue=(
@@ -59,7 +59,7 @@ def test_discrete_event_simulation_uses_each_port_and_queue_duration() -> None:
     assert result.predicted_charge_start_at == datetime.fromisoformat(
         "2026-09-26T10:28:00+07:00"
     )
-    assert "PROVIDER_REPORTED_DURATION" in result.duration_sources
+    assert "PROVIDER_REPORTED_PORT_RELEASE" in result.duration_sources
     assert "QUEUE_DURATION_ESTIMATE" in result.duration_sources
     assert "UNOBSERVED_ARRIVALS_EXCLUDED" in result.flags
 

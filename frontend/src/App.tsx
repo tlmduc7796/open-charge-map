@@ -4,6 +4,7 @@ import { api } from "./api";
 import JourneyForm from "./components/JourneyForm";
 import MapView from "./components/MapView";
 import RecommendationList from "./components/RecommendationList";
+import QueueLab from "./components/QueueLab";
 import StationDetails from "./components/StationDetails";
 import StatusBar from "./components/StatusBar";
 import type {
@@ -327,6 +328,7 @@ export default function App() {
           />
         </section>
       </div>
+      <QueueLab />
     </main>
   );
 }

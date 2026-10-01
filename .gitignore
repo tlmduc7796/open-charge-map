@@ -9,8 +9,8 @@ pytest-cache-files-*/
 frontend/node_modules/
 frontend/dist/
 ml/artifacts/*.joblib
-data/ml/urbanev/raw/*.zip
-data/ml/urbanev/raw/*.part
-data/ml/urbanev/raw/*
-!data/ml/urbanev/raw/.gitkeep
+ml/data/external/*/raw/*.zip
+ml/data/external/*/raw/*.part
+ml/data/external/*/raw/*
+!ml/data/external/*/raw/.gitkeep
 Reference/

@@ -54,7 +54,9 @@ try:
         settings.model_preprocessor_path,
         settings.model_meta_path,
     )
-    app.state.occupancy_forecast_service = OccupancyForecastService(predictor)
+    app.state.occupancy_forecast_service = OccupancyForecastService(
+        predictor, model_horizons_min=tuple(metadata["horizons_min"])
+    )
     app.state.model_metadata = metadata
     logger.info("occupancy_model_loaded profile=%s", metadata.get("profile"))
 except (ArtifactValidationError, FileNotFoundError):
@@ -79,17 +81,13 @@ app.state.runtime_state = RuntimeStateStore(
     app.state.domain_data.station_statuses,
     app.state.domain_data.demo_events,
 )
-app.state.planned_arrival_store = PlannedArrivalStore(
-    app.state.domain_data.planned_arrivals
-)
+app.state.planned_arrival_store = PlannedArrivalStore(app.state.domain_data.planned_arrivals)
 # No residual-duration artifact is loaded yet.  The simulator therefore accepts
 # provider-reported remaining durations only, and fails closed if they are absent.
 app.state.realtime_telemetry_store = RealtimeTelemetryStore()
 app.state.des_wait_simulator = DiscreteEventWaitSimulator(ResidualDurationService())
 goong_geocoding_provider = (
-    GoongGeocodingProvider(
-        settings.goong_api_key, timeout_s=settings.routing_timeout_s
-    )
+    GoongGeocodingProvider(settings.goong_api_key, timeout_s=settings.routing_timeout_s)
     if settings.goong_api_key
     else None
 )

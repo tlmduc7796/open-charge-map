@@ -161,7 +161,7 @@ def test_simulated_realtime_telemetry_can_drive_des_wait_endpoint() -> None:
                 "connector_types": ["CCS2"],
                 "state": "charging",
                 "session_id": "SESSION_A",
-                "reported_remaining_charge_min": 8,
+                "reported_remaining_port_release_min": 8,
             },
             {
                 "port_id": "B",

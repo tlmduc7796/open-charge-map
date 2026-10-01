@@ -24,14 +24,14 @@ class ChargingPortTelemetry(DomainModel):
     connector_types: tuple[str, ...] = Field(min_length=1)
     state: Literal["available", "charging", "offline"]
     session_id: str | None = None
-    reported_remaining_charge_min: float | None = Field(default=None, gt=0)
+    reported_remaining_port_release_min: float | None = Field(default=None, gt=0)
 
     @model_validator(mode="after")
     def validate_session_state(self) -> ChargingPortTelemetry:
         if self.state == "charging" and not self.session_id:
             raise ValueError("a charging port requires session_id")
         if self.state != "charging" and (
-            self.session_id is not None or self.reported_remaining_charge_min is not None
+            self.session_id is not None or self.reported_remaining_port_release_min is not None
         ):
             raise ValueError("only a charging port may carry session duration data")
         return self
@@ -83,14 +83,14 @@ class StationTelemetrySnapshot(DomainModel):
 
 
 class ResidualDurationPredictor(Protocol):
-    """Future ML/DL adapter: estimates remaining minutes of a live session."""
+    """Future ML/DL adapter: estimates remaining minutes until port release."""
 
-    def predict_remaining_charge_min(self, port: ChargingPortTelemetry) -> float:
-        """Return a strictly positive remaining session duration in minutes."""
+    def predict_remaining_port_release_min(self, port: ChargingPortTelemetry) -> float:
+        """Return a strictly positive remaining duration until the EV unplugs."""
 
 
 class ResidualDurationService:
-    """Prefer provider telemetry; use an approved RDM only when it exists."""
+    """Prefer provider port-release telemetry; use an approved RDM only when it exists."""
 
     def __init__(self, predictor: ResidualDurationPredictor | None = None) -> None:
         self._predictor = predictor
@@ -98,16 +98,16 @@ class ResidualDurationService:
     def resolve(self, port: ChargingPortTelemetry) -> tuple[float, str]:
         if port.state != "charging":
             raise ValueError("only charging ports have a residual duration")
-        if port.reported_remaining_charge_min is not None:
-            return port.reported_remaining_charge_min, "PROVIDER_REPORTED_DURATION"
+        if port.reported_remaining_port_release_min is not None:
+            return port.reported_remaining_port_release_min, "PROVIDER_REPORTED_PORT_RELEASE"
         if self._predictor is None:
             raise ValueError(
                 "charging port has no reported duration and no approved residual-duration model"
             )
-        duration = self._predictor.predict_remaining_charge_min(port)
+        duration = self._predictor.predict_remaining_port_release_min(port)
         if duration <= 0:
             raise ValueError("residual-duration model returned a non-positive duration")
-        return duration, "RESIDUAL_DURATION_MODEL"
+        return duration, "PORT_RELEASE_DURATION_MODEL"
 
 
 class DESWaitRequest(DomainModel):

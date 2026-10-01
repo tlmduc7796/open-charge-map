@@ -16,6 +16,16 @@ from backend.app.domain.phase7_models import (
     RouteRequest,
     RouteResult,
 )
+from backend.app.domain.queue_lab import (
+    QueueLabSimulationRequest,
+    QueueLabSimulationResult,
+)
+from backend.app.domain.queue_lab import (
+    demo_request as queue_lab_demo_request,
+)
+from backend.app.domain.queue_lab import (
+    simulate_queue_lab as run_queue_lab,
+)
 from backend.app.domain.realtime import (
     DESWaitRequest,
     DESWaitResult,
@@ -197,6 +207,26 @@ def simulate_realtime_wait(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
+@router.get(
+    "/queue-lab/default-scenario",
+    response_model=QueueLabSimulationRequest,
+    tags=["queue-lab"],
+)
+def queue_lab_default_scenario() -> QueueLabSimulationRequest:
+    """Return the documented fixed-duration scenario whose wait is 28 minutes."""
+    return queue_lab_demo_request()
+
+
+@router.post(
+    "/queue-lab/simulate",
+    response_model=QueueLabSimulationResult,
+    tags=["queue-lab"],
+)
+def simulate_queue_lab(payload: QueueLabSimulationRequest) -> QueueLabSimulationResult:
+    """Run the standalone deterministic / synthetic Monte Carlo queue simulator."""
+    return run_queue_lab(payload)
+
+
 @router.get("/planned-arrivals", tags=["planned-arrivals"])
 def list_planned_arrivals(request: Request):
     return request.app.state.planned_arrival_store.all()
@@ -236,9 +266,7 @@ def commit_planned_arrival(
     try:
         data.stations.get(payload.station_id)
         data.vehicles.get(payload.vehicle_id)
-        eta_at = payload.departure_at + timedelta(
-            seconds=payload.route_duration_to_station_s
-        )
+        eta_at = payload.departure_at + timedelta(seconds=payload.route_duration_to_station_s)
         create_request = PlannedArrivalCreateRequest(
             station_id=payload.station_id,
             vehicle_id=payload.vehicle_id,
@@ -315,8 +343,6 @@ def model_status(request: Request) -> ModelStatus:
         model_version=metadata.get("format_version") if metadata else None,
         model_profile=metadata.get("profile") if metadata else None,
         serving_reason=(
-            "Validated model release loaded"
-            if metadata
-            else "No approved ML release deployed"
+            "Validated model release loaded" if metadata else "No approved ML release deployed"
         ),
     )

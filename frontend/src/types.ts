@@ -168,3 +168,61 @@ export interface PlannedArrival {
   route_id: string | null;
   status: "planned" | "arrived" | "cancelled" | "expired";
 }
+
+export interface SyntheticDuration {
+  kind: "fixed" | "uniform";
+  value_min?: number | null;
+  min_min?: number | null;
+  max_min?: number | null;
+}
+
+export interface QueueLabPort {
+  port_id: string;
+  connector_types: string[];
+  state: "available" | "charging" | "offline";
+  remaining_port_release?: SyntheticDuration | null;
+}
+
+export interface QueueLabVehicle {
+  vehicle_id: string;
+  queue_position: number;
+  connector_types: string[];
+  charging_duration: SyntheticDuration;
+}
+
+export interface QueueLabRequest {
+  evaluation_at: string;
+  ports: QueueLabPort[];
+  confirmed_queue: QueueLabVehicle[];
+  requester_connector_types: string[];
+  requester_charge_duration: SyntheticDuration;
+  trials: number;
+  seed: number;
+  wait_threshold_min: number;
+}
+
+export interface QueueLabTimelineEntry {
+  port_id: string;
+  vehicle_id: string;
+  kind: "active_session" | "confirmed_queue" | "requester";
+  start_at: string;
+  end_at: string;
+}
+
+export interface QueueLabMonteCarloSummary {
+  trials: number;
+  seed: number;
+  p10_wait_min: number | null;
+  p50_wait_min: number | null;
+  p90_wait_min: number | null;
+  probability_wait_over_threshold: number | null;
+  wait_threshold_min: number;
+}
+
+export interface QueueLabResult {
+  estimated_start_at: string | null;
+  estimated_wait_min: number | null;
+  timeline: QueueLabTimelineEntry[];
+  monte_carlo: QueueLabMonteCarloSummary;
+  caveats: string[];
+}

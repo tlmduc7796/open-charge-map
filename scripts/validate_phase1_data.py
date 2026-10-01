@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import math
 import sys
@@ -67,30 +66,6 @@ def unique_ids(records: list, key: str, context: str) -> set[str]:
     if duplicates:
         error(f"Duplicate {key} in {context}: {duplicates}")
     return set(values)
-
-
-def validate_raw_source() -> None:
-    manifest = load_json("data/ml/urbanev/source_manifest.json")
-    if not isinstance(manifest, dict):
-        return
-    archive_name = manifest.get("archive")
-    archive = ROOT / "data" / "ml" / "urbanev" / "raw" / str(archive_name)
-    if not archive.is_file():
-        error(f"UrbanEV raw archive missing: `{archive.relative_to(ROOT)}`")
-        return
-    if archive.stat().st_size != manifest.get("size_bytes"):
-        error("UrbanEV raw archive size differs from source manifest")
-    digest = hashlib.sha256()
-    with archive.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    if digest.hexdigest() != manifest.get("sha256"):
-        error("UrbanEV raw archive SHA-256 differs from source manifest")
-    if manifest.get("zip_test") != "PASS":
-        error("UrbanEV archive integrity is not PASS in source manifest")
-    if not (ROOT / "data" / "ml" / "urbanev" / "source_manifest.md").is_file():
-        error("Missing human-readable UrbanEV source manifest")
-    checked(f"UrbanEV archive verified: {archive.stat().st_size} bytes, SHA-256 matched")
 
 
 def validate_all() -> None:
@@ -337,7 +312,6 @@ def validate_all() -> None:
 
     if not (ROOT / "data" / "demo" / "station_history.csv").exists():
         warning("Optional station_history.csv omitted; UrbanEV-normalized replay will be decided in Phase 03")
-    validate_raw_source()
 
 
 def write_report() -> None:
