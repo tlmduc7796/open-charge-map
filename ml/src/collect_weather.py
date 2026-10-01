@@ -5,7 +5,7 @@ Aligns weather data with UrbanEV time range (2022-09-01 to 2023-02-28).
 UrbanEV dataset is from Paderborn, Germany area — we use representative
 coordinates for weather retrieval.
 
-Output: ml/artifacts/weather_historical.parquet
+Output: ml/data/derived/weather/weather_historical.parquet
 """
 from __future__ import annotations
 
@@ -178,7 +178,7 @@ def main(argv: list[str] | None = None) -> None:
         help="End date (default: 2023-02-28, matching UrbanEV)",
     )
     parser.add_argument(
-        "--output-dir", default="ml/artifacts",
+        "--output-dir", default="ml/data/derived/weather",
         help="Output directory for weather parquet",
     )
     args = parser.parse_args(argv)

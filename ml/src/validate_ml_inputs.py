@@ -48,7 +48,7 @@ def main() -> None:
     parser.add_argument(
         "--dataset",
         type=Path,
-        default=ROOT_DIR / "ml/artifacts/occupancy_features_baseline.parquet",
+        default=ROOT_DIR / "ml/data/features/occupancy_features_baseline.parquet",
     )
     args = parser.parse_args()
     print(json.dumps(validate(args.dataset), indent=2))

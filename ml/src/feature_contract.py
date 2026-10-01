@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-CONTRACT_VERSION = "1.0"
+CONTRACT_VERSION = "2.1"
 LOOKBACK_STEPS = 12
-HORIZONS_MIN = (5, 10, 15)
+HORIZONS_MIN = tuple(range(5, 61, 5))
 INTERVAL_MIN = 5
 
 LAG_FEATURES = tuple(f"lag_{step}" for step in range(1, LOOKBACK_STEPS + 1))
@@ -31,6 +31,11 @@ WEATHER_FEATURES = (
     "wind_speed_10m",
     "is_raining",
 )
+
+# These columns are deliberately horizon-specific.  A direct model for +30
+# minutes must see the station profile for the calendar bucket at t+30, not
+# the bucket at the forecast origin t.
+SEASONAL_PRIOR_FEATURES = tuple(f"seasonal_prior_t_plus_{horizon}m" for horizon in HORIZONS_MIN)
 
 
 @dataclass(frozen=True)
@@ -58,6 +63,16 @@ FEATURE_PROFILES = {
         serving_reason=(
             "Requires a deployment-region calendar provider in the backend; "
             "the current API intentionally serves only the baseline profile."
+        ),
+    ),
+    "seasonal": FeatureProfile(
+        name="seasonal",
+        feature_names=(*LAG_FEATURES, *SEASONAL_PRIOR_FEATURES),
+        required_inputs=("occupancy", "seasonal_profile"),
+        serving_ready=True,
+        serving_reason=(
+            "Uses a frozen station weekday/weekend 5-minute profile bundled "
+            "with the model; inference also requires station ID and timestamp."
         ),
     ),
     "context": FeatureProfile(

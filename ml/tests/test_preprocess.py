@@ -8,13 +8,13 @@ from pathlib import Path
 import pandas as pd
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
-ARTIFACTS_DIR = ROOT_DIR / "ml" / "artifacts"
-PARQUET_PATH = ARTIFACTS_DIR / "urbanev_processed.parquet"
-MANIFEST_PATH = ARTIFACTS_DIR / "split_manifest.json"
-META_PATH = ARTIFACTS_DIR / "preprocessing_meta.json"
+PROCESSED_DIR = ROOT_DIR / "ml" / "data" / "processed" / "urbanev"
+PARQUET_PATH = PROCESSED_DIR / "urbanev_processed.parquet"
+MANIFEST_PATH = PROCESSED_DIR / "split_manifest.json"
+META_PATH = PROCESSED_DIR / "preprocessing_meta.json"
 
 
-def test_phase3_artifacts_exist():
+def test_phase3_processed_data_exists():
     assert PARQUET_PATH.is_file(), "urbanev_processed.parquet must exist"
     assert MANIFEST_PATH.is_file(), "split_manifest.json must exist"
     assert META_PATH.is_file(), "preprocessing_meta.json must exist"

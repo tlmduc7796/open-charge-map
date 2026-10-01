@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-URBANEVDIR = ROOT / "data" / "ml" / "urbanev"
+URBANEVDIR = ROOT / "ml" / "data" / "external" / "urbanev"
 RAW_DIR = URBANEVDIR / "raw"
 ARCHIVE = RAW_DIR / "UrbanEVDataset.zip"
 FILE_ID = "1OEpo-XDocd33aK3MbgDt9S5bcqwiAFPQ"

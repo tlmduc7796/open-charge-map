@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Plan the telemetry-gated residual charging-duration model (RDM).
+"""Plan the telemetry-gated residual port-release-duration model (RDM).
 
 This is intentionally a training gate, not a synthetic-model generator.  The
-future model predicts remaining charging minutes for a *live session*; DES uses
-that value only when a station provider did not report it directly.
+future model predicts remaining minutes until a connected EV unplugs; DES uses
+that port-release value only when a station provider did not report it directly.
 """
 
 from __future__ import annotations
@@ -26,7 +26,9 @@ REQUIRED_COLUMNS = (
     "session_elapsed_min",
     "energy_delivered_kwh",
     "current_power_kw",
-    "remaining_charge_min",
+    "done_charging_at",
+    "disconnect_at",
+    "remaining_port_release_min",
 )
 
 
@@ -34,7 +36,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA_PATH)
     parser.add_argument(
-        "--dataset", type=Path, default=ROOT_DIR / "ml/artifacts/session_training.parquet"
+        "--dataset", type=Path, default=ROOT_DIR / "ml/data/features/session_training.parquet"
     )
     parser.add_argument("--execute", action="store_true")
     args = parser.parse_args()
@@ -42,15 +44,17 @@ def main() -> None:
     plan = {
         "will_train": args.execute,
         "dataset": str(args.dataset),
-        "required_columns": REQUIRED_COLUMNS,
-        "target": "remaining_charge_min",
-        "split_rule": (
-            "split by completed session end time; never mix rows of one session across splits"
-        ),
-        "serving_rule": (
-            "provider-reported duration wins; RDM needs calibration and freshness monitoring"
-        ),
         **schema.training_requirements("residual_duration"),
+        "required_columns": REQUIRED_COLUMNS,
+        "target": "remaining_port_release_min",
+        "target_semantics": (
+            "disconnect_at (physical port release), not done_charging_at (last power draw)"
+        ),
+        "split_rule": ("split by disconnect_at; never mix rows of one session across splits"),
+        "serving_rule": (
+            "Provider-reported port-release duration wins; RDM needs calibration "
+            "and freshness monitoring."
+        ),
     }
     if not args.execute:
         print(json.dumps(plan, indent=2))

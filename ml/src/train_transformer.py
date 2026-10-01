@@ -16,11 +16,13 @@ import pandas as pd
 
 try:
     from .domain_schema import DEFAULT_SCHEMA_PATH, load_domain_schema
+    from .feature_contract import HORIZONS_MIN
 except ImportError:  # pragma: no cover - direct script invocation.
     from domain_schema import DEFAULT_SCHEMA_PATH, load_domain_schema
+    from feature_contract import HORIZONS_MIN
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
-HORIZONS = (5, 10, 15)
+HORIZONS = HORIZONS_MIN
 
 
 def build_transformer_samples(
@@ -90,6 +92,7 @@ def execute_training(dataset_path: Path, schema_path: Path, output_dir: Path) ->
         context_features=profile.context_features,
         target=schema.target_name,
     )
+
     # The code below is intentionally small and inspectable; hyperparameter
     # tuning, graph topology and categorical embeddings are data-review tasks.
     class MultiDomainTransformer(nn.Module):
@@ -133,9 +136,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA_PATH)
     parser.add_argument(
-        "--dataset", type=Path, default=ROOT_DIR / "ml/artifacts/enriched_training.parquet"
+        "--dataset", type=Path, default=ROOT_DIR / "ml/data/features/enriched_training.parquet"
     )
-    parser.add_argument("--output-dir", type=Path, default=ROOT_DIR / "ml/artifacts")
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=ROOT_DIR / "ml/results/foundation/candidates",
+    )
     parser.add_argument("--execute", action="store_true")
     args = parser.parse_args()
     schema = load_domain_schema(args.schema)

@@ -24,8 +24,11 @@ logging.basicConfig(
 logger = logging.getLogger("preprocess_urbanev")
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
-DEFAULT_ZIP_PATH = ROOT_DIR / "data" / "ml" / "urbanev" / "raw" / "UrbanEVDataset.zip"
-DEFAULT_OUTPUT_DIR = ROOT_DIR / "ml" / "artifacts"
+DEFAULT_ZIP_PATH = (
+    ROOT_DIR / "ml" / "data" / "external" / "urbanev" / "raw" / "UrbanEVDataset.zip"
+)
+DEFAULT_OUTPUT_DIR = ROOT_DIR / "ml" / "data" / "processed" / "urbanev"
+DEFAULT_REPORT_DIR = ROOT_DIR / "ml" / "results" / "preprocessing"
 
 # Canonical temporal boundaries (strictly non-overlapping)
 # Total: 2022-09-01 to 2023-02-28 (181 days, 52,128 steps)
@@ -60,6 +63,7 @@ def sha256_file(path: Path) -> str:
 class PreprocessingConfig:
     raw_zip_path: Path
     output_dir: Path
+    report_dir: Path
     num_stations: int
     train_end: str = TRAIN_END
     val_start: str = VAL_START
@@ -74,6 +78,7 @@ class UrbanEVPreprocessor:
         if not self.config.raw_zip_path.is_file():
             raise FileNotFoundError(f"Raw archive not found: {self.config.raw_zip_path}")
         self.config.output_dir.mkdir(parents=True, exist_ok=True)
+        self.config.report_dir.mkdir(parents=True, exist_ok=True)
 
     def select_station_ids(self, zip_handle: zipfile.ZipFile) -> list[str]:
         info_path = "UrbanEVDataset/20220901-20230228_station-raw/station_information.csv"
@@ -306,7 +311,7 @@ class UrbanEVPreprocessor:
             "- [x] Scaler/normalization not required for target as ratio is inherently in [0, 1].\n"
             "- [x] `split_manifest.json` and `preprocessing_meta.json` generated and committed.\n"
         )
-        report_path = self.config.output_dir / "phase3_preprocessing_report.md"
+        report_path = self.config.report_dir / "phase3_preprocessing_report.md"
         report_path.write_text(report_content, encoding="utf-8")
         logger.info("Saved validation report: %s", report_path)
 
@@ -325,7 +330,13 @@ def main() -> None:
         "--output-dir",
         type=Path,
         default=DEFAULT_OUTPUT_DIR,
-        help="Directory to save artifacts",
+        help="Directory to save processed data and provenance",
+    )
+    parser.add_argument(
+        "--report-dir",
+        type=Path,
+        default=DEFAULT_REPORT_DIR,
+        help="Directory to save the preprocessing validation report",
     )
     parser.add_argument(
         "--stations-count",
@@ -338,6 +349,7 @@ def main() -> None:
     cfg = PreprocessingConfig(
         raw_zip_path=args.raw_zip,
         output_dir=args.output_dir,
+        report_dir=args.report_dir,
         num_stations=args.stations_count,
     )
     preprocessor = UrbanEVPreprocessor(cfg)

@@ -1,7 +1,7 @@
 # ML data handoff — required reading before enabling DL
 
 The source of truth for proposed domains is
-[`Reference/data_gap_analysis.md`](../Reference/data_gap_analysis.md). It is a
+[`Reference/data_gap_analysis.md`](../../Reference/data_gap_analysis.md). It is a
 strategy/reference document, not an executable schema. The executable review
 surface is [`config/domain_schema.draft.json`](config/domain_schema.draft.json).
 
@@ -26,6 +26,7 @@ premature `--execute` fail visibly instead of training on guessed features.
 | Model stage | Minimum approved data |
 |---|---|
 | XGBoost baseline | occupancy history and capacity only |
-| LSTM + Markov | baseline + deployment-region calendar + station context; session state when available |
+| Hybrid LSTM source experiment | occupancy history + frozen target-time seasonal profile |
+| LSTM + Markov production candidate | baseline + deployment-region calendar + station context; compatible-port state when available |
 | Transformer/STGNN | multi-station temporal data + spatial/POI + weather; traffic only with an approved source |
 | Foundation fine-tune | sufficient real station diversity, long history and a benchmark that proves baseline/DL limitations |

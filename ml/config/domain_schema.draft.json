@@ -42,7 +42,7 @@
     "charging_sessions": {
       "status": "candidate",
       "join_keys": ["entity_id", "timestamp"],
-      "features": ["arrival_rate_per_hour", "session_duration_min", "soc_on_arrival", "vehicle_segment", "session_id", "port_id", "connector_type", "session_elapsed_min", "energy_delivered_kwh", "current_power_kw", "target_soc", "remaining_charge_min"],
+      "features": ["arrival_rate_per_hour", "session_duration_min", "soc_on_arrival", "vehicle_segment", "session_id", "port_id", "connector_type", "session_elapsed_min", "energy_delivered_kwh", "current_power_kw", "target_soc", "done_charging_at", "disconnect_at", "remaining_port_release_min"],
       "note": "Sensitive operational data; define consent, retention and aggregation before use. Per-session fields enable DES and residual-duration modelling only after telemetry contracts are approved."
     }
   },
@@ -56,8 +56,14 @@
     "lstm_markov": {
       "enabled": false,
       "sequence_features": ["occupancy_ratio"],
-      "context_features": ["hour_sin", "hour_cos", "dow_sin", "dow_cos", "is_weekend", "is_public_holiday", "location_type"],
+      "context_features": [],
       "serving_status": "experimental"
+    },
+    "markov_wait": {
+      "enabled": false,
+      "sequence_features": ["occupied_ports", "total_ports"],
+      "context_features": ["hour_sin", "hour_cos", "dow_sin", "dow_cos", "is_weekend", "is_public_holiday"],
+      "serving_status": "experimental_probability_layer"
     },
     "transformer": {
       "enabled": false,
@@ -82,7 +88,7 @@
     "Replace UNRESOLVED deployment_region with the actual station region.",
     "For every candidate domain, approve/remove fields, source, granularity, timezone, freshness and missing-value handling.",
     "Build a versioned enriched dataset and verify that every selected field is available at inference time.",
-    "For DES/RDM, define port/session lifecycle events, connector compatibility, data freshness, and the ground-truth session end timestamp.",
+    "For DES/RDM, define port/session lifecycle events, connector compatibility, data freshness, and disconnect_at as the ground-truth port-release timestamp; done_charging_at is not port release.",
     "Change only the relevant model profile enabled flag after data and privacy review.",
     "Run temporal backtest, calibration, capacity and fairness checks before production promotion."
   ]

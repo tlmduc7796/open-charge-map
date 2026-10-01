@@ -11,7 +11,7 @@ Creates a temporal feature table with:
 - Rush hour flags
 - Weekend/workday classification
 
-Output: ml/artifacts/calendar_features.parquet
+Output: ml/data/derived/calendar/calendar_features_<region>.parquet
 
 Note: While UrbanEV data is from Germany, we generate BOTH German and
 Vietnamese calendars. German calendar aligns with UrbanEV for training.
@@ -237,7 +237,7 @@ def main(argv: list[str] | None = None) -> None:
         help="Calendar region (default: germany for UrbanEV alignment)",
     )
     parser.add_argument(
-        "--output-dir", default="ml/artifacts",
+        "--output-dir", default="ml/data/derived/calendar",
         help="Output directory",
     )
     args = parser.parse_args(argv)

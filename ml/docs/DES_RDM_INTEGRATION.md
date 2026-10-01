@@ -1,5 +1,10 @@
 # DES + residual-duration integration
 
+For the active implementation order—frontend deterministic Queue Lab, then
+Monte Carlo DES, then ACN-Data/RDM—see
+[`QUEUE_LAB_DES_ROADMAP.md`](QUEUE_LAB_DES_ROADMAP.md). This document remains
+the contract and safety boundary for DES/RDM.
+
 ## Decision boundary
 
 The system has two wait-time modes. They are not competing models and must not
@@ -104,8 +109,10 @@ DES result for a requester's compatible connector types.
 
 Each port reports `available`, `charging` or `offline`. A charging port needs a
 `session_id`; its remaining duration comes from
-`reported_remaining_charge_min`, or—only after a reviewed artifact is deployed—a
-Residual Duration Model. Queue entries represent vehicles physically confirmed
+`reported_remaining_port_release_min`, or—only after a reviewed artifact is deployed—a
+Residual Duration Model. The duration means until physical port release: a
+vehicle may have reached `doneChargingTime` but still occupy the port until its
+`disconnectTime`. Queue entries represent vehicles physically confirmed
 at the station and carry a connector requirement and expected duration.
 
 The result always carries these safety flags:
@@ -119,11 +126,12 @@ The result always carries these safety flags:
 
 `ml/src/train_residual_duration.py` currently prints the required data contract
 and refuses `--execute` because the session domain is still unapproved. The
-required ground truth is the eventual end timestamp of every completed session;
-the label at observation time is:
+required ground truth is the eventual physical port-release timestamp
+(`disconnectTime` for ACN-Data), not the last non-zero charging-current time
+(`doneChargingTime`). The label at observation time is:
 
 ```text
-remaining_charge_min = actual_session_end_at - observation_timestamp
+remaining_port_release_min = disconnect_at - observation_timestamp
 ```
 
 Rows from one session must never appear in both train and test. Compare a

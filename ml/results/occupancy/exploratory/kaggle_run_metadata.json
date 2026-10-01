@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "experiment_id": "urbanev-occupancy-residual-xgboost-exploratory-2026-10-01",
+  "decision": {
+    "status": "exploratory_only",
+    "deployment_eligible": false,
+    "next_model_training_authorized": false,
+    "summary": "Residual XGBoost is a source-domain benchmark only. Do not deploy it and do not train LSTM from this result."
+  },
+  "kaggle": {
+    "notebook": {
+      "ref": "not_recorded_in_repository",
+      "version": "not_recorded_in_repository",
+      "required_action": "Copy the Kaggle notebook URL/slug and its saved version number here when exporting the run."
+    },
+    "input_dataset": {
+      "slug": "khoitukieran/ocm-urbanev-processed",
+      "version": "not_recorded_in_repository",
+      "required_action": "Copy the immutable Kaggle dataset version number used by the notebook here."
+    }
+  },
+  "code": {
+    "git_commit": "53f30a836410ec029dee9f8a45723f0582c59c06",
+    "archive": "open-charge-map-ml-code.zip",
+    "archive_sha256": "a1a82bc20e495b12920d28d9b4eeae58a0a90f32f7c802af8dfbf69e66771185"
+  },
+  "metrics_report": "occupancy_exploratory_benchmark.json",
+  "dataset_path_in_run": "/kaggle/input/datasets/khoitukieran/ocm-urbanev-processed/urbanev_processed.parquet"
+}
