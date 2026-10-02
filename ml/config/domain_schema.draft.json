@@ -1,8 +1,30 @@
 {
-  "schema_version": "draft-1",
-  "purpose": "Review contract only. Do not enable training until team approval.",
+  "schema_version": "data-contract-2",
+  "purpose": "Canonical source-contract review. Models consume versioned dataset products, never vendor raw files.",
   "deployment_region": "UNRESOLVED",
-  "canonical_keys": ["timestamp", "entity_id", "split"],
+  "canonical_keys": ["observed_at", "received_at", "station_id", "port_id", "source", "schema_version", "quality_flag", "is_backfilled", "split"],
+  "canonical_products": {
+    "occupancy_history": {
+      "grain": "station snapshot",
+      "required_columns": ["observed_at", "received_at", "station_id", "occupied_ports", "available_ports", "offline_ports", "total_ports", "occupancy_ratio", "source", "schema_version", "quality_flag", "is_backfilled"],
+      "split_rule": "strictly temporal by observed_at"
+    },
+    "sessions": {
+      "grain": "charging session",
+      "required_columns": ["session_id", "station_id", "port_id", "connector_type", "connection_at", "done_charging_at", "disconnect_at", "is_censored", "censoring_at", "source", "schema_version", "quality_flag"],
+      "split_rule": "all observations of a session inherit split from disconnect_at"
+    },
+    "session_telemetry": {
+      "grain": "session observation",
+      "required_columns": ["session_id", "station_id", "port_id", "observed_at", "received_at", "energy_delivered_kwh", "current_power_kw", "source", "schema_version", "quality_flag", "is_backfilled"],
+      "split_rule": "inherits the complete session split"
+    },
+    "port_status": {
+      "grain": "per-port snapshot/event",
+      "required_columns": ["observed_at", "received_at", "station_id", "port_id", "connector_type", "state", "event_id", "event_sequence", "source", "schema_version", "quality_flag", "is_backfilled"],
+      "split_rule": "strictly temporal by observed_at"
+    }
+  },
   "target": {
     "name": "occupancy_ratio",
     "availability": "approved_for_pipeline_only",
@@ -44,6 +66,23 @@
       "join_keys": ["entity_id", "timestamp"],
       "features": ["arrival_rate_per_hour", "session_duration_min", "soc_on_arrival", "vehicle_segment", "session_id", "port_id", "connector_type", "session_elapsed_min", "energy_delivered_kwh", "current_power_kw", "target_soc", "done_charging_at", "disconnect_at", "remaining_port_release_min"],
       "note": "Sensitive operational data; define consent, retention and aggregation before use. Per-session fields enable DES and residual-duration modelling only after telemetry contracts are approved."
+    }
+  },
+  "dataset_products": {
+    "occupancy_supervised": {
+      "builders": ["prepare_occupancy_history.py", "build_feature_dataset.py"],
+      "models": ["xgboost_baseline", "lstm_markov", "transformer"],
+      "label": "occupancy_ratio at +5...+60 minutes"
+    },
+    "rdm_session_observations": {
+      "builders": ["prepare_acn_data.py", "build_rdm_dataset.py"],
+      "models": ["residual_duration"],
+      "label": "disconnect_at - observed_at"
+    },
+    "connector_markov_states": {
+      "builders": ["build_markov_dataset.py"],
+      "models": ["markov_wait"],
+      "label": "next connector-aware availability state"
     }
   },
   "model_profiles": {

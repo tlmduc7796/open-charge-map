@@ -15,6 +15,13 @@ benchmarking; it is not proof that a model will perform well for Vietnamese
 stations. The backend intentionally remains on its safe persistence fallback
 until an approved model release exists.
 
+The executable data-first architecture is documented in
+[`docs/DATA_PIPELINE_ARCHITECTURE.md`](docs/DATA_PIPELINE_ARCHITECTURE.md).
+It separates source adapters (UrbanEV, ACN, future OCPP/operator exports),
+canonical data products, model-specific dataset builders and trainers.  The
+decision gates for LSTM/RDM-LSTM/Transformer are in
+[`docs/MODEL_CONTINUATION_GATES.md`](docs/MODEL_CONTINUATION_GATES.md).
+
 For the current delivery order—deterministic frontend Queue Lab first, then
 Monte Carlo DES, then ACN-Data/RDM—read
 [`docs/QUEUE_LAB_DES_ROADMAP.md`](docs/QUEUE_LAB_DES_ROADMAP.md). It also records why the
@@ -59,6 +66,14 @@ none starts model training by default.
 
 # Print a training plan only. This does not train.
 .\.venv\Scripts\python.exe ml\src\train_occupancy.py
+
+# Canonical data adapters and real-data dataset builders.
+.\.venv\Scripts\python.exe ml\src\prepare_occupancy_history.py --help
+.\.venv\Scripts\python.exe ml\src\prepare_acn_data.py --help
+.\.venv\Scripts\python.exe ml\src\build_rdm_dataset.py --help
+.\.venv\Scripts\python.exe ml\src\train_rdm_quantile.py
+.\.venv\Scripts\python.exe ml\src\build_markov_dataset.py --help
+.\.venv\Scripts\python.exe ml\src\train_markov.py
 
 # The legacy trainer remains for artifact-format work; do not promote an UrbanEV
 # result to backend serving.
@@ -165,7 +180,11 @@ This prevents accidental online learning, leakage and poisoned observations.
 | `train_lstm_markov.py` | Hybrid LSTM occupancy regression using the frozen seasonal dataset | Phase 05A; opt-in |
 | `train_transformer.py` | generic multi-domain Transformer, driven by reviewed schema | Phase 3; disabled draft |
 | `train_foundation.py` | Chronos/TimesFM data/licence/GPU gate and provider handoff | Phase 4; research-only |
-| `train_residual_duration.py` | session-duration data gate for future DES residual-duration model | telemetry-gated; disabled draft |
+| `data_pipeline/adapters.py` | source-specific UrbanEV/ACN normalization into canonical tables | executable; no protected API calls |
+| `data_pipeline/occupancy.py`, `rdm.py`, `markov.py` | leakage-safe supervised dataset builders | executable after valid source exports exist |
+| `train_rdm_quantile.py` | XGBoost P10/P50/P90 port-release RDM trainer | executable; artifact remains experimental until promotion review |
+| `train_markov.py` | connector-aware aggregate transition estimator | executable fallback experiment |
+| `train_residual_duration.py` | compatibility alias for `train_rdm_quantile.py` | maintained for old commands |
 
 `ml/notebooks/` intentionally contains notebook guidance rather than duplicated
 code. Add notebook outputs there only when they call these modules.

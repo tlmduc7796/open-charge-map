@@ -125,6 +125,7 @@ def train(
     max_train_rows: int | None = None,
     seed: int = 42,
     prediction_mode: str = "direct",
+    evaluate_test: bool = False,
 ) -> dict[str, object]:
     """Train a source-domain artifact for format checks, never UrbanEV serving."""
     if prediction_mode not in PREDICTION_MODES:
@@ -144,7 +145,7 @@ def train(
         # for the final benchmark because it changes the training distribution.
         train_frame = train_frame.sample(n=max_train_rows, random_state=seed).sort_index()
     val_frame = frame.loc[frame["split"] == "val"]
-    test_frame = frame.loc[frame["split"] == "test"]
+    test_frame = frame.loc[frame["split"] == "test"] if evaluate_test else None
 
     try:
         from xgboost import XGBRegressor
@@ -171,27 +172,39 @@ def train(
         if prediction_mode == "residual_to_persistence":
             train_target = train_target - train_frame["lag_1"]
         model.fit(train_frame.loc[:, feature_names], train_target)
-        test_pred = _prediction_from_model(
-            model.predict(test_frame.loc[:, feature_names]),
-            test_frame,
-            prediction_mode=prediction_mode,
-        )
         val_pred = _prediction_from_model(
             model.predict(val_frame.loc[:, feature_names]),
             val_frame,
             prediction_mode=prediction_mode,
         )
-        test_metrics: dict[str, object] = {
-            "persistence": _metrics(test_frame[target], _persistence(test_frame)),
-            "xgboost": _metrics(test_frame[target], test_pred),
-            "validation_xgboost": _metrics(val_frame[target], val_pred),
+        horizon_metrics: dict[str, object] = {
+            "validation": {
+                "persistence": _metrics(val_frame[target], _persistence(val_frame)),
+                "xgboost": _metrics(val_frame[target], val_pred),
+            }
         }
         seasonal_column = SEASONAL_PRIOR_FEATURES[HORIZONS_MIN.index(horizon)]
         if seasonal_column in frame:
-            test_metrics["seasonal_naive"] = _metrics(
-                test_frame[target], test_frame[seasonal_column].to_numpy(dtype=float)
+            horizon_metrics["validation"]["seasonal_naive"] = _metrics(
+                val_frame[target], val_frame[seasonal_column].to_numpy(dtype=float)
             )
-        metrics[str(horizon)] = test_metrics
+        if evaluate_test:
+            assert test_frame is not None
+            test_pred = _prediction_from_model(
+                model.predict(test_frame.loc[:, feature_names]),
+                test_frame,
+                prediction_mode=prediction_mode,
+            )
+            test_metrics: dict[str, object] = {
+                "persistence": _metrics(test_frame[target], _persistence(test_frame)),
+                "xgboost": _metrics(test_frame[target], test_pred),
+            }
+            if seasonal_column in frame:
+                test_metrics["seasonal_naive"] = _metrics(
+                    test_frame[target], test_frame[seasonal_column].to_numpy(dtype=float)
+                )
+            horizon_metrics["test_exploratory"] = test_metrics
+        metrics[str(horizon)] = horizon_metrics
         models[horizon] = model
         features_by_horizon[horizon] = feature_names
 
@@ -243,6 +256,10 @@ def train(
         "target": "occupancy_ratio",
         "calibration": "10-bin reliability ECE plus OLS observed-on-predicted slope/intercept",
         "metrics": metrics,
+        "test_accessed": evaluate_test,
+        "test_status": (
+            "exploratory_until_protocol_is_frozen" if evaluate_test else "not_accessed"
+        ),
         "source_feature_metadata": str(dataset_path.with_suffix(".meta.json")),
         "serving_ready": False,
         "release_status": "exploratory_source_domain_only",
@@ -275,6 +292,11 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--prediction-mode", choices=PREDICTION_MODES, default="direct")
     parser.add_argument(
+        "--evaluate-test",
+        action="store_true",
+        help="Explicitly access test and label the run exploratory until the protocol is frozen.",
+    )
+    parser.add_argument(
         "--execute", action="store_true", help="Actually train and write artifacts."
     )
     args = parser.parse_args()
@@ -284,6 +306,7 @@ def main() -> None:
         "will_train": args.execute,
         "max_train_rows": args.max_train_rows,
         "prediction_mode": args.prediction_mode,
+        "test_will_be_accessed": args.evaluate_test,
     }
     if not args.execute:
         print(
@@ -296,6 +319,7 @@ def main() -> None:
         max_train_rows=args.max_train_rows,
         seed=args.seed,
         prediction_mode=args.prediction_mode,
+        evaluate_test=args.evaluate_test,
     )
     print(json.dumps({**plan, **result}, indent=2))
 

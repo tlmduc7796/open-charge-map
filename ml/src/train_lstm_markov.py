@@ -151,6 +151,7 @@ def run_training(
     batch_size: int,
     learning_rate: float,
     seed: int,
+    evaluate_test: bool = False,
 ) -> dict[str, object]:
     try:
         import torch
@@ -167,7 +168,7 @@ def run_training(
     frame = pd.read_parquet(dataset_path)
     train_parts = build_sequences(frame, split="train")
     val_parts = build_sequences(frame, split="val")
-    test_parts = build_sequences(frame, split="test")
+    test_parts = build_sequences(frame, split="test") if evaluate_test else None
 
     class HybridLSTMNet(nn.Module):
         def __init__(self) -> None:
@@ -196,7 +197,11 @@ def run_training(
         shuffle=True,
     )
     val_tensors = tuple(torch.from_numpy(part).to(device) for part in val_parts)
-    test_tensors = tuple(torch.from_numpy(part).to(device) for part in test_parts)
+    test_tensors = (
+        tuple(torch.from_numpy(part).to(device) for part in test_parts)
+        if test_parts is not None
+        else None
+    )
     history: list[dict[str, float]] = []
     for epoch in range(1, epochs + 1):
         model.train()
@@ -242,7 +247,11 @@ def run_training(
         ],
         "loss": "SmoothL1 regression loss on bounded occupancy_ratio",
         "history": history,
-        "test_metrics": _regression_metrics(model, test_tensors),
+        "validation_metrics": _regression_metrics(model, val_tensors),
+        "test_accessed": evaluate_test,
+        "test_status": (
+            "exploratory_until_protocol_is_frozen" if evaluate_test else "not_accessed"
+        ),
         "device": str(device),
         "markov_status": (
             "not_trained; Phase 05B must train and calibrate transition probabilities separately"
@@ -252,6 +261,8 @@ def run_training(
             "No calibration, seasonal-naive benchmark, or serving adapter is approved yet.",
         ],
     }
+    if test_tensors is not None:
+        metadata["test_metrics"] = _regression_metrics(model, test_tensors)
     metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     return {"model": str(model_path), "metadata": str(metadata_path), "final": history[-1]}
 
@@ -274,6 +285,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA_PATH)
     parser.add_argument("--execute", action="store_true")
+    parser.add_argument("--evaluate-test", action="store_true")
     args = parser.parse_args()
     schema = load_domain_schema(args.schema)
     plan = schema.training_requirements("lstm_markov")
@@ -303,6 +315,7 @@ def main() -> None:
                 batch_size=args.batch_size,
                 learning_rate=args.learning_rate,
                 seed=args.seed,
+                evaluate_test=args.evaluate_test,
             ),
             indent=2,
         )
