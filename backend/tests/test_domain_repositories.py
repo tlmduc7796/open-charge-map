@@ -9,14 +9,14 @@ def test_phase5_data_loads_with_complete_station_coverage() -> None:
     vehicles = domain_data.vehicles.all()
     statuses = domain_data.station_statuses.all()
 
-    assert len(stations) == 16
+    assert len(stations) == 3
     assert len(vehicles) == 3
     assert {station.station_id for station in stations} == {
         status.station_id for status in statuses
     }
     assert len(domain_data.planned_arrivals.all()) == 4
     assert domain_data.queue_assumptions.baseline_rate("ST_EVO_LAVIDA_Q7") == 0.6
-    assert len(domain_data.routes.all()) == 16
+    assert len(domain_data.routes.all()) == 3
     assert len(domain_data.demo_events.all()) == 4
     assert len(domain_data.demo_scenarios.all()) == 4
 

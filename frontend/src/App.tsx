@@ -4,6 +4,7 @@ import { api } from "./api";
 import JourneyForm from "./components/JourneyForm";
 import MapView from "./components/MapView";
 import RecommendationList from "./components/RecommendationList";
+import QueueLab from "./components/QueueLab";
 import StationDetails from "./components/StationDetails";
 import StatusBar from "./components/StatusBar";
 import type {
@@ -45,7 +46,6 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
 
   const scenario = scenarios.find((item) => item.scenario_id === scenarioId) ?? scenarios[0];
-  const selectedVehicle = vehicles.find((item) => item.vehicle_id === vehicleId) ?? vehicles[0] ?? null;
 
   const refreshStatuses = useCallback(async (stationList: Station[]) => {
     const records = await Promise.all(
@@ -255,7 +255,8 @@ export default function App() {
       {error && <div className="error-banner" role="alert"><span>{error}</span><button onClick={() => setError(null)}>Đóng</button></div>}
       {modelStatus && !modelStatus.release_ready && (
         <div className="fallback-banner" role="status">
-          Occupancy model chưa sẵn sàng — backend đang dùng persistence fallback cho demo.
+          Occupancy model chưa có bản release đã xác thực — backend đang dùng persistence fallback cho demo.
+          {modelStatus.flags.length ? ` (${modelStatus.flags.join(", ")})` : ""}
         </div>
       )}
 
@@ -267,6 +268,7 @@ export default function App() {
             scenario={scenario}
             vehicleId={vehicleId}
             initialSoc={initialSoc}
+            targetSoc={targetSoc}
             applyEvents={applyEvents}
             origin={origin ?? scenario.origin}
             destination={destination ?? scenario.destination}
@@ -275,6 +277,7 @@ export default function App() {
             onScenarioChange={changeScenario}
             onVehicleChange={setVehicleId}
             onInitialSocChange={setInitialSoc}
+            onTargetSocChange={setTargetSoc}
             onApplyEventsChange={setApplyEvents}
             onOriginChange={setOrigin}
             onDestinationChange={setDestination}
@@ -287,7 +290,6 @@ export default function App() {
             items={recommendation?.recommendations ?? []}
             exclusions={recommendation?.excluded_candidates ?? []}
             stations={stations}
-            vehicle={selectedVehicle}
             selectedStationId={selectedStationId}
             hasRun={recommendation !== null}
             onSelect={(item) => void selectRecommendation(item)}
@@ -326,6 +328,7 @@ export default function App() {
           />
         </section>
       </div>
+      <QueueLab />
     </main>
   );
 }

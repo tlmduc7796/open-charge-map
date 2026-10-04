@@ -34,6 +34,10 @@ export default function StationDetails({
         {status && <span className={`availability-dot ${status.operational_ports === 0 ? "offline" : status.available_ports > 0 ? "available" : "busy"}`} />}
       </div>
 
+      {properties.notes.length > 0 && (
+        <div className="notice">{properties.notes.join(" ")}</div>
+      )}
+
       <div className="detail-grid">
         <div><span>Đầu sạc</span><strong>{properties.connectors.map((item) => `${item.type} ${item.max_power_kw} kW ×${item.count}`).join(", ")}</strong></div>
         <div><span>Cổng hoạt động</span><strong>{status ? `${status.operational_ports}/${status.total_ports}` : "—"}</strong></div>

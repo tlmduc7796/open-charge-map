@@ -44,8 +44,6 @@ export const vehicle: Vehicle = {
   model: "VF 5",
   variant: "Plus",
   battery_capacity_kwh: 37.23,
-  usable_battery_kwh: 37.23,
-  consumption_wh_km: 124.1,
   max_ac_power_kw: 6.6,
   max_dc_power_kw: 50,
   reserve_soc: 0.1,

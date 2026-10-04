@@ -2,22 +2,24 @@
 
 from __future__ import annotations
 
+import inspect
 import math
-from datetime import datetime
 from typing import Protocol
 
 from backend.app.domain.models import OccupancyForecastResult, StationStatus
 
 
 class OccupancyPredictor(Protocol):
-    """Adapter contract for the Phase 04 model (see ``occupancy_model.py``).
+    """Adapter contract for the future Phase 04 model artifact."""
 
-    ``predict`` gets 12 occupancy ratios (oldest first) and a horizon of 5, 10 or 15
-    minutes. A predictor whose features include time-of-day sets ``uses_timestamp = True``
-    and must then also accept ``observed_at`` (the time of the newest observation).
-    """
-
-    def predict(self, occupancy_history: tuple[float, ...], horizon_min: int) -> float: ...
+    def predict(
+        self,
+        occupancy_history: tuple[float, ...],
+        horizon_min: int,
+        *,
+        station_id: str | None = None,
+        forecast_at: object | None = None,
+    ) -> float: ...
 
 
 class OccupancyForecastService:
@@ -26,13 +28,18 @@ class OccupancyForecastService:
         predictor: OccupancyPredictor | None = None,
         *,
         lookback_steps: int = 12,
-        max_model_horizon_min: int = 15,
+        model_horizons_min: tuple[int, ...] = tuple(range(5, 61, 5)),
     ) -> None:
-        if lookback_steps <= 0 or max_model_horizon_min <= 0:
+        if (
+            lookback_steps <= 0
+            or not model_horizons_min
+            or any(value <= 0 for value in model_horizons_min)
+        ):
             raise ValueError("forecast lookback and horizon must be positive")
         self._predictor = predictor
         self._lookback_steps = lookback_steps
-        self._max_model_horizon_min = max_model_horizon_min
+        self._model_horizons_min = tuple(sorted(set(model_horizons_min)))
+        self._max_model_horizon_min = self._model_horizons_min[-1]
 
     @property
     def model_loaded(self) -> bool:
@@ -44,7 +51,6 @@ class OccupancyForecastService:
         *,
         horizon_min: int,
         occupancy_history: tuple[float, ...] | None = None,
-        observed_at: datetime | None = None,
     ) -> OccupancyForecastResult:
         if horizon_min <= 0:
             raise ValueError("horizon_min must be positive")
@@ -73,7 +79,9 @@ class OccupancyForecastService:
             if occupancy_history is None:
                 flags.append("SYNTHETIC_HISTORY")
             try:
-                raw_prediction = float(self._call_predictor(history, used_horizon, observed_at))
+                raw_prediction = float(
+                    self._predict(history, used_horizon, status.station_id, status.timestamp)
+                )
                 if not math.isfinite(raw_prediction):
                     raise ValueError("model prediction must be finite")
                 prediction = min(1.0, max(0.0, float(raw_prediction)))
@@ -100,26 +108,31 @@ class OccupancyForecastService:
             flags,
         )
 
-    def _call_predictor(
+    def _aligned_horizon(self, requested_horizon_min: int) -> int:
+        for horizon in self._model_horizons_min:
+            if requested_horizon_min <= horizon:
+                return horizon
+        return self._max_model_horizon_min
+
+    def _predict(
         self,
         history: tuple[float, ...],
-        horizon_min: int,
-        observed_at: datetime | None,
+        horizon: int,
+        station_id: str,
+        forecast_at: object,
     ) -> float:
+        """Pass serving context to newer predictors without breaking old adapters."""
         assert self._predictor is not None
-        if getattr(self._predictor, "uses_timestamp", False):
-            if observed_at is None:
-                raise ValueError("this model needs observed_at for its time features")
-            predict = self._predictor.predict
-            return predict(history, horizon_min, observed_at=observed_at)  # type: ignore[call-arg]
-        return self._predictor.predict(history, horizon_min)
-
-    def _aligned_horizon(self, requested_horizon_min: int) -> int:
-        if requested_horizon_min <= 5:
-            return 5
-        if requested_horizon_min <= 10:
-            return 10
-        return self._max_model_horizon_min
+        parameters = inspect.signature(self._predictor.predict).parameters
+        if "station_id" in parameters or any(
+            parameter.kind == inspect.Parameter.VAR_KEYWORD for parameter in parameters.values()
+        ):
+            return float(
+                self._predictor.predict(
+                    history, horizon, station_id=station_id, forecast_at=forecast_at
+                )
+            )
+        return float(self._predictor.predict(history, horizon))
 
     def _prepare_history(
         self,

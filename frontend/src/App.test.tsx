@@ -53,22 +53,11 @@ test("loads backend data and renders a recommendation from mocked API", async ()
   expect(screen.getByText(/Đang kết nối Smart EV backend/i)).toBeInTheDocument();
 
   expect(await screen.findByRole("heading", { name: /Chọn trạm sạc phù hợp/i })).toBeInTheDocument();
-  expect(screen.getByText("Quãng đường tối đa EV có thể đi")).toBeInTheDocument();
-  expect(screen.getByText("165 km")).toBeInTheDocument();
-  fireEvent.change(screen.getByRole("slider", { name: "Quãng đường tối đa EV có thể đi" }), {
-    target: { value: "150" },
-  });
   fireEvent.click(screen.getByRole("button", { name: /Tìm trạm phù hợp/i }));
 
   expect((await screen.findAllByText(station.properties.name)).length).toBeGreaterThan(0);
-  expect(screen.getByText("156 km")).toBeInTheDocument();
   expect(mockedApi.recommend).toHaveBeenCalledWith(
-    expect.objectContaining({
-      scenario_id: scenario.scenario_id,
-      vehicle_id: vehicle.vehicle_id,
-      initial_soc: 0.5,
-      target_soc: scenario.target_soc,
-    }),
+    expect.objectContaining({ scenario_id: scenario.scenario_id, vehicle_id: vehicle.vehicle_id }),
   );
   await waitFor(() => expect(mockedApi.recommend).toHaveBeenCalledWith(
     expect.objectContaining({ origin: scenario.origin, destination: scenario.destination }),

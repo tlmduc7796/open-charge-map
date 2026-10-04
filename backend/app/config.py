@@ -71,8 +71,6 @@ class Settings:
             self.data_dir / "routes" / "route_base_direct.json",
             self.data_dir / "routes" / "route_via_lavida.json",
             self.data_dir / "routes" / "route_via_deutsches_haus.json",
-            self.data_dir / "ml" / "urbanev" / "source_manifest.json",
-            self.data_dir / "ml" / "urbanev" / "raw" / "UrbanEVDataset.zip",
         )
 
 

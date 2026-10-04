@@ -16,6 +16,21 @@ from backend.app.domain.phase7_models import (
     RouteRequest,
     RouteResult,
 )
+from backend.app.domain.queue_lab import (
+    QueueLabSimulationRequest,
+    QueueLabSimulationResult,
+)
+from backend.app.domain.queue_lab import (
+    demo_request as queue_lab_demo_request,
+)
+from backend.app.domain.queue_lab import (
+    simulate_queue_lab as run_queue_lab,
+)
+from backend.app.domain.realtime import (
+    DESWaitRequest,
+    DESWaitResult,
+    StationTelemetrySnapshot,
+)
 
 router = APIRouter()
 
@@ -135,7 +150,81 @@ def apply_event(event_id: str, request: Request):
 def reset_demo(request: Request) -> dict[str, str]:
     request.app.state.runtime_state.reset()
     request.app.state.planned_arrival_store.reset()
+    request.app.state.realtime_telemetry_store.reset()
     return {"status": "reset"}
+
+
+@router.put(
+    "/realtime/stations/{station_id}/telemetry",
+    response_model=StationTelemetrySnapshot,
+    tags=["realtime"],
+)
+def upsert_station_telemetry(
+    station_id: str,
+    payload: StationTelemetrySnapshot,
+    request: Request,
+) -> StationTelemetrySnapshot:
+    """Adapter endpoint for the future frontend simulator or station provider."""
+    try:
+        request.app.state.domain_data.stations.get(station_id)
+        if payload.station_id != station_id:
+            raise ValueError("path station_id does not match telemetry station_id")
+        return request.app.state.realtime_telemetry_store.upsert(payload)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="station not found") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.get(
+    "/realtime/stations/{station_id}/telemetry",
+    response_model=StationTelemetrySnapshot,
+    tags=["realtime"],
+)
+def station_telemetry(station_id: str, request: Request) -> StationTelemetrySnapshot:
+    try:
+        return request.app.state.realtime_telemetry_store.get(station_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="telemetry snapshot not found") from exc
+
+
+@router.post(
+    "/realtime/stations/{station_id}/simulate-wait",
+    response_model=DESWaitResult,
+    tags=["realtime"],
+)
+def simulate_realtime_wait(
+    station_id: str,
+    payload: DESWaitRequest,
+    request: Request,
+) -> DESWaitResult:
+    try:
+        snapshot = request.app.state.realtime_telemetry_store.get(station_id)
+        return request.app.state.des_wait_simulator.estimate(snapshot, payload)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="telemetry snapshot not found") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.get(
+    "/queue-lab/default-scenario",
+    response_model=QueueLabSimulationRequest,
+    tags=["queue-lab"],
+)
+def queue_lab_default_scenario() -> QueueLabSimulationRequest:
+    """Return the documented fixed-duration scenario whose wait is 28 minutes."""
+    return queue_lab_demo_request()
+
+
+@router.post(
+    "/queue-lab/simulate",
+    response_model=QueueLabSimulationResult,
+    tags=["queue-lab"],
+)
+def simulate_queue_lab(payload: QueueLabSimulationRequest) -> QueueLabSimulationResult:
+    """Run the standalone deterministic / synthetic Monte Carlo queue simulator."""
+    return run_queue_lab(payload)
 
 
 @router.get("/planned-arrivals", tags=["planned-arrivals"])
@@ -177,9 +266,7 @@ def commit_planned_arrival(
     try:
         data.stations.get(payload.station_id)
         data.vehicles.get(payload.vehicle_id)
-        eta_at = payload.departure_at + timedelta(
-            seconds=payload.route_duration_to_station_s
-        )
+        eta_at = payload.departure_at + timedelta(seconds=payload.route_duration_to_station_s)
         create_request = PlannedArrivalCreateRequest(
             station_id=payload.station_id,
             vehicle_id=payload.vehicle_id,
@@ -237,15 +324,14 @@ def model_status(request: Request) -> ModelStatus:
     preprocessor_available = settings.model_preprocessor_path.is_file()
     metadata_available = settings.model_meta_path.is_file()
     model_loaded = request.app.state.occupancy_forecast_service.model_loaded
-    load = request.app.state.model_load
-    meta = load.predictor.meta if load.predictor is not None else None
+    metadata = request.app.state.model_metadata
     artifacts_available = model_available and preprocessor_available and metadata_available
     release_ready = artifacts_available and model_loaded
     flags: tuple[str, ...] = ()
     if not artifacts_available:
-        flags = ("PHASE_04_ARTIFACTS_UNAVAILABLE",)
+        flags = (request.app.state.model_load_error or "PHASE_04_ARTIFACTS_UNAVAILABLE",)
     elif not model_loaded:
-        flags = ("MODEL_ADAPTER_NOT_LOADED",)
+        flags = (request.app.state.model_load_error or "MODEL_ADAPTER_NOT_LOADED",)
     return ModelStatus(
         prediction_source="model" if model_loaded else "persistence",
         model_artifact_available=model_available,
@@ -254,7 +340,9 @@ def model_status(request: Request) -> ModelStatus:
         model_adapter_loaded=model_loaded,
         release_ready=release_ready,
         flags=flags,
-        model_name=meta.model_name if meta else None,
-        model_version=meta.model_version if meta else None,
-        load_error=load.error,
+        model_version=metadata.get("format_version") if metadata else None,
+        model_profile=metadata.get("profile") if metadata else None,
+        serving_reason=(
+            "Validated model release loaded" if metadata else "No approved ML release deployed"
+        ),
     )

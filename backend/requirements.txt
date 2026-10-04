@@ -1,5 +1,7 @@
 fastapi==0.141.1
 httpx==0.28.1
-joblib==1.6.0
 pydantic==2.13.5
 uvicorn[standard]==0.52.0
+# Required only when a validated Phase 04 XGBoost release bundle is deployed.
+joblib>=1.3.0
+xgboost>=2.0.0

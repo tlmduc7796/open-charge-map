@@ -25,13 +25,6 @@ class LineStringGeometry(DomainModel):
     coordinates: tuple[tuple[float, float], ...] = Field(min_length=2)
 
 
-class RouteLeg(DomainModel):
-    """Distance and duration of one segment between consecutive route points."""
-
-    distance_m: float = Field(ge=0)
-    duration_s: float = Field(ge=0)
-
-
 class RouteRecord(DomainModel):
     route_id: str = Field(min_length=1)
     provider: Literal["goong", "osrm"]
@@ -56,9 +49,6 @@ class RouteResult(DomainModel):
     geometry: LineStringGeometry
     distance_m: float = Field(gt=0)
     duration_s: float = Field(gt=0)
-    # Per-segment metrics from live providers; empty for cached routes, which
-    # only store totals (station metrics are then interpolated from geometry).
-    legs: tuple[RouteLeg, ...] = ()
     flags: tuple[str, ...] = ()
 
 
@@ -244,6 +234,6 @@ class ModelStatus(DomainModel):
     model_adapter_loaded: bool
     release_ready: bool
     flags: tuple[str, ...]
-    model_name: str | None = None
     model_version: str | None = None
-    load_error: str | None = None
+    model_profile: str | None = None
+    serving_reason: str | None = None

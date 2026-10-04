@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from time import perf_counter
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.api import router
@@ -13,7 +13,12 @@ from backend.app.config import load_settings
 from backend.app.domain import load_domain_data
 from backend.app.domain.forecasting import OccupancyForecastService
 from backend.app.domain.geocoding import GeocodingService, GoongGeocodingProvider
-from backend.app.domain.occupancy_model import load_occupancy_model
+from backend.app.domain.model_artifacts import ArtifactValidationError, JoblibOccupancyPredictor
+from backend.app.domain.realtime import (
+    DiscreteEventWaitSimulator,
+    RealtimeTelemetryStore,
+    ResidualDurationService,
+)
 from backend.app.domain.recommendation import (
     RecommendationService,
     RecommendationThresholds,
@@ -25,7 +30,6 @@ from backend.app.domain.routing import (
 )
 from backend.app.domain.runtime import PlannedArrivalStore, RuntimeStateStore
 from backend.app.domain.wait_estimation import WaitEstimator
-from backend.app.health import run_startup_checks
 from backend.app.logging_config import configure_logging
 
 settings = load_settings()
@@ -42,10 +46,33 @@ app.add_middleware(
 )
 app.state.settings = settings
 app.state.domain_data = load_domain_data(settings.data_dir)
-app.state.model_load = load_occupancy_model(settings)
-app.state.occupancy_forecast_service = OccupancyForecastService(
-    app.state.model_load.predictor
-)
+app.state.model_metadata = None
+app.state.model_load_error = None
+try:
+    predictor, metadata = JoblibOccupancyPredictor.from_files(
+        settings.model_artifact_path,
+        settings.model_preprocessor_path,
+        settings.model_meta_path,
+    )
+    app.state.occupancy_forecast_service = OccupancyForecastService(
+        predictor, model_horizons_min=tuple(metadata["horizons_min"])
+    )
+    app.state.model_metadata = metadata
+    logger.info("occupancy_model_loaded profile=%s", metadata.get("profile"))
+except (ArtifactValidationError, FileNotFoundError):
+    app.state.occupancy_forecast_service = OccupancyForecastService()
+    if all(
+        path.is_file()
+        for path in (
+            settings.model_artifact_path,
+            settings.model_preprocessor_path,
+            settings.model_meta_path,
+        )
+    ):
+        app.state.model_load_error = "MODEL_RELEASE_INVALID"
+        logger.warning("occupancy model artifacts exist but failed validation")
+    else:
+        app.state.model_load_error = "PHASE_04_ARTIFACTS_UNAVAILABLE"
 app.state.wait_estimator = WaitEstimator(
     app.state.domain_data.queue_assumptions,
     scoring_wait_cap_min=settings.wait_scoring_cap_min,
@@ -54,13 +81,13 @@ app.state.runtime_state = RuntimeStateStore(
     app.state.domain_data.station_statuses,
     app.state.domain_data.demo_events,
 )
-app.state.planned_arrival_store = PlannedArrivalStore(
-    app.state.domain_data.planned_arrivals
-)
+app.state.planned_arrival_store = PlannedArrivalStore(app.state.domain_data.planned_arrivals)
+# No residual-duration artifact is loaded yet.  The simulator therefore accepts
+# provider-reported remaining durations only, and fails closed if they are absent.
+app.state.realtime_telemetry_store = RealtimeTelemetryStore()
+app.state.des_wait_simulator = DiscreteEventWaitSimulator(ResidualDurationService())
 goong_geocoding_provider = (
-    GoongGeocodingProvider(
-        settings.goong_api_key, timeout_s=settings.routing_timeout_s
-    )
+    GoongGeocodingProvider(settings.goong_api_key, timeout_s=settings.routing_timeout_s)
     if settings.goong_api_key
     else None
 )
@@ -94,28 +121,6 @@ app.state.recommendation_service = RecommendationService(
 app.include_router(router)
 
 
-def _log_startup_checks() -> None:
-    report = run_startup_checks(
-        settings,
-        app.state.domain_data,
-        app.state.occupancy_forecast_service,
-        model_load_error=app.state.model_load.error,
-    )
-    logger.info("startup_checks status=%s", report["status"])
-    for check in report["checks"]:
-        level = logging.INFO if check["status"] == "ok" else logging.WARNING
-        logger.log(
-            level,
-            "startup_check name=%s status=%s detail=%s",
-            check["name"],
-            check["status"],
-            check["detail"],
-        )
-
-
-_log_startup_checks()
-
-
 @app.middleware("http")
 async def integration_request_log(request, call_next):
     started_at = perf_counter()
@@ -142,16 +147,3 @@ def health() -> dict[str, str | bool]:
         "environment": settings.app_env,
         "demo_mode": settings.demo_mode,
     }
-
-
-@app.get("/health/checks", tags=["system"])
-def health_checks(response: Response) -> dict[str, object]:
-    report = run_startup_checks(
-        settings,
-        app.state.domain_data,
-        app.state.occupancy_forecast_service,
-        model_load_error=app.state.model_load.error,
-    )
-    if report["status"] == "fail":
-        response.status_code = 503
-    return report

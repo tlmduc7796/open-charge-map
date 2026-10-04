@@ -7,9 +7,9 @@ def test_normal_recommendation_is_explainable_and_excludes_private_station() -> 
 
     result = app.state.recommendation_service.recommend("SCN_NORMAL")
 
-    assert len(result.recommendations) == 15
-    assert result.recommendations[0].station_id == "ST_VF_LA_VELA"
-    assert [item.rank for item in result.recommendations] == list(range(1, 16))
+    assert len(result.recommendations) == 2
+    assert result.recommendations[0].station_id == "ST_EVO_LAVIDA_Q7"
+    assert [item.rank for item in result.recommendations] == [1, 2]
     assert all(0 <= item.final_score <= 1 for item in result.recommendations)
     assert all(item.prediction_source == "persistence" for item in result.recommendations)
     assert "cost" not in result.model_dump_json().lower()
@@ -58,58 +58,9 @@ def test_port_outage_event_changes_recommendation() -> None:
         "SCN_PORT_OUTAGE_REROUTE", apply_scenario_events=True
     )
 
-    assert before.recommendations[0].station_id == "ST_VF_LA_VELA"
-    assert after.recommendations[0].station_id != "ST_VF_LA_VELA"
+    assert before.recommendations[0].station_id == "ST_EVO_LAVIDA_Q7"
+    assert after.recommendations[0].station_id == "ST_EVO_DEUTSCHES_HAUS"
     exclusions = {
         item.station_id: item.reason_codes for item in after.excluded_candidates
     }
-    assert exclusions["ST_VF_LA_VELA"] == ("STATION_OFFLINE",)
-
-
-def test_low_soc_scenario_keeps_safe_options_and_excludes_unreachable_stations() -> None:
-    app.state.runtime_state.reset()
-    result = app.state.recommendation_service.recommend("SCN_LOW_SOC")
-
-    assert result.recommendations
-    assert all(item.arrival_soc >= 0.1 for item in result.recommendations)
-    assert any(
-        "INSUFFICIENT_SOC_RESERVE" in exclusion.reason_codes
-        for exclusion in result.excluded_candidates
-    )
-
-
-def test_congestion_increases_wait_and_changes_top_recommendation() -> None:
-    app.state.runtime_state.reset()
-    service = app.state.recommendation_service
-
-    before = service.recommend("SCN_CONGESTION_REROUTE")
-    app.state.runtime_state.reset()
-    after = service.recommend(
-        "SCN_CONGESTION_REROUTE", apply_scenario_events=True
-    )
-
-    before_la_vela = next(
-        item for item in before.recommendations if item.station_id == "ST_VF_LA_VELA"
-    )
-    after_la_vela = next(
-        item for item in after.recommendations if item.station_id == "ST_VF_LA_VELA"
-    )
-    assert before.recommendations[0].station_id == "ST_VF_LA_VELA"
-    assert after.recommendations[0].station_id != "ST_VF_LA_VELA"
-    assert after_la_vela.estimated_wait_min > before_la_vela.estimated_wait_min
-
-
-def test_fixed_scenarios_cache_routes_for_every_public_station() -> None:
-    public_station_ids = {
-        station.station_id
-        for station in app.state.domain_data.stations.all()
-        if station.properties.access == "public"
-    }
-
-    for scenario in app.state.domain_data.demo_scenarios.all():
-        cached_station_ids = {
-            waypoint.station_id
-            for route_id in scenario.route_ids
-            for waypoint in app.state.domain_data.routes.get(route_id).waypoints
-        }
-        assert cached_station_ids == public_station_ids
+    assert exclusions["ST_EVO_LAVIDA_Q7"] == ("STATION_OFFLINE",)

@@ -29,9 +29,7 @@ def deutsches_status() -> StationStatus:
 
 
 def test_persistence_forecast_uses_latest_occupancy(deutsches_status: StationStatus) -> None:
-    result = OccupancyForecastService().forecast_occupancy(
-        deutsches_status, horizon_min=10
-    )
+    result = OccupancyForecastService().forecast_occupancy(deutsches_status, horizon_min=10)
 
     assert result.prediction_source == "persistence"
     assert result.predicted_occupancy_ratio == 0.75
@@ -39,14 +37,12 @@ def test_persistence_forecast_uses_latest_occupancy(deutsches_status: StationSta
     assert result.flags == ("PERSISTENCE_FALLBACK",)
 
 
-def test_beyond_model_horizon_uses_fifteen_minute_proxy(
+def test_beyond_model_horizon_uses_sixty_minute_proxy(
     deutsches_status: StationStatus,
 ) -> None:
-    result = OccupancyForecastService().forecast_occupancy(
-        deutsches_status, horizon_min=30
-    )
+    result = OccupancyForecastService().forecast_occupancy(deutsches_status, horizon_min=65)
 
-    assert result.used_horizon_min == 15
+    assert result.used_horizon_min == 60
     assert "BEYOND_MODEL_HORIZON" in result.flags
     assert result.prediction_source == "persistence"
 
@@ -55,9 +51,7 @@ def test_model_adapter_gets_twelve_step_shape_and_clamps_output(
     deutsches_status: StationStatus,
 ) -> None:
     predictor = FixedPredictor(1.2)
-    result = OccupancyForecastService(predictor).forecast_occupancy(
-        deutsches_status, horizon_min=8
-    )
+    result = OccupancyForecastService(predictor).forecast_occupancy(deutsches_status, horizon_min=8)
 
     assert predictor.history_length == 12
     assert result.used_horizon_min == 10
