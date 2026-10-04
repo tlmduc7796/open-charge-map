@@ -12,7 +12,7 @@
         "lon": 106.7035683
       },
       "operator": "EV ONE",
-      "access": "private",
+      "access": "public",
       "technical": {
         "total_ports": 4,
         "connectors": [
