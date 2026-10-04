@@ -1,0 +1,183 @@
+from __future__ import annotations
+
+import argparse
+import re
+import subprocess
+import time
+from pathlib import Path
+
+from alembic import command
+from alembic.config import Config
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import make_url
+
+from data_platform.config import load_settings
+
+PACKAGE_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_SNAPSHOT = PACKAGE_ROOT / "data" / "bootstrap" / "current_database.sql"
+EXPECTED_COUNTS = {
+    "app_config": 0,
+    "connector_types": 2,
+    "port_status": 211,
+    "port_status_history": 211,
+    "ports": 826,
+    "predictions": 96,
+    "station_amenities": 714,
+    "station_external_refs": 14,
+    "station_live_metrics": 16,
+    "station_occupancy_5m": 4624,
+    "stations": 102,
+    "trip_events": 0,
+    "trip_positions": 0,
+    "trips": 0,
+    "vehicle_connectors": 0,
+    "vehicle_models": 0,
+}
+
+
+def _docker(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["docker", "compose", *args],
+        cwd=PACKAGE_ROOT,
+        check=check,
+        text=True,
+        capture_output=not check,
+    )
+
+
+def _wait_for_postgres() -> None:
+    for _ in range(60):
+        result = _docker(
+            "exec",
+            "-T",
+            "postgres",
+            "pg_isready",
+            "-U",
+            "smart_ev",
+            "-d",
+            "postgres",
+            check=False,
+        )
+        if result.returncode == 0:
+            return
+        time.sleep(1)
+    raise RuntimeError("PostgreSQL did not become ready within 60 seconds")
+
+
+def _ensure_database(database_name: str) -> None:
+    result = _docker(
+        "exec",
+        "-T",
+        "postgres",
+        "psql",
+        "-U",
+        "smart_ev",
+        "-d",
+        "postgres",
+        "-tAc",
+        f"SELECT 1 FROM pg_database WHERE datname = '{database_name}'",
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or "Unable to inspect PostgreSQL databases")
+    if result.stdout.strip() == "1":
+        return
+    _docker("exec", "-T", "postgres", "createdb", "-U", "smart_ev", database_name)
+
+
+def _database_url(database_name: str) -> str:
+    return make_url(load_settings().database_url).set(database=database_name).render_as_string(
+        hide_password=False
+    )
+
+
+def _migrate(database_url: str) -> None:
+    config = Config(PACKAGE_ROOT / "alembic.ini")
+    config.set_main_option("sqlalchemy.url", database_url)
+    command.upgrade(config, "head")
+
+
+def _table_counts(database_url: str) -> dict[str, int]:
+    engine = create_engine(database_url)
+    try:
+        with engine.connect() as connection:
+            return {
+                table: int(connection.scalar(text(f'SELECT count(*) FROM "{table}"')) or 0)
+                for table in EXPECTED_COUNTS
+            }
+    finally:
+        engine.dispose()
+
+
+def _restore(snapshot: Path, database_name: str) -> None:
+    with snapshot.open("rb") as source:
+        subprocess.run(
+            [
+                "docker",
+                "compose",
+                "exec",
+                "-T",
+                "postgres",
+                "psql",
+                "--quiet",
+                "-v",
+                "ON_ERROR_STOP=1",
+                "--single-transaction",
+                "-U",
+                "smart_ev",
+                "-d",
+                database_name,
+            ],
+            cwd=PACKAGE_ROOT,
+            stdin=source,
+            check=True,
+        )
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Create the database and restore the repository's complete demo snapshot."
+    )
+    parser.add_argument("--snapshot", type=Path, default=DEFAULT_SNAPSHOT)
+    parser.add_argument("--database-name", default="smart_ev_data")
+    args = parser.parse_args()
+
+    if not re.fullmatch(r"[A-Za-z0-9_]+", args.database_name):
+        raise ValueError("database name may contain only letters, digits and underscores")
+    snapshot = args.snapshot.resolve()
+    if not snapshot.is_file():
+        raise FileNotFoundError(f"database snapshot not found: {snapshot}")
+
+    _docker("up", "-d", "postgres")
+    _wait_for_postgres()
+    _ensure_database(args.database_name)
+    database_url = _database_url(args.database_name)
+    _migrate(database_url)
+
+    before = _table_counts(database_url)
+    populated = {table: count for table, count in before.items() if count}
+    if populated:
+        details = ", ".join(f"{table}={count}" for table, count in populated.items())
+        raise RuntimeError(
+            "Bootstrap requires an empty migrated database; existing rows found: " + details
+        )
+
+    _restore(snapshot, args.database_name)
+    actual = _table_counts(database_url)
+    if actual != EXPECTED_COUNTS:
+        differences = {
+            table: {"expected": EXPECTED_COUNTS[table], "actual": actual[table]}
+            for table in EXPECTED_COUNTS
+            if actual[table] != EXPECTED_COUNTS[table]
+        }
+        raise RuntimeError(f"restored row counts do not match snapshot: {differences}")
+
+    print(
+        "Database bootstrap complete: "
+        f"{actual['stations']} stations, {actual['ports']} ports, "
+        f"{actual['station_amenities']} amenities"
+    )
+
+
+if __name__ == "__main__":
+    main()

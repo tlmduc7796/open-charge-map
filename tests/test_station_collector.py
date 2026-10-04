@@ -1,16 +1,152 @@
 import json
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from scripts.collect_station_candidates import (
+    CollectorError,
+    collect_goong,
     deduplicate,
+    goong_search_centers,
     make_candidate,
+    osm_site_amenities,
     parse_evone_items,
     preserve_reviews,
+    request_overpass,
 )
 
 
 class StationCollectorTests(unittest.TestCase):
+    def test_osm_site_amenities_only_use_tags_on_the_station(self):
+        claims = osm_site_amenities(
+            {
+                "toilets": "yes",
+                "internet_access": "wlan",
+                "parking": "surface",
+                "shop": "convenience",
+            }
+        )
+
+        self.assertEqual(
+            {claim["code"] for claim in claims},
+            {"restroom", "wifi", "parking", "retail"},
+        )
+        self.assertTrue(all(claim["status"] == "provider_reported" for claim in claims))
+        self.assertEqual(osm_site_amenities({"vending": "parking_tickets"}), [])
+
+    def test_hcm_config_uses_only_pre_2025_city_search_areas(self):
+        config_path = (
+            Path(__file__).resolve().parents[1]
+            / "data_platform"
+            / "config"
+            / "hcm_station_collector.json"
+        )
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(config["scope"]["boundary_version"], "pre-2025")
+        self.assertEqual(
+            {bounds["name"] for bounds in config["search_bounds"]},
+            {"HCMC_SW", "HCMC_SE", "HCMC_NW", "HCMC_NE"},
+        )
+        excluded_names = {
+            "Thủ Dầu Một",
+            "Dĩ An",
+            "Thuận An",
+            "Bến Cát",
+            "Tân Uyên",
+            "Vũng Tàu",
+            "Bà Rịa",
+            "Phú Mỹ",
+            "Hồ Tràm - Xuyên Mộc",
+            "Côn Đảo",
+        }
+        self.assertTrue(
+            excluded_names.isdisjoint(center.get("name") for center in config["search_centers"])
+        )
+
+    def test_goong_grid_covers_bounds_with_multiple_centers(self):
+        config = {
+            "demo_bounds": {
+                "south": 10.0,
+                "west": 106.0,
+                "north": 10.1,
+                "east": 106.1,
+            },
+            "search_centers": [],
+            "goong_grid_spacing_km": 5,
+        }
+
+        centers = goong_search_centers(config)
+
+        self.assertEqual(len(centers), 9)
+        self.assertTrue(all(10.0 <= row["lat"] <= 10.1 for row in centers))
+        self.assertTrue(all(106.0 <= row["lon"] <= 106.1 for row in centers))
+
+    @mock.patch("scripts.collect_station_candidates.request_json")
+    def test_goong_collects_all_unique_predictions_without_global_cap(self, request_json):
+        predictions = [
+            {"place_id": f"place-{index}", "description": f"Station {index}"}
+            for index in range(3)
+        ]
+
+        def response(url, **kwargs):
+            if url == "autocomplete":
+                return {"predictions": predictions}
+            place_id = kwargs["params"]["place_id"]
+            index = int(place_id.rsplit("-", 1)[1])
+            return {
+                "result": {
+                    "name": f"Station {index}",
+                    "formatted_address": "TP.HCM",
+                    "geometry": {
+                        "location": {"lat": 10.75 + index * 0.001, "lng": 106.70}
+                    },
+                }
+            }
+
+        request_json.side_effect = response
+        config = {
+            "demo_bounds": {
+                "south": 10.7,
+                "west": 106.6,
+                "north": 10.9,
+                "east": 106.8,
+            },
+            "search_centers": [{"lat": 10.75, "lon": 106.70}],
+            "search_terms": ["trạm sạc xe điện"],
+            "goong_autocomplete_url": "autocomplete",
+            "goong_detail_url": "detail",
+            "http_timeout_s": 1,
+            "user_agent": "test",
+            "goong_max_details": 1,
+        }
+
+        candidates = collect_goong(config, "api-key")
+
+        self.assertEqual(len(candidates), 3)
+
+    @mock.patch("scripts.collect_station_candidates.time.sleep")
+    @mock.patch("scripts.collect_station_candidates.request_json")
+    def test_overpass_retries_with_fallback_endpoint(self, request_json, sleep):
+        request_json.side_effect = [CollectorError("busy"), {"elements": []}]
+        config = {
+            "overpass_url": "primary",
+            "overpass_fallback_urls": ["fallback"],
+            "overpass_max_attempts": 3,
+            "overpass_retry_base_s": 1,
+            "overpass_retry_max_s": 5,
+            "overpass_timeout_s": 1,
+            "http_timeout_s": 1,
+            "user_agent": "test",
+        }
+
+        result = request_overpass("query", config)
+
+        self.assertEqual(result, {"elements": []})
+        self.assertEqual(request_json.call_args_list[0].args[0], "primary")
+        self.assertEqual(request_json.call_args_list[1].args[0], "fallback")
+        sleep.assert_called_once_with(1)
+
     def test_parse_evone_hcm_list_item(self):
         html = """
         <ul>

@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smart-ev-data-platform"
+version = "0.1.0"
+description = "Isolated data normalization and PostgreSQL/PostGIS prototype for Smart EV Journey"
+requires-python = ">=3.12"
+dependencies = [
+  "alembic==1.14.1",
+  "psycopg[binary]==3.2.4",
+  "sqlalchemy==2.0.37",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

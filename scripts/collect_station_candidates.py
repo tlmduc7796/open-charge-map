@@ -128,6 +128,17 @@ def in_bounds(lat: float, lon: float, bounds: dict[str, float]) -> bool:
     return bounds["south"] <= lat <= bounds["north"] and bounds["west"] <= lon <= bounds["east"]
 
 
+def configured_bounds(config: dict[str, Any]) -> list[dict[str, float]]:
+    bounds = config.get("search_bounds")
+    if bounds:
+        return bounds
+    return [config["demo_bounds"]]
+
+
+def in_configured_bounds(lat: float, lon: float, config: dict[str, Any]) -> bool:
+    return any(in_bounds(lat, lon, bounds) for bounds in configured_bounds(config))
+
+
 def haversine_m(first: dict[str, float], second: dict[str, float]) -> float:
     radius_m = 6_371_000
     lat1, lat2 = math.radians(first["lat"]), math.radians(second["lat"])
@@ -138,6 +149,58 @@ def haversine_m(first: dict[str, float], second: dict[str, float]) -> float:
         + math.cos(lat1) * math.cos(lat2) * math.sin(delta_lon / 2) ** 2
     )
     return 2 * radius_m * math.asin(math.sqrt(value))
+
+
+def goong_search_centers(config: dict[str, Any]) -> list[dict[str, Any]]:
+    bounds_list = configured_bounds(config)
+    spacing_km = float(config.get("goong_grid_spacing_km", 0))
+    minimum_separation_m = spacing_km * 1_000 * 0.35
+    centers: list[dict[str, Any]] = []
+
+    def add_center(center: dict[str, Any]) -> None:
+        point = {"lat": float(center["lat"]), "lon": float(center["lon"])}
+        if not in_configured_bounds(point["lat"], point["lon"], config):
+            return
+        if minimum_separation_m and any(
+            haversine_m(point, existing) < minimum_separation_m for existing in centers
+        ):
+            return
+        centers.append({**center, **point})
+
+    for center in config.get("search_centers", []):
+        add_center(center)
+
+    if spacing_km <= 0:
+        return centers
+
+    for bounds in bounds_list:
+        latitude_km = max((bounds["north"] - bounds["south"]) * 111.32, 0)
+        middle_latitude = (bounds["south"] + bounds["north"]) / 2
+        longitude_km = max(
+            (bounds["east"] - bounds["west"])
+            * 111.32
+            * math.cos(math.radians(middle_latitude)),
+            0,
+        )
+        rows = max(1, math.ceil(latitude_km / spacing_km))
+        columns = max(1, math.ceil(longitude_km / spacing_km))
+        for row in range(rows):
+            lat = bounds["south"] + (row + 0.5) * (
+                bounds["north"] - bounds["south"]
+            ) / rows
+            for column in range(columns):
+                lon = bounds["west"] + (column + 0.5) * (
+                    bounds["east"] - bounds["west"]
+                ) / columns
+                add_center(
+                    {
+                        "name": f'{bounds.get("name", "bounds")}_{row + 1}_{column + 1}',
+                        "lat": lat,
+                        "lon": lon,
+                    }
+                )
+
+    return centers
 
 
 def make_candidate(
@@ -153,6 +216,7 @@ def make_candidate(
     source_url: str | None = None,
     source_attributes: dict[str, Any] | None = None,
     technical: dict[str, Any] | None = None,
+    site_amenities: list[dict[str, Any]] | None = None,
     review_status: str = "pending",
     matched_station_id: str | None = None,
 ) -> dict[str, Any]:
@@ -164,6 +228,7 @@ def make_candidate(
         "operator": operator,
         "access": access,
         "technical": technical or {"total_ports": None, "connectors": []},
+        "site_amenities": site_amenities or [],
         "provider_refs": [
             {
                 "provider": provider,
@@ -184,6 +249,11 @@ def existing_master_candidates() -> list[dict[str, Any]]:
     for feature in data.get("features", []):
         props = feature["properties"]
         lon, lat = feature["geometry"]["coordinates"]
+        amenity_status = (
+            "unverified"
+            if "amenities" in props.get("synthetic_fields", [])
+            else "reviewed"
+        )
         candidates.append(
             make_candidate(
                 provider="existing_master",
@@ -200,6 +270,15 @@ def existing_master_candidates() -> list[dict[str, Any]]:
                     "total_ports": props.get("total_ports"),
                     "connectors": props.get("connectors", []),
                 },
+                site_amenities=[
+                    {
+                        "code": code,
+                        "is_available": True,
+                        "status": amenity_status,
+                        "evidence": "existing_master",
+                    }
+                    for code in props.get("amenities", [])
+                ],
                 review_status="verified",
                 matched_station_id=props["station_id"],
             )
@@ -279,7 +358,7 @@ def collect_evone(config: dict[str, Any], warnings: list[str]) -> list[dict[str,
                 break
         if not location:
             warnings.append(f'No coordinates found for EV ONE candidate: {record["name"]}')
-        elif not in_bounds(location["lat"], location["lon"], config["demo_bounds"]):
+        elif not in_configured_bounds(location["lat"], location["lon"], config):
             continue
         provider_id = normalize_text(record["name"] + " " + record["address"])
         candidate = make_candidate(
@@ -328,30 +407,113 @@ def osm_access(value: str | None) -> str:
     return "unknown"
 
 
-def collect_osm(config: dict[str, Any]) -> list[dict[str, Any]]:
-    bounds = config["demo_bounds"]
-    bbox = f'{bounds["south"]},{bounds["west"]},{bounds["north"]},{bounds["east"]}'
-    query = (
-        '[out:json][timeout:45];('
-        f'nwr["amenity"="charging_station"]({bbox});'
-        f'nwr["fuel:electricity"="yes"]({bbox});'
-        ');out center tags;'
+def osm_site_amenities(tags: dict[str, Any]) -> list[dict[str, Any]]:
+    claims: list[dict[str, Any]] = []
+
+    def add(code: str, key: str) -> None:
+        claims.append(
+            {
+                "code": code,
+                "is_available": True,
+                "status": "provider_reported",
+                "evidence": f"{key}={tags[key]}",
+            }
+        )
+
+    if tags.get("toilets") in {"yes", "customers"}:
+        add("restroom", "toilets")
+    if tags.get("internet_access") in {"yes", "wlan", "wifi"}:
+        add("wifi", "internet_access")
+    if tags.get("parking") not in {None, "no"}:
+        add("parking", "parking")
+    if tags.get("shop") not in {None, "no"}:
+        add("retail", "shop")
+    if tags.get("food") == "yes":
+        add("food", "food")
+    vending = normalize_text(str(tags.get("vending", "")))
+    if any(item in vending.split() for item in ("drinks", "coffee", "water", "milk")):
+        add("beverage", "vending")
+    if tags.get("rest_area") == "yes":
+        add("rest_area", "rest_area")
+    return claims
+
+
+def request_overpass(query: str, config: dict[str, Any]) -> dict[str, Any]:
+    urls = list(
+        dict.fromkeys(
+            [config["overpass_url"], *config.get("overpass_fallback_urls", [])]
+        )
     )
-    data = request_json(
-        config["overpass_url"],
-        params={"data": query},
-        user_agent=config["user_agent"],
-        timeout=config["http_timeout_s"],
-        post=True,
+    attempts = max(1, int(config.get("overpass_max_attempts", 1)))
+    retry_base_s = max(0.0, float(config.get("overpass_retry_base_s", 1)))
+    retry_max_s = max(retry_base_s, float(config.get("overpass_retry_max_s", 20)))
+    overpass_timeout_s = int(config.get("overpass_timeout_s", 45))
+    errors: list[str] = []
+
+    for attempt in range(attempts):
+        url = urls[attempt % len(urls)]
+        try:
+            return request_json(
+                url,
+                params={"data": query},
+                user_agent=config["user_agent"],
+                timeout=max(int(config["http_timeout_s"]), overpass_timeout_s + 5),
+                post=True,
+            )
+        except CollectorError as exc:
+            errors.append(f"{url}: {exc}")
+            if attempt + 1 < attempts:
+                time.sleep(min(retry_base_s * (2**attempt), retry_max_s))
+
+    raise CollectorError(
+        f"failed after {attempts} attempts ({'; '.join(errors)})"
     )
+
+
+def collect_osm(
+    config: dict[str, Any], warnings: list[str] | None = None
+) -> list[dict[str, Any]]:
+    elements: dict[str, dict[str, Any]] = {}
+    overpass_timeout_s = int(config.get("overpass_timeout_s", 45))
+    successful_queries = 0
+    for index, bounds in enumerate(configured_bounds(config)):
+        label = bounds.get("name", str(index + 1))
+        print(f"OSM search bounds {label}...", flush=True)
+        bbox = f'{bounds["south"]},{bounds["west"]},{bounds["north"]},{bounds["east"]}'
+        query = (
+            f'[out:json][timeout:{overpass_timeout_s}];('
+            f'nwr["amenity"="charging_station"]({bbox});'
+            f'nwr["fuel:electricity"="yes"]({bbox});'
+            ');out center tags;'
+        )
+        try:
+            data = request_overpass(query, config)
+        except CollectorError as exc:
+            if warnings is not None:
+                warnings.append(f"OSM search bounds {label} skipped: {exc}")
+            print(f"OSM search bounds {label}: failed ({exc})", flush=True)
+            continue
+        successful_queries += 1
+        print(
+            f'OSM search bounds {label}: {len(data.get("elements", []))} elements',
+            flush=True,
+        )
+        for element in data.get("elements", []):
+            provider_id = f'{element.get("type")}/{element.get("id")}'
+            elements[provider_id] = element
+        if index + 1 < len(configured_bounds(config)):
+            time.sleep(float(config.get("overpass_delay_s", 0)))
+
+    if successful_queries == 0:
+        raise CollectorError("all OSM search-bound queries failed")
+
     candidates = []
-    for element in data.get("elements", []):
+    for provider_id, element in elements.items():
         tags = element.get("tags", {})
         lat = element.get("lat", element.get("center", {}).get("lat"))
         lon = element.get("lon", element.get("center", {}).get("lon"))
-        if lat is None or lon is None or not in_bounds(float(lat), float(lon), bounds):
+        if lat is None or lon is None or not in_configured_bounds(float(lat), float(lon), config):
             continue
-        provider_id = f'{element.get("type")}/{element.get("id")}'
         name = tags.get("name") or tags.get("operator") or f"OSM charging station {provider_id}"
         capacity = tags.get("capacity")
         try:
@@ -361,8 +523,28 @@ def collect_osm(config: dict[str, Any]) -> list[dict[str, Any]]:
         source_attributes = {
             key: value
             for key, value in tags.items()
-            if key in {"access", "brand", "capacity", "network", "opening_hours", "operator"}
-            or key.startswith("socket:")
+            if key
+            in {
+                "access",
+                "amenity",
+                "brand",
+                "capacity",
+                "charging_station",
+                "fuel:electricity",
+                "motorcar",
+                "motorcycle",
+                "network",
+                "opening_hours",
+                "operator",
+                "food",
+                "internet_access",
+                "parking",
+                "rest_area",
+                "shop",
+                "toilets",
+                "vending",
+            }
+            or key.startswith(("authentication:", "payment:", "socket:"))
         }
         candidates.append(
             make_candidate(
@@ -377,41 +559,54 @@ def collect_osm(config: dict[str, Any]) -> list[dict[str, Any]]:
                 source_url="https://www.openstreetmap.org/" + provider_id,
                 source_attributes=source_attributes,
                 technical={"total_ports": total_ports, "connectors": []},
+                site_amenities=osm_site_amenities(tags),
             )
         )
     return candidates
 
 
-def collect_goong(config: dict[str, Any], api_key: str) -> list[dict[str, Any]]:
+def collect_goong(
+    config: dict[str, Any], api_key: str, warnings: list[str] | None = None
+) -> list[dict[str, Any]]:
     predictions: dict[str, dict[str, Any]] = {}
-    for center in config["search_centers"]:
+    for center in goong_search_centers(config):
         location = f'{center["lat"]},{center["lon"]}'
         for term in config["search_terms"]:
-            data = request_json(
-                config["goong_autocomplete_url"],
-                params={"api_key": api_key, "input": term, "location": location},
-                user_agent=config["user_agent"],
-                timeout=config["http_timeout_s"],
-            )
+            try:
+                data = request_json(
+                    config["goong_autocomplete_url"],
+                    params={"api_key": api_key, "input": term, "location": location},
+                    user_agent=config["user_agent"],
+                    timeout=config["http_timeout_s"],
+                )
+            except CollectorError as exc:
+                if warnings is not None:
+                    label = center.get("name", location)
+                    warnings.append(f"Goong autocomplete {label!r}/{term!r} skipped: {exc}")
+                continue
             for prediction in data.get("predictions", []):
                 place_id = prediction.get("place_id")
                 if place_id:
                     predictions.setdefault(place_id, prediction)
 
     candidates = []
-    max_details = int(config.get("goong_max_details", 30))
-    for place_id, prediction in list(predictions.items())[:max_details]:
-        data = request_json(
-            config["goong_detail_url"],
-            params={"api_key": api_key, "place_id": place_id},
-            user_agent=config["user_agent"],
-            timeout=config["http_timeout_s"],
-        )
+    for place_id, prediction in predictions.items():
+        try:
+            data = request_json(
+                config["goong_detail_url"],
+                params={"api_key": api_key, "place_id": place_id},
+                user_agent=config["user_agent"],
+                timeout=config["http_timeout_s"],
+            )
+        except CollectorError as exc:
+            if warnings is not None:
+                warnings.append(f"Goong place detail {place_id!r} skipped: {exc}")
+            continue
         result = data.get("result", data)
         location = result.get("geometry", {}).get("location", {})
         lat = location.get("lat")
         lon = location.get("lng", location.get("lon"))
-        if lat is None or lon is None or not in_bounds(float(lat), float(lon), config["demo_bounds"]):
+        if lat is None or lon is None or not in_configured_bounds(float(lat), float(lon), config):
             continue
         name = result.get("name") or prediction.get("structured_formatting", {}).get("main_text")
         name = name or prediction.get("description") or f"Goong place {place_id}"
@@ -465,6 +660,15 @@ def merge_into(target: dict[str, Any], incoming: dict[str, Any]) -> None:
         target["technical"]["total_ports"] = incoming["technical"].get("total_ports")
     if not target["technical"].get("connectors") and incoming["technical"].get("connectors"):
         target["technical"]["connectors"] = incoming["technical"]["connectors"]
+    known_amenities = {
+        (claim.get("code"), claim.get("evidence"))
+        for claim in target.get("site_amenities", [])
+    }
+    for claim in incoming.get("site_amenities", []):
+        key = (claim.get("code"), claim.get("evidence"))
+        if key not in known_amenities:
+            target.setdefault("site_amenities", []).append(claim)
+            known_amenities.add(key)
     known_refs = source_keys(target)
     for ref in incoming.get("provider_refs", []):
         key = f'{ref["provider"]}:{ref["provider_id"]}'
@@ -522,18 +726,31 @@ def preserve_reviews(candidates: list[dict[str, Any]], output_path: Path) -> Non
 
 def write_search_area_kml(
     output_path: Path,
-    bounds: dict[str, float],
+    bounds_list: list[dict[str, float]],
     candidates: list[dict[str, Any]],
 ) -> None:
-    polygon = " ".join(
-        [
-            f'{bounds["west"]},{bounds["south"]},0',
-            f'{bounds["east"]},{bounds["south"]},0',
-            f'{bounds["east"]},{bounds["north"]},0',
-            f'{bounds["west"]},{bounds["north"]},0',
-            f'{bounds["west"]},{bounds["south"]},0',
-        ]
-    )
+    search_areas = []
+    for index, bounds in enumerate(bounds_list, start=1):
+        polygon = " ".join(
+            [
+                f'{bounds["west"]},{bounds["south"]},0',
+                f'{bounds["east"]},{bounds["south"]},0',
+                f'{bounds["east"]},{bounds["north"]},0',
+                f'{bounds["west"]},{bounds["north"]},0',
+                f'{bounds["west"]},{bounds["south"]},0',
+            ]
+        )
+        search_areas.extend(
+            [
+                "    <Placemark>",
+                f"      <name>Collector search bounds {index}</name>",
+                "      <styleUrl>#search-area</styleUrl>",
+                "      <Polygon><outerBoundaryIs><LinearRing>",
+                f"        <coordinates>{polygon}</coordinates>",
+                "      </LinearRing></outerBoundaryIs></Polygon>",
+                "    </Placemark>",
+            ]
+        )
     placemarks = []
     for candidate in candidates:
         location = candidate.get("location")
@@ -571,13 +788,7 @@ def write_search_area_kml(
             '    <Style id="station">',
             "      <IconStyle><color>ff00a545</color><scale>1.1</scale></IconStyle>",
             "    </Style>",
-            "    <Placemark>",
-            "      <name>Collector search bounds</name>",
-            "      <styleUrl>#search-area</styleUrl>",
-            "      <Polygon><outerBoundaryIs><LinearRing>",
-            f"        <coordinates>{polygon}</coordinates>",
-            "      </LinearRing></outerBoundaryIs></Polygon>",
-            "    </Placemark>",
+            *search_areas,
             *placemarks,
             "  </Document>",
             "</kml>",
@@ -594,6 +805,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--kml-output", type=Path, default=DEFAULT_KML_OUTPUT)
     parser.add_argument("--providers", help="Comma-separated remote providers: evone,osm,goong")
+    parser.add_argument("--bounds-names", help="Comma-separated search-bound names to run")
+    parser.add_argument("--overpass-url", help="Override the configured Overpass endpoint")
     parser.add_argument("--offline", action="store_true", help="Use only existing stations.geojson")
     return parser.parse_args()
 
@@ -601,6 +814,22 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     config = read_json(args.config)
+    if args.overpass_url:
+        config["overpass_url"] = args.overpass_url
+    if args.bounds_names:
+        requested_bounds = {
+            item.strip() for item in args.bounds_names.split(",") if item.strip()
+        }
+        selected_bounds = [
+            bounds
+            for bounds in configured_bounds(config)
+            if bounds.get("name") in requested_bounds
+        ]
+        selected_names = {bounds.get("name") for bounds in selected_bounds}
+        missing_bounds = sorted(requested_bounds - selected_names)
+        if missing_bounds:
+            raise SystemExit(f"Unknown search bounds: {', '.join(missing_bounds)}")
+        config["search_bounds"] = selected_bounds
     load_dotenv(ROOT / ".env")
     requested = (
         [item.strip() for item in args.providers.split(",") if item.strip()]
@@ -617,7 +846,7 @@ def main() -> int:
     if not args.offline:
         collectors = {
             "evone": lambda: collect_evone(config, warnings),
-            "osm": lambda: collect_osm(config),
+            "osm": lambda: collect_osm(config, warnings),
         }
         for provider in ("evone", "osm"):
             if provider not in requested:
@@ -633,7 +862,7 @@ def main() -> int:
                 warnings.append("goong skipped: GOONG_API_KEY is not configured")
             else:
                 try:
-                    candidates.extend(collect_goong(config, api_key))
+                    candidates.extend(collect_goong(config, api_key, warnings))
                     providers_run.append("goong")
                 except CollectorError as exc:
                     warnings.append(f"goong skipped: {exc}")
@@ -641,9 +870,12 @@ def main() -> int:
     candidates = deduplicate(candidates, float(config["dedup_distance_m"]))
     preserve_reviews(candidates, args.output)
     candidates.sort(key=lambda item: (item["review_status"] != "verified", item["name"]))
+    bounds_list = configured_bounds(config)
     output = {
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-        "demo_bounds": config["demo_bounds"],
+        "scope": config.get("scope"),
+        "search_bounds": bounds_list,
+        "coverage_claim": config.get("coverage_claim", "none"),
         "providers_requested": [] if args.offline else requested,
         "providers_run": providers_run,
         "warnings": warnings,
@@ -651,7 +883,7 @@ def main() -> int:
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    write_search_area_kml(args.kml_output, config["demo_bounds"], candidates)
+    write_search_area_kml(args.kml_output, bounds_list, candidates)
     print(f"Station candidates: {len(candidates)}")
     print(f"Providers run: {', '.join(providers_run)}")
     print(f"Warnings: {len(warnings)}")

@@ -11,4 +11,6 @@ frontend/dist/
 ml/artifacts/*.joblib
 data/ml/urbanev/raw/*.zip
 data/ml/urbanev/raw/*.part
+data/ml/urbanev/eda/
 AGENTS.md
+references/
