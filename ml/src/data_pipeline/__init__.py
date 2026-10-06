@@ -5,7 +5,12 @@ then create model-specific supervised rows.  No model is allowed to consume a
 vendor-specific CSV directly.
 """
 
-from .adapters import normalize_acn_sessions, normalize_occupancy_source
+from .adapters import (
+    normalize_acn_sessions,
+    normalize_occupancy_source,
+    normalize_operator_sessions,
+    normalize_simulator_sessions,
+)
 from .contracts import (
     CANONICAL_OCCUPANCY_COLUMNS,
     CANONICAL_SESSION_COLUMNS,
@@ -22,4 +27,6 @@ __all__ = [
     "assign_temporal_split",
     "normalize_acn_sessions",
     "normalize_occupancy_source",
+    "normalize_operator_sessions",
+    "normalize_simulator_sessions",
 ]

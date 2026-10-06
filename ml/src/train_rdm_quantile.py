@@ -24,24 +24,44 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
 try:  # Supports package import and `python ml/src/...py`.
-    from .data_pipeline.rdm import RDM_FEATURE_COLUMNS, RDM_TARGET_COLUMN
+    from .data_pipeline.rdm import (
+        RDM_FEATURE_COLUMNS,
+        RDM_LIVE_SAFE_FEATURE_COLUMNS,
+        RDM_TARGET_COLUMN,
+    )
 except ImportError:  # pragma: no cover - direct CLI invocation.
-    from data_pipeline.rdm import RDM_FEATURE_COLUMNS, RDM_TARGET_COLUMN
+    from data_pipeline.rdm import (
+        RDM_FEATURE_COLUMNS,
+        RDM_LIVE_SAFE_FEATURE_COLUMNS,
+        RDM_TARGET_COLUMN,
+    )
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 QUANTILES = (0.1, 0.5, 0.9)
 NUMERIC_FEATURES = ("session_elapsed_min", "energy_delivered_kwh", "current_power_kw")
 CATEGORICAL_FEATURES = ("station_id", "port_id", "connector_type")
+LIVE_SAFE_NUMERIC_FEATURES = NUMERIC_FEATURES + (
+    "port_max_power_kw",
+    "observation_hour_local",
+    "observation_weekday_local",
+    "is_drawing_power",
+)
+LIVE_SAFE_CATEGORICAL_FEATURES = CATEGORICAL_FEATURES
 
 
-def _build_model(quantile: float, seed: int) -> Pipeline:
+def _build_model_for_features(
+    quantile: float,
+    seed: int,
+    numeric_features: tuple[str, ...],
+    categorical_features: tuple[str, ...],
+) -> Pipeline:
     try:
         from xgboost import XGBRegressor
     except ImportError as exc:
         raise RuntimeError("Install ml/requirements.txt to train quantile RDM") from exc
     preprocessor = ColumnTransformer(
         [
-            ("numeric", SimpleImputer(strategy="median"), list(NUMERIC_FEATURES)),
+            ("numeric", SimpleImputer(strategy="median"), list(numeric_features)),
             (
                 "categorical",
                 Pipeline(
@@ -50,7 +70,7 @@ def _build_model(quantile: float, seed: int) -> Pipeline:
                         ("one_hot", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
                     ]
                 ),
-                list(CATEGORICAL_FEATURES),
+                list(categorical_features),
             ),
         ],
         sparse_threshold=0,
@@ -69,8 +89,22 @@ def _build_model(quantile: float, seed: int) -> Pipeline:
     return Pipeline([("features", preprocessor), ("model", model)])
 
 
-def _validate_dataset(frame: pd.DataFrame) -> None:
-    required = {"session_id", "observed_at", "split", *RDM_FEATURE_COLUMNS, RDM_TARGET_COLUMN}
+def _build_model(quantile: float, seed: int) -> Pipeline:
+    """Legacy six-column profile, retained for existing artifacts and tests."""
+    return _build_model_for_features(quantile, seed, NUMERIC_FEATURES, CATEGORICAL_FEATURES)
+
+
+def _build_live_safe_model(quantile: float, seed: int) -> Pipeline:
+    return _build_model_for_features(
+        quantile, seed, LIVE_SAFE_NUMERIC_FEATURES, LIVE_SAFE_CATEGORICAL_FEATURES
+    )
+
+
+def _validate_dataset(
+    frame: pd.DataFrame,
+    feature_columns: tuple[str, ...] = RDM_FEATURE_COLUMNS,
+) -> None:
+    required = {"session_id", "observed_at", "split", *feature_columns, RDM_TARGET_COLUMN}
     if missing := required - set(frame.columns):
         raise ValueError(f"RDM dataset misses columns: {sorted(missing)}")
     if not {"train", "val", "test"}.issubset(set(frame["split"])):
@@ -105,20 +139,28 @@ def train_rdm(
     *,
     seed: int = 42,
     evaluate_test: bool = False,
+    feature_profile: str = "legacy",
 ) -> dict[str, object]:
     """Fit RDM models and return validation metrics; test is opt-in only."""
     frame = pd.read_parquet(dataset_path)
-    _validate_dataset(frame)
+    profiles = {
+        "legacy": (RDM_FEATURE_COLUMNS, _build_model),
+        "live_safe": (RDM_LIVE_SAFE_FEATURE_COLUMNS, _build_live_safe_model),
+    }
+    if feature_profile not in profiles:
+        raise ValueError(f"Unknown RDM feature profile: {feature_profile}")
+    feature_columns, model_builder = profiles[feature_profile]
+    _validate_dataset(frame, feature_columns)
     train = frame.loc[frame["split"] == "train"]
     validation = frame.loc[frame["split"] == "val"]
     models: dict[float, Pipeline] = {}
     validation_predictions: dict[float, np.ndarray] = {}
     for quantile in QUANTILES:
-        model = _build_model(quantile, seed)
-        model.fit(train.loc[:, list(RDM_FEATURE_COLUMNS)], train[RDM_TARGET_COLUMN])
+        model = model_builder(quantile, seed)
+        model.fit(train.loc[:, list(feature_columns)], train[RDM_TARGET_COLUMN])
         models[quantile] = model
         validation_predictions[quantile] = model.predict(
-            validation.loc[:, list(RDM_FEATURE_COLUMNS)]
+            validation.loc[:, list(feature_columns)]
         )
     metadata: dict[str, object] = {
         "format_version": "rdm-quantile-1",
@@ -128,7 +170,8 @@ def train_rdm(
         "dataset": str(dataset_path),
         "target": RDM_TARGET_COLUMN,
         "target_semantics": "disconnect_at - observed_at (physical port release)",
-        "feature_columns": list(RDM_FEATURE_COLUMNS),
+        "feature_profile": feature_profile,
+        "feature_columns": list(feature_columns),
         "quantiles": list(QUANTILES),
         "split_policy": "all observations of a session assigned by disconnect_at",
         "validation_metrics": _metrics(validation[RDM_TARGET_COLUMN], validation_predictions),
@@ -141,7 +184,7 @@ def train_rdm(
     if evaluate_test:
         test = frame.loc[frame["split"] == "test"]
         test_predictions = {
-            quantile: model.predict(test.loc[:, list(RDM_FEATURE_COLUMNS)])
+            quantile: model.predict(test.loc[:, list(feature_columns)])
             for quantile, model in models.items()
         }
         metadata["test_metrics"] = _metrics(test[RDM_TARGET_COLUMN], test_predictions)
@@ -163,6 +206,12 @@ def main() -> None:
     )
     parser.add_argument("--artifact-dir", type=Path, default=ROOT_DIR / "ml/artifacts/rdm")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--feature-profile",
+        choices=("legacy", "live_safe"),
+        default="legacy",
+        help="Use live_safe only with a dataset built using --port-inventory.",
+    )
     parser.add_argument("--execute", action="store_true")
     parser.add_argument(
         "--evaluate-test",
@@ -176,7 +225,12 @@ def main() -> None:
         "will_train": args.execute,
         "test_will_be_accessed": args.evaluate_test,
         "target": RDM_TARGET_COLUMN,
-        "required_features": list(RDM_FEATURE_COLUMNS),
+        "feature_profile": args.feature_profile,
+        "required_features": list(
+            RDM_LIVE_SAFE_FEATURE_COLUMNS
+            if args.feature_profile == "live_safe"
+            else RDM_FEATURE_COLUMNS
+        ),
     }
     if not args.execute:
         print(
@@ -195,6 +249,7 @@ def main() -> None:
                     args.artifact_dir,
                     seed=args.seed,
                     evaluate_test=args.evaluate_test,
+                    feature_profile=args.feature_profile,
                 ),
             },
             indent=2,

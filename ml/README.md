@@ -58,6 +58,16 @@ none starts model training by default.
 .\.venv\Scripts\python.exe ml\src\validate_urbanev_source.py
 .\.venv\Scripts\python.exe ml\src\preprocess_urbanev.py
 
+# ACN raw sessions plus charging-rate telemetry for the RDM pipeline.
+# Add ACNDATA_API_TOKEN to the local root .env or process environment first.
+# Defaults to Caltech 2021, the most recent confirmed non-empty Caltech year.
+.\.venv\Scripts\python.exe ml\src\acquire_acn_data.py
+
+# RDM needs telemetry; fetch it in a small, resumable date batch.
+.\.venv\Scripts\python.exe ml\src\acquire_acn_data.py `
+  --start 2021-01-01T00:00:00Z --end 2021-01-02T00:00:00Z `
+  --with-timeseries --output ml\data\external\acn\raw\acn_caltech_2021_01_01_timeseries.json
+
 # Run the one occupancy benchmark harness. It writes no serving model bundle.
 .\.venv\Scripts\python.exe ml\src\benchmark_occupancy.py --execute
 
@@ -70,6 +80,10 @@ none starts model training by default.
 # Canonical data adapters and real-data dataset builders.
 .\.venv\Scripts\python.exe ml\src\prepare_occupancy_history.py --help
 .\.venv\Scripts\python.exe ml\src\prepare_acn_data.py --help
+.\.venv\Scripts\python.exe ml\src\prepare_simulator_data.py `
+  --sessions simulator\output\sessions.csv `
+  --ports simulator\output\ports.csv `
+  --output ml\data\silver\simulator\sessions.parquet
 .\.venv\Scripts\python.exe ml\src\build_rdm_dataset.py --help
 .\.venv\Scripts\python.exe ml\src\train_rdm_quantile.py
 .\.venv\Scripts\python.exe ml\src\build_markov_dataset.py --help
@@ -181,6 +195,7 @@ This prevents accidental online learning, leakage and poisoned observations.
 | `train_transformer.py` | generic multi-domain Transformer, driven by reviewed schema | Phase 3; disabled draft |
 | `train_foundation.py` | Chronos/TimesFM data/licence/GPU gate and provider handoff | Phase 4; research-only |
 | `data_pipeline/adapters.py` | source-specific UrbanEV/ACN normalization into canonical tables | executable; no protected API calls |
+| `prepare_simulator_data.py` | maps simulator sessions to canonical session labels | evaluation-only; provenance gate enforced |
 | `data_pipeline/occupancy.py`, `rdm.py`, `markov.py` | leakage-safe supervised dataset builders | executable after valid source exports exist |
 | `train_rdm_quantile.py` | XGBoost P10/P50/P90 port-release RDM trainer | executable; artifact remains experimental until promotion review |
 | `train_markov.py` | connector-aware aggregate transition estimator | executable fallback experiment |

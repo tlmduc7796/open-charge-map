@@ -9,11 +9,22 @@ from pathlib import Path
 
 import pandas as pd
 
-from shared.seasonal_profile import (
-    DEFAULT_SEASONAL_PRIOR,
-    SEASONAL_SMOOTHING,
-    seasonal_bucket,
-)
+try:
+    from shared.seasonal_profile import (
+        DEFAULT_SEASONAL_PRIOR,
+        SEASONAL_SMOOTHING,
+        seasonal_bucket,
+    )
+except ModuleNotFoundError:  # pragma: no cover - direct script invocation.
+    import sys
+
+    project_root = Path(__file__).resolve().parents[2]
+    sys.path.insert(0, str(project_root))
+    from shared.seasonal_profile import (
+        DEFAULT_SEASONAL_PRIOR,
+        SEASONAL_SMOOTHING,
+        seasonal_bucket,
+    )
 
 try:  # Supports both `python ml/src/...py` and package imports in tests/notebooks.
     from .feature_contract import (

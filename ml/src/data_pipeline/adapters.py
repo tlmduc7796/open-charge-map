@@ -167,6 +167,122 @@ def normalize_acn_sessions(path: Path, *, default_station_id: str = "ACN_UNKNOWN
     return validate_sessions(result)
 
 
+def normalize_operator_sessions(path: Path, *, source: str) -> pd.DataFrame:
+    """Normalize a real operator lifecycle export without vendor-specific model code.
+
+    This intentionally accepts only a local export. Authentication, OCPP polling
+    and retention remain an operator integration concern. Missing disconnects
+    are retained as censored observations, never guessed as labels.
+    """
+    if not source.strip() or "synthetic" in source.lower():
+        raise ValueError("operator session source must identify a non-synthetic provider")
+    frame = _read_export(path)
+    connection_at = _timestamp(frame, ("connection_at", "connectionTime", "plugged_in_at"))
+    disconnect_source = _column(
+        frame, ("disconnect_at", "disconnectTime", "unplugged_at"), required=False
+    )
+    disconnect_at = pd.to_datetime(disconnect_source, utc=True, errors="coerce")
+    done_source = _column(
+        frame, ("done_charging_at", "doneChargingTime", "charging_stopped_at"), required=False
+    )
+    done_charging_at = pd.to_datetime(done_source, utc=True, errors="coerce")
+    censored = disconnect_at.isna()
+    export_seen = _column(frame, ("received_at", "retrieved_at", "lastUpdate"), required=False)
+    seen_at = pd.to_datetime(export_seen, utc=True, errors="coerce")
+    censoring_at = pd.Series(pd.NaT, index=frame.index, dtype="datetime64[ns, UTC]")
+    censoring_at.loc[censored] = seen_at.loc[censored].fillna(connection_at.loc[censored])
+    result = pd.DataFrame(
+        {
+            "session_id": _text(frame, ("session_id", "sessionID", "_id")),
+            "station_id": _text(frame, ("station_id", "stationID", "siteID")),
+            "port_id": _text(frame, ("port_id", "portID", "EVSEID", "spaceID")),
+            "connector_type": _text(
+                frame, ("connector_type", "connectorType"), default="UNKNOWN"
+            ),
+            "connection_at": connection_at,
+            "done_charging_at": done_charging_at,
+            "disconnect_at": disconnect_at,
+            "final_energy_delivered_kwh": pd.to_numeric(
+                _column(
+                    frame,
+                    ("final_energy_delivered_kwh", "kWhDelivered", "energy_kwh"),
+                    required=False,
+                ),
+                errors="coerce",
+            ),
+            "source": source,
+            "schema_version": "operator-adapter-1",
+            "quality_flag": "validated",
+            "is_censored": censored,
+            "censoring_at": censoring_at,
+        }
+    )
+    result.loc[censored, "quality_flag"] = "censored_missing_disconnect"
+    return validate_sessions(result)
+
+
+def normalize_simulator_sessions(sessions_path: Path, ports_path: Path) -> pd.DataFrame:
+    """Normalize simulator output for offline contract and DES evaluation only.
+
+    The simulator's ``t_disconnect`` is deliberately mapped to the canonical
+    physical port-release label.  Simulator rows must declare their synthetic
+    provenance; this adapter never presents them as operator observations or a
+    deployable training source.
+    """
+    sessions = _read_export(sessions_path)
+    ports = _read_export(ports_path)
+    required_session_columns = {
+        "session_id",
+        "station_id",
+        "port_id",
+        "t_connect",
+        "t_charge_end",
+        "t_disconnect",
+        "energy_kwh",
+        "is_synthetic",
+    }
+    missing = required_session_columns - set(sessions.columns)
+    if missing:
+        raise ValueError(f"Simulator sessions miss columns: {sorted(missing)}")
+    if not sessions["is_synthetic"].astype("string").str.lower().eq("true").all():
+        raise ValueError("Simulator adapter accepts only rows explicitly marked is_synthetic=true")
+    required_port_columns = {"port_id", "station_id", "connector"}
+    missing_ports = required_port_columns - set(ports.columns)
+    if missing_ports:
+        raise ValueError(f"Simulator ports miss columns: {sorted(missing_ports)}")
+    if ports["port_id"].duplicated().any():
+        raise ValueError("Simulator ports contain duplicate port_id values")
+
+    connector_by_port = ports.set_index("port_id")["connector"]
+    connector = sessions["port_id"].map(connector_by_port)
+    if connector.isna().any():
+        unknown = sessions.loc[connector.isna(), "port_id"].unique().tolist()
+        raise ValueError(f"Simulator sessions reference unknown ports: {unknown}")
+    port_station = sessions["port_id"].map(ports.set_index("port_id")["station_id"])
+    if not port_station.eq(sessions["station_id"]).all():
+        raise ValueError("Simulator session station_id does not match its port")
+
+    connection_at = _timestamp(sessions, ("t_connect",))
+    result = pd.DataFrame(
+        {
+            "session_id": _text(sessions, ("session_id",)),
+            "station_id": _text(sessions, ("station_id",)),
+            "port_id": _text(sessions, ("port_id",)),
+            "connector_type": connector.astype("string"),
+            "connection_at": connection_at,
+            "done_charging_at": _timestamp(sessions, ("t_charge_end",)),
+            "disconnect_at": _timestamp(sessions, ("t_disconnect",)),
+            "final_energy_delivered_kwh": pd.to_numeric(sessions["energy_kwh"], errors="coerce"),
+            "source": "simulator_hcmc_synthetic",
+            "schema_version": "simulator-adapter-1",
+            "quality_flag": "synthetic_for_evaluation_only",
+            "is_censored": False,
+            "censoring_at": pd.Series(pd.NaT, index=sessions.index, dtype="datetime64[ns, UTC]"),
+        }
+    )
+    return validate_sessions(result)
+
+
 def normalize_session_telemetry(
     path: Path,
     *,

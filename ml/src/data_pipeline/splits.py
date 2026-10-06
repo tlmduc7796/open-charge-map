@@ -67,6 +67,11 @@ def assign_session_temporal_split(
         raise ValueError(f"Sessions miss columns: {sorted(missing)}")
     if missing := required_observations - set(observations.columns):
         raise ValueError(f"Observations miss columns: {sorted(missing)}")
+    # Canonical source products normally have no split.  Gold products retain
+    # one for audit, but this function owns the split assignment and must not
+    # merge duplicate ``split_x/split_y`` columns back into observations.
+    sessions = sessions.drop(columns=["split"], errors="ignore")
+    observations = observations.drop(columns=["split"], errors="ignore")
     labels = sessions.loc[
         ~sessions["is_censored"].astype(bool), ["session_id", "disconnect_at"]
     ].copy()

@@ -18,6 +18,13 @@ RDM_FEATURE_COLUMNS = (
     "port_id",
     "connector_type",
 )
+RDM_LIVE_SAFE_FEATURE_COLUMNS = (
+    *RDM_FEATURE_COLUMNS,
+    "port_max_power_kw",
+    "observation_hour_local",
+    "observation_weekday_local",
+    "is_drawing_power",
+)
 RDM_TARGET_COLUMN = "remaining_port_release_min"
 
 
@@ -106,4 +113,99 @@ def build_rdm_dataset(
         "manifest_path": str(manifest_path),
         "records": int(len(output)),
         "sessions": int(output["session_id"].nunique()),
+    }
+
+
+def _read_port_inventory(path: Path) -> pd.DataFrame:
+    """Read the minimum static port facts required by the live-safe profile."""
+    if path.suffix.lower() == ".parquet":
+        inventory = pd.read_parquet(path)
+    elif path.suffix.lower() == ".csv":
+        inventory = pd.read_csv(path)
+    else:
+        raise ValueError("Port inventory must be a CSV or Parquet file")
+    aliases = {
+        "stationID": "station_id",
+        "portID": "port_id",
+        "EVSEID": "port_id",
+        "maxPowerKw": "max_power_kw",
+        "max_power": "max_power_kw",
+    }
+    rename_columns = {old: new for old, new in aliases.items() if old in inventory}
+    inventory = inventory.rename(columns=rename_columns)
+    required = {"station_id", "port_id", "max_power_kw"}
+    if missing := required - set(inventory):
+        raise ValueError(f"Port inventory misses columns: {sorted(missing)}")
+    result = inventory.loc[:, ["station_id", "port_id", "max_power_kw"]].copy()
+    result["station_id"] = result["station_id"].astype("string")
+    result["port_id"] = result["port_id"].astype("string")
+    result["max_power_kw"] = pd.to_numeric(result["max_power_kw"], errors="coerce")
+    if result.isna().any().any() or (result["max_power_kw"] <= 0).any():
+        raise ValueError("Port inventory requires a positive max_power_kw for every port")
+    if result.duplicated(["station_id", "port_id"]).any():
+        raise ValueError("Port inventory has duplicate station_id/port_id rows")
+    return result
+
+
+def build_live_safe_rdm_dataset(
+    sessions_path: Path,
+    telemetry_path: Path,
+    port_inventory_path: Path,
+    output_path: Path,
+    *,
+    split_config: TemporalSplitConfig,
+    local_timezone: str = "Asia/Ho_Chi_Minh",
+) -> dict[str, object]:
+    """Build an RDM dataset using only telemetry/inventory facts observable live.
+
+    Unlike the old six-column RDM contract, this profile joins static port
+    capacity and derives local clock plus drawing-power state at observation
+    time. It never joins final session fields such as disconnect, final energy
+    or idle duration as features.
+    """
+    build_rdm_dataset(
+        sessions_path, telemetry_path, output_path, split_config=split_config
+    )
+    result = pd.read_parquet(output_path)
+    inventory = _read_port_inventory(port_inventory_path)
+    result = result.merge(
+        inventory,
+        on=["station_id", "port_id"],
+        how="left",
+        validate="many_to_one",
+    )
+    if result["max_power_kw"].isna().any():
+        unknown = result.loc[result["max_power_kw"].isna(), "port_id"].unique().tolist()
+        raise ValueError(f"RDM observations reference ports absent from inventory: {unknown}")
+    local_observed_at = result["observed_at"].dt.tz_convert(local_timezone)
+    result["port_max_power_kw"] = result.pop("max_power_kw")
+    result["observation_hour_local"] = local_observed_at.dt.hour.astype("int8")
+    result["observation_weekday_local"] = local_observed_at.dt.weekday.astype("int8")
+    # This is a meter fact, not a claim that the vehicle has physically unplugged.
+    result["is_drawing_power"] = (result["current_power_kw"] > 0).astype("int8")
+    result.to_parquet(output_path, index=False)
+    manifest_path = write_dataset_manifest(
+        output_path,
+        result,
+        dataset_kind="rdm_live_safe_session_observations",
+        source_paths=[sessions_path, telemetry_path, port_inventory_path],
+        extra={
+            "target": RDM_TARGET_COLUMN,
+            "target_semantics": "disconnect_at - observed_at; physical port release",
+            "feature_columns": list(RDM_LIVE_SAFE_FEATURE_COLUMNS),
+            "local_timezone": local_timezone,
+            "prohibited_future_features": [
+                "disconnect_at",
+                "done_charging_at",
+                "final_energy_delivered_kwh",
+                "idle_min",
+            ],
+        },
+    )
+    return {
+        "output_path": str(output_path),
+        "manifest_path": str(manifest_path),
+        "records": int(len(result)),
+        "sessions": int(result["session_id"].nunique()),
+        "feature_columns": list(RDM_LIVE_SAFE_FEATURE_COLUMNS),
     }

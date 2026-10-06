@@ -1,0 +1,51 @@
+{
+  "output": "ml\\data\\external\\acn\\raw\\acn_caltech_2018_sessions.json",
+  "manifest": "ml\\data\\external\\acn\\raw\\acn_caltech_2018_sessions.manifest.json",
+  "dataset": "ACN-Data",
+  "source": "ACN-Data API",
+  "raw_export": "acn_caltech_2018_sessions.json",
+  "site": "caltech",
+  "start": "2018-01-01T00:00:00+00:00",
+  "end": "2019-01-01T00:00:00+00:00",
+  "timeseries_requested": false,
+  "records": 15297,
+  "size_bytes": 9295447,
+  "sha256": "857959841ac803e6e3a6f1a059d70c487efafccd736d8590bd650e8ba0326a14",
+  "acquired_at": "2026-10-04T16:21:55.441263+00:00",
+  "token_storage": "environment variable only; token is not stored in this manifest",
+  "usage": "offline research/pipeline validation; not Vietnamese production ground truth"
+}
+{
+  "output": "ml\\data\\external\\acn\\raw\\acn_caltech_2019_sessions.json",
+  "manifest": "ml\\data\\external\\acn\\raw\\acn_caltech_2019_sessions.manifest.json",
+  "dataset": "ACN-Data",
+  "source": "ACN-Data API",
+  "raw_export": "acn_caltech_2019_sessions.json",
+  "site": "caltech",
+  "start": "2019-01-01T00:00:00+00:00",
+  "end": "2020-01-01T00:00:00+00:00",
+  "timeseries_requested": false,
+  "records": 10617,
+  "size_bytes": 9367015,
+  "sha256": "94bdd4bc7a1999e1c22a255d0481ec710b3d72bebfcffdaf8de28b5d89e825bf",
+  "acquired_at": "2026-10-04T16:24:16.401032+00:00",
+  "token_storage": "environment variable only; token is not stored in this manifest",
+  "usage": "offline research/pipeline validation; not Vietnamese production ground truth"
+}
+{
+  "output": "ml\\data\\external\\acn\\raw\\acn_caltech_2020_sessions.json",
+  "manifest": "ml\\data\\external\\acn\\raw\\acn_caltech_2020_sessions.manifest.json",
+  "dataset": "ACN-Data",
+  "source": "ACN-Data API",
+  "raw_export": "acn_caltech_2020_sessions.json",
+  "site": "caltech",
+  "start": "2020-01-01T00:00:00+00:00",
+  "end": "2021-01-01T00:00:00+00:00",
+  "timeseries_requested": false,
+  "records": 2472,
+  "size_bytes": 2180411,
+  "sha256": "d20f18314f990ff5698be7813ddbda5d84a097fbfd38dbe72dabf19d4bee2087",
+  "acquired_at": "2026-10-04T16:24:49.560486+00:00",
+  "token_storage": "environment variable only; token is not stored in this manifest",
+  "usage": "offline research/pipeline validation; not Vietnamese production ground truth"
+}

@@ -53,6 +53,13 @@ datasets get a neighbouring manifest with source checksums.
   --telemetry C:\data\acn_telemetry.parquet `
   --telemetry-output ml\data\silver\acn\telemetry.parquet
 
+# Synthetic simulator CSVs -> canonical sessions for adapter/DES/RDM-label tests only.
+# The output manifest is labelled synthetic and evaluation_only; do not train or serve it.
+.\.venv\Scripts\python.exe ml\src\prepare_simulator_data.py `
+  --sessions simulator\output\sessions.csv `
+  --ports simulator\output\ports.csv `
+  --output ml\data\silver\simulator\sessions.parquet
+
 # Build the actual RDM supervised rows, then train only against validation.
 .\.venv\Scripts\python.exe ml\src\build_rdm_dataset.py `
   --sessions ml\data\silver\acn\sessions.parquet `
