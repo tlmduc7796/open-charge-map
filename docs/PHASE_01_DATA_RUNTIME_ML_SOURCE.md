@@ -38,7 +38,7 @@ Hoàn thành các dataset synthetic/runtime và chuẩn bị UrbanEV làm nguồ
 Suggested structure:
 
 ```text
-data/ml/urbanev/
+data_platform/data/ml/urbanev/
 ├── raw/
 └── source_manifest.md
 ```
@@ -128,7 +128,7 @@ Kiểm tra:
 ## 4. Deliverables
 
 ```text
-data/
+data_platform/data/
 ├── ml/urbanev/raw/
 ├── runtime/
 │   ├── station_status.json

@@ -12,7 +12,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REPORT = ROOT / "data" / "validation" / "full_data_validation_report.md"
+DATA_ROOT = ROOT / "data_platform" / "data"
+REPORT = DATA_ROOT / "validation" / "full_data_validation_report.md"
 errors: list[str] = []
 warnings: list[str] = []
 checks: list[str] = []
@@ -70,11 +71,11 @@ def unique_ids(records: list, key: str, context: str) -> set[str]:
 
 
 def validate_raw_source() -> None:
-    manifest = load_json("data/ml/urbanev/source_manifest.json")
+    manifest = load_json("data_platform/data/ml/urbanev/source_manifest.json")
     if not isinstance(manifest, dict):
         return
     archive_name = manifest.get("archive")
-    archive = ROOT / "data" / "ml" / "urbanev" / "raw" / str(archive_name)
+    archive = DATA_ROOT / "ml" / "urbanev" / "raw" / str(archive_name)
     if not archive.is_file():
         error(f"UrbanEV raw archive missing: `{archive.relative_to(ROOT)}`")
         return
@@ -88,19 +89,19 @@ def validate_raw_source() -> None:
         error("UrbanEV raw archive SHA-256 differs from source manifest")
     if manifest.get("zip_test") != "PASS":
         error("UrbanEV archive integrity is not PASS in source manifest")
-    if not (ROOT / "data" / "ml" / "urbanev" / "source_manifest.md").is_file():
+    if not (DATA_ROOT / "ml" / "urbanev" / "source_manifest.md").is_file():
         error("Missing human-readable UrbanEV source manifest")
     checked(f"UrbanEV archive verified: {archive.stat().st_size} bytes, SHA-256 matched")
 
 
 def validate_all() -> None:
-    stations_doc = load_json("data/static/stations.geojson")
-    vehicles = load_json("data/static/vehicles.json")
-    statuses = load_json("data/runtime/station_status.json")
-    arrivals = load_json("data/runtime/planned_arrivals.json")
-    events = load_json("data/demo/demo_events.json")
-    scenarios = load_json("data/demo/demo_scenarios.json")
-    assumptions = load_json("data/demo/queue_assumptions.json")
+    stations_doc = load_json("data_platform/data/static/stations.geojson")
+    vehicles = load_json("data_platform/data/demo/vehicles.json")
+    statuses = load_json("data_platform/data/runtime/station_status.json")
+    arrivals = load_json("data_platform/data/runtime/planned_arrivals.json")
+    events = load_json("data_platform/data/demo/demo_events.json")
+    scenarios = load_json("data_platform/data/demo/demo_scenarios.json")
+    assumptions = load_json("data_platform/data/demo/queue_assumptions.json")
     if any(value is None for value in [stations_doc, vehicles, statuses, arrivals, events, scenarios, assumptions]):
         return
     if not all(isinstance(value, list) for value in [vehicles, statuses, arrivals, events, scenarios]):
@@ -164,7 +165,7 @@ def validate_all() -> None:
     checked(f"Runtime capacity invariants checked for {len(statuses)} stations")
 
     route_by_id: dict[str, dict] = {}
-    route_files = sorted((ROOT / "data" / "routes").glob("*.json")) if (ROOT / "data" / "routes").exists() else []
+    route_files = sorted((DATA_ROOT / "routes").glob("*.json")) if (DATA_ROOT / "routes").exists() else []
     for path in route_files:
         try:
             route = json.loads(path.read_text(encoding="utf-8"))
@@ -359,7 +360,7 @@ def validate_all() -> None:
             error("queue_assumptions.data_source must be synthetic")
         checked(f"Validated one baseline arrival rate for each of {len(station_ids)} stations")
 
-    if not (ROOT / "data" / "demo" / "station_history.csv").exists():
+    if not (DATA_ROOT / "demo" / "station_history.csv").exists():
         warning("Optional station_history.csv omitted; UrbanEV-normalized replay will be decided in Phase 03")
     validate_raw_source()
 

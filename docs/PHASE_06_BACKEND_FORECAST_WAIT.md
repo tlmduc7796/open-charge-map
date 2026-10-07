@@ -91,7 +91,7 @@ Test ít nhất:
 
 **Exit Gate result:** `DEMO PASS / RELEASE BLOCKED` — 2026-09-25.
 
-Chi tiết kiểm chứng: `data/validation/phase6_forecast_wait_report.md`.
+Chi tiết kiểm chứng: `data_platform/data/validation/phase6_forecast_wait_report.md`.
 
 ## 6. Implementation notes
 

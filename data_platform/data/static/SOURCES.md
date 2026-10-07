@@ -22,11 +22,11 @@ Where EVCS did not expose an exact matching inventory, `total_ports` and `connec
 
 The Audi Ho Chi Minh station was manually verified on `2026-09-25` as having four ports and restricted internal access for Audi vehicles. Its `access` and `notes` fields prevent it from being recommended as a public charging stop.
 
-## Vehicles
+## Vehicles (legacy backend demo fixtures)
 
 - VinFast VF 5 product FAQ: <https://vinfastauto.com/vn_vi/cau-hoi-thuong-gap/cau-hoi-xe-o-to/san-pham/vf-5>
 - VinFast VF 5 specification article: <https://vinfastauto.com/vn_vi/VF-5-Plus-di-duoc-bao-nhieu-km-sau-1-lan-sac-day>
 - VinFast VF 7 official brochure: <https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw8e23886a/Document/VF7_Brochure_25.10.pdf>
 - VinFast charging-standard description: <https://vinfastauto.com/vn_vi/uu-diem-xe-vinfast-vf-9>
 
-Nominal capacity is not separately published in the selected sources, so the usable capacity is copied into `battery_capacity_kwh` and declared synthetic. Reserve SOC, target SOC and charging efficiency are project assumptions. `EV_GBT_CITY_DEMO` is a fully synthetic negative compatibility fixture.
+Nominal capacity is not separately published in the selected sources, so the usable capacity is copied into `battery_capacity_kwh` and declared synthetic. Reserve SOC, target SOC and charging efficiency are project assumptions. `EV_GBT_CITY_DEMO` is a fully synthetic negative compatibility fixture. These three profiles now live in `data_platform/data/demo/vehicles.json`; the separate `data_platform/data/static/vehicles.json` contains 20 DB-oriented profiles with per-field provenance.

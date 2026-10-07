@@ -14,8 +14,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ROUTE_CONFIG = ROOT / "config" / "demo_routes.json"
-STATIONS_FILE = ROOT / "data" / "static" / "stations.geojson"
-ROUTES_DIR = ROOT / "data" / "routes"
+STATIONS_FILE = ROOT / "data_platform" / "data" / "static" / "stations.geojson"
+ROUTES_DIR = ROOT / "data_platform" / "data" / "routes"
 OSRM_BASE_URL = "https://router.project-osrm.org/route/v1/driving"
 
 

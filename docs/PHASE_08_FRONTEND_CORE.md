@@ -85,7 +85,7 @@ Hiển thị:
 
 **Exit Gate result:** `DEMO PASS / RELEASE BLOCKED BY PHASE 03–04` — 2026-09-26.
 
-Chi tiết kiểm chứng: `data/validation/phase8_frontend_core_report.md`.
+Chi tiết kiểm chứng: `data_platform/data/validation/phase8_frontend_core_report.md`.
 
 ## 5. Implementation notes
 

@@ -62,7 +62,7 @@ class Settings:
     def required_data_paths(self) -> tuple[Path, ...]:
         return (
             self.data_dir / "static" / "stations.geojson",
-            self.data_dir / "static" / "vehicles.json",
+            self.data_dir / "demo" / "vehicles.json",
             self.data_dir / "runtime" / "station_status.json",
             self.data_dir / "runtime" / "planned_arrivals.json",
             self.data_dir / "demo" / "demo_events.json",
@@ -84,7 +84,7 @@ def load_settings() -> Settings:
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
         demo_mode=_read_bool("DEMO_MODE", True),
         goong_api_key=key,
-        data_dir=_resolve_from_root(os.getenv("DATA_DIR", "data")),
+        data_dir=_resolve_from_root(os.getenv("DATA_DIR", "data_platform/data")),
         model_artifact_path=_resolve_from_root(
             os.getenv("MODEL_ARTIFACT_PATH", "ml/artifacts/occupancy_model.joblib")
         ),

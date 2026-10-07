@@ -94,7 +94,7 @@ Nên ghi rõ:
 
 **Final Exit Gate result:** `DEMO PASS / RELEASE DEFERRED` — 2026-09-27.
 
-Phase 10 report: `data/validation/phase10_dynamic_demo_report.md`. Release gate đầy đủ vẫn
+Phase 10 report: `data_platform/data/validation/phase10_dynamic_demo_report.md`. Release gate đầy đủ vẫn
 blocked bởi Phase 03–04 và clean-clone verification sau khi tạo commit cuối.
 
 > Chỉ khi gate này PASS mới coi MVP/hackathon build là release-ready.

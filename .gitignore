@@ -9,8 +9,8 @@ pytest-cache-files-*/
 frontend/node_modules/
 frontend/dist/
 ml/artifacts/*.joblib
-data/ml/urbanev/raw/*.zip
-data/ml/urbanev/raw/*.part
-data/ml/urbanev/eda/
+data_platform/data/ml/urbanev/raw/*.zip
+data_platform/data/ml/urbanev/raw/*.part
+data_platform/data/ml/urbanev/eda/
 AGENTS.md
 references/

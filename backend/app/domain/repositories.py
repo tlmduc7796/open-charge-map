@@ -212,7 +212,7 @@ class DomainData:
 def load_domain_data(data_dir: Path) -> DomainData:
     """Load Phase 05 inputs and reject inconsistent station coverage/capacity."""
     stations = StationRepository.from_file(data_dir / "static" / "stations.geojson")
-    vehicles = VehicleRepository.from_file(data_dir / "static" / "vehicles.json")
+    vehicles = VehicleRepository.from_file(data_dir / "demo" / "vehicles.json")
     statuses = StationStatusRepository.from_file(
         data_dir / "runtime" / "station_status.json"
     )

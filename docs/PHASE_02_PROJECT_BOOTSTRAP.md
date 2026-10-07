@@ -25,7 +25,8 @@ smart-ev-journey/
 │   ├── notebooks/
 │   ├── artifacts/
 │   └── tests/
-├── data/
+├── data_platform/
+│   └── data/
 ├── scripts/
 ├── docs/
 ├── .env.example
@@ -71,7 +72,7 @@ smart-ev-journey/
 - [x] Không có secret/API key thật trong source; `.env` được ignore.
 - [x] Data-path validation tìm đúng 12 dataset/artifact từ Phase 00–01.
 
-**Exit Gate result:** `PASS` — 2026-09-25. Chi tiết tại `data/validation/phase2_bootstrap_report.md`.
+**Exit Gate result:** `PASS` — 2026-09-25. Chi tiết tại `data_platform/data/validation/phase2_bootstrap_report.md`.
 
 ## 5.1 Kết quả thực tế
 

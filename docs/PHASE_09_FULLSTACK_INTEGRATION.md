@@ -49,7 +49,7 @@ Thay mock bằng API thật và hoàn thành flow người dùng từ input đ�
 
 **Exit Gate result:** `DEMO PASS / RELEASE BLOCKED BY PHASE 03–04` — 2026-09-26.
 
-Chi tiết kiểm chứng: `data/validation/phase9_fullstack_integration_report.md`.
+Chi tiết kiểm chứng: `data_platform/data/validation/phase9_fullstack_integration_report.md`.
 
 ## 5. Implementation notes
 

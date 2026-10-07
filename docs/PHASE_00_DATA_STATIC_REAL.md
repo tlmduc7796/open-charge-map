@@ -25,7 +25,7 @@ Hoàn thành các dataset tĩnh theo `SMART_EV_JOURNEY_DATA_CONTRACT_MVP.md`, ư
 ### 3.1 `stations.geojson`
 
 - Chọn vùng demo đủ nhỏ để route/map dễ quan sát nhưng có nhiều candidate station.
-- Chạy station collector để tạo `data/collection/station_candidates.json`; review candidate trước khi đưa vào master data.
+- Chạy station collector để tạo `data_platform/data/collection/station_candidates.json`; review candidate trước khi đưa vào master data.
 - Thu thập tọa độ, tên, địa chỉ và provider ID từ nguồn bản đồ/API khi có.
 - Chuẩn hóa:
   - `station_id`
@@ -44,7 +44,7 @@ Hoàn thành các dataset tĩnh theo `SMART_EV_JOURNEY_DATA_CONTRACT_MVP.md`, ư
 - Điền chính xác `synthetic_fields`.
 - Kiểm tra tổng `connectors[].count == total_ports`.
 
-### 3.2 `vehicles.json`
+### 3.2 `data_platform/data/demo/vehicles.json`
 
 Chuẩn bị một tập xe demo nhỏ nhưng đủ khác biệt về:
 
@@ -72,11 +72,13 @@ Viết validator để kiểm tra:
 ## 4. Deliverables
 
 ```text
-data/
+data_platform/data/
 ├── collection/
 │   └── station_candidates.json
 ├── static/
 │   ├── stations.geojson
+│   └── SOURCES.md
+├── demo/
 │   └── vehicles.json
 └── validation/
     └── static_data_validation_report.md

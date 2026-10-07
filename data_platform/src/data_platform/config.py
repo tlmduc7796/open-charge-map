@@ -31,7 +31,7 @@ def load_settings() -> Settings:
         ),
         test_database_url=os.getenv("DATA_PLATFORM_TEST_DATABASE_URL") or None,
         legacy_data_dir=_resolve_from_package(
-            os.getenv("DATA_PLATFORM_LEGACY_DATA_DIR", "../data")
+            os.getenv("DATA_PLATFORM_LEGACY_DATA_DIR", "data")
         ),
         artifact_dir=_resolve_from_package(
             os.getenv("DATA_PLATFORM_ARTIFACT_DIR", "artifacts")

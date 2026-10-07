@@ -1,7 +1,8 @@
 # Smart EV data platform
 
-Thư mục này chứa bộ tối thiểu để tạo lại PostgreSQL/PostGIS database demo từ một snapshot SQL.
-Không cần các JSON/KML thu thập, notebook, UrbanEV archive hoặc các script seed rời.
+Thư mục này tập trung toàn bộ dữ liệu của repository. Bootstrap PostgreSQL/PostGIS dùng
+snapshot SQL và hai file xe JSON; backend demo cùng các script thu thập/kiểm tra vẫn đọc
+các JSON/KML khác trong `data/`.
 
 ## Yêu cầu
 
@@ -27,7 +28,8 @@ Lệnh cuối thực hiện toàn bộ quy trình:
 2. chờ database sẵn sàng;
 3. chạy Alembic migrations đến revision `0004_trips_config`;
 4. nạp `data/bootstrap/current_database.sql` trong một transaction;
-5. kiểm tra số row sau khi nạp.
+5. đối chiếu `data/static/vehicles.json` với `data/demo/vehicles.json` và nạp xe;
+6. kiểm tra số row sau khi nạp.
 
 Database mặc định:
 
@@ -44,13 +46,13 @@ dừng lại để tránh trộn hoặc ghi đè dữ liệu.
 
 ## Dữ liệu sau khi khởi tạo
 
-Snapshot được chụp ngày 04/10/2026 và bao gồm cả dữ liệu master lẫn dữ liệu demo bổ sung.
+Snapshot trạm được chụp ngày 04/10/2026; hồ sơ xe được nạp thêm từ hai file JSON khi bootstrap.
 
 | Bảng | Số row | Nội dung |
 | --- | ---: | --- |
 | `stations` | 102 | 16 trạm master và 86 trạm demo bổ sung |
 | `station_external_refs` | 14 | Mã trạm từ nguồn bên ngoài |
-| `connector_types` | 2 | CCS2 và Type2 |
+| `connector_types` | 4 | CCS2, Type2 và hai chuẩn GB/T dành cho fixture demo |
 | `ports` | 826 | Cổng sạc của toàn bộ trạm |
 | `port_status` | 211 | Trạng thái hiện tại đã có trong snapshot |
 | `station_live_metrics` | 16 | Queue/session metric hiện có |
@@ -58,8 +60,8 @@ Snapshot được chụp ngày 04/10/2026 và bao gồm cả dữ liệu master 
 | `station_occupancy_5m` | 4.624 | Occupancy theo bucket 5 phút |
 | `predictions` | 96 | Prediction theo trạm và horizon |
 | `station_amenities` | 714 | Bảy amenity cho mỗi trạm |
-| `vehicle_models` | 0 | Chưa có dữ liệu trong snapshot hiện tại |
-| `vehicle_connectors` | 0 | Chưa có dữ liệu trong snapshot hiện tại |
+| `vehicle_models` | 21 | 20 hồ sơ nguồn hãng và một xe synthetic chỉ dành cho demo |
+| `vehicle_connectors` | 41 | Quan hệ cổng sạc của 21 xe |
 | `trips` | 0 | Chưa có dữ liệu trong snapshot hiện tại |
 | `trip_positions` | 0 | Chưa có dữ liệu trong snapshot hiện tại |
 | `trip_events` | 0 | Chưa có dữ liệu trong snapshot hiện tại |
@@ -69,21 +71,43 @@ Trong 102 trạm có 52 trạm mang `review_status=synthetic` và `is_active=tru
 là dữ liệu synthetic. Chỉ 211 cổng master có current status trong snapshot; không được suy diễn
 status hoặc queue cho các cổng còn lại.
 
-## Các file cần giữ
+## Bố cục dữ liệu
 
 ```text
 data_platform/
 ├── compose.yaml
 ├── alembic.ini
 ├── pyproject.toml
-├── data/bootstrap/current_database.sql
+├── data/
+│   ├── bootstrap/current_database.sql  # snapshot dùng để khởi tạo DB
+│   ├── static/                         # trạm nguồn và 20 hồ sơ xe cho DB
+│   ├── demo/                           # fixture backend, gồm 3 xe schema cũ
+│   ├── collection/                     # candidate chờ review
+│   ├── runtime/                        # trạng thái demo
+│   ├── routes/                         # route cache
+│   ├── ml/urbanev/                     # nguồn và EDA ML
+│   └── validation/                     # báo cáo kiểm tra
 ├── migrations/
 ├── scripts/bootstrap_database.py
 └── src/data_platform/
 ```
 
-`current_database.sql` là file dữ liệu duy nhất cần thiết. Schema được tạo từ migrations, vì vậy
-snapshot không chứa các bảng hệ thống của PostGIS.
+`current_database.sql` và hai file `static/vehicles.json`, `demo/vehicles.json` được bootstrap
+tự nạp. Hai xe demo VinFast trùng cấu hình được gộp với hồ sơ nguồn hãng; xe GB/T synthetic
+được lưu với `market=DEMO`, `is_active=false`. Các thông số chưa được xác minh như dung lượng
+pin khả dụng của BYD vẫn để `null`, không suy đoán. Schema được tạo từ migrations; snapshot
+không chứa bảng hệ thống PostGIS.
+
+Để nạp lại xe vào database đã khởi tạo mà không lặp bản ghi:
+
+```powershell
+Set-Location data_platform
+python scripts\seed_vehicles.py
+```
+
+Importer chỉ điền trường số còn `null` và giữ giá trị đang có trong DB. Nếu một cấu hình khớp
+nhiều row hiện hữu, importer dừng để kiểm tra thủ công thay vì tự xóa dữ liệu có thể đang được
+`trips` tham chiếu.
 
 ## Tạo lại database local từ đầu
 

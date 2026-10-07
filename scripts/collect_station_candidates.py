@@ -21,9 +21,9 @@ from xml.sax.saxutils import escape
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = ROOT / "config" / "station_collector.json"
-DEFAULT_OUTPUT = ROOT / "data" / "collection" / "station_candidates.json"
-DEFAULT_KML_OUTPUT = ROOT / "data" / "collection" / "station_search_area.kml"
-MASTER_STATIONS = ROOT / "data" / "static" / "stations.geojson"
+DEFAULT_OUTPUT = ROOT / "data_platform" / "data" / "collection" / "station_candidates.json"
+DEFAULT_KML_OUTPUT = ROOT / "data_platform" / "data" / "collection" / "station_search_area.kml"
+MASTER_STATIONS = ROOT / "data_platform" / "data" / "static" / "stations.geojson"
 
 
 class CollectorError(RuntimeError):

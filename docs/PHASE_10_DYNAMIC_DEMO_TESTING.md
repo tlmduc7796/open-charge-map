@@ -83,4 +83,4 @@ Expected:
 
 **Exit Gate result:** `PASS` — 2026-09-27. Backend regression tests chạy cả bốn
 scenario; UI dry-run và kết quả chi tiết được lưu tại
-`data/validation/phase10_dynamic_demo_report.md`.
+`data_platform/data/validation/phase10_dynamic_demo_report.md`.

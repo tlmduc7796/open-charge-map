@@ -8,9 +8,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RUNTIME_DIR = ROOT / "data" / "runtime"
-DEMO_DIR = ROOT / "data" / "demo"
-STATIONS_PATH = ROOT / "data" / "static" / "stations.geojson"
+RUNTIME_DIR = ROOT / "data_platform" / "data" / "runtime"
+DEMO_DIR = ROOT / "data_platform" / "data" / "demo"
+STATIONS_PATH = ROOT / "data_platform" / "data" / "static" / "stations.geojson"
 ROUTE_CONFIG_PATH = ROOT / "config" / "demo_routes.json"
 
 ORIGIN = {"lat": 10.7075, "lon": 106.705, "label": "Nguyen Huu Tho - Phuoc Kien"}

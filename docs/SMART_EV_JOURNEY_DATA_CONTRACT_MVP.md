@@ -64,7 +64,7 @@ Các dataset có thể dùng field `data_source` với một trong các giá tr�
 ### Container của file
 
 - `stations.geojson` dùng GeoJSON `FeatureCollection`; mỗi phần tử trong `features` tuân theo schema Feature bên dưới.
-- `vehicles.json`, `station_status.json`, `planned_arrivals.json`, `demo_events.json` và `demo_scenarios.json` dùng JSON array ở top-level.
+- `data_platform/data/demo/vehicles.json`, `station_status.json`, `planned_arrivals.json`, `demo_events.json` và `demo_scenarios.json` dùng JSON array ở top-level. `data_platform/data/static/vehicles.json` là bộ hồ sơ cho database, dùng object `snapshot` + `vehicles` riêng.
 - Mỗi file trong `routes/*.json`, `queue_assumptions.json` và `occupancy_model_meta.json` dùng một JSON object ở top-level.
 
 ---
@@ -165,7 +165,7 @@ File có `type = "FeatureCollection"` và `features` là array các GeoJSON Feat
 
 ---
 
-# 4. `vehicles.json`
+# 4. `data_platform/data/demo/vehicles.json`
 
 ## Mục đích
 
@@ -859,7 +859,7 @@ Lưu các thành phần đã normalize và score cuối cho từng candidate sta
 | Dataset / artifact | Nội dung chính | Nguồn chính | Giai đoạn sử dụng |
 |---|---|---|---|
 | `stations.geojson` | Vị trí, capacity, connector, công suất, provenance | Map thật + synthetic enrichment | Data setup, map, compatibility, recommendation |
-| `vehicles.json` | Battery, connector, charging limits, consumption, SOC rules | Real/manual | Compatibility, reachability, charging estimate |
+| `demo/vehicles.json` | Battery, connector, charging limits, consumption, SOC rules | Real/manual | Compatibility, reachability, charging estimate |
 | UrbanEV / `urbanev_processed.csv` | Historical occupancy data dùng cho train/validation/test | UrbanEV real | Occupancy ML |
 | `station_history.csv` *(optional)* | Synthetic replay/simulation log; không dùng train ML | Synthetic | Replay, chart, wait-estimator evaluation |
 | `station_status.json` | Current capacity, occupancy, queue và service-time assumption | Synthetic runtime | Runtime wait/recommendation |

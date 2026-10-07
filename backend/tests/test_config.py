@@ -19,7 +19,7 @@ def test_default_paths_are_rooted_at_project(monkeypatch) -> None:
         monkeypatch.delenv(name, raising=False)
     settings = load_settings()
 
-    assert settings.data_dir == PROJECT_ROOT / "data"
+    assert settings.data_dir == PROJECT_ROOT / "data_platform" / "data"
     assert settings.model_artifact_path == (
         PROJECT_ROOT / "ml" / "artifacts" / "occupancy_model.joblib"
     )

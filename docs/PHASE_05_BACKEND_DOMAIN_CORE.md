@@ -88,7 +88,7 @@ Unit tests cho:
 
 **Exit Gate result:** `PASS` — 2026-09-25 trên nhánh `demo/backend-first`.
 
-Chi tiết kiểm chứng: `data/validation/phase5_domain_core_report.md`.
+Chi tiết kiểm chứng: `data_platform/data/validation/phase5_domain_core_report.md`.
 
 ## 6. Implementation notes
 

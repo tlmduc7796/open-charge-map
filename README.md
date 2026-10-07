@@ -17,6 +17,9 @@ Phase 03–04 vẫn deferred và chưa được đánh dấu hoàn thành, vì v
 demo gate chứ chưa đạt release gate. Bản demo không claim đã có occupancy ML artifact:
 `prediction_source=persistence` là trạng thái chủ động và được hiển thị trên UI.
 
+Toàn bộ dữ liệu của repo được lưu tại `data_platform/data/`; backend demo tiếp tục đọc
+fixture JSON ở đó, còn lệnh bootstrap database nạp SQL snapshot và 21 hồ sơ xe đã đối chiếu.
+
 ## Yêu cầu
 
 - Python 3.12
@@ -40,6 +43,21 @@ Nếu chưa có UrbanEV raw archive:
 ```powershell
 python scripts\acquire_urbanev.py
 ```
+
+## EDA UrbanEV trước preprocessing
+
+Trước khi điều chỉnh dữ liệu synthetic trong `station_status.json`, chạy notebook EDA để
+đánh giá thủ công chất lượng dữ liệu UrbanEV station-level:
+
+```powershell
+python -m pip install -r requirements-eda.txt
+python -m jupyter lab notebooks\urbanev_eda.ipynb
+```
+
+Notebook mặc định quét một mẫu xác định trước để kiểm tra nhanh. Sau khi xác nhận pipeline,
+đặt `FULL_SCAN = True` trong cell cấu hình để quét toàn bộ trạm và xuất kết quả vào
+`data_platform/data/ml/urbanev/eda/`. Kết quả EDA chỉ dùng để đưa ra quyết định preprocessing; notebook
+không sửa hay sinh `station_status.json`.
 
 Kiểm tra toàn bộ input Phase 0–1:
 
@@ -209,7 +227,9 @@ Sao chép `.env.example` thành `.env`. Không commit `.env` hoặc API key th�
 
 - `GOONG_API_KEY`: REST key đặt trong `.env` ở repository root; Phase 7 dùng cho
   Directions/Distance Matrix và collector dùng cho Places. Không đưa key này vào biến `VITE_*`.
-- `DATA_DIR`: thư mục data, mặc định `data`.
+- `DATA_DIR`: thư mục data, mặc định `data_platform/data`. Bộ 20 xe cho database nằm ở
+  `data_platform/data/static/vehicles.json`; ba xe fixture của backend demo nằm ở
+  `data_platform/data/demo/vehicles.json` cho đến khi backend chuyển sang đọc database.
 - `MODEL_ARTIFACT_PATH`: model occupancy, chưa tồn tại trước Phase 04.
 - `MODEL_PREPROCESSOR_PATH`, `MODEL_META_PATH`: artifact phụ của Phase 04.
 - `WAIT_SCORING_CAP_MIN`: wait hữu hạn dùng để score station overload/offline.

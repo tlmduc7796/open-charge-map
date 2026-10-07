@@ -5,9 +5,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-STATIONS_PATH = ROOT / "data" / "static" / "stations.geojson"
-VEHICLES_PATH = ROOT / "data" / "static" / "vehicles.json"
-REPORT_PATH = ROOT / "data" / "validation" / "static_data_validation_report.md"
+STATIONS_PATH = ROOT / "data_platform" / "data" / "static" / "stations.geojson"
+VEHICLES_PATH = ROOT / "data_platform" / "data" / "demo" / "vehicles.json"
+REPORT_PATH = ROOT / "data_platform" / "data" / "validation" / "static_data_validation_report.md"
 
 STATION_REQUIRED = {
     "station_id",

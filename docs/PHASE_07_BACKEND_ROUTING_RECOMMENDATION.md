@@ -93,7 +93,7 @@ Tối thiểu:
 
 **Exit Gate result:** `DEMO PASS / RELEASE BLOCKED BY PHASE 04–06` — 2026-09-25.
 
-Chi tiết kiểm chứng: `data/validation/phase7_backend_demo_report.md`.
+Chi tiết kiểm chứng: `data_platform/data/validation/phase7_backend_demo_report.md`.
 
 ## 4. Implementation notes
 

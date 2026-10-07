@@ -2,7 +2,7 @@
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
     <name>OCM Verified EV Charging Stations</name>
-    <description>Verified charging stations promoted to data/static/stations.geojson.</description>
+    <description>Verified charging stations promoted to data_platform/data/static/stations.geojson.</description>
     <Style id="verified-real">
       <IconStyle><color>ff00a000</color><scale>1.1</scale><Icon><href>http://maps.google.com/mapfiles/kml/paddle/grn-circle.png</href></Icon></IconStyle>
     </Style>

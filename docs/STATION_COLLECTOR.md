@@ -40,7 +40,7 @@ Nếu không có key, provider Goong được bỏ qua và collector vẫn tạo
 
 ## Xem vùng tìm kiếm trên Google Maps
 
-Mỗi lần chạy, collector tạo `data/collection/station_search_area.kml` gồm bounding box và các candidate có tọa độ. Để xem chính xác trên nền Google Maps:
+Mỗi lần chạy, collector tạo `data_platform/data/collection/station_search_area.kml` gồm bounding box và các candidate có tọa độ. Để xem chính xác trên nền Google Maps:
 
 1. mở <https://www.google.com/mymaps> và tạo một map;
 2. chọn **Import** ở layer đầu tiên;

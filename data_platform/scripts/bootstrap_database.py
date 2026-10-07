@@ -8,16 +8,18 @@ from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
+from data_platform.config import load_settings
+from data_platform.vehicles import load_vehicle_seed, seed_vehicle_data
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 
-from data_platform.config import load_settings
-
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SNAPSHOT = PACKAGE_ROOT / "data" / "bootstrap" / "current_database.sql"
+VEHICLE_CATALOG = PACKAGE_ROOT / "data" / "static" / "vehicles.json"
+DEMO_VEHICLES = PACKAGE_ROOT / "data" / "demo" / "vehicles.json"
 EXPECTED_COUNTS = {
     "app_config": 0,
-    "connector_types": 2,
+    "connector_types": 4,
     "port_status": 211,
     "port_status_history": 211,
     "ports": 826,
@@ -30,8 +32,8 @@ EXPECTED_COUNTS = {
     "trip_events": 0,
     "trip_positions": 0,
     "trips": 0,
-    "vehicle_connectors": 0,
-    "vehicle_models": 0,
+    "vehicle_connectors": 41,
+    "vehicle_models": 21,
 }
 
 
@@ -147,6 +149,7 @@ def main() -> None:
     snapshot = args.snapshot.resolve()
     if not snapshot.is_file():
         raise FileNotFoundError(f"database snapshot not found: {snapshot}")
+    load_vehicle_seed(VEHICLE_CATALOG, DEMO_VEHICLES)
 
     _docker("up", "-d", "postgres")
     _wait_for_postgres()
@@ -163,6 +166,11 @@ def main() -> None:
         )
 
     _restore(snapshot, args.database_name)
+    engine = create_engine(database_url)
+    try:
+        seed_vehicle_data(engine, VEHICLE_CATALOG, DEMO_VEHICLES)
+    finally:
+        engine.dispose()
     actual = _table_counts(database_url)
     if actual != EXPECTED_COUNTS:
         differences = {
@@ -175,7 +183,8 @@ def main() -> None:
     print(
         "Database bootstrap complete: "
         f"{actual['stations']} stations, {actual['ports']} ports, "
-        f"{actual['station_amenities']} amenities"
+        f"{actual['station_amenities']} amenities, "
+        f"{actual['vehicle_models']} vehicles"
     )
 
 
