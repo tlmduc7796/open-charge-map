@@ -2,7 +2,7 @@
 
 - Nguồn chính thức: https://github.com/IntelligentSystemsLab/UrbanEV
 - File Drive: `1OEpo-XDocd33aK3MbgDt9S5bcqwiAFPQ`
-- Ngày tải: `2026-09-25T17:25:55+07:00`
+- Ngày tải: `2026-10-06T17:13:18+07:00`
 - Archive: `raw/UrbanEVDataset.zip` (647305188 bytes)
 - SHA-256: `9d3f0aec34434546d082509efcdeeaea116eaa841701cc5854a9b62a27881a79`
 - ZIP integrity: `PASS` (3138 members)
