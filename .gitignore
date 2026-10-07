@@ -31,4 +31,6 @@ ml/results/ctgan/*
 !ml/results/ctgan/.gitkeep
 ml/results/rdm/*
 !ml/results/rdm/.gitkeep
+ml/results/occupancy/*
+!ml/results/occupancy/.gitkeep
 Reference/
