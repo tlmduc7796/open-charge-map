@@ -41,7 +41,7 @@ export default function JourneyForm(props: JourneyFormProps) {
       <div className="section-heading">
         <div>
           <span className="step-label">01 · Hành trình</span>
-          <h1>Chọn trạm sạc phù hợp</h1>
+          <h1>Chọn trạm sạc</h1>
         </div>
       </div>
 

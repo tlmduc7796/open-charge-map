@@ -57,7 +57,6 @@ export default function RecommendationList(props: RecommendationListProps) {
                 <span><b>{Math.round(item.arrival_soc * 100)}%</b> SOC tới</span>
               </span>
             </span>
-            <span className="score">{Math.round(item.final_score * 100)}</span>
           </button>
         ))}
       </div>
