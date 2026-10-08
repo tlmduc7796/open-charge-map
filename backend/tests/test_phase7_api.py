@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import replace
 
 import httpx
 
@@ -39,6 +40,26 @@ def test_station_vehicle_route_and_model_endpoints() -> None:
     assert len(responses[4].json()) == 4
     assert responses[5].json()["resolution_source"] == "cache"
     assert responses[6].json()["prediction_source"] == "persistence"
+
+
+def test_demo_reset_requires_demo_mode() -> None:
+    original_settings = app.state.settings
+    try:
+        app.state.settings = replace(original_settings, demo_mode=True)
+        app.state.runtime_state.reset()
+        app.state.runtime_state.apply("EVT_OUTAGE_LA_VELA")
+        app.state.settings = replace(original_settings, demo_mode=False)
+
+        response = asyncio.run(_request("POST", "/demo/reset"))
+
+        assert response.status_code == 403
+        assert response.json() == {"detail": "demo mode is disabled"}
+        assert app.state.runtime_state.active_event_ids() == (
+            "EVT_OUTAGE_LA_VELA",
+        )
+    finally:
+        app.state.settings = original_settings
+        app.state.runtime_state.reset()
 
 
 def test_required_end_to_end_recommendation_scenarios() -> None:

@@ -80,7 +80,7 @@ http://127.0.0.1:8000/docs
 POST /journey/recommend
 POST /route
 POST /demo/events/{event_id}/apply
-POST /demo/reset
+POST /demo/reset                       # chỉ khả dụng khi DEMO_MODE=true
 GET  /model/status
 GET  /demo/scenarios
 GET  /geocoding/autocomplete

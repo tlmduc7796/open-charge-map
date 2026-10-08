@@ -133,6 +133,8 @@ def apply_event(event_id: str, request: Request):
 
 @router.post("/demo/reset", tags=["demo"])
 def reset_demo(request: Request) -> dict[str, str]:
+    if not request.app.state.settings.demo_mode:
+        raise HTTPException(status_code=403, detail="demo mode is disabled")
     request.app.state.runtime_state.reset()
     request.app.state.planned_arrival_store.reset()
     return {"status": "reset"}
