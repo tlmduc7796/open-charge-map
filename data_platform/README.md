@@ -29,7 +29,8 @@ Lệnh cuối thực hiện toàn bộ quy trình:
 3. chạy Alembic migrations đến revision `0004_trips_config`;
 4. nạp `data/bootstrap/current_database.sql` trong một transaction;
 5. đối chiếu `data/static/vehicles.json` với `data/demo/vehicles.json` và nạp xe;
-6. kiểm tra số row sau khi nạp.
+6. nạp planned arrivals, arrival rate nền và cửa sổ tính từ fixture runtime/demo;
+7. kiểm tra số row sau khi nạp.
 
 Database mặc định:
 
@@ -62,10 +63,12 @@ Snapshot trạm được chụp ngày 04/10/2026; hồ sơ xe được nạp th�
 | `station_amenities` | 714 | Bảy amenity cho mỗi trạm |
 | `vehicle_models` | 21 | 20 hồ sơ nguồn hãng và một xe synthetic chỉ dành cho demo |
 | `vehicle_connectors` | 41 | Quan hệ cổng sạc của 21 xe |
+| `planned_arrivals` | 4 | Hai planned, một cancelled và một expired fixture synthetic |
+| `station_arrival_rates` | 16 | Arrival rate nền synthetic cho các trạm demo |
 | `trips` | 0 | Chưa có dữ liệu trong snapshot hiện tại |
 | `trip_positions` | 0 | Chưa có dữ liệu trong snapshot hiện tại |
 | `trip_events` | 0 | Chưa có dữ liệu trong snapshot hiện tại |
-| `app_config` | 0 | Chưa có dữ liệu trong snapshot hiện tại |
+| `app_config` | 1 | Cửa sổ tính planned-arrival rate, hiện là 15 phút |
 
 Trong 102 trạm có 52 trạm mang `review_status=synthetic` và `is_active=true`. Toàn bộ 714 amenity
 là dữ liệu synthetic. Chỉ 211 cổng master có current status trong snapshot; không được suy diễn
@@ -92,11 +95,11 @@ data_platform/
 └── src/data_platform/
 ```
 
-`current_database.sql` và hai file `static/vehicles.json`, `demo/vehicles.json` được bootstrap
-tự nạp. Hai xe demo VinFast trùng cấu hình được gộp với hồ sơ nguồn hãng; xe GB/T synthetic
-được lưu với `market=DEMO`, `is_active=false`. Các thông số chưa được xác minh như dung lượng
-pin khả dụng của BYD vẫn để `null`, không suy đoán. Schema được tạo từ migrations; snapshot
-không chứa bảng hệ thống PostGIS.
+`current_database.sql`, hai file xe, `runtime/planned_arrivals.json` và
+`demo/queue_assumptions.json` được bootstrap tự nạp. Hai xe demo VinFast trùng cấu hình được
+gộp với hồ sơ nguồn hãng; xe GB/T synthetic được lưu với `market=DEMO`, `is_active=false`.
+Các thông số chưa được xác minh như dung lượng pin khả dụng của BYD vẫn để `null`, không suy
+đoán. Schema được tạo từ migrations; snapshot không chứa bảng hệ thống PostGIS.
 
 Để nạp lại xe vào database đã khởi tạo mà không lặp bản ghi:
 

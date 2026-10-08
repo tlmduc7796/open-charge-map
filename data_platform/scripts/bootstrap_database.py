@@ -9,6 +9,7 @@ from pathlib import Path
 from alembic import command
 from alembic.config import Config
 from data_platform.config import load_settings
+from data_platform.runtime_seed import load_runtime_seed, seed_runtime_data
 from data_platform.vehicles import load_vehicle_seed, seed_vehicle_data
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
@@ -17,13 +18,17 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SNAPSHOT = PACKAGE_ROOT / "data" / "bootstrap" / "current_database.sql"
 VEHICLE_CATALOG = PACKAGE_ROOT / "data" / "static" / "vehicles.json"
 DEMO_VEHICLES = PACKAGE_ROOT / "data" / "demo" / "vehicles.json"
+PLANNED_ARRIVALS = PACKAGE_ROOT / "data" / "runtime" / "planned_arrivals.json"
+QUEUE_ASSUMPTIONS = PACKAGE_ROOT / "data" / "demo" / "queue_assumptions.json"
 EXPECTED_COUNTS = {
-    "app_config": 0,
+    "app_config": 1,
     "connector_types": 4,
     "port_status": 211,
     "port_status_history": 211,
     "ports": 826,
     "predictions": 96,
+    "planned_arrivals": 4,
+    "station_arrival_rates": 16,
     "station_amenities": 714,
     "station_external_refs": 14,
     "station_live_metrics": 16,
@@ -150,6 +155,7 @@ def main() -> None:
     if not snapshot.is_file():
         raise FileNotFoundError(f"database snapshot not found: {snapshot}")
     load_vehicle_seed(VEHICLE_CATALOG, DEMO_VEHICLES)
+    load_runtime_seed(PLANNED_ARRIVALS, QUEUE_ASSUMPTIONS)
 
     _docker("up", "-d", "postgres")
     _wait_for_postgres()
@@ -169,6 +175,7 @@ def main() -> None:
     engine = create_engine(database_url)
     try:
         seed_vehicle_data(engine, VEHICLE_CATALOG, DEMO_VEHICLES)
+        seed_runtime_data(engine, PLANNED_ARRIVALS, QUEUE_ASSUMPTIONS)
     finally:
         engine.dispose()
     actual = _table_counts(database_url)
@@ -184,7 +191,8 @@ def main() -> None:
         "Database bootstrap complete: "
         f"{actual['stations']} stations, {actual['ports']} ports, "
         f"{actual['station_amenities']} amenities, "
-        f"{actual['vehicle_models']} vehicles"
+        f"{actual['vehicle_models']} vehicles, "
+        f"{actual['planned_arrivals']} planned arrivals"
     )
 
 
