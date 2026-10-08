@@ -274,3 +274,21 @@ button { cursor: pointer; }
   .timeline-entry { grid-template-columns: 48px 1fr; }
   .timeline-entry time { grid-column: 2; }
 }
+.advanced-toggle {
+  display: block;
+  margin: 12px auto 0 0;
+  padding: 10px 14px;
+  color: #173d35;
+  background-color: #fbfdfb;
+  border: 1px solid #cedbd4;
+  border-radius: 10px;
+  font: inherit;
+  font-size: calc(1em - 2px);
+  cursor: pointer;
+}
+.advanced-options {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+.advanced-options > label { margin-bottom: 0; }
