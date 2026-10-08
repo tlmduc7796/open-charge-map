@@ -181,7 +181,7 @@ class RouteRequest(DomainModel):
 
 
 class PlannedArrivalCreateRequest(DomainModel):
-    arrival_id: str | None = None
+    arrival_id: str | None = Field(default=None, min_length=1)
     station_id: str
     vehicle_id: str | None = None
     eta_at: datetime
@@ -195,6 +195,7 @@ class PlannedArrivalCreateRequest(DomainModel):
 
 
 class PlannedArrivalCommitRequest(DomainModel):
+    arrival_id: str | None = Field(default=None, min_length=1)
     station_id: str
     vehicle_id: str
     departure_at: datetime

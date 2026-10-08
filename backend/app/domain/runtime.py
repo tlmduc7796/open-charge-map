@@ -15,6 +15,24 @@ from backend.app.domain.repositories import (
 )
 
 
+def planned_arrival_matches_request(
+    arrival: PlannedArrival, request: PlannedArrivalCreateRequest
+) -> bool:
+    return (
+        arrival.station_id == request.station_id
+        and arrival.vehicle_id == request.vehicle_id
+        and arrival.eta_at == request.eta_at
+        and arrival.eta_window_start == request.eta_window_start
+        and arrival.eta_window_end == request.eta_window_end
+        and arrival.expected_energy_kwh == request.expected_energy_kwh
+        and arrival.expected_charge_duration_min
+        == request.expected_charge_duration_min
+        and arrival.arrival_probability == request.arrival_probability
+        and arrival.expires_at == request.expires_at
+        and arrival.route_id == request.route_id
+    )
+
+
 class RuntimeStateStore:
     def __init__(
         self,
@@ -117,6 +135,9 @@ class PlannedArrivalStore:
         arrival_id = request.arrival_id or f"ARR_{uuid4().hex[:12].upper()}"
         with self._lock:
             if arrival_id in self._arrivals:
+                existing = self._arrivals[arrival_id]
+                if planned_arrival_matches_request(existing, request):
+                    return existing
                 raise ValueError(f"arrival_id already exists: {arrival_id}")
             arrival = PlannedArrival(
                 arrival_id=arrival_id,
@@ -140,6 +161,10 @@ class PlannedArrivalStore:
     def cancel(self, arrival_id: str) -> PlannedArrival:
         with self._lock:
             arrival = self._arrivals[arrival_id]
+            if arrival.status != "planned":
+                raise ValueError(
+                    f"planned arrival {arrival_id} cannot transition from {arrival.status}"
+                )
             updated = arrival.model_copy(update={"status": "cancelled"})
             self._arrivals[arrival_id] = updated
             return updated
@@ -147,6 +172,10 @@ class PlannedArrivalStore:
     def mark_arrived(self, arrival_id: str) -> PlannedArrival:
         with self._lock:
             arrival = self._arrivals[arrival_id]
+            if arrival.status != "planned":
+                raise ValueError(
+                    f"planned arrival {arrival_id} cannot transition from {arrival.status}"
+                )
             updated = arrival.model_copy(update={"status": "arrived"})
             self._arrivals[arrival_id] = updated
             return updated

@@ -13,6 +13,7 @@ from sqlalchemy.exc import IntegrityError
 
 from backend.app.domain.models import PlannedArrival
 from backend.app.domain.phase7_models import PlannedArrivalCreateRequest
+from backend.app.domain.runtime import planned_arrival_matches_request
 
 DEMO_TIMEZONE = ZoneInfo("Asia/Ho_Chi_Minh")
 
@@ -160,6 +161,17 @@ class DatabasePlannedArrivalRepository:
         *,
         created_at: datetime,
     ) -> PlannedArrival:
+        if request.arrival_id is not None:
+            try:
+                existing = self.get(request.arrival_id)
+            except KeyError:
+                pass
+            else:
+                if planned_arrival_matches_request(existing, request):
+                    return existing
+                raise ValueError(
+                    f"arrival_id already exists: {request.arrival_id}"
+                )
         arrival = PlannedArrival(
             arrival_id=request.arrival_id or f"ARR_{uuid4().hex[:12].upper()}",
             station_id=request.station_id,
@@ -180,6 +192,10 @@ class DatabasePlannedArrivalRepository:
             with self._engine.begin() as connection:
                 self._insert(connection, arrival)
         except IntegrityError as exc:
+            if request.arrival_id is not None:
+                existing = self.get(request.arrival_id)
+                if planned_arrival_matches_request(existing, request):
+                    return existing
             raise ValueError(
                 f"arrival_id already exists: {arrival.arrival_id}"
             ) from exc

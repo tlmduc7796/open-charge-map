@@ -168,6 +168,7 @@ def test_commit_arrival_and_timezone_validation() -> None:
             "POST",
             "/planned-arrivals/commit",
             json={
+                    "arrival_id": "ARR_COMMIT_TEST",
                 "station_id": "ST_EVO_LAVIDA_Q7",
                 "vehicle_id": "EV_VF5_PLUS",
                 "departure_at": "2099-01-01T10:00:00+07:00",
@@ -188,3 +189,68 @@ def test_commit_arrival_and_timezone_validation() -> None:
     assert committed.json()["eta_at"] == "2099-01-01T10:10:00+07:00"
     assert committed.json()["route_id"] == "LIVE_GOONG_DEMO"
     assert cancelled.json()["status"] == "cancelled"
+
+
+def test_planned_arrival_idempotency_conflicts_and_reference_validation() -> None:
+    payload = {
+        "arrival_id": "ARR_IDEMPOTENT_TEST",
+        "station_id": "ST_EVO_LAVIDA_Q7",
+        "vehicle_id": "EV_VF5_PLUS",
+        "departure_at": "2099-01-01T10:00:00+07:00",
+        "route_id": "LIVE_GOONG_DEMO",
+        "route_duration_to_station_s": 600,
+        "expected_energy_kwh": 12,
+        "expected_charge_duration_min": 20,
+    }
+
+    async def lifecycle():
+        await _request("POST", "/demo/reset")
+        created = await _request(
+            "POST", "/planned-arrivals/commit", json=payload
+        )
+        retried = await _request(
+            "POST", "/planned-arrivals/commit", json=payload
+        )
+        conflicting = await _request(
+            "POST",
+            "/planned-arrivals/commit",
+            json={**payload, "expected_energy_kwh": 13},
+        )
+        cancelled = await _request(
+            "POST", "/planned-arrivals/ARR_IDEMPOTENT_TEST/cancel"
+        )
+        cancelled_again = await _request(
+            "POST", "/planned-arrivals/ARR_IDEMPOTENT_TEST/cancel"
+        )
+        unknown_station = await _request(
+            "POST",
+            "/planned-arrivals/commit",
+            json={**payload, "arrival_id": "ARR_UNKNOWN", "station_id": "ST_UNKNOWN"},
+        )
+        empty_id = await _request(
+            "POST",
+            "/planned-arrivals/commit",
+            json={**payload, "arrival_id": ""},
+        )
+        return (
+            created,
+            retried,
+            conflicting,
+            cancelled,
+            cancelled_again,
+            unknown_station,
+            empty_id,
+        )
+
+    responses = asyncio.run(lifecycle())
+    created, retried, conflicting, cancelled, cancelled_again, unknown, empty_id = (
+        responses
+    )
+    assert created.status_code == 200
+    assert retried.status_code == 200
+    assert retried.json() == created.json()
+    assert conflicting.status_code == 409
+    assert cancelled.status_code == 200
+    assert cancelled_again.status_code == 409
+    assert unknown.status_code == 404
+    assert empty_id.status_code == 422

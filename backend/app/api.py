@@ -143,6 +143,17 @@ def list_planned_arrivals(request: Request):
     return request.app.state.planned_arrival_store.all()
 
 
+def _validate_memory_arrival_references(
+    request: Request, station_id: str, vehicle_id: str | None
+) -> None:
+    if request.app.state.settings.planned_arrivals_storage != "memory":
+        return
+    data = request.app.state.domain_data
+    data.stations.get(station_id)
+    if vehicle_id is not None:
+        data.vehicles.get(vehicle_id)
+
+
 @router.post(
     "/planned-arrivals",
     response_model=PlannedArrival,
@@ -151,11 +162,10 @@ def list_planned_arrivals(request: Request):
 def register_planned_arrival(
     payload: PlannedArrivalCreateRequest, request: Request
 ) -> PlannedArrival:
-    data = request.app.state.domain_data
     try:
-        data.stations.get(payload.station_id)
-        if payload.vehicle_id is not None:
-            data.vehicles.get(payload.vehicle_id)
+        _validate_memory_arrival_references(
+            request, payload.station_id, payload.vehicle_id
+        )
         return request.app.state.planned_arrival_store.register(
             payload, created_at=datetime.now(UTC)
         )
@@ -173,14 +183,15 @@ def register_planned_arrival(
 def commit_planned_arrival(
     payload: PlannedArrivalCommitRequest, request: Request
 ) -> PlannedArrival:
-    data = request.app.state.domain_data
     try:
-        data.stations.get(payload.station_id)
-        data.vehicles.get(payload.vehicle_id)
+        _validate_memory_arrival_references(
+            request, payload.station_id, payload.vehicle_id
+        )
         eta_at = payload.departure_at + timedelta(
             seconds=payload.route_duration_to_station_s
         )
         create_request = PlannedArrivalCreateRequest(
+            arrival_id=payload.arrival_id,
             station_id=payload.station_id,
             vehicle_id=payload.vehicle_id,
             eta_at=eta_at,
@@ -197,6 +208,8 @@ def commit_planned_arrival(
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="arrival reference not found") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.post("/planned-arrivals/expire", tags=["planned-arrivals"])
@@ -216,6 +229,8 @@ def cancel_planned_arrival(arrival_id: str, request: Request) -> PlannedArrival:
         return request.app.state.planned_arrival_store.cancel(arrival_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="arrival not found") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.post(
@@ -228,6 +243,8 @@ def mark_planned_arrival_arrived(arrival_id: str, request: Request) -> PlannedAr
         return request.app.state.planned_arrival_store.mark_arrived(arrival_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="arrival not found") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.get("/model/status", response_model=ModelStatus, tags=["model"])
