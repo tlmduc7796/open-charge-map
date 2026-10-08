@@ -32,6 +32,7 @@ export const status: StationStatus = {
   occupied_ports: 0,
   available_ports: 1,
   offline_ports: 0,
+  unknown_ports: 0,
   occupancy_ratio: 0,
   queue_length: 0,
   avg_session_duration_min: 30,

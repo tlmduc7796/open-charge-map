@@ -111,15 +111,18 @@ class StationStatus(DomainModel):
     occupied_ports: int = Field(ge=0)
     available_ports: int = Field(ge=0)
     offline_ports: int = Field(ge=0)
+    unknown_ports: int = Field(default=0, ge=0)
     occupancy_ratio: float | None = Field(default=None, ge=0, le=1)
-    queue_length: int = Field(ge=0)
-    avg_session_duration_min: float = Field(gt=0)
+    queue_length: int | None = Field(default=None, ge=0)
+    avg_session_duration_min: float | None = Field(default=None, gt=0)
     data_source: str = Field(min_length=1)
 
     @model_validator(mode="after")
     def validate_capacity_invariants(self) -> StationStatus:
-        if self.operational_ports + self.offline_ports != self.total_ports:
-            raise ValueError("operational_ports + offline_ports must equal total_ports")
+        if self.operational_ports + self.offline_ports + self.unknown_ports != self.total_ports:
+            raise ValueError(
+                "operational_ports + offline_ports + unknown_ports must equal total_ports"
+            )
         if self.occupied_ports + self.available_ports != self.operational_ports:
             raise ValueError("occupied_ports + available_ports must equal operational_ports")
         expected_ratio = (

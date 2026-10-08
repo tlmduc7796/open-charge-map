@@ -13,6 +13,10 @@ from sqlalchemy import Engine, text
 
 VEHICLE_NAMESPACE = uuid.UUID("f94a5b96-193a-4a39-93fb-85376024a52e")
 NUMERIC_FIELDS = ("battery_kwh", "consumption_kwh_per_100km", "max_ac_kw", "max_dc_kw")
+RETIRED_BYD_BROCHURE_URL = (
+    "https://www.byd.com/content/dam/byd-site/vn/proudct-specs/"
+    "new-catalogue-2024/Brochure%20Catalogue_BYD_ATTO%203_VN_view.pdf"
+)
 CONNECTOR_TYPES = {
     "TYPE2": ("Type 2", "AC"),
     "CCS2": ("CCS 2", "DC"),
@@ -51,6 +55,24 @@ def build_vehicle_bundle(catalog: dict[str, Any], demo: list[dict[str, Any]]) ->
     snapshot = catalog.get("snapshot")
     if not isinstance(snapshot, dict) or not snapshot.get("retrieved_at"):
         raise ValueError("vehicle catalog requires snapshot.retrieved_at")
+    defaults = snapshot.get("calculation_defaults")
+    if (
+        not isinstance(defaults, dict)
+        or defaults.get("origin") != "synthetic"
+        or not defaults.get("provider")
+        or not defaults.get("note")
+    ):
+        raise ValueError("vehicle catalog requires synthetic calculation defaults")
+    reserve = defaults.get("reserve_soc")
+    target = defaults.get("default_target_soc")
+    efficiency = defaults.get("charging_efficiency")
+    if not all(type(value) in (int, float) for value in (reserve, target, efficiency)):
+        raise ValueError("vehicle calculation defaults must be numeric")
+    if not (0 <= reserve < target <= 1 and 0 < efficiency <= 1):
+        raise ValueError("vehicle calculation defaults are out of range")
+    for field in ("unknown_ac_planning_kw", "unknown_dc_planning_kw"):
+        if _positive(defaults.get(field), field, "calculation_defaults") is None:
+            raise ValueError(f"vehicle calculation defaults require {field}")
     if not isinstance(catalog.get("vehicles"), list) or not isinstance(demo, list):
         raise ValueError("vehicle catalog and demo vehicles must be arrays")
 
@@ -70,6 +92,19 @@ def build_vehicle_bundle(catalog: dict[str, Any], demo: list[dict[str, Any]]) ->
         if key in by_key:
             raise ValueError(f"duplicate vehicle configuration: {code}")
         provenance = dict(raw.get("provenance") or {})
+        provenance["_calculation_defaults"] = {
+            field: defaults[field]
+            for field in ("reserve_soc", "default_target_soc", "charging_efficiency")
+        }
+        for field in provenance["_calculation_defaults"]:
+            provenance.setdefault(
+                field,
+                {
+                    "origin": "synthetic",
+                    "provider": defaults["provider"],
+                    "note": defaults["note"],
+                },
+            )
         for field in NUMERIC_FIELDS:
             value = _positive(raw.get(field), field, code)
             if value is not None and field not in provenance:
@@ -83,6 +118,23 @@ def build_vehicle_bundle(catalog: dict[str, Any], demo: list[dict[str, Any]]) ->
         connector_codes = tuple(_connector_code(item) for item in connectors)
         if len(connector_codes) != len(set(connector_codes)):
             raise ValueError(f"duplicate connector for {code}")
+        power_fallbacks = {}
+        for field, connector, default_field in (
+            ("max_ac_kw", "TYPE2", "unknown_ac_planning_kw"),
+            ("max_dc_kw", "CCS2", "unknown_dc_planning_kw"),
+        ):
+            if raw.get(field) is None and connector in connector_codes:
+                power_fallbacks[field] = defaults[default_field]
+                provenance.setdefault(
+                    field,
+                    {
+                        "origin": "synthetic",
+                        "provider": defaults["provider"],
+                        "note": "Demo calculation fallback; manufacturer maximum remains unknown.",
+                    },
+                )
+        if power_fallbacks:
+            provenance["_planning_power_fallback"] = power_fallbacks
         vehicle = {
             **raw,
             "provenance": {**provenance, "_snapshot": snapshot},
@@ -242,11 +294,21 @@ def seed_vehicle_data(engine: Engine, catalog_path: Path, demo_path: Path) -> di
             if row is not None:
                 prior_provenance = dict(row["provenance"] or {})
                 provenance = {**provenance, **prior_provenance}
+                for field, details in vehicle["provenance"].items():
+                    previous = provenance.get(field)
+                    if (
+                        isinstance(details, dict)
+                        and isinstance(previous, dict)
+                        and previous.get("source_ref") == RETIRED_BYD_BROCHURE_URL
+                    ):
+                        previous["source_ref"] = details.get("source_ref")
                 for field in NUMERIC_FIELDS:
                     if row[field] is not None:
                         values[field] = row[field]
                     elif values[field] is not None:
                         provenance[field] = vehicle["provenance"][field]
+                if values["battery_kwh"] is not None:
+                    provenance.pop("_battery_note", None)
                 vehicle_id = row["id"]
                 connection.execute(
                     text(

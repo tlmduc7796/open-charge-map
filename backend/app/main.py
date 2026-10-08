@@ -11,6 +11,11 @@ from sqlalchemy import create_engine
 
 from backend.app.api import router
 from backend.app.arrival_rate_repository import DatabaseArrivalRateRepository
+from backend.app.catalog_repository import (
+    DatabaseStationRepository,
+    DatabaseStationStatusRepository,
+    DatabaseVehicleRepository,
+)
 from backend.app.config import load_settings
 from backend.app.domain import load_domain_data
 from backend.app.domain.forecasting import OccupancyForecastService
@@ -48,8 +53,24 @@ app.state.runtime_state = RuntimeStateStore(
     app.state.domain_data.station_statuses,
     app.state.domain_data.demo_events,
 )
+uses_database = (
+    settings.catalog_storage == "database"
+    or settings.planned_arrivals_storage == "database"
+)
+app.state.database_engine = (
+    create_engine(settings.database_url, pool_pre_ping=True) if uses_database else None
+)
+if settings.catalog_storage == "database":
+    app.state.station_repository = DatabaseStationRepository(app.state.database_engine)
+    app.state.vehicle_repository = DatabaseVehicleRepository(app.state.database_engine)
+    app.state.station_status_repository = DatabaseStationStatusRepository(
+        app.state.database_engine
+    )
+else:
+    app.state.station_repository = app.state.domain_data.stations
+    app.state.vehicle_repository = app.state.domain_data.vehicles
+    app.state.station_status_repository = app.state.domain_data.station_statuses
 if settings.planned_arrivals_storage == "database":
-    app.state.database_engine = create_engine(settings.database_url, pool_pre_ping=True)
     app.state.arrival_rate_repository = DatabaseArrivalRateRepository(
         app.state.database_engine,
         app.state.domain_data.queue_assumptions,
@@ -59,7 +80,6 @@ if settings.planned_arrivals_storage == "database":
         app.state.domain_data.planned_arrivals.all(),
     )
 else:
-    app.state.database_engine = None
     app.state.arrival_rate_repository = app.state.domain_data.queue_assumptions
     app.state.planned_arrival_store = PlannedArrivalStore(
         app.state.domain_data.planned_arrivals
@@ -101,6 +121,7 @@ app.state.recommendation_service = RecommendationService(
         max_charge_min=settings.recommend_max_charge_min,
         soc_risk_buffer=settings.recommend_soc_risk_buffer,
     ),
+    vehicle_repository=app.state.vehicle_repository,
 )
 app.include_router(router)
 

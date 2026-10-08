@@ -19,7 +19,7 @@ const HCMC_CENTER: [number, number] = [106.7009, 10.7769];
 function stateFor(status: StationStatus | undefined) {
   if (!status || status.operational_ports === 0) return "offline";
   if (status.data_source === "runtime") return "affected";
-  if (status.available_ports === 0 || status.queue_length > 0) return "busy";
+  if (status.available_ports === 0 || (status.queue_length ?? 0) > 0) return "busy";
   return "available";
 }
 

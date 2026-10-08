@@ -18,8 +18,10 @@ demo gate chứ chưa đạt release gate. Bản demo không claim đã có occu
 `prediction_source=persistence` là trạng thái chủ động và được hiển thị trên UI.
 
 Toàn bộ dữ liệu nguồn của repo được lưu tại `data_platform/data/`. Backend vẫn đọc fixture
-JSON cho station/vehicle demo, runtime status, event, scenario và route cache; mặc định planned
-arrivals, arrival rate nền và cửa sổ tính tải được đọc/ghi qua PostgreSQL sau một lần bootstrap.
+JSON cho event, scenario và route cache. Mặc định API catalog đọc station, vehicle và runtime
+status từ PostgreSQL; planned arrivals, arrival rate nền và cửa sổ tính tải cũng được đọc/ghi
+qua PostgreSQL sau một lần bootstrap. Recommendation demo vẫn dùng tập fixture 16 trạm cho tới
+khi bước tích hợp candidate query bằng PostGIS hoàn tất.
 
 ## Yêu cầu
 
@@ -83,6 +85,10 @@ python -m uvicorn backend.app.main:app --reload
 ```
 
 Health endpoint: `http://127.0.0.1:8000/health`
+
+`CATALOG_STORAGE=database` là chế độ vận hành mặc định. Chỉ đặt `memory` trong unit test hoặc
+khi cần chẩn đoán fixture độc lập. API trả mọi station `is_active=true`; station chưa có
+telemetry có `data_source=unknown`, `unknown_ports=total_ports`, không được tính là available.
 
 Các demo endpoints và interactive schema:
 

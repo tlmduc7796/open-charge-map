@@ -34,6 +34,16 @@ Lệnh cuối thực hiện toàn bộ quy trình:
    `data/runtime/station_status.json` của 16 trạm gốc;
 8. kiểm tra số row sau khi nạp.
 
+Với database đã bootstrap từ revision cũ, nâng schema và đồng bộ runtime seed mà không
+khôi phục lại snapshot tĩnh:
+
+```powershell
+Set-Location data_platform
+..\.venv\Scripts\python.exe -m alembic upgrade head
+..\.venv\Scripts\python.exe scripts\seed_runtime_data.py
+Set-Location ..
+```
+
 Database mặc định:
 
 ```text
@@ -109,8 +119,11 @@ data_platform/
 `current_database.sql`, hai file xe, `runtime/planned_arrivals.json` và
 `demo/queue_assumptions.json` được bootstrap tự nạp. Hai xe demo VinFast trùng cấu hình được
 gộp với hồ sơ nguồn hãng; xe GB/T synthetic được lưu với `market=DEMO`, `is_active=false`.
-Các thông số chưa được xác minh như dung lượng pin khả dụng của BYD vẫn để `null`, không suy
-đoán. Schema được tạo từ migrations; snapshot không chứa bảng hệ thống PostGIS.
+Dung lượng pin công bố của BYD đã được nạp; dung lượng khả dụng và công suất AC tối đa chưa được
+hãng xác nhận nên không suy đoán. Mức tiêu thụ BYD được suy ra từ dung lượng công bố và tầm chạy
+NEDC, có provenance `inferred`. Các mức SOC dự phòng/đích và hiệu suất sạc dùng giả định lập kế
+hoạch `synthetic` cho 20 hồ sơ xe. Schema được tạo từ migrations; snapshot không chứa bảng hệ
+thống PostGIS.
 
 Để nạp lại xe vào database đã khởi tạo mà không lặp bản ghi:
 

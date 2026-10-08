@@ -3,8 +3,18 @@
     "retrieved_at": "2026-10-06",
     "market": "VN",
     "publisher": "VinFast; BYD Auto Vietnam",
-    "method": "Manufacturer product pages, FAQs and official brochures; consumption inferred from published usable battery and test-cycle range where noted",
-    "catalog_complete": false
+    "method": "Manufacturer product pages, FAQs and official brochures; consumption inferred from published battery capacity and test-cycle range where noted (usable capacity only where explicitly stated)",
+    "catalog_complete": false,
+    "calculation_defaults": {
+      "reserve_soc": 0.1,
+      "default_target_soc": 0.8,
+      "charging_efficiency": 0.9,
+      "unknown_ac_planning_kw": 3.3,
+      "unknown_dc_planning_kw": 50,
+      "origin": "synthetic",
+      "provider": "project_demo_policy",
+      "note": "Shared planning assumptions from the legacy demo; unknown charging-power fallbacks are demo estimates, not manufacturer specifications."
+    }
   },
   "vehicles": [
     {
@@ -220,22 +230,24 @@
     },
     {
       "code": "BYD_ATTO3_DYNAMIC_2024_VN", "brand": "BYD", "model": "ATTO 3", "variant": "Dynamic", "model_year": 2024, "market": "VN",
-      "battery_kwh": null, "consumption_kwh_per_100km": null, "max_ac_kw": null, "max_dc_kw": 70,
+      "battery_kwh": 49.92, "consumption_kwh_per_100km": 12.176, "max_ac_kw": null, "max_dc_kw": 70,
       "connectors": ["Type2", "CCS2"], "is_active": true,
       "provenance": {
-        "_battery_note": "Official Vietnam brochure gives 49.92 kWh battery capacity but does not identify usable capacity; battery_kwh remains null.",
-        "max_dc_kw": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/content/dam/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure%20Catalogue_BYD_ATTO%203_VN_view.pdf", "confidence": 1.0, "note": "2024 Vietnam brochure lists CCS2 70 kW."},
-        "connectors": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/content/dam/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure%20Catalogue_BYD_ATTO%203_VN_view.pdf", "confidence": 1.0, "note": "Type 2 AC and CCS 2 DC."}
+        "battery_kwh": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 1.0, "note": "Manufacturer-published battery capacity; usable capacity is not specified."},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 0.7, "note": "49.92 kWh / 410 km NEDC × 100; cycle estimate using published total capacity, not measured consumption."},
+        "max_dc_kw": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 1.0, "note": "2024 Vietnam brochure lists CCS2 70 kW."},
+        "connectors": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 1.0, "note": "Type 2 AC and CCS 2 DC."}
       }
     },
     {
       "code": "BYD_ATTO3_PREMIUM_2024_VN", "brand": "BYD", "model": "ATTO 3", "variant": "Premium", "model_year": 2024, "market": "VN",
-      "battery_kwh": null, "consumption_kwh_per_100km": null, "max_ac_kw": null, "max_dc_kw": 70,
+      "battery_kwh": 60.48, "consumption_kwh_per_100km": 12.6, "max_ac_kw": null, "max_dc_kw": 70,
       "connectors": ["Type2", "CCS2"], "is_active": true,
       "provenance": {
-        "_battery_note": "Official Vietnam brochure gives 60.48 kWh battery capacity but does not identify usable capacity; battery_kwh remains null.",
-        "max_dc_kw": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/content/dam/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure%20Catalogue_BYD_ATTO%203_VN_view.pdf", "confidence": 1.0, "note": "2024 Vietnam brochure lists CCS2 70 kW."},
-        "connectors": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/content/dam/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure%20Catalogue_BYD_ATTO%203_VN_view.pdf", "confidence": 1.0, "note": "Type 2 AC and CCS 2 DC."}
+        "battery_kwh": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 1.0, "note": "Manufacturer-published battery capacity; usable capacity is not specified."},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 0.7, "note": "60.48 kWh / 480 km NEDC × 100; cycle estimate using published total capacity, not measured consumption."},
+        "max_dc_kw": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 1.0, "note": "2024 Vietnam brochure lists CCS2 70 kW."},
+        "connectors": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 1.0, "note": "Type 2 AC and CCS 2 DC."}
       }
     }
   ]

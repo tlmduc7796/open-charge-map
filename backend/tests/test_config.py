@@ -16,6 +16,7 @@ def test_default_paths_are_rooted_at_project(monkeypatch) -> None:
         "CORS_ORIGINS",
         "GOONG_API_KEY",
         "DATABASE_URL",
+        "CATALOG_STORAGE",
         "PLANNED_ARRIVALS_STORAGE",
     ]:
         monkeypatch.delenv(name, raising=False)
@@ -40,6 +41,7 @@ def test_default_paths_are_rooted_at_project(monkeypatch) -> None:
     assert settings.cors_origins == ("http://127.0.0.1:5173",)
     assert settings.goong_api_key is None
     assert settings.database_url.endswith("@127.0.0.1:5433/smart_ev_data")
+    assert settings.catalog_storage == "database"
     assert settings.planned_arrivals_storage == "database"
 
 

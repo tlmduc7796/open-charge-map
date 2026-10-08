@@ -7,7 +7,7 @@ from datetime import timedelta
 from typing import Protocol
 
 from backend.app.domain.forecasting import OccupancyForecastService
-from backend.app.domain.models import PlannedArrival
+from backend.app.domain.models import PlannedArrival, Vehicle
 from backend.app.domain.phase7_models import (
     CandidateExclusion,
     DemoScenario,
@@ -51,6 +51,10 @@ class PlannedArrivalReader(Protocol):
     ) -> tuple[PlannedArrival, ...]: ...
 
 
+class VehicleReader(Protocol):
+    def get(self, vehicle_id: str) -> Vehicle: ...
+
+
 class RecommendationService:
     def __init__(
         self,
@@ -61,8 +65,11 @@ class RecommendationService:
         forecasting: OccupancyForecastService,
         wait_estimator: WaitEstimator,
         thresholds: RecommendationThresholds,
+        *,
+        vehicle_repository: VehicleReader | None = None,
     ) -> None:
         self._data = data
+        self._vehicles = vehicle_repository or data.vehicles
         self._runtime = runtime
         self._planned_arrivals = planned_arrivals
         self._routing = routing
@@ -91,7 +98,7 @@ class RecommendationService:
             for event_id in scenario.event_ids:
                 self._runtime.apply(event_id)
 
-        vehicle = self._data.vehicles.get(scenario.vehicle_id)
+        vehicle = self._vehicles.get(scenario.vehicle_id)
         cached_routes = tuple(
             self._routing.cached_route(route_id) for route_id in scenario.route_ids
         )

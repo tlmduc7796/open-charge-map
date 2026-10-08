@@ -39,13 +39,18 @@ def _scenario_from_payload(payload: JourneyRecommendationRequest, request: Reque
 
 @router.get("/stations", tags=["stations"])
 def list_stations(request: Request):
-    return request.app.state.domain_data.stations.all()
+    return request.app.state.station_repository.all()
 
 
 @router.get("/stations/{station_id}/status", tags=["stations"])
 def station_status(station_id: str, request: Request):
     try:
-        return request.app.state.runtime_state.get(station_id)
+        if request.app.state.runtime_state.active_event_ids():
+            try:
+                return request.app.state.runtime_state.get(station_id)
+            except KeyError:
+                pass
+        return request.app.state.station_status_repository.get(station_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="station not found") from exc
 
@@ -53,14 +58,14 @@ def station_status(station_id: str, request: Request):
 @router.get("/stations/{station_id}", tags=["stations"])
 def station_detail(station_id: str, request: Request):
     try:
-        return request.app.state.domain_data.stations.get(station_id)
+        return request.app.state.station_repository.get(station_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="station not found") from exc
 
 
 @router.get("/vehicles", tags=["vehicles"])
 def list_vehicles(request: Request):
-    return request.app.state.domain_data.vehicles.all()
+    return request.app.state.vehicle_repository.all()
 
 
 @router.get("/demo/scenarios", tags=["demo"])

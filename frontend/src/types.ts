@@ -31,9 +31,10 @@ export interface StationStatus {
   occupied_ports: number;
   available_ports: number;
   offline_ports: number;
+  unknown_ports: number;
   occupancy_ratio: number | null;
-  queue_length: number;
-  avg_session_duration_min: number;
+  queue_length: number | null;
+  avg_session_duration_min: number | null;
   data_source: string;
 }
 

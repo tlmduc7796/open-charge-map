@@ -87,6 +87,8 @@ class RuntimeStateStore:
 
     @staticmethod
     def _apply_effect(status: StationStatus, event: DemoEvent) -> StationStatus:
+        if status.queue_length is None or status.avg_session_duration_min is None:
+            raise ValueError("demo events require queue and session-duration telemetry")
         offline_ports = min(
             status.total_ports,
             max(0, status.offline_ports + event.effects.offline_ports_delta),
@@ -109,6 +111,7 @@ class RuntimeStateStore:
             occupied_ports=occupied_ports,
             available_ports=available_ports,
             offline_ports=offline_ports,
+            unknown_ports=status.unknown_ports,
             occupancy_ratio=occupancy_ratio,
             queue_length=queue_length,
             avg_session_duration_min=status.avg_session_duration_min,

@@ -35,6 +35,36 @@ def test_legacy_duplicates_merge_and_demo_only_vehicle_stays_labeled() -> None:
     assert synthetic["consumption_kwh_per_100km"] == 14.5
 
 
+def test_manufacturer_catalog_has_calculation_inputs_with_labeled_defaults() -> None:
+    bundle = load_vehicle_seed(DATA / "static/vehicles.json", DATA / "demo/vehicles.json")
+    vehicles = {vehicle["code"]: vehicle for vehicle in bundle.vehicles}
+    catalog_vehicles = [vehicle for vehicle in bundle.vehicles if vehicle["market"] == "VN"]
+
+    assert len(catalog_vehicles) == 20
+    assert all(
+        vehicle["battery_kwh"] and vehicle["consumption_kwh_per_100km"]
+        for vehicle in catalog_vehicles
+    )
+    assert all(
+        vehicle["provenance"]["_calculation_defaults"]
+        == {"reserve_soc": 0.1, "default_target_soc": 0.8, "charging_efficiency": 0.9}
+        for vehicle in catalog_vehicles
+    )
+    assert vehicles["BYD_ATTO3_DYNAMIC_2024_VN"]["battery_kwh"] == 49.92
+    assert vehicles["BYD_ATTO3_PREMIUM_2024_VN"]["battery_kwh"] == 60.48
+    assert vehicles["BYD_ATTO3_DYNAMIC_2024_VN"]["provenance"]["_planning_power_fallback"] == {
+        "max_ac_kw": 3.3
+    }
+    assert vehicles["VF9_ECO_VN"]["provenance"]["_planning_power_fallback"] == {
+        "max_dc_kw": 50
+    }
+    assert (
+        vehicles["BYD_ATTO3_DYNAMIC_2024_VN"]["provenance"]
+        ["consumption_kwh_per_100km"]["origin"]
+        == "inferred"
+    )
+
+
 def test_missing_catalog_value_is_filled_from_matching_demo_profile() -> None:
     catalog, demo = _documents()
     catalog = copy.deepcopy(catalog)

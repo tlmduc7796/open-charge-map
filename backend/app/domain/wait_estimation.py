@@ -50,6 +50,8 @@ class WaitEstimator:
             raise ValueError("evaluation_at must include a timezone")
         if status.station_id != forecast.station_id:
             raise ValueError("status and forecast must reference the same station")
+        if status.queue_length is None or status.avg_session_duration_min is None:
+            raise ValueError("wait estimation requires queue and session-duration telemetry")
         if forecast.predicted_occupied_ports > status.operational_ports:
             raise ValueError("predicted occupied ports exceed current operational capacity")
 

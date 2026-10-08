@@ -55,6 +55,7 @@ class Settings:
     demo_mode: bool
     goong_api_key: str | None
     database_url: str
+    catalog_storage: str
     planned_arrivals_storage: str
     data_dir: Path
     model_artifact_path: Path
@@ -96,6 +97,9 @@ def load_settings() -> Settings:
         database_url=os.getenv(
             "DATABASE_URL",
             "postgresql+psycopg://smart_ev:smart_ev@127.0.0.1:5433/smart_ev_data",
+        ),
+        catalog_storage=_read_choice(
+            "CATALOG_STORAGE", "database", {"database", "memory"}
         ),
         planned_arrivals_storage=_read_choice(
             "PLANNED_ARRIVALS_STORAGE", "database", {"database", "memory"}
