@@ -30,7 +30,9 @@ Lệnh cuối thực hiện toàn bộ quy trình:
 4. nạp `data/bootstrap/current_database.sql` trong một transaction;
 5. đối chiếu `data/static/vehicles.json` với `data/demo/vehicles.json` và nạp xe;
 6. nạp planned arrivals, arrival rate nền và cửa sổ tính từ fixture runtime/demo;
-7. kiểm tra số row sau khi nạp.
+7. tạo trạng thái cổng, lịch sử ban đầu và metric synthetic cho 86 trạm mới từ
+   `data/runtime/station_status.json` của 16 trạm gốc;
+8. kiểm tra số row sau khi nạp.
 
 Database mặc định:
 
@@ -55,9 +57,9 @@ Snapshot trạm được chụp ngày 04/10/2026; hồ sơ xe được nạp th�
 | `station_external_refs` | 14 | Mã trạm từ nguồn bên ngoài |
 | `connector_types` | 4 | CCS2, Type2 và hai chuẩn GB/T dành cho fixture demo |
 | `ports` | 826 | Cổng sạc của toàn bộ trạm |
-| `port_status` | 211 | Trạng thái hiện tại đã có trong snapshot |
-| `station_live_metrics` | 16 | Queue/session metric hiện có |
-| `port_status_history` | 211 | Lịch sử trạng thái cổng |
+| `port_status` | 826 | 211 trạng thái gốc và 615 trạng thái synthetic cho trạm mới |
+| `station_live_metrics` | 102 | 16 metric gốc và 86 metric synthetic cho trạm mới |
+| `port_status_history` | 826 | 211 mốc gốc và 615 mốc khởi tạo synthetic |
 | `station_occupancy_5m` | 4.624 | Occupancy theo bucket 5 phút |
 | `predictions` | 96 | Prediction theo trạm và horizon |
 | `station_amenities` | 714 | Bảy amenity cho mỗi trạm |
@@ -71,8 +73,17 @@ Snapshot trạm được chụp ngày 04/10/2026; hồ sơ xe được nạp th�
 | `app_config` | 1 | Cửa sổ tính planned-arrival rate, hiện là 15 phút |
 
 Trong 102 trạm có 52 trạm mang `review_status=synthetic` và `is_active=true`. Toàn bộ 714 amenity
-là dữ liệu synthetic. Chỉ 211 cổng master có current status trong snapshot; không được suy diễn
-status hoặc queue cho các cổng còn lại.
+là dữ liệu synthetic. Trong 86 trạm mới, 34 trạm có `review_status=verified` đối với thông tin
+trạm, nhưng toàn bộ 615 cổng của 86 trạm đều có `data_origin=synthetic`. Trạng thái cổng và
+queue được mô phỏng từ 16 bản ghi JSON gốc, gắn `data_origin=synthetic`; nhãn review của trạm
+không bị thay đổi. Seeder chỉ bổ sung bản ghi thiếu và có thể chạy lại an toàn.
+
+Để bổ sung trạng thái cho database đã bootstrap trước thay đổi này:
+
+```powershell
+Set-Location data_platform
+.\.venv\Scripts\python.exe scripts\seed_synthetic_port_statuses.py
+```
 
 ## Bố cục dữ liệu
 

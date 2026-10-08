@@ -10,6 +10,7 @@ from alembic import command
 from alembic.config import Config
 from data_platform.config import load_settings
 from data_platform.runtime_seed import load_runtime_seed, seed_runtime_data
+from data_platform.synthetic_port_seed import seed_synthetic_port_statuses
 from data_platform.vehicles import load_vehicle_seed, seed_vehicle_data
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
@@ -23,15 +24,15 @@ QUEUE_ASSUMPTIONS = PACKAGE_ROOT / "data" / "demo" / "queue_assumptions.json"
 EXPECTED_COUNTS = {
     "app_config": 1,
     "connector_types": 4,
-    "port_status": 211,
-    "port_status_history": 211,
+    "port_status": 826,
+    "port_status_history": 826,
     "ports": 826,
     "predictions": 96,
     "planned_arrivals": 4,
     "station_arrival_rates": 16,
     "station_amenities": 714,
     "station_external_refs": 14,
-    "station_live_metrics": 16,
+    "station_live_metrics": 102,
     "station_occupancy_5m": 4624,
     "stations": 102,
     "trip_events": 0,
@@ -176,6 +177,7 @@ def main() -> None:
     try:
         seed_vehicle_data(engine, VEHICLE_CATALOG, DEMO_VEHICLES)
         seed_runtime_data(engine, PLANNED_ARRIVALS, QUEUE_ASSUMPTIONS)
+        seed_synthetic_port_statuses(engine, PACKAGE_ROOT / "data/runtime/station_status.json")
     finally:
         engine.dispose()
     actual = _table_counts(database_url)
