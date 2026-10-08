@@ -455,6 +455,120 @@ class VehicleConnector(Base):
     )
 
 
+class StationArrivalRate(Base):
+    __tablename__ = "station_arrival_rates"
+    __table_args__ = (
+        CheckConstraint(
+            "baseline_arrival_rate_per_hour >= 0",
+            name="ck_station_arrival_rates_nonnegative",
+        ),
+        CheckConstraint(
+            "data_source = 'synthetic'",
+            name="ck_station_arrival_rates_source",
+        ),
+    )
+
+    station_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("stations.id", ondelete="CASCADE"), primary_key=True
+    )
+    baseline_arrival_rate_per_hour: Mapped[Decimal] = mapped_column(
+        Numeric(10, 4), nullable=False
+    )
+    data_source: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'synthetic'")
+    )
+    provenance: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=text("now()")
+    )
+
+
+class PlannedArrival(Base):
+    __tablename__ = "planned_arrivals"
+    __table_args__ = (
+        CheckConstraint(
+            "char_length(trim(arrival_id)) > 0",
+            name="ck_planned_arrivals_id_nonempty",
+        ),
+        CheckConstraint(
+            "route_id IS NULL OR char_length(trim(route_id)) > 0",
+            name="ck_planned_arrivals_route_id_nonempty",
+        ),
+        CheckConstraint(
+            "expected_energy_kwh >= 0",
+            name="ck_planned_arrivals_energy_nonnegative",
+        ),
+        CheckConstraint(
+            "expected_charge_duration_min > 0",
+            name="ck_planned_arrivals_charge_duration_positive",
+        ),
+        CheckConstraint(
+            "arrival_probability BETWEEN 0 AND 1",
+            name="ck_planned_arrivals_probability",
+        ),
+        CheckConstraint(
+            "status IN ('planned', 'arrived', 'cancelled', 'expired')",
+            name="ck_planned_arrivals_status",
+        ),
+        CheckConstraint(
+            "data_source IN ('runtime', 'synthetic')",
+            name="ck_planned_arrivals_source",
+        ),
+        CheckConstraint(
+            "eta_window_start <= eta_at AND eta_at <= eta_window_end",
+            name="ck_planned_arrivals_eta_window",
+        ),
+        CheckConstraint(
+            "expires_at > created_at",
+            name="ck_planned_arrivals_expiry",
+        ),
+        Index(
+            "ix_planned_arrivals_station_eta_planned",
+            "station_id",
+            "eta_at",
+            postgresql_where=text("status = 'planned'"),
+        ),
+        Index(
+            "ix_planned_arrivals_expires_planned",
+            "expires_at",
+            postgresql_where=text("status = 'planned'"),
+        ),
+    )
+
+    arrival_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    station_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("stations.id", ondelete="RESTRICT"), nullable=False
+    )
+    vehicle_model_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("vehicle_models.id", ondelete="SET NULL")
+    )
+    route_id: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=text("now()")
+    )
+    eta_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    eta_window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    eta_window_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expected_energy_kwh: Mapped[Decimal] = mapped_column(Numeric(10, 3), nullable=False)
+    expected_charge_duration_min: Mapped[Decimal] = mapped_column(
+        Numeric(10, 3), nullable=False
+    )
+    arrival_probability: Mapped[Decimal] = mapped_column(Numeric(7, 6), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    status: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'planned'")
+    )
+    data_source: Mapped[str] = mapped_column(Text, nullable=False)
+    provenance: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=text("now()")
+    )
+
+
 class Trip(Base):
     __tablename__ = "trips"
     __table_args__ = (
