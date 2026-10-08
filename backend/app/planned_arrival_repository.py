@@ -8,7 +8,7 @@ from typing import Any
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import Connection, Engine, text
+from sqlalchemy import Connection, Engine, bindparam, text
 from sqlalchemy.exc import IntegrityError
 
 from backend.app.domain.models import PlannedArrival
@@ -142,6 +142,22 @@ class DatabasePlannedArrivalRepository:
         with self._engine.connect() as connection:
             rows = connection.execute(
                 text(_SELECT_ARRIVALS + " ORDER BY pa.created_at, pa.arrival_id")
+            ).mappings()
+            return tuple(self._to_domain(row) for row in rows)
+
+    def active_for_stations(
+        self, station_ids: tuple[str, ...]
+    ) -> tuple[PlannedArrival, ...]:
+        if not station_ids:
+            return ()
+        statement = text(
+            _SELECT_ARRIVALS
+            + " WHERE pa.status='planned' AND s.code IN :station_ids "
+            "ORDER BY pa.eta_at, pa.arrival_id"
+        ).bindparams(bindparam("station_ids", expanding=True))
+        with self._engine.connect() as connection:
+            rows = connection.execute(
+                statement, {"station_ids": station_ids}
             ).mappings()
             return tuple(self._to_domain(row) for row in rows)
 

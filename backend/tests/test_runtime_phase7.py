@@ -37,6 +37,10 @@ def test_all_event_effect_types_are_capacity_safe() -> None:
 def test_planned_arrival_register_cancel_arrive_expire_and_reset() -> None:
     data = load_domain_data(load_settings().data_dir)
     store = PlannedArrivalStore(data.planned_arrivals)
+    assert {
+        arrival.arrival_id
+        for arrival in store.active_for_stations(("ST_EVO_DEUTSCHES_HAUS",))
+    } == {"ARR_DEUTSCHES_001", "ARR_DEUTSCHES_002"}
     request = PlannedArrivalCreateRequest(
         arrival_id="ARR_PHASE7_TEST",
         station_id="ST_EVO_LAVIDA_Q7",

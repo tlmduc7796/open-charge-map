@@ -114,6 +114,10 @@ class QueueAssumptionsRepository:
     def from_file(cls, path: Path) -> QueueAssumptionsRepository:
         return cls(QueueAssumptions.model_validate(_read_json(path)))
 
+    @property
+    def planned_arrival_window_min(self) -> int:
+        return self.assumptions.planned_arrival_window_min
+
     def baseline_rate(self, station_id: str, scenario_id: str | None = None) -> float:
         if scenario_id is not None:
             override = self._scenario_overrides.get((scenario_id, station_id))

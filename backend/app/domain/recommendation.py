@@ -46,6 +46,10 @@ class RecommendationThresholds:
 class PlannedArrivalReader(Protocol):
     def all(self) -> tuple[PlannedArrival, ...]: ...
 
+    def active_for_stations(
+        self, station_ids: tuple[str, ...]
+    ) -> tuple[PlannedArrival, ...]: ...
+
 
 class RecommendationService:
     def __init__(
@@ -109,7 +113,11 @@ class RecommendationService:
 
         items: list[RecommendationItem] = []
         exclusions: list[CandidateExclusion] = []
-        for station in self._data.stations.all():
+        stations = self._data.stations.all()
+        planned_arrivals = self._planned_arrivals.active_for_stations(
+            tuple(station.station_id for station in stations)
+        )
+        for station in stations:
             if station.properties.access != "public":
                 exclusions.append(
                     CandidateExclusion(
@@ -194,7 +202,7 @@ class RecommendationService:
                 status,
                 forecast,
                 evaluation_at=eta_at,
-                planned_arrivals=self._planned_arrivals.all(),
+                planned_arrivals=planned_arrivals,
                 scenario_id=scenario.scenario_id,
             )
             charging = estimate_charging(

@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine
 
 from backend.app.api import router
+from backend.app.arrival_rate_repository import DatabaseArrivalRateRepository
 from backend.app.config import load_settings
 from backend.app.domain import load_domain_data
 from backend.app.domain.forecasting import OccupancyForecastService
@@ -43,25 +44,30 @@ app.add_middleware(
 app.state.settings = settings
 app.state.domain_data = load_domain_data(settings.data_dir)
 app.state.occupancy_forecast_service = OccupancyForecastService()
-app.state.wait_estimator = WaitEstimator(
-    app.state.domain_data.queue_assumptions,
-    scoring_wait_cap_min=settings.wait_scoring_cap_min,
-)
 app.state.runtime_state = RuntimeStateStore(
     app.state.domain_data.station_statuses,
     app.state.domain_data.demo_events,
 )
 if settings.planned_arrivals_storage == "database":
     app.state.database_engine = create_engine(settings.database_url, pool_pre_ping=True)
+    app.state.arrival_rate_repository = DatabaseArrivalRateRepository(
+        app.state.database_engine,
+        app.state.domain_data.queue_assumptions,
+    )
     app.state.planned_arrival_store = DatabasePlannedArrivalRepository(
         app.state.database_engine,
         app.state.domain_data.planned_arrivals.all(),
     )
 else:
     app.state.database_engine = None
+    app.state.arrival_rate_repository = app.state.domain_data.queue_assumptions
     app.state.planned_arrival_store = PlannedArrivalStore(
         app.state.domain_data.planned_arrivals
     )
+app.state.wait_estimator = WaitEstimator(
+    app.state.arrival_rate_repository,
+    scoring_wait_cap_min=settings.wait_scoring_cap_min,
+)
 goong_geocoding_provider = (
     GoongGeocodingProvider(
         settings.goong_api_key, timeout_s=settings.routing_timeout_s

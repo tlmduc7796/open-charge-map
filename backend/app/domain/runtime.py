@@ -126,6 +126,18 @@ class PlannedArrivalStore:
         with self._lock:
             return tuple(self._arrivals.values())
 
+    def active_for_stations(
+        self, station_ids: tuple[str, ...]
+    ) -> tuple[PlannedArrival, ...]:
+        station_id_set = set(station_ids)
+        with self._lock:
+            return tuple(
+                arrival
+                for arrival in self._arrivals.values()
+                if arrival.status == "planned"
+                and arrival.station_id in station_id_set
+            )
+
     def register(
         self,
         request: PlannedArrivalCreateRequest,

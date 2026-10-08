@@ -6,6 +6,7 @@ from datetime import datetime
 import pytest
 from sqlalchemy import create_engine
 
+from backend.app.arrival_rate_repository import DatabaseArrivalRateRepository
 from backend.app.config import load_settings
 from backend.app.domain.phase7_models import PlannedArrivalCreateRequest
 from backend.app.domain.repositories import load_domain_data
@@ -24,6 +25,9 @@ def test_database_planned_arrival_lifecycle_persists_and_resets() -> None:
     repository = DatabasePlannedArrivalRepository(
         engine, data.planned_arrivals.all()
     )
+    rate_repository = DatabaseArrivalRateRepository(
+        engine, data.queue_assumptions
+    )
     request = PlannedArrivalCreateRequest(
         arrival_id="ARR_DATABASE_TEST",
         station_id="ST_EVO_LAVIDA_Q7",
@@ -40,6 +44,16 @@ def test_database_planned_arrival_lifecycle_persists_and_resets() -> None:
 
     try:
         repository.reset()
+        assert rate_repository.planned_arrival_window_min == 15
+        assert rate_repository.baseline_rate("ST_EVO_LAVIDA_Q7") == (
+            data.queue_assumptions.baseline_rate("ST_EVO_LAVIDA_Q7")
+        )
+        assert {
+            arrival.arrival_id
+            for arrival in repository.active_for_stations(
+                ("ST_EVO_DEUTSCHES_HAUS",)
+            )
+        } == {"ARR_DEUTSCHES_001", "ARR_DEUTSCHES_002"}
         registered = repository.register(
             request,
             created_at=datetime.fromisoformat("2026-10-08T10:00:00+07:00"),

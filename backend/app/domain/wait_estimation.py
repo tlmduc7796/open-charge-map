@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from datetime import datetime, timedelta
+from typing import Protocol
 
 from backend.app.domain.models import (
     OccupancyForecastResult,
@@ -11,13 +12,21 @@ from backend.app.domain.models import (
     StationStatus,
     WaitEstimateResult,
 )
-from backend.app.domain.repositories import QueueAssumptionsRepository
+
+
+class ArrivalRateProvider(Protocol):
+    @property
+    def planned_arrival_window_min(self) -> int: ...
+
+    def baseline_rate(self, station_id: str, scenario_id: str | None = None) -> float: ...
+
+    def has_override(self, scenario_id: str, station_id: str) -> bool: ...
 
 
 class WaitEstimator:
     def __init__(
         self,
-        assumptions: QueueAssumptionsRepository,
+        assumptions: ArrivalRateProvider,
         *,
         scoring_wait_cap_min: float = 120,
     ) -> None:
@@ -143,7 +152,7 @@ class WaitEstimator:
         arrivals: tuple[PlannedArrival, ...],
         excluded_arrival_id: str | None,
     ) -> float:
-        window_min = self._assumptions.assumptions.planned_arrival_window_min
+        window_min = self._assumptions.planned_arrival_window_min
         window_end = evaluation_at + timedelta(minutes=window_min)
         probability_sum = sum(
             arrival.arrival_probability
