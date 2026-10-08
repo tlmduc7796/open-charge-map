@@ -17,8 +17,9 @@ Phase 03–04 vẫn deferred và chưa được đánh dấu hoàn thành, vì v
 demo gate chứ chưa đạt release gate. Bản demo không claim đã có occupancy ML artifact:
 `prediction_source=persistence` là trạng thái chủ động và được hiển thị trên UI.
 
-Toàn bộ dữ liệu của repo được lưu tại `data_platform/data/`; backend demo tiếp tục đọc
-fixture JSON ở đó, còn lệnh bootstrap database nạp SQL snapshot và 21 hồ sơ xe đã đối chiếu.
+Toàn bộ dữ liệu nguồn của repo được lưu tại `data_platform/data/`. Backend vẫn đọc fixture
+JSON cho station/vehicle demo, runtime status, event, scenario và route cache; mặc định planned
+arrivals, arrival rate nền và cửa sổ tính tải được đọc/ghi qua PostgreSQL sau một lần bootstrap.
 
 ## Yêu cầu
 
@@ -36,6 +37,16 @@ python -m venv .venv
 python -m pip install --upgrade pip
 python -m pip install -r backend\requirements-dev.txt
 Copy-Item .env.example .env
+```
+
+Khởi tạo PostgreSQL một lần trước khi chạy backend (Docker Desktop phải đang chạy):
+
+```powershell
+Set-Location data_platform
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e .
+.\.venv\Scripts\python.exe scripts\bootstrap_database.py
+Set-Location ..
 ```
 
 Nếu chưa có UrbanEV raw archive:

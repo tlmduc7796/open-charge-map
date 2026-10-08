@@ -8,6 +8,7 @@ Occupancy forecast hiện dùng persistence fallback vì Phase 03–04 chưa ho�
 - Python 3.12.
 - Node.js 20.19+ hoặc 22.12+.
 - pnpm 11.19+.
+- Docker Desktop để chạy PostgreSQL/PostGIS.
 - Goong REST key cho Places và Directions nếu muốn thử địa điểm tùy chọn.
 - Goong Maptiles key nếu muốn dùng Goong làm bản đồ chính.
 
@@ -58,6 +59,19 @@ VITE_GOONG_MAPTILES_KEY=your_maptiles_key
 `GOONG_API_KEY` là secret backend. Không đặt key này vào biến `VITE_*`. Maptiles key được gửi
 tới browser nên cần giới hạn domain trong Goong Console. `.env` và `.env.local` đã được ignore.
 
+Khởi tạo database một lần trước khi chạy backend:
+
+```powershell
+Set-Location data_platform
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e .
+.\.venv\Scripts\python.exe scripts\bootstrap_database.py
+Set-Location ..
+```
+
+Backend mặc định dùng PostgreSQL cho planned arrivals, arrival rate nền và cửa sổ tính tải.
+`PLANNED_ARRIVALS_STORAGE=memory` chỉ dành cho unit test hoặc chẩn đoán cô lập.
+
 ## 3. Kiểm tra dữ liệu và test suite
 
 Tại repository root:
@@ -71,9 +85,11 @@ pnpm --dir frontend test
 pnpm --dir frontend build
 ```
 
-Baseline sau Phase 10:
+Baseline hiện tại:
 
-- backend: 51 tests pass;
+- backend memory: 49 tests pass, 1 PostgreSQL integration test skip;
+- backend PostgreSQL: 50 tests pass;
+- data-platform: 10 tests pass;
 - frontend: 8 tests pass;
 - Ruff, ESLint, TypeScript và Vite build pass.
 
@@ -247,7 +263,8 @@ Trong UI dùng **Reset demo**, hoặc:
 Invoke-RestMethod -Method Post http://127.0.0.1:8000/demo/reset
 ```
 
-Reset xóa event đã apply và khôi phục planned arrivals về snapshot ban đầu.
+Khi `DEMO_MODE=true`, reset xóa event đã apply và khôi phục bảng `planned_arrivals` về fixture
+bootstrap ban đầu. Khi `DEMO_MODE=false`, endpoint trả `403` và không thay đổi dữ liệu.
 
 ## 7. Troubleshooting
 
@@ -265,5 +282,6 @@ Reset xóa event đã apply và khôi phục planned arrivals về snapshot ban 
 
 ## 8. Dừng demo
 
-Nhấn `Ctrl+C` trong cả hai terminal. Không cần chỉnh hoặc xóa JSON runtime sau khi demo; state
-event và planned arrival là in-memory và sẽ reset khi backend restart.
+Nhấn `Ctrl+C` trong cả hai terminal. Không cần chỉnh hoặc xóa JSON runtime sau khi demo. Event
+state nằm trong memory và reset khi backend restart; planned arrivals được giữ trong PostgreSQL
+cho đến khi lifecycle API thay đổi chúng hoặc `/demo/reset` được gọi trong demo mode.

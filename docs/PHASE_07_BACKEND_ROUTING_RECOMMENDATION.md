@@ -130,8 +130,11 @@ SOC score dùng khoảng cách từ arrival SOC tới reserve SOC. Không có pr
 - Event engine giữ runtime copy, không sửa station static master data.
 - Apply idempotent; reset rebuild state từ snapshot gốc.
 - Planned arrivals hỗ trợ register, cancel, arrived, expire và reset.
-- State chỉ tồn tại in-memory và reset khi backend restart; phù hợp demo nhưng chưa phải
-  production persistence.
+- Event state vẫn in-memory. Planned-arrival lifecycle mặc định persist trong PostgreSQL;
+  memory repository chỉ dùng cho unit test hoặc chẩn đoán cô lập.
+- Baseline arrival rates và cửa sổ quy đổi planned arrivals được đọc từ PostgreSQL; scenario
+  override synthetic vẫn nằm trong fixture JSON có gắn nhãn demo.
+- `/demo/reset` chỉ hoạt động khi `DEMO_MODE=true`.
 - Event được kích hoạt chủ động qua demo endpoint/scenario, chưa có background scheduler
   tự apply theo `start_at`/`end_at`.
 

@@ -26,7 +26,7 @@ Lệnh cuối thực hiện toàn bộ quy trình:
 
 1. khởi động PostgreSQL/PostGIS bằng `compose.yaml`;
 2. chờ database sẵn sàng;
-3. chạy Alembic migrations đến revision `0004_trips_config`;
+3. chạy Alembic migrations đến revision `0005_planned_arrivals`;
 4. nạp `data/bootstrap/current_database.sql` trong một transaction;
 5. đối chiếu `data/static/vehicles.json` với `data/demo/vehicles.json` và nạp xe;
 6. nạp planned arrivals, arrival rate nền và cửa sổ tính từ fixture runtime/demo;
