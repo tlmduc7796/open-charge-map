@@ -90,6 +90,7 @@ function DurationFields({
 }
 
 export default function QueueLab() {
+  const [isExpanded, setIsExpanded] = useState(true);
   const [request, setRequest] = useState<QueueLabRequest | null>(null);
   const [result, setResult] = useState<QueueLabResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -150,16 +151,28 @@ export default function QueueLab() {
   return (
     <section className="queue-lab-shell" id="queue-lab">
       <div className="queue-lab-heading">
-        <div>
-          <span className="step-label">04 · Queue Lab</span>
-          <h2>DES chờ sạc theo từng port</h2>
-          <p>Duration là input mô phỏng; chưa dùng telemetry hoặc ML session thật.</p>
-        </div>
+        <button
+          className="queue-lab-heading-toggle"
+          type="button"
+          aria-expanded={isExpanded}
+          aria-controls="queue-lab-content"
+          onClick={() => setIsExpanded((expanded) => !expanded)}
+        >
+          <span>
+            <span className="step-label">04 · Queue Lab</span>
+            <span className="queue-lab-title" role="heading" aria-level={2}>DES chờ sạc theo từng port</span>
+            <span className="queue-lab-description">Duration là input mô phỏng; chưa dùng telemetry hoặc ML session thật.</span>
+          </span>
+          <span className="queue-lab-chevron" aria-hidden="true">{isExpanded ? "⌃" : "⌄"}</span>
+        </button>
+      </div>
+
+      <div id="queue-lab-content" hidden={!isExpanded}>
+      <div className="queue-lab-content-actions">
         <button className="secondary-button" onClick={() => void loadScenario()}>
           Nạp scenario 28 phút
         </button>
       </div>
-
       {error && <p className="queue-error" role="alert">{error}</p>}
 
       <div className="queue-lab-grid">
@@ -336,6 +349,7 @@ export default function QueueLab() {
       </div>
 
       {result && <QueueResults result={result} />}
+      </div>
     </section>
   );
 }
