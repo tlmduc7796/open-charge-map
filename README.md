@@ -230,6 +230,10 @@ Sao chép `.env.example` thành `.env`. Không commit `.env` hoặc API key th�
 - `DATA_DIR`: thư mục data, mặc định `data_platform/data`. Bộ 20 xe cho database nằm ở
   `data_platform/data/static/vehicles.json`; ba xe fixture của backend demo nằm ở
   `data_platform/data/demo/vehicles.json` cho đến khi backend chuyển sang đọc database.
+- `DATABASE_URL`: kết nối PostgreSQL của backend, mặc định trỏ tới database được tạo bởi
+  `data_platform/scripts/bootstrap_database.py` trên cổng `5433`.
+- `PLANNED_ARRIVALS_STORAGE`: mặc định `database`; giá trị `memory` chỉ dùng cho unit test
+  hoặc chẩn đoán cô lập.
 - `MODEL_ARTIFACT_PATH`: model occupancy, chưa tồn tại trước Phase 04.
 - `MODEL_PREPROCESSOR_PATH`, `MODEL_META_PATH`: artifact phụ của Phase 04.
 - `WAIT_SCORING_CAP_MIN`: wait hữu hạn dùng để score station overload/offline.

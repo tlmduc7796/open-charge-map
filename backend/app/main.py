@@ -7,6 +7,7 @@ from time import perf_counter
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import create_engine
 
 from backend.app.api import router
 from backend.app.config import load_settings
@@ -25,6 +26,7 @@ from backend.app.domain.routing import (
 from backend.app.domain.runtime import PlannedArrivalStore, RuntimeStateStore
 from backend.app.domain.wait_estimation import WaitEstimator
 from backend.app.logging_config import configure_logging
+from backend.app.planned_arrival_repository import DatabasePlannedArrivalRepository
 
 settings = load_settings()
 configure_logging(settings.log_level)
@@ -49,9 +51,17 @@ app.state.runtime_state = RuntimeStateStore(
     app.state.domain_data.station_statuses,
     app.state.domain_data.demo_events,
 )
-app.state.planned_arrival_store = PlannedArrivalStore(
-    app.state.domain_data.planned_arrivals
-)
+if settings.planned_arrivals_storage == "database":
+    app.state.database_engine = create_engine(settings.database_url, pool_pre_ping=True)
+    app.state.planned_arrival_store = DatabasePlannedArrivalRepository(
+        app.state.database_engine,
+        app.state.domain_data.planned_arrivals.all(),
+    )
+else:
+    app.state.database_engine = None
+    app.state.planned_arrival_store = PlannedArrivalStore(
+        app.state.domain_data.planned_arrivals
+    )
 goong_geocoding_provider = (
     GoongGeocodingProvider(
         settings.goong_api_key, timeout_s=settings.routing_timeout_s

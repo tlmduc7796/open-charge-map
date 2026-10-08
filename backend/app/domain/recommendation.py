@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import Protocol
 
 from backend.app.domain.forecasting import OccupancyForecastService
+from backend.app.domain.models import PlannedArrival
 from backend.app.domain.phase7_models import (
     CandidateExclusion,
     DemoScenario,
@@ -15,7 +17,7 @@ from backend.app.domain.phase7_models import (
 )
 from backend.app.domain.repositories import DomainData
 from backend.app.domain.routing import RoutingService, route_metrics_to_station
-from backend.app.domain.runtime import PlannedArrivalStore, RuntimeStateStore
+from backend.app.domain.runtime import RuntimeStateStore
 from backend.app.domain.services import (
     check_compatibility,
     estimate_charging,
@@ -41,12 +43,16 @@ class RecommendationThresholds:
             raise ValueError("recommendation thresholds must be positive")
 
 
+class PlannedArrivalReader(Protocol):
+    def all(self) -> tuple[PlannedArrival, ...]: ...
+
+
 class RecommendationService:
     def __init__(
         self,
         data: DomainData,
         runtime: RuntimeStateStore,
-        planned_arrivals: PlannedArrivalStore,
+        planned_arrivals: PlannedArrivalReader,
         routing: RoutingService,
         forecasting: OccupancyForecastService,
         wait_estimator: WaitEstimator,

@@ -40,6 +40,13 @@ def _read_csv(name: str, default: str) -> tuple[str, ...]:
     return tuple(item.strip() for item in os.getenv(name, default).split(",") if item.strip())
 
 
+def _read_choice(name: str, default: str, choices: set[str]) -> str:
+    value = os.getenv(name, default).strip().lower()
+    if value not in choices:
+        raise ValueError(f"{name} must be one of: {', '.join(sorted(choices))}")
+    return value
+
+
 @dataclass(frozen=True)
 class Settings:
     app_name: str
@@ -47,6 +54,8 @@ class Settings:
     log_level: str
     demo_mode: bool
     goong_api_key: str | None
+    database_url: str
+    planned_arrivals_storage: str
     data_dir: Path
     model_artifact_path: Path
     model_preprocessor_path: Path
@@ -84,6 +93,13 @@ def load_settings() -> Settings:
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
         demo_mode=_read_bool("DEMO_MODE", True),
         goong_api_key=key,
+        database_url=os.getenv(
+            "DATABASE_URL",
+            "postgresql+psycopg://smart_ev:smart_ev@127.0.0.1:5433/smart_ev_data",
+        ),
+        planned_arrivals_storage=_read_choice(
+            "PLANNED_ARRIVALS_STORAGE", "database", {"database", "memory"}
+        ),
         data_dir=_resolve_from_root(os.getenv("DATA_DIR", "data_platform/data")),
         model_artifact_path=_resolve_from_root(
             os.getenv("MODEL_ARTIFACT_PATH", "ml/artifacts/occupancy_model.joblib")

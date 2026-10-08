@@ -15,6 +15,8 @@ def test_default_paths_are_rooted_at_project(monkeypatch) -> None:
         "RECOMMEND_SOC_RISK_BUFFER",
         "CORS_ORIGINS",
         "GOONG_API_KEY",
+        "DATABASE_URL",
+        "PLANNED_ARRIVALS_STORAGE",
     ]:
         monkeypatch.delenv(name, raising=False)
     settings = load_settings()
@@ -37,6 +39,8 @@ def test_default_paths_are_rooted_at_project(monkeypatch) -> None:
     assert settings.recommend_soc_risk_buffer == 0.20
     assert settings.cors_origins == ("http://127.0.0.1:5173",)
     assert settings.goong_api_key is None
+    assert settings.database_url.endswith("@127.0.0.1:5433/smart_ev_data")
+    assert settings.planned_arrivals_storage == "database"
 
 
 def test_required_phase_data_exists() -> None:
