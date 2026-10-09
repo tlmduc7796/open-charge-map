@@ -7,7 +7,7 @@ from datetime import timedelta
 from typing import Protocol
 
 from backend.app.domain.forecasting import OccupancyForecastService
-from backend.app.domain.models import PlannedArrival, Vehicle
+from backend.app.domain.models import PlannedArrival, Station, Vehicle
 from backend.app.domain.phase7_models import (
     CandidateExclusion,
     DemoScenario,
@@ -55,6 +55,17 @@ class VehicleReader(Protocol):
     def get(self, vehicle_id: str) -> Vehicle: ...
 
 
+class StationCandidateReader(Protocol):
+    def candidates(
+        self,
+        origin_lon: float,
+        origin_lat: float,
+        destination_lon: float,
+        destination_lat: float,
+        corridor_m: float,
+    ) -> tuple[Station, ...]: ...
+
+
 class RecommendationService:
     def __init__(
         self,
@@ -67,15 +78,21 @@ class RecommendationService:
         thresholds: RecommendationThresholds,
         *,
         vehicle_repository: VehicleReader | None = None,
+        station_repository: StationCandidateReader | None = None,
+        candidate_corridor_m: float = 5_000,
     ) -> None:
+        if candidate_corridor_m <= 0:
+            raise ValueError("candidate corridor must be positive")
         self._data = data
         self._vehicles = vehicle_repository or data.vehicles
+        self._stations = station_repository or data.stations
         self._runtime = runtime
         self._planned_arrivals = planned_arrivals
         self._routing = routing
         self._forecasting = forecasting
         self._wait_estimator = wait_estimator
         self._thresholds = thresholds
+        self._candidate_corridor_m = candidate_corridor_m
 
     def recommend(
         self,
@@ -94,6 +111,7 @@ class RecommendationService:
         *,
         apply_scenario_events: bool = False,
     ) -> JourneyRecommendationResult:
+        self._runtime.refresh()
         if apply_scenario_events:
             for event_id in scenario.event_ids:
                 self._runtime.apply(event_id)
@@ -120,7 +138,13 @@ class RecommendationService:
 
         items: list[RecommendationItem] = []
         exclusions: list[CandidateExclusion] = []
-        stations = self._data.stations.all()
+        stations = self._stations.candidates(
+            scenario.origin.lon,
+            scenario.origin.lat,
+            scenario.destination.lon,
+            scenario.destination.lat,
+            self._candidate_corridor_m,
+        )
         planned_arrivals = self._planned_arrivals.active_for_stations(
             tuple(station.station_id for station in stations)
         )
@@ -134,7 +158,16 @@ class RecommendationService:
                 )
                 continue
 
-            status = self._runtime.get(station.station_id)
+            try:
+                status = self._runtime.get(station.station_id)
+            except KeyError:
+                exclusions.append(
+                    CandidateExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("TELEMETRY_UNAVAILABLE",),
+                    )
+                )
+                continue
             if status.operational_ports == 0:
                 exclusions.append(
                     CandidateExclusion(
@@ -205,13 +238,22 @@ class RecommendationService:
             forecast = self._forecasting.forecast_occupancy(
                 status, horizon_min=horizon_min
             )
-            wait = self._wait_estimator.estimate_wait(
-                status,
-                forecast,
-                evaluation_at=eta_at,
-                planned_arrivals=planned_arrivals,
-                scenario_id=scenario.scenario_id,
-            )
+            try:
+                wait = self._wait_estimator.estimate_wait(
+                    status,
+                    forecast,
+                    evaluation_at=eta_at,
+                    planned_arrivals=planned_arrivals,
+                    scenario_id=scenario.scenario_id,
+                )
+            except (KeyError, ValueError):
+                exclusions.append(
+                    CandidateExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("WAIT_INPUT_UNAVAILABLE",),
+                    )
+                )
+                continue
             charging = estimate_charging(
                 vehicle,
                 station,

@@ -39,6 +39,7 @@ class RuntimeStateStore:
         statuses: StationStatusRepository,
         events: DemoEventRepository,
     ) -> None:
+        self._status_repository = statuses
         self._base = {status.station_id: status for status in statuses.all()}
         self._events = events
         self._active_event_ids: list[str] = []
@@ -57,6 +58,13 @@ class RuntimeStateStore:
         with self._lock:
             return tuple(self._active_event_ids)
 
+    def refresh(self) -> None:
+        """Reload persisted telemetry and then reapply active demo overlays."""
+        statuses = self._status_repository.all()
+        with self._lock:
+            self._base = {status.station_id: status for status in statuses}
+            self._rebuild()
+
     def apply(self, event_id: str) -> StationStatus:
         with self._lock:
             event = self._events.get(event_id)
@@ -68,6 +76,7 @@ class RuntimeStateStore:
             return self._statuses[event.station_id]
 
     def reset(self, event_id: str | None = None) -> None:
+        statuses = self._status_repository.all()
         with self._lock:
             if event_id is None:
                 self._active_event_ids.clear()
@@ -75,6 +84,7 @@ class RuntimeStateStore:
                 self._active_event_ids = [
                     active for active in self._active_event_ids if active != event_id
                 ]
+            self._base = {status.station_id: status for status in statuses}
             self._rebuild()
 
     def _rebuild(self) -> None:

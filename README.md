@@ -20,8 +20,9 @@ demo gate chứ chưa đạt release gate. Bản demo không claim đã có occu
 Toàn bộ dữ liệu nguồn của repo được lưu tại `data_platform/data/`. Backend vẫn đọc fixture
 JSON cho event, scenario và route cache. Mặc định API catalog đọc station, vehicle và runtime
 status từ PostgreSQL; planned arrivals, arrival rate nền và cửa sổ tính tải cũng được đọc/ghi
-qua PostgreSQL sau một lần bootstrap. Recommendation demo vẫn dùng tập fixture 16 trạm cho tới
-khi bước tích hợp candidate query bằng PostGIS hoàn tất.
+qua PostgreSQL sau một lần bootstrap. Mỗi request recommendation làm mới telemetry từ database
+và dùng PostGIS lọc trạm trong hành lang điểm đi–điểm đến trước khi routing. Fixture chỉ còn giữ
+event, scenario và các route cache deterministic.
 
 ## Yêu cầu
 
@@ -89,6 +90,8 @@ Health endpoint: `http://127.0.0.1:8000/health`
 `CATALOG_STORAGE=database` là chế độ vận hành mặc định. Chỉ đặt `memory` trong unit test hoặc
 khi cần chẩn đoán fixture độc lập. API trả mọi station `is_active=true`; station chưa có
 telemetry có `data_source=unknown`, `unknown_ports=total_ports`, không được tính là available.
+Backend fail-fast nếu không kết nối được PostgreSQL hoặc revision Alembic không phải
+`0005_planned_arrivals`; `/health` cũng kiểm tra lại kết nối và revision khi đang chạy.
 
 Các demo endpoints và interactive schema:
 
@@ -222,6 +225,13 @@ python scripts\validate_static_data.py
 python scripts\validate_phase1_data.py
 ```
 
+Chạy riêng integration tests với PostgreSQL đã bootstrap:
+
+```powershell
+$env:BACKEND_TEST_DATABASE_URL="postgresql+psycopg://smart_ev:smart_ev@127.0.0.1:5433/smart_ev_data"
+pytest backend\tests\test_catalog_persistence.py backend\tests\test_planned_arrival_persistence.py
+```
+
 Backend hiện có unit tests cho schema/repository và các phép tính Phase 05. Dữ liệu domain
 được validate khi FastAPI application khởi tạo; sai capacity hoặc thiếu runtime status sẽ làm
 backend fail sớm.
@@ -244,9 +254,9 @@ Sao chép `.env.example` thành `.env`. Không commit `.env` hoặc API key th�
 
 - `GOONG_API_KEY`: REST key đặt trong `.env` ở repository root; Phase 7 dùng cho
   Directions/Distance Matrix và collector dùng cho Places. Không đưa key này vào biến `VITE_*`.
-- `DATA_DIR`: thư mục data, mặc định `data_platform/data`. Bộ 20 xe cho database nằm ở
-  `data_platform/data/static/vehicles.json`; ba xe fixture của backend demo nằm ở
-  `data_platform/data/demo/vehicles.json` cho đến khi backend chuyển sang đọc database.
+- `DATA_DIR`: thư mục data, mặc định `data_platform/data`. Bộ xe vận hành nằm ở
+  `data_platform/data/static/vehicles.json`; ba xe trong `data_platform/data/demo/vehicles.json`
+  chỉ phục vụ fixture và bổ sung các mã xe của scenario khi bootstrap.
 - `DATABASE_URL`: kết nối PostgreSQL của backend, mặc định trỏ tới database được tạo bởi
   `data_platform/scripts/bootstrap_database.py` trên cổng `5433`.
 - `PLANNED_ARRIVALS_STORAGE`: mặc định `database`; giá trị `memory` chỉ dùng cho unit test
@@ -257,6 +267,9 @@ Sao chép `.env.example` thành `.env`. Không commit `.env` hoặc API key th�
 - `ROUTING_TIMEOUT_S`: timeout cho Goong/OSRM live routing.
 - `RECOMMEND_MAX_*`, `RECOMMEND_SOC_RISK_BUFFER`: fixed normalization thresholds;
   recommendation không dùng min-max theo candidate set.
+- `RECOMMEND_CANDIDATE_CORRIDOR_M`: bán kính hành lang PostGIS quanh đường thẳng nối origin và
+  destination, mặc định `5000` mét. Với snapshot hiện tại, nó giảm 102 trạm xuống 42 ứng viên
+  cho hành trình normal và vẫn giữ đủ 16 trạm có route cache.
 - `DEMO_MODE`: bật dữ liệu/scenario demo.
 
 Frontend dùng file riêng vì Vite không đọc `.env` ở repository root:

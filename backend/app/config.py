@@ -67,6 +67,7 @@ class Settings:
     recommend_max_wait_min: float
     recommend_max_charge_min: float
     recommend_soc_risk_buffer: float
+    recommend_candidate_corridor_m: float
     cors_origins: tuple[str, ...]
 
     def required_data_paths(self) -> tuple[Path, ...]:
@@ -128,6 +129,9 @@ def load_settings() -> Settings:
         ),
         recommend_soc_risk_buffer=_read_positive_float(
             "RECOMMEND_SOC_RISK_BUFFER", 0.20
+        ),
+        recommend_candidate_corridor_m=_read_positive_float(
+            "RECOMMEND_CANDIDATE_CORRIDOR_M", 5_000
         ),
         cors_origins=_read_csv("CORS_ORIGINS", "http://127.0.0.1:5173"),
     )

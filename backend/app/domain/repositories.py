@@ -41,6 +41,17 @@ class StationRepository:
     def get(self, station_id: str) -> Station:
         return self._by_id[station_id]
 
+    def candidates(
+        self,
+        origin_lon: float,
+        origin_lat: float,
+        destination_lon: float,
+        destination_lat: float,
+        corridor_m: float,
+    ) -> tuple[Station, ...]:
+        """Keep fixture mode deterministic while matching the database repository API."""
+        return self._stations
+
 
 class VehicleRepository:
     def __init__(self, vehicles: tuple[Vehicle, ...]) -> None:

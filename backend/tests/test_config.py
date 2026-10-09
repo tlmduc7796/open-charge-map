@@ -13,6 +13,7 @@ def test_default_paths_are_rooted_at_project(monkeypatch) -> None:
         "RECOMMEND_MAX_WAIT_MIN",
         "RECOMMEND_MAX_CHARGE_MIN",
         "RECOMMEND_SOC_RISK_BUFFER",
+        "RECOMMEND_CANDIDATE_CORRIDOR_M",
         "CORS_ORIGINS",
         "GOONG_API_KEY",
         "DATABASE_URL",
@@ -38,6 +39,7 @@ def test_default_paths_are_rooted_at_project(monkeypatch) -> None:
     assert settings.recommend_max_wait_min == 120
     assert settings.recommend_max_charge_min == 90
     assert settings.recommend_soc_risk_buffer == 0.20
+    assert settings.recommend_candidate_corridor_m == 5_000
     assert settings.cors_origins == ("http://127.0.0.1:5173",)
     assert settings.goong_api_key is None
     assert settings.database_url.endswith("@127.0.0.1:5433/smart_ev_data")

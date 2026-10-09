@@ -5,11 +5,24 @@ import os
 import pytest
 from sqlalchemy import create_engine
 
+from backend.app.arrival_rate_repository import DatabaseArrivalRateRepository
 from backend.app.catalog_repository import (
     DatabaseStationRepository,
     DatabaseStationStatusRepository,
     DatabaseVehicleRepository,
 )
+from backend.app.config import load_settings
+from backend.app.database import REQUIRED_DATABASE_REVISION, validate_database
+from backend.app.domain import load_domain_data
+from backend.app.domain.forecasting import OccupancyForecastService
+from backend.app.domain.recommendation import (
+    RecommendationService,
+    RecommendationThresholds,
+)
+from backend.app.domain.routing import RoutingService
+from backend.app.domain.runtime import RuntimeStateStore
+from backend.app.domain.wait_estimation import WaitEstimator
+from backend.app.planned_arrival_repository import DatabasePlannedArrivalRepository
 
 TEST_DATABASE_URL = os.getenv("BACKEND_TEST_DATABASE_URL")
 
@@ -24,6 +37,8 @@ def test_database_catalog_serves_active_records_and_synthetic_status() -> None:
         stations = DatabaseStationRepository(engine)
         statuses = DatabaseStationStatusRepository(engine)
         vehicles = DatabaseVehicleRepository(engine)
+
+        assert validate_database(engine) == REQUIRED_DATABASE_REVISION
 
         station_items = stations.all()
         status_items = statuses.all()
@@ -48,5 +63,74 @@ def test_database_catalog_serves_active_records_and_synthetic_status() -> None:
         assert "max_dc_kw" in vf9.synthetic_fields
         assert stations.get(station_items[0].station_id) == station_items[0]
         assert vehicles.get(vehicle_items[0].vehicle_id) == vehicle_items[0]
+
+        candidates = stations.candidates(
+            106.705,
+            10.7075,
+            106.687,
+            10.806,
+            5_000,
+        )
+        fixture_data = load_domain_data(load_settings().data_dir)
+        assert len(candidates) < len(station_items)
+        assert {station.station_id for station in fixture_data.stations.all()} <= {
+            station.station_id for station in candidates
+        }
+    finally:
+        engine.dispose()
+
+
+@pytest.mark.skipif(
+    not TEST_DATABASE_URL,
+    reason="BACKEND_TEST_DATABASE_URL is required for PostgreSQL integration",
+)
+def test_recommendation_reads_database_catalog_and_runtime() -> None:
+    engine = create_engine(TEST_DATABASE_URL, pool_pre_ping=True)
+    settings = load_settings()
+    data = load_domain_data(settings.data_dir)
+    stations = DatabaseStationRepository(engine)
+    statuses = DatabaseStationStatusRepository(engine)
+    vehicles = DatabaseVehicleRepository(engine)
+    arrivals = DatabasePlannedArrivalRepository(engine, data.planned_arrivals.all())
+    arrival_rates = DatabaseArrivalRateRepository(engine, data.queue_assumptions)
+    try:
+        service = RecommendationService(
+            data,
+            RuntimeStateStore(statuses, data.demo_events),
+            arrivals,
+            RoutingService(data.routes, goong=None, osrm=None),
+            OccupancyForecastService(),
+            WaitEstimator(arrival_rates, scoring_wait_cap_min=120),
+            RecommendationThresholds(
+                max_detour_min=30,
+                max_wait_min=120,
+                max_charge_min=90,
+                soc_risk_buffer=0.2,
+            ),
+            vehicle_repository=vehicles,
+            station_repository=stations,
+            candidate_corridor_m=5_000,
+        )
+
+        result = service.recommend("SCN_NORMAL")
+        scenario = data.demo_scenarios.get("SCN_NORMAL")
+        candidate_ids = {
+            station.station_id
+            for station in stations.candidates(
+                scenario.origin.lon,
+                scenario.origin.lat,
+                scenario.destination.lon,
+                scenario.destination.lat,
+                5_000,
+            )
+        }
+        result_ids = {
+            *(item.station_id for item in result.recommendations),
+            *(item.station_id for item in result.excluded_candidates),
+        }
+
+        assert result.recommendations
+        assert result_ids == candidate_ids
+        assert result.vehicle_id == scenario.vehicle_id
     finally:
         engine.dispose()

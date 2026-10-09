@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from time import perf_counter
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine
 
@@ -17,6 +17,7 @@ from backend.app.catalog_repository import (
     DatabaseVehicleRepository,
 )
 from backend.app.config import load_settings
+from backend.app.database import validate_database
 from backend.app.domain import load_domain_data
 from backend.app.domain.forecasting import OccupancyForecastService
 from backend.app.domain.geocoding import GeocodingService, GoongGeocodingProvider
@@ -49,16 +50,15 @@ app.add_middleware(
 app.state.settings = settings
 app.state.domain_data = load_domain_data(settings.data_dir)
 app.state.occupancy_forecast_service = OccupancyForecastService()
-app.state.runtime_state = RuntimeStateStore(
-    app.state.domain_data.station_statuses,
-    app.state.domain_data.demo_events,
-)
 uses_database = (
     settings.catalog_storage == "database"
     or settings.planned_arrivals_storage == "database"
 )
 app.state.database_engine = (
     create_engine(settings.database_url, pool_pre_ping=True) if uses_database else None
+)
+app.state.database_revision = (
+    validate_database(app.state.database_engine) if uses_database else None
 )
 if settings.catalog_storage == "database":
     app.state.station_repository = DatabaseStationRepository(app.state.database_engine)
@@ -70,6 +70,10 @@ else:
     app.state.station_repository = app.state.domain_data.stations
     app.state.vehicle_repository = app.state.domain_data.vehicles
     app.state.station_status_repository = app.state.domain_data.station_statuses
+app.state.runtime_state = RuntimeStateStore(
+    app.state.station_status_repository,
+    app.state.domain_data.demo_events,
+)
 if settings.planned_arrivals_storage == "database":
     app.state.arrival_rate_repository = DatabaseArrivalRateRepository(
         app.state.database_engine,
@@ -122,6 +126,8 @@ app.state.recommendation_service = RecommendationService(
         soc_risk_buffer=settings.recommend_soc_risk_buffer,
     ),
     vehicle_repository=app.state.vehicle_repository,
+    station_repository=app.state.station_repository,
+    candidate_corridor_m=settings.recommend_candidate_corridor_m,
 )
 app.include_router(router)
 
@@ -146,9 +152,17 @@ async def integration_request_log(request, call_next):
 
 @app.get("/health", tags=["system"])
 def health() -> dict[str, str | bool]:
-    return {
+    result: dict[str, str | bool] = {
         "status": "ok",
         "service": settings.app_name,
         "environment": settings.app_env,
         "demo_mode": settings.demo_mode,
     }
+    if app.state.database_engine is not None:
+        try:
+            result["database_revision"] = validate_database(
+                app.state.database_engine
+            )
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return result

@@ -277,6 +277,42 @@ class DatabaseStationRepository:
             raise KeyError(station_id)
         return _station_from_row(row)
 
+    def candidates(
+        self,
+        origin_lon: float,
+        origin_lat: float,
+        destination_lon: float,
+        destination_lat: float,
+        corridor_m: float,
+    ) -> tuple[Station, ...]:
+        query = _STATION_SELECT + """
+            AND ST_DWithin(
+                s.location,
+                ST_MakeLine(
+                    ST_SetSRID(ST_MakePoint(:origin_lon, :origin_lat), 4326),
+                    ST_SetSRID(ST_MakePoint(:destination_lon, :destination_lat), 4326)
+                )::geography,
+                :corridor_m
+            )
+            ORDER BY ST_Distance(
+                s.location,
+                ST_MakeLine(
+                    ST_SetSRID(ST_MakePoint(:origin_lon, :origin_lat), 4326),
+                    ST_SetSRID(ST_MakePoint(:destination_lon, :destination_lat), 4326)
+                )::geography
+            ), s.code
+        """
+        parameters = {
+            "origin_lon": origin_lon,
+            "origin_lat": origin_lat,
+            "destination_lon": destination_lon,
+            "destination_lat": destination_lat,
+            "corridor_m": corridor_m,
+        }
+        with self._engine.connect() as connection:
+            rows = connection.execute(text(query), parameters).mappings()
+            return tuple(_station_from_row(row) for row in rows)
+
 
 class DatabaseVehicleRepository:
     def __init__(self, engine: Engine) -> None:
