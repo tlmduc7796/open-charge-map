@@ -5,6 +5,7 @@ from __future__ import annotations
 import hmac
 from datetime import UTC, datetime, timedelta
 from math import ceil
+from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, Query, Request
 
@@ -24,6 +25,10 @@ from backend.app.api_v1_models import (
     StationAvailability,
     StationDetail,
     StationSummary,
+    TripActionRequest,
+    TripCreateRequest,
+    TripPositionRequest,
+    TripResponse,
 )
 
 router = APIRouter(prefix="/api/v1")
@@ -376,4 +381,62 @@ def search_route(payload: SearchRouteRequest, request: Request) -> SearchRouteRe
         raise HTTPException(
             status_code=422,
             detail={"code": "NO_ROUTE", "message": str(exc)},
+        ) from exc
+
+
+def _trip_service(request: Request):
+    service = request.app.state.trip_service
+    if service is None:
+        raise HTTPException(status_code=503, detail="trip database is unavailable")
+    return service
+
+
+@router.post("/trips", response_model=TripResponse, status_code=201, tags=["v1-trips"])
+def create_trip(payload: TripCreateRequest, request: Request) -> TripResponse:
+    try:
+        return _trip_service(request).create(payload)
+    except KeyError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "SEARCH_EXPIRED", "message": str(exc.args[0])},
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=422, detail={"code": "INVALID_TRIP", "message": str(exc)}
+        ) from exc
+
+
+@router.get("/trips/{trip_id}", response_model=TripResponse, tags=["v1-trips"])
+def get_trip(trip_id: UUID, request: Request) -> TripResponse:
+    try:
+        return _trip_service(request).get(str(trip_id))
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="trip not found") from exc
+
+
+@router.post("/trips/{trip_id}/position", response_model=TripResponse, tags=["v1-trips"])
+def trip_position(
+    trip_id: UUID, payload: TripPositionRequest, request: Request
+) -> TripResponse:
+    try:
+        return _trip_service(request).position(str(trip_id), payload)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="trip not found") from exc
+    except (ValueError, RuntimeError) as exc:
+        raise HTTPException(
+            status_code=409, detail={"code": "TRIP_CONFLICT", "message": str(exc)}
+        ) from exc
+
+
+@router.patch("/trips/{trip_id}", response_model=TripResponse, tags=["v1-trips"])
+def update_trip(
+    trip_id: UUID, payload: TripActionRequest, request: Request
+) -> TripResponse:
+    try:
+        return _trip_service(request).action(str(trip_id), payload)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="trip not found") from exc
+    except (ValueError, RuntimeError) as exc:
+        raise HTTPException(
+            status_code=409, detail={"code": "TRIP_CONFLICT", "message": str(exc)}
         ) from exc

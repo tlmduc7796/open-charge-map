@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from math import cos, radians, sqrt
 from typing import Literal
 
 from pydantic import Field, model_validator
@@ -86,3 +87,23 @@ def register_reroute(
             "last_reroute_at": evaluated_at,
         }
     ), True
+
+
+def distance_to_route_m(
+    *, lat: float, lng: float, geometry: tuple[tuple[float, float], ...]
+) -> float:
+    """Approximate cross-track distance over short city-scale route segments."""
+    if len(geometry) < 2:
+        raise ValueError("route needs at least two points")
+    metres_per_lng = 111_320 * cos(radians(lat))
+    def projected(point: tuple[float, float]) -> tuple[float, float]:
+        return (point[0] - lng) * metres_per_lng, (point[1] - lat) * 111_320
+
+    best = float("inf")
+    for start, end in zip(geometry, geometry[1:]):
+        x1, y1 = projected(start)
+        x2, y2 = projected(end)
+        dx, dy = x2 - x1, y2 - y1
+        ratio = min(1.0, max(0.0, -(x1 * dx + y1 * dy) / (dx * dx + dy * dy))) if dx or dy else 0
+        best = min(best, sqrt((x1 + ratio * dx) ** 2 + (y1 + ratio * dy) ** 2))
+    return best

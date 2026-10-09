@@ -28,7 +28,7 @@ from backend.app.domain.runtime import RuntimeStateStore
 from backend.app.domain.services import check_compatibility, estimate_charging
 from backend.app.domain.station_hours import is_confirmed_open
 from backend.app.domain.wait_estimation import WaitEstimator
-from backend.app.search_store import SearchResultStore
+from backend.app.search_store import SearchResultStore, SearchSnapshot
 
 
 class SearchService:
@@ -279,7 +279,9 @@ class SearchService:
             )
         search_id = self._store.put(provisional, created_at=generated_at)
         result = provisional.model_copy(update={"search_id": search_id})
-        self._store.set(search_id, result, created_at=generated_at)
+        self._store.set(
+            search_id, SearchSnapshot(payload, result), created_at=generated_at
+        )
         return result
 
     def search_stations(
@@ -437,5 +439,7 @@ class SearchService:
         )
         search_id = self._store.put(provisional, created_at=generated_at)
         result = provisional.model_copy(update={"search_id": search_id})
-        self._store.set(search_id, result, created_at=generated_at)
+        self._store.set(
+            search_id, SearchSnapshot(payload, result), created_at=generated_at
+        )
         return result

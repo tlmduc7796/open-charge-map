@@ -37,11 +37,13 @@ from backend.app.domain.routing import (
 )
 from backend.app.domain.runtime import PlannedArrivalStore, RuntimeStateStore
 from backend.app.domain.search import SearchService
+from backend.app.domain.trip_service import TripService
 from backend.app.domain.wait_estimation import WaitEstimator
 from backend.app.logging_config import configure_logging
 from backend.app.planned_arrival_repository import DatabasePlannedArrivalRepository
 from backend.app.search_store import SearchRateLimiter, SearchResultStore
 from backend.app.station_state_repository import DatabaseStationStateRepository
+from backend.app.trip_repository import DatabaseTripRepository
 
 settings = load_settings()
 configure_logging(settings.log_level)
@@ -194,6 +196,19 @@ app.state.search_service = SearchService(
     app.state.search_result_store,
     settings.availability_green_min,
     app.state.app_config_repository,
+)
+app.state.trip_service = (
+    TripService(
+        DatabaseTripRepository(app.state.database_engine),
+        app.state.search_result_store,
+        app.state.app_config_repository,
+        app.state.search_service,
+        app.state.station_repository,
+        app.state.station_status_repository,
+        app.state.vehicle_repository,
+    )
+    if app.state.database_engine is not None
+    else None
 )
 app.include_router(router)
 app.include_router(v1_router)

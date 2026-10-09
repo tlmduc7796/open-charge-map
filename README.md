@@ -117,6 +117,10 @@ GET  /api/v1/stations/availability?offset=0|5|10|15|20|25|30
 GET  /api/v1/stations/{id}/ports
 POST /api/v1/search/stations
 POST /api/v1/search/route
+POST /api/v1/trips                      # tạo từ searchId (10 phút)
+GET  /api/v1/trips/{id}
+POST /api/v1/trips/{id}/position         # GPS, recordedAt có timezone
+PATCH /api/v1/trips/{id}                 # accept/decline/depart/correctBattery/cancel
 POST /api/v1/internal/port-status        # yêu cầu X-API-Key
 POST /api/v1/internal/port-status/mark-stale
 ```
@@ -129,6 +133,12 @@ hiện nằm trong bộ nhớ của từng process; Redis dùng chung giữa cá
 Các ngưỡng cấu hình đọc từ `app_config` khi có key tương ứng, nếu thiếu dùng mặc định trong
 backend. Job tự đánh dấu telemetry quan sát quá hạn thành `unknown` mỗi phút; dữ liệu
 synthetic demo vẫn giữ nguồn `synthetic` và không bị job này đổi trạng thái.
+Trip API chỉ khả dụng khi Backend kết nối PostgreSQL. Trip, GPS, sự kiện và planned arrival
+được lưu bền; `searchId` chỉ tồn tại trong bộ nhớ process trong 10 phút. GPS lặp/cũ không
+ghi đè trạng thái. Quãng đường và pin không có telemetry trực tiếp được ước tính từ các
+đoạn thẳng giữa hai ping; ETA dùng tiến độ theo tuyến hiện có. Re-plan dùng ngưỡng lệch
+tuyến, ETA tăng, khả dụng trạm và pin trong `app_config`, kèm cooldown 60 giây mặc định;
+những trạm đã decline không được đề xuất lại cho trip đó.
 
 ## Cài đặt frontend
 

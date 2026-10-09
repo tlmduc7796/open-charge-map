@@ -59,6 +59,16 @@ Các thành phần sau **không nằm trong data contract MVP**:
   `updatedAt` khi biểu diễn trạng thái có thể thay đổi.
 - Forecast contract công khai hỗ trợ offset `0,5,10,15,20,25,30`. Mốc chưa có model
   tương ứng dùng persistence và phải trả nguồn/flag fallback, không nội suy như model thật.
+- `POST /api/v1/trips` nhận `searchId` còn hạn và `stationId` thuộc kết quả tìm kiếm;
+  hành trình `enough` có thể không chọn trạm. Trip trả `phase`, `routeVersion`, `etaAt`,
+  `batteryPct`, `distanceKm`, `predictionSource` và tuyến với nguồn routing.
+- `POST /api/v1/trips/{id}/position` nhận `{location,recordedAt,batteryPct?,speedKmh?,heading?}`;
+  bản tin không mới hơn GPS cuối được bỏ qua (`positionAccepted=false`). Nếu không có
+  pin từ telemetry, Backend ước tính từ quãng đường giữa các ping, không coi là phép đo.
+- `PATCH /api/v1/trips/{id}` nhận `action` là `accept`, `decline`, `depart`,
+  `correctBattery` hoặc `cancel`; `accept` cần `stationId`, `correctBattery` cần
+  `batteryPct`. Re-plan chỉ tăng `routeVersion` khi tuyến hoặc trạm thay đổi;
+  planned arrival của trip được cập nhật/hủy/đánh dấu đến cùng transaction.
 
 ### `data_source`
 

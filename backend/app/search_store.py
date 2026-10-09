@@ -3,11 +3,25 @@
 from __future__ import annotations
 
 from collections import deque
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from threading import RLock
 from time import monotonic
 from typing import Any
 from uuid import uuid4
+
+from backend.app.api_v1_models import (
+    SearchRouteRequest,
+    SearchRouteResponse,
+    SearchStationsRequest,
+    SearchStationsResponse,
+)
+
+
+@dataclass(frozen=True)
+class SearchSnapshot:
+    request: SearchRouteRequest | SearchStationsRequest
+    response: SearchRouteResponse | SearchStationsResponse
 
 
 class SearchResultStore:

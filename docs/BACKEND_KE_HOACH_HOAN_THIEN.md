@@ -1,7 +1,7 @@
 # Kế hoạch hoàn thiện Backend theo kế hoạch gốc
 
 **Cập nhật:** 2026-10-09  
-**Trạng thái:** M1–M2 đã triển khai và kiểm thử; M3 đang chờ triển khai. Chưa phải kết quả nghiệm thu/release.
+**Trạng thái:** M1–M3 đã triển khai và kiểm thử backend; chưa phải kết quả nghiệm thu/release.
 **Mục tiêu:** Hoàn thiện các phần C (Database), D (Backend) và phần kiểm thử liên quan ở [kế hoạch Rule-Based-AI](Rule-Based-AI-Ke-hoach-trien-khai.md). [Bộ Phase 00–11](PHASE_INDEX.md) tiếp tục được dùng để theo dõi kết quả đã đạt, nhưng `RELEASE PASS` chỉ được xét sau khi các chức năng và kiểm định của kế hoạch gốc hoàn tất.
 
 ## 1. Phạm vi và phân công
@@ -16,7 +16,7 @@
 - PostgreSQL/PostGIS đã phục vụ danh mục trạm, cổng, xe, trạng thái hiện tại, planned arrivals và arrival rate; recommendation đã lọc ứng viên bằng PostGIS. Các phần chính: `backend/app/catalog_repository.py`, `backend/app/arrival_rate_repository.py`, `backend/app/planned_arrival_repository.py`, `backend/app/domain/recommendation.py`.
 - Backend vẫn giữ `/journey/recommend` dựa trên scenario; `/api/v1/search/stations` và `/api/v1/search/route` đã được bổ sung với thứ hạng `totalMin`.
 - Forecast hiện là persistence fallback; `OccupancyForecastService` chưa load model artifact thật. Wait estimator hiện dùng Erlang C, chưa trả phân phối Markov.
-- Schema `predictions`, `trips`, `trip_positions`, `trip_events`, `app_config` đã có. API trạng thái cổng và job stale đã triển khai; trip/GPS vẫn là M3. `data_platform/compose.yaml` hiện chỉ khai báo PostgreSQL/PostGIS.
+- Schema `predictions`, `trips`, `trip_positions`, `trip_events`, `app_config` đã có. API trạng thái cổng, job stale và trip/GPS/re-plan đã triển khai; `data_platform/compose.yaml` hiện chỉ khai báo PostgreSQL/PostGIS.
 - Event demo vẫn là overlay trong bộ nhớ. Dữ liệu trạng thái/queue mới bổ sung cho nhiều trạm là synthetic; phải giữ nguồn dữ liệu hiển thị rõ.
 
 ## 3. Những hợp đồng phải chốt trước khi mở rộng
@@ -64,10 +64,10 @@
 
 ### M3 — Trip, GPS và re-plan
 
-- [ ] Tạo trip từ `searchId`; lưu tuyến, trạm chọn, ETA, phase và `route_version` trong PostgreSQL.
-- [ ] Thêm position ping: bỏ qua timestamp cũ, ghi vị trí/quãng đường, ước tính pin, cập nhật ETA và phase `to_station → at_station → to_destination → arrived`.
-- [ ] Thêm accept/decline/cancel và sửa pin; ghi `trip_events`; đồng bộ planned arrival khi đổi trạm, tới trạm hoặc hủy.
-- [ ] Re-plan khi lệch tuyến, ETA tăng, trạm không còn dùng được hoặc pin không đủ; áp dụng cooldown/hysteresis và loại trạm đã từ chối.
+- [x] Tạo trip từ `searchId`; lưu tuyến, trạm chọn, ETA, phase và `route_version` trong PostgreSQL.
+- [x] Thêm position ping: bỏ qua timestamp cũ, ghi vị trí/quãng đường, ước tính pin, cập nhật ETA và phase `to_station → at_station → to_destination → arrived`.
+- [x] Thêm accept/decline/cancel và sửa pin; ghi `trip_events`; đồng bộ planned arrival khi đổi trạm, tới trạm hoặc hủy.
+- [x] Re-plan khi lệch tuyến, ETA tăng, trạm không còn dùng được hoặc pin không đủ; áp dụng cooldown/hysteresis và loại trạm đã từ chối. GPS dùng đoạn thẳng giữa các ping, ETA theo tiến độ tuyến; độ chính xác thực địa chưa được nghiệm thu.
 
 **Schema hiện có:** `data_platform/migrations/versions/0004_trips_config.py`, `data_platform/migrations/versions/0005_planned_arrivals.py`. **File mới dự kiến:** `backend/app/trip_repository.py`, `backend/app/domain/trips.py`, test vòng đời trip; mở rộng `backend/app/api.py`.  
 **Kiểm chứng:** restart Backend vẫn đọc được trip; GPS gửi lặp/cũ không làm lùi trạng thái; re-plan chỉ tăng version khi đổi tuyến; trip kết thúc giải phóng planned arrival.

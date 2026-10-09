@@ -36,7 +36,7 @@ def test_route_search_returns_enough_without_station_when_battery_is_sufficient(
     assert (
         app.state.search_result_store.get(
             result.search_id, now=NOW + timedelta(seconds=1)
-        ).search_id
+        ).response.search_id
         == result.search_id
     )
 
