@@ -39,16 +39,29 @@ def test_persistence_forecast_uses_latest_occupancy(deutsches_status: StationSta
     assert result.flags == ("PERSISTENCE_FALLBACK",)
 
 
-def test_beyond_model_horizon_uses_fifteen_minute_proxy(
+def test_beyond_model_horizon_uses_requested_contract_horizon_with_fallback(
     deutsches_status: StationStatus,
 ) -> None:
     result = OccupancyForecastService().forecast_occupancy(
         deutsches_status, horizon_min=30
     )
 
-    assert result.used_horizon_min == 15
+    assert result.used_horizon_min == 30
     assert "BEYOND_MODEL_HORIZON" in result.flags
     assert result.prediction_source == "persistence"
+
+
+def test_loaded_model_is_not_called_for_an_unsupported_contract_horizon(
+    deutsches_status: StationStatus,
+) -> None:
+    predictor = FixedPredictor(0.5)
+    result = OccupancyForecastService(predictor).forecast_occupancy(
+        deutsches_status, horizon_min=20
+    )
+
+    assert result.used_horizon_min == 20
+    assert result.prediction_source == "persistence"
+    assert "MODEL_HORIZON_UNSUPPORTED" in result.flags
 
 
 def test_model_adapter_gets_twelve_step_shape_and_clamps_output(

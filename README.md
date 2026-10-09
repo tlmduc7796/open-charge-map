@@ -108,6 +108,28 @@ GET  /geocoding/details/{place_id}
 POST /planned-arrivals/commit
 ```
 
+Các endpoint hợp đồng mới chạy song song với demo API:
+
+```text
+GET  /api/v1/config
+GET  /api/v1/stations?bbox=minLng,minLat,maxLng,maxLat
+GET  /api/v1/stations/availability?offset=0|5|10|15|20|25|30
+GET  /api/v1/stations/{id}/ports
+POST /api/v1/search/stations
+POST /api/v1/search/route
+POST /api/v1/internal/port-status        # yêu cầu X-API-Key
+POST /api/v1/internal/port-status/mark-stale
+```
+
+API `/api/v1` dùng `{lat,lng}`, pin phần trăm `[0,100]` và JSON `camelCase`. Domain và dữ liệu
+nội bộ vẫn dùng `{lat,lon}` và SOC `[0,1]`.
+Search chỉ đề xuất trạm có giờ mở cửa được xác nhận (`24/7` hoặc `always_open=true`);
+trạm thiếu metadata này được trả trong `excludedCandidates`. `searchId` và giới hạn tần suất
+hiện nằm trong bộ nhớ của từng process; Redis dùng chung giữa các worker thuộc M5.
+Các ngưỡng cấu hình đọc từ `app_config` khi có key tương ứng, nếu thiếu dùng mặc định trong
+backend. Job tự đánh dấu telemetry quan sát quá hạn thành `unknown` mỗi phút; dữ liệu
+synthetic demo vẫn giữ nguồn `synthetic` và không bị job này đổi trạng thái.
+
 ## Cài đặt frontend
 
 Kiểm tra `pnpm` trước:
@@ -225,11 +247,12 @@ python scripts\validate_static_data.py
 python scripts\validate_phase1_data.py
 ```
 
-Chạy riêng integration tests với PostgreSQL đã bootstrap:
+Chạy integration tests với **database test riêng** đã migrate và seed. Không trỏ biến này
+vào database demo/vận hành vì test trạng thái cổng có ghi dữ liệu:
 
 ```powershell
-$env:BACKEND_TEST_DATABASE_URL="postgresql+psycopg://smart_ev:smart_ev@127.0.0.1:5433/smart_ev_data"
-pytest backend\tests\test_catalog_persistence.py backend\tests\test_planned_arrival_persistence.py
+$env:BACKEND_TEST_DATABASE_URL="postgresql+psycopg://smart_ev:smart_ev@127.0.0.1:5434/smart_ev_test"
+pytest backend\tests
 ```
 
 Backend hiện có unit tests cho schema/repository và các phép tính Phase 05. Dữ liệu domain
@@ -270,6 +293,12 @@ Sao chép `.env.example` thành `.env`. Không commit `.env` hoặc API key th�
 - `RECOMMEND_CANDIDATE_CORRIDOR_M`: bán kính hành lang PostGIS quanh đường thẳng nối origin và
   destination, mặc định `5000` mét. Với snapshot hiện tại, nó giảm 102 trạm xuống 42 ứng viên
   cho hành trình normal và vẫn giữ đủ 16 trạm có route cache.
+- `INTERNAL_API_KEY`: khóa bắt buộc cho các endpoint `/api/v1/internal`; không commit giá trị thật.
+- `STATION_STATUS_STALE_AFTER_S`: thời gian tối đa trước khi trạng thái cổng được đánh dấu
+  `unknown`, mặc định 120 giây.
+- `AVAILABILITY_GREEN_MIN`: số cổng trống tối thiểu để trạng thái trạm là green, mặc định 2.
+- `SEARCH_RATE_LIMIT_PER_MIN`: số lần tìm kiếm tối đa mỗi IP trong 60 giây ở mỗi backend
+  process, mặc định 30.
 - `DEMO_MODE`: bật dữ liệu/scenario demo.
 
 Frontend dùng file riêng vì Vite không đọc `.env` ở repository root:

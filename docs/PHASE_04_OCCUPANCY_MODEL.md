@@ -36,7 +36,10 @@ Có thể thêm:
 
 ### 3.2 Model
 
-Model candidate chính là XGBoost với lag/time features. Dùng 12 bước lookback ở resolution 5 phút và ba model trực tiếp cho horizon +5, +10, +15 phút. Không dùng station/entity ID, queue hoặc wait làm feature.
+Model candidate chính là XGBoost với lag/time features. Dùng 12 bước lookback ở resolution
+5 phút và ba model trực tiếp cho horizon +5, +10, +15 phút. API/DB hỗ trợ thêm
++20/+25/+30 bằng persistence fallback có nhãn cho tới khi có artifact tương ứng. Không dùng
+station/entity ID, queue hoặc wait làm feature.
 
 ### 3.3 Experiment contract
 
@@ -73,6 +76,7 @@ Metadata phải ghi:
 - resolution;
 - lookback;
 - horizon;
+- danh sách `supported_horizons_min` và metrics cho đúng từng horizon được hỗ trợ;
 - features;
 - target;
 - metrics;

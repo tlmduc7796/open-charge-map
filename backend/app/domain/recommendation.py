@@ -16,13 +16,18 @@ from backend.app.domain.phase7_models import (
     RouteWaypoint,
 )
 from backend.app.domain.repositories import DomainData
-from backend.app.domain.routing import RoutingService, route_metrics_to_station
+from backend.app.domain.routing import (
+    RoutingService,
+    _haversine_m,
+    route_metrics_to_station,
+)
 from backend.app.domain.runtime import RuntimeStateStore
 from backend.app.domain.services import (
     check_compatibility,
     estimate_charging,
     estimate_reachability,
 )
+from backend.app.domain.station_hours import is_confirmed_open
 from backend.app.domain.wait_estimation import WaitEstimator
 
 
@@ -110,6 +115,7 @@ class RecommendationService:
         scenario: DemoScenario,
         *,
         apply_scenario_events: bool = False,
+        require_confirmed_open: bool = False,
     ) -> JourneyRecommendationResult:
         self._runtime.refresh()
         if apply_scenario_events:
@@ -120,11 +126,16 @@ class RecommendationService:
         cached_routes = tuple(
             self._routing.cached_route(route_id) for route_id in scenario.route_ids
         )
-        cached_direct = next(route for route in cached_routes if not route.waypoints)
-        use_scenario_cache = self._same_point(
-            cached_direct.origin, scenario.origin
-        ) and self._same_point(cached_direct.destination, scenario.destination)
+        cached_direct = next(
+            (route for route in cached_routes if not route.waypoints), None
+        )
+        use_scenario_cache = (
+            cached_direct is not None
+            and self._same_point(cached_direct.origin, scenario.origin)
+            and self._same_point(cached_direct.destination, scenario.destination)
+        )
         if use_scenario_cache:
+            assert cached_direct is not None
             direct_route = cached_direct
             routes_by_station = {
                 waypoint.station_id: route
@@ -149,6 +160,14 @@ class RecommendationService:
             tuple(station.station_id for station in stations)
         )
         for station in stations:
+            if require_confirmed_open and not is_confirmed_open(station):
+                exclusions.append(
+                    CandidateExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("OPENING_HOURS_UNVERIFIED",),
+                    )
+                )
+                continue
             if station.properties.access != "public":
                 exclusions.append(
                     CandidateExclusion(
@@ -187,10 +206,26 @@ class RecommendationService:
                 )
                 continue
 
+            max_reachable_m = max(
+                0.0,
+                (scenario.initial_soc - vehicle.reserve_soc)
+                * vehicle.calculation_battery_kwh
+                / vehicle.consumption_wh_km
+                * 1_000_000,
+            )
+            lon, lat = station.geometry.coordinates
+            if _haversine_m(scenario.origin.lat, scenario.origin.lon, lat, lon) > max_reachable_m:
+                exclusions.append(
+                    CandidateExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("INSUFFICIENT_SOC_RESERVE",),
+                    )
+                )
+                continue
+
             route = routes_by_station.get(station.station_id)
             if route is None and not use_scenario_cache:
                 try:
-                    lon, lat = station.geometry.coordinates
                     route = self._routing.route(
                         scenario.origin,
                         scenario.destination,

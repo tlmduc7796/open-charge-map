@@ -5,6 +5,7 @@ import os
 import pytest
 from sqlalchemy import create_engine
 
+from backend.app.api_v1_models import ApiPoint, SearchRouteRequest, SearchStationsRequest
 from backend.app.arrival_rate_repository import DatabaseArrivalRateRepository
 from backend.app.catalog_repository import (
     DatabaseStationRepository,
@@ -21,8 +22,10 @@ from backend.app.domain.recommendation import (
 )
 from backend.app.domain.routing import RoutingService
 from backend.app.domain.runtime import RuntimeStateStore
+from backend.app.domain.search import SearchService
 from backend.app.domain.wait_estimation import WaitEstimator
 from backend.app.planned_arrival_repository import DatabasePlannedArrivalRepository
+from backend.app.search_store import SearchResultStore
 
 TEST_DATABASE_URL = os.getenv("BACKEND_TEST_DATABASE_URL")
 
@@ -94,13 +97,17 @@ def test_recommendation_reads_database_catalog_and_runtime() -> None:
     arrivals = DatabasePlannedArrivalRepository(engine, data.planned_arrivals.all())
     arrival_rates = DatabaseArrivalRateRepository(engine, data.queue_assumptions)
     try:
+        runtime = RuntimeStateStore(statuses, data.demo_events)
+        routing = RoutingService(data.routes, goong=None, osrm=None)
+        forecasting = OccupancyForecastService()
+        wait = WaitEstimator(arrival_rates, scoring_wait_cap_min=120)
         service = RecommendationService(
             data,
-            RuntimeStateStore(statuses, data.demo_events),
+            runtime,
             arrivals,
-            RoutingService(data.routes, goong=None, osrm=None),
-            OccupancyForecastService(),
-            WaitEstimator(arrival_rates, scoring_wait_cap_min=120),
+            routing,
+            forecasting,
+            wait,
             RecommendationThresholds(
                 max_detour_min=30,
                 max_wait_min=120,
@@ -132,5 +139,32 @@ def test_recommendation_reads_database_catalog_and_runtime() -> None:
         assert result.recommendations
         assert result_ids == candidate_ids
         assert result.vehicle_id == scenario.vehicle_id
+
+        search = SearchService(
+            service, routing, vehicles, stations, statuses, runtime,
+            arrivals, forecasting, wait, SearchResultStore(), 2,
+        )
+        origin = ApiPoint(lat=scenario.origin.lat, lng=scenario.origin.lon)
+        destination = ApiPoint(
+            lat=scenario.destination.lat, lng=scenario.destination.lon
+        )
+        station_search = search.search_stations(
+            SearchStationsRequest(
+                origin=origin, vehicle_id=scenario.vehicle_id, battery_pct=55
+            ),
+            now=scenario.departure_at,
+        )
+        route_search = search.search_route(
+            SearchRouteRequest(
+                origin=origin,
+                destination=destination,
+                vehicle_id="EV_VF5_PLUS",
+                battery_pct=14,
+            ),
+            now=scenario.departure_at,
+        )
+        assert station_search.stations
+        assert route_search.case == "needCharge"
+        assert route_search.stations
     finally:
         engine.dispose()

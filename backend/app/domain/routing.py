@@ -202,6 +202,41 @@ class RoutingService:
     def cached_route(self, route_id: str) -> RouteResult:
         return self._from_cache(route_id)
 
+    def route_to_station(
+        self, origin: GeoPoint, station: GeoPoint, station_id: str
+    ) -> RouteResult:
+        cached = self._routes.find_by_station(station_id)
+        if cached is None or not self._same_point(cached.origin, origin):
+            return self.route(origin, station)
+        full = self._from_cache(cached.route_id)
+        distance_m, duration_s = route_metrics_to_station(full, station_id)
+        nearest_index = min(
+            range(len(full.geometry.coordinates)),
+            key=lambda index: _haversine_m(
+                full.geometry.coordinates[index][1],
+                full.geometry.coordinates[index][0],
+                station.lat,
+                station.lon,
+            ),
+        )
+        coordinates = full.geometry.coordinates[: nearest_index + 1]
+        if not coordinates or coordinates[-1] != (station.lon, station.lat):
+            coordinates = (*coordinates, (station.lon, station.lat))
+        if len(coordinates) < 2:
+            coordinates = ((origin.lon, origin.lat), (station.lon, station.lat))
+        return RouteResult(
+            route_id=f"{full.route_id}_TO_{station_id}",
+            provider=full.provider,
+            resolution_source="cache",
+            origin=origin,
+            destination=station,
+            waypoints=(),
+            geometry=LineStringGeometry(type="LineString", coordinates=coordinates),
+            distance_m=distance_m,
+            duration_s=duration_s,
+            flags=full.flags,
+        )
+
     def _from_cache(self, route_id: str) -> RouteResult:
         route = self._routes.get(route_id)
         return RouteResult(
@@ -234,6 +269,10 @@ class RoutingService:
             ):
                 return route
         return None
+
+    @staticmethod
+    def _same_point(left: GeoPoint, right: GeoPoint) -> bool:
+        return abs(left.lat - right.lat) < 1e-6 and abs(left.lon - right.lon) < 1e-6
 
 
 def route_metrics_to_station(route: RouteResult, station_id: str) -> tuple[float, float]:

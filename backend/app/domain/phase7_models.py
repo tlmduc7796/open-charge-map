@@ -100,7 +100,7 @@ class DemoScenario(DomainModel):
     departure_at: datetime
     preference: RecommendationPreference
     event_ids: tuple[str, ...]
-    route_ids: tuple[str, ...] = Field(min_length=1)
+    route_ids: tuple[str, ...] = ()
 
     @field_validator("departure_at")
     @classmethod

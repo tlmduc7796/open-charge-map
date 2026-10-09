@@ -97,11 +97,12 @@ Chi tiết kiểm chứng: `data_platform/data/validation/phase6_forecast_wait_r
 
 ### 6.1 Forecast contract
 
-- Interface nhận history `occupancy_ratio` gồm 12 bước và horizon được căn về
-  +5/+10/+15 phút.
+- Interface nhận history `occupancy_ratio` gồm 12 bước và horizon được căn về một trong
+  +5/+10/+15/+20/+25/+30 phút.
 - Khi không có model, prediction bằng observation mới nhất và trả
   `prediction_source=persistence` cùng flag `PERSISTENCE_FALLBACK`.
-- ETA trên 15 phút dùng +15 làm proxy và trả `BEYOND_MODEL_HORIZON`.
+- Horizon không được artifact hỗ trợ dùng persistence ở chính mốc contract và trả
+  `MODEL_HORIZON_UNSUPPORTED`; mốc trên 15 phút đồng thời trả `BEYOND_MODEL_HORIZON`.
 - Nếu sau này model adapter được cắm nhưng chưa có history, service tạo 12 giá trị
   lặp từ observation mới nhất và trả `SYNTHETIC_HISTORY`.
 - Model output được clamp vào `[0, 1]`; lỗi inference tự hạ cấp sang persistence.

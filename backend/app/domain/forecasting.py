@@ -20,13 +20,15 @@ class OccupancyForecastService:
         predictor: OccupancyPredictor | None = None,
         *,
         lookback_steps: int = 12,
-        max_model_horizon_min: int = 15,
+        supported_model_horizons: tuple[int, ...] = (5, 10, 15),
     ) -> None:
-        if lookback_steps <= 0 or max_model_horizon_min <= 0:
+        if lookback_steps <= 0 or not supported_model_horizons:
             raise ValueError("forecast lookback and horizon must be positive")
+        if any(horizon not in {5, 10, 15, 20, 25, 30} for horizon in supported_model_horizons):
+            raise ValueError("model horizons must use supported five-minute offsets")
         self._predictor = predictor
         self._lookback_steps = lookback_steps
-        self._max_model_horizon_min = max_model_horizon_min
+        self._supported_model_horizons = tuple(sorted(set(supported_model_horizons)))
 
     @property
     def model_loaded(self) -> bool:
@@ -44,7 +46,9 @@ class OccupancyForecastService:
 
         used_horizon = self._aligned_horizon(horizon_min)
         flags: list[str] = []
-        if horizon_min > self._max_model_horizon_min:
+        if horizon_min > 30:
+            flags.append("BEYOND_FORECAST_HORIZON")
+        if used_horizon > max(self._supported_model_horizons):
             flags.append("BEYOND_MODEL_HORIZON")
         elif used_horizon != horizon_min:
             flags.append("HORIZON_ALIGNED_TO_MODEL")
@@ -62,7 +66,7 @@ class OccupancyForecastService:
             )
 
         history = self._prepare_history(status, occupancy_history)
-        if self._predictor is not None:
+        if self._predictor is not None and used_horizon in self._supported_model_horizons:
             if occupancy_history is None:
                 flags.append("SYNTHETIC_HISTORY")
             try:
@@ -82,6 +86,8 @@ class OccupancyForecastService:
                 )
             except Exception:  # Model adapter errors must degrade to the declared fallback.
                 flags.append("MODEL_INFERENCE_FAILED")
+        elif self._predictor is not None:
+            flags.append("MODEL_HORIZON_UNSUPPORTED")
 
         flags.append("PERSISTENCE_FALLBACK")
         return self._result(
@@ -94,11 +100,11 @@ class OccupancyForecastService:
         )
 
     def _aligned_horizon(self, requested_horizon_min: int) -> int:
-        if requested_horizon_min <= 5:
-            return 5
-        if requested_horizon_min <= 10:
-            return 10
-        return self._max_model_horizon_min
+        bounded = min(requested_horizon_min, 30)
+        return min(
+            (horizon for horizon in (5, 10, 15, 20, 25, 30) if horizon >= bounded),
+            default=30,
+        )
 
     def _prepare_history(
         self,

@@ -53,6 +53,7 @@ class Settings:
     app_env: str
     log_level: str
     demo_mode: bool
+    internal_api_key: str | None
     goong_api_key: str | None
     database_url: str
     catalog_storage: str
@@ -68,6 +69,9 @@ class Settings:
     recommend_max_charge_min: float
     recommend_soc_risk_buffer: float
     recommend_candidate_corridor_m: float
+    station_status_stale_after_s: float
+    availability_green_min: int
+    search_rate_limit_per_min: int
     cors_origins: tuple[str, ...]
 
     def required_data_paths(self) -> tuple[Path, ...]:
@@ -89,11 +93,19 @@ class Settings:
 
 def load_settings() -> Settings:
     key = os.getenv("GOONG_API_KEY", "").strip() or None
+    internal_api_key = os.getenv("INTERNAL_API_KEY", "").strip() or None
+    availability_green_min = int(os.getenv("AVAILABILITY_GREEN_MIN", "2"))
+    if availability_green_min <= 0:
+        raise ValueError("AVAILABILITY_GREEN_MIN must be positive")
+    search_rate_limit_per_min = int(os.getenv("SEARCH_RATE_LIMIT_PER_MIN", "30"))
+    if search_rate_limit_per_min <= 0:
+        raise ValueError("SEARCH_RATE_LIMIT_PER_MIN must be positive")
     return Settings(
         app_name="Smart EV Journey API",
         app_env=os.getenv("APP_ENV", "development"),
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
         demo_mode=_read_bool("DEMO_MODE", True),
+        internal_api_key=internal_api_key,
         goong_api_key=key,
         database_url=os.getenv(
             "DATABASE_URL",
@@ -133,5 +145,10 @@ def load_settings() -> Settings:
         recommend_candidate_corridor_m=_read_positive_float(
             "RECOMMEND_CANDIDATE_CORRIDOR_M", 5_000
         ),
+        station_status_stale_after_s=_read_positive_float(
+            "STATION_STATUS_STALE_AFTER_S", 120
+        ),
+        availability_green_min=availability_green_min,
+        search_rate_limit_per_min=search_rate_limit_per_min,
         cors_origins=_read_csv("CORS_ORIGINS", "http://127.0.0.1:5173"),
     )

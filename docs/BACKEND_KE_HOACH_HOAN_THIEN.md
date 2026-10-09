@@ -1,7 +1,7 @@
 # Kế hoạch hoàn thiện Backend theo kế hoạch gốc
 
 **Cập nhật:** 2026-10-09  
-**Trạng thái:** Kế hoạch thực thi; chưa phải kết quả nghiệm thu.  
+**Trạng thái:** M1–M2 đã triển khai và kiểm thử; M3 đang chờ triển khai. Chưa phải kết quả nghiệm thu/release.
 **Mục tiêu:** Hoàn thiện các phần C (Database), D (Backend) và phần kiểm thử liên quan ở [kế hoạch Rule-Based-AI](Rule-Based-AI-Ke-hoach-trien-khai.md). [Bộ Phase 00–11](PHASE_INDEX.md) tiếp tục được dùng để theo dõi kết quả đã đạt, nhưng `RELEASE PASS` chỉ được xét sau khi các chức năng và kiểm định của kế hoạch gốc hoàn tất.
 
 ## 1. Phạm vi và phân công
@@ -14,9 +14,9 @@
 ## 2. Hiện trạng làm mốc
 
 - PostgreSQL/PostGIS đã phục vụ danh mục trạm, cổng, xe, trạng thái hiện tại, planned arrivals và arrival rate; recommendation đã lọc ứng viên bằng PostGIS. Các phần chính: `backend/app/catalog_repository.py`, `backend/app/arrival_rate_repository.py`, `backend/app/planned_arrival_repository.py`, `backend/app/domain/recommendation.py`.
-- Backend đang có `/journey/recommend` dựa trên scenario, route cache và điểm có trọng số; chưa có hai API tìm kiếm tổng quát `/search/stations`, `/search/route` theo kế hoạch gốc.
+- Backend vẫn giữ `/journey/recommend` dựa trên scenario; `/api/v1/search/stations` và `/api/v1/search/route` đã được bổ sung với thứ hạng `totalMin`.
 - Forecast hiện là persistence fallback; `OccupancyForecastService` chưa load model artifact thật. Wait estimator hiện dùng Erlang C, chưa trả phân phối Markov.
-- Schema `predictions`, `trips`, `trip_positions`, `trip_events`, `app_config` đã có; các API/job tương ứng của kế hoạch gốc chưa được triển khai. `data_platform/compose.yaml` hiện chỉ khai báo PostgreSQL/PostGIS.
+- Schema `predictions`, `trips`, `trip_positions`, `trip_events`, `app_config` đã có. API trạng thái cổng và job stale đã triển khai; trip/GPS vẫn là M3. `data_platform/compose.yaml` hiện chỉ khai báo PostgreSQL/PostGIS.
 - Event demo vẫn là overlay trong bộ nhớ. Dữ liệu trạng thái/queue mới bổ sung cho nhiều trạm là synthetic; phải giữ nguồn dữ liệu hiển thị rõ.
 
 ## 3. Những hợp đồng phải chốt trước khi mở rộng
@@ -44,20 +44,20 @@
 
 ### M1 — Trạng thái trạm có thể cập nhật
 
-- [ ] Thêm API nội bộ có API key để nhận batch trạng thái cổng; ghi `port_status` và `port_status_history` trong cùng transaction, bỏ qua bản tin cũ hơn `reported_at` hiện tại.
-- [ ] Job đánh dấu trạng thái quá hạn là unknown; availability và recommendation không coi unknown là cổng trống.
-- [ ] Hoàn thiện arrival rate/queue/session duration cho các trạm được phép đề xuất; nếu thiếu input, trả lý do loại trạm thay vì ước lượng không có căn cứ.
-- [ ] Thêm `GET /config`, danh sách trạm theo bbox, availability hiện tại, chi tiết theo connector và danh sách ports; xác định màu từ `app_config`.
+- [x] Thêm API nội bộ có API key để nhận batch trạng thái cổng; ghi `port_status` và `port_status_history` trong cùng transaction, bỏ qua bản tin cũ hơn `reported_at` hiện tại.
+- [x] Job đánh dấu trạng thái quá hạn là unknown; availability và recommendation không coi unknown là cổng trống. Dữ liệu synthetic được giữ nguyên nhãn thay vì tự suy diễn là quan sát thật bị stale.
+- [x] Hoàn thiện arrival rate/queue/session duration cho các trạm được phép đề xuất; nếu thiếu input, trả lý do loại trạm thay vì ước lượng không có căn cứ. Chỉ đề xuất trạm có giờ mở cửa xác nhận; 7 trạm luôn mở trong fixture PostgreSQL đáp ứng điều kiện này.
+- [x] Thêm `GET /config`, danh sách trạm theo bbox, availability hiện tại, chi tiết theo connector và danh sách ports; xác định màu từ `app_config`.
 
 **File hiện có:** `backend/app/api.py`, `backend/app/catalog_repository.py`, `backend/app/arrival_rate_repository.py`, `backend/app/domain/recommendation.py`, `data_platform/migrations/versions/0001_initial_schema.py`, `data_platform/migrations/versions/0004_trips_config.py`. Migration mới chỉ tạo nếu schema hiện tại không biểu diễn được hợp đồng đã chốt.  
 **Kiểm chứng:** cập nhật một cổng qua API làm thay đổi status/availability; history có đúng một event; tin cũ không ghi đè tin mới; trạng thái stale chuyển unknown.
 
 ### M2 — Tìm kiếm trạm và tuyến tổng quát
 
-- [ ] Thêm `POST /search/stations` và `POST /search/route` nhận điểm đi/đến, xe và mức pin tùy ý; không yêu cầu `scenario_id`.
-- [ ] Lọc trạm đang mở, quyền truy cập, chuẩn sạc, bán kính pin an toàn và hành lang tuyến trước routing; dùng quãng đường thật để kiểm tra lại reachability.
-- [ ] Tính ETA, wait ở mốc dự báo gần nhất, charge time và `totalMin`; trả `enough`, `needCharge`, `fallback`, `OUT_OF_RANGE` hoặc `NO_ROUTE` đúng trường hợp.
-- [ ] Lưu kết quả `searchId` trong 10 phút để tạo trip; áp dụng giới hạn tần suất cho API tìm kiếm.
+- [x] Thêm `POST /search/stations` và `POST /search/route` nhận điểm đi/đến, xe và mức pin tùy ý; không yêu cầu `scenario_id`.
+- [x] Lọc trạm đang mở, quyền truy cập, chuẩn sạc, bán kính pin an toàn và hành lang tuyến trước routing; dùng quãng đường thật để kiểm tra lại reachability.
+- [x] Tính ETA, wait ở mốc dự báo gần nhất, charge time và `totalMin`; trả `enough`, `needCharge`, `fallback`, `OUT_OF_RANGE` hoặc `NO_ROUTE` đúng trường hợp.
+- [x] Lưu kết quả `searchId` trong 10 phút để tạo trip; áp dụng giới hạn tần suất cho API tìm kiếm. Cache/rate limit hiện theo từng process; Redis chia sẻ giữa nhiều process là M5.
 
 **File hiện có:** `backend/app/domain/recommendation.py`, `backend/app/domain/routing.py`, `backend/app/domain/services.py`, `backend/app/domain/phase7_models.py`, `backend/app/catalog_repository.py`, `backend/app/api.py`. **File mới dự kiến:** repository/cache cho search result và test API tìm kiếm.  
 **Kiểm chứng:** test hành trình đủ pin, cần sạc, pin quá thấp, trạm private/incompatible/offline, không có route và tọa độ ngoài vùng demo; thứ hạng đúng theo `totalMin`.

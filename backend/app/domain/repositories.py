@@ -41,6 +41,33 @@ class StationRepository:
     def get(self, station_id: str) -> Station:
         return self._by_id[station_id]
 
+    def within_bbox(
+        self, min_lon: float, min_lat: float, max_lon: float, max_lat: float
+    ) -> tuple[Station, ...]:
+        return tuple(
+            station
+            for station in self._stations
+            if min_lon <= station.geometry.coordinates[0] <= max_lon
+            and min_lat <= station.geometry.coordinates[1] <= max_lat
+        )
+
+    def nearby(
+        self, longitude: float, latitude: float, radius_m: float
+    ) -> tuple[Station, ...]:
+        from backend.app.domain.routing import _haversine_m
+
+        return tuple(
+            station
+            for station in self._stations
+            if _haversine_m(
+                latitude,
+                longitude,
+                station.geometry.coordinates[1],
+                station.geometry.coordinates[0],
+            )
+            <= radius_m
+        )
+
     def candidates(
         self,
         origin_lon: float,

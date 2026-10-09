@@ -50,6 +50,16 @@ Các thành phần sau **không nằm trong data contract MVP**:
 | SOC | số thực trong `[0, 1]` |
 | Ratio | số thực trong `[0, 1]` |
 
+### Ranh giới API `/api/v1`
+
+- Domain và file dữ liệu tiếp tục dùng SOC `[0,1]` và tọa độ `{lat,lon}`.
+- API công khai nhận/trả pin theo phần trăm `[0,100]` và tọa độ `{lat,lng}`; adapter
+  chuyển đổi tại ranh giới HTTP, không truyền đơn vị API vào domain.
+- Field JSON của `/api/v1` dùng `camelCase`; timestamp luôn có timezone và response có
+  `updatedAt` khi biểu diễn trạng thái có thể thay đổi.
+- Forecast contract công khai hỗ trợ offset `0,5,10,15,20,25,30`. Mốc chưa có model
+  tương ứng dùng persistence và phải trả nguồn/flag fallback, không nội suy như model thật.
+
 ### `data_source`
 
 Các dataset có thể dùng field `data_source` với một trong các giá trị:

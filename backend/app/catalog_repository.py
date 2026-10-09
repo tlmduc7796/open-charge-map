@@ -277,6 +277,53 @@ class DatabaseStationRepository:
             raise KeyError(station_id)
         return _station_from_row(row)
 
+    def within_bbox(
+        self, min_lon: float, min_lat: float, max_lon: float, max_lat: float
+    ) -> tuple[Station, ...]:
+        query = _STATION_SELECT + """
+            AND ST_Intersects(
+                s.location,
+                ST_MakeEnvelope(:min_lon, :min_lat, :max_lon, :max_lat, 4326)::geography
+            )
+            ORDER BY s.code
+        """
+        with self._engine.connect() as connection:
+            rows = connection.execute(
+                text(query),
+                {
+                    "min_lon": min_lon,
+                    "min_lat": min_lat,
+                    "max_lon": max_lon,
+                    "max_lat": max_lat,
+                },
+            ).mappings()
+            return tuple(_station_from_row(row) for row in rows)
+
+    def nearby(
+        self, longitude: float, latitude: float, radius_m: float
+    ) -> tuple[Station, ...]:
+        query = _STATION_SELECT + """
+            AND ST_DWithin(
+                s.location,
+                ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography,
+                :radius_m
+            )
+            ORDER BY ST_Distance(
+                s.location,
+                ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography
+            ), s.code
+        """
+        with self._engine.connect() as connection:
+            rows = connection.execute(
+                text(query),
+                {
+                    "longitude": longitude,
+                    "latitude": latitude,
+                    "radius_m": radius_m,
+                },
+            ).mappings()
+            return tuple(_station_from_row(row) for row in rows)
+
     def candidates(
         self,
         origin_lon: float,
