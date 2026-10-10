@@ -13,8 +13,8 @@ from data_platform.runtime_seed import load_runtime_seed, seed_runtime_data
 from data_platform.synthetic_port_seed import seed_synthetic_port_statuses
 from data_platform.vehicles import load_vehicle_seed, seed_vehicle_data
 from sqlalchemy import create_engine, text
-from sqlalchemy.exc import OperationalError
 from sqlalchemy.engine import make_url
+from sqlalchemy.exc import OperationalError
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SNAPSHOT = PACKAGE_ROOT / "data" / "bootstrap" / "current_database.sql"
