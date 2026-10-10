@@ -88,12 +88,12 @@ export default function RecommendationList(props: RecommendationListProps) {
             <span className="card-main">
               <strong>{item.station_name}</strong>
               <small>{item.matched_connectors.join(" · ")} · {item.effective_power_kw} kW</small>
-              <span className="total-time">{minutes(item.total_time_min)} tổng thời gian đến đích</span>
+              <span className="arrival-time">{minutes(item.drive_to_station_min)} đến trạm</span>
               <span className="metric-row">
-                <span><b>{minutes(item.drive_to_station_min)}</b> đến trạm</span>
                 <span title="Ước tính tại thời điểm tới trạm, có điều chỉnh theo occupancy dự báo và hàng chờ đã quan sát."><b>{minutes(item.wait_expected_min ?? item.estimated_wait_min)}</b> chờ dự kiến</span>
                 <span><b>{minutes(item.charge_min ?? item.estimated_charge_min)}</b> sạc</span>
                 <span><b>{minutes(item.drive_station_to_destination_min)}</b> đi tiếp</span>
+                <span><b>{minutes(item.total_time_min)}</b> đến đích</span>
               </span>
               <small>{Math.round(item.arrival_soc * 100)}% pin khi tới trạm · {item.soc_after_charge == null ? "—" : `${Math.round(item.soc_after_charge * 100)}% sau sạc`} · {Math.round(item.destination_soc * 100)}% khi đến đích · {item.prediction_source}{item.model_version ? ` · model ${item.model_version}` : ""}</small>
               <small>{item.predicted_free_ports == null ? "Chưa có dự báo số cổng trống" : `Dự báo ${item.predicted_free_ports.toFixed(1)} cổng trống khi tới trạm`}</small>

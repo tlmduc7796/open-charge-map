@@ -134,7 +134,7 @@ button { cursor: pointer; }
 .card-main, .card-main strong, .card-main small { display: block; }
 .card-main strong { font-size: 13px; }
 .card-main small { margin-top: 4px; color: #72857f; font-size: 10px; }
-.total-time { display: block; margin-top: 9px; color: #174f3d; font-weight: 700; font-size: 13px; }
+.arrival-time { display: block; margin-top: 9px; color: #174f3d; font-weight: 700; font-size: 16px; }
 .metric-row { margin-top: 11px; display: grid; grid-template-columns: 1fr 1fr; gap: 7px 12px; color: #789088; font-size: 9px; }
 .metric-row span, .metric-row b { display: block; }
 .metric-row b { color: #264c42; font-size: 11px; }
