@@ -13,6 +13,7 @@ from data_platform.runtime_seed import load_runtime_seed, seed_runtime_data
 from data_platform.synthetic_port_seed import seed_synthetic_port_statuses
 from data_platform.vehicles import load_vehicle_seed, seed_vehicle_data
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.engine import make_url
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
@@ -63,25 +64,23 @@ def _docker(
     )
 
 
-def _wait_for_postgres(env_file: Path | None, compose_file: Path) -> None:
-    for _ in range(60):
-        result = _docker(
-            "exec",
-            "-T",
-            "postgres",
-            "pg_isready",
-            "-U",
-            "smart_ev",
-            "-d",
-            "postgres",
-            check=False,
-            env_file=env_file,
-            compose_file=compose_file,
-        )
-        if result.returncode == 0:
-            return
-        time.sleep(1)
-    raise RuntimeError("PostgreSQL did not become ready within 60 seconds")
+def _wait_for_postgres() -> None:
+    engine = create_engine(load_settings().database_url)
+    last_error: Exception | None = None
+    try:
+        for _ in range(60):
+            try:
+                with engine.connect() as connection:
+                    connection.execute(text("SELECT 1"))
+                return
+            except OperationalError as exc:
+                last_error = exc
+                time.sleep(1)
+    finally:
+        engine.dispose()
+    raise RuntimeError(
+        "PostgreSQL did not accept application connections within 60 seconds"
+    ) from last_error
 
 
 def _ensure_database(
@@ -203,7 +202,7 @@ def main() -> None:
     _docker(
         "up", "-d", "postgres", env_file=env_file, compose_file=compose_file
     )
-    _wait_for_postgres(env_file, compose_file)
+    _wait_for_postgres()
     _ensure_database(args.database_name, env_file, compose_file)
     database_url = _database_url(args.database_name)
     _migrate(database_url)

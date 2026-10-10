@@ -6,6 +6,7 @@ frontend/.env.local
 __pycache__/
 *.pyc
 .pytest_cache/
+.pytest-tmp/
 pytest-cache-files-*/
 .ruff_cache/
 frontend/node_modules/
