@@ -166,6 +166,10 @@ class QueueAssumptionsRepository:
     def has_override(self, scenario_id: str, station_id: str) -> bool:
         return (scenario_id, station_id) in self._scenario_overrides
 
+    def baseline_source(self, station_id: str, scenario_id: str | None = None) -> str:
+        self.baseline_rate(station_id, scenario_id)
+        return self.assumptions.data_source
+
 
 class RouteRepository:
     def __init__(self, routes: tuple[RouteRecord, ...]) -> None:

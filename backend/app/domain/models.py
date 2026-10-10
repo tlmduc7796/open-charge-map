@@ -116,6 +116,7 @@ class StationStatus(DomainModel):
     queue_length: int | None = Field(default=None, ge=0)
     avg_session_duration_min: float | None = Field(default=None, gt=0)
     data_source: str = Field(min_length=1)
+    synthetic_fields: tuple[str, ...] = ()
 
     @model_validator(mode="after")
     def validate_capacity_invariants(self) -> StationStatus:

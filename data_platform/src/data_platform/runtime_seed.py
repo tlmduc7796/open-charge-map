@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
 from datetime import datetime
@@ -14,6 +15,12 @@ PLANNED_ARRIVALS_SOURCE_REF = "data/runtime/planned_arrivals.json"
 QUEUE_ASSUMPTIONS_SOURCE_REF = "data/demo/queue_assumptions.json"
 PLANNED_ARRIVAL_STATUSES = {"planned", "arrived", "cancelled", "expired"}
 PLANNED_ARRIVAL_SOURCES = {"runtime", "synthetic"}
+
+
+def synthetic_arrival_rate(station_code: str) -> float:
+    """Stable demo-only rate in [0.3, 1.5] arrivals/hour."""
+    bucket = int(hashlib.sha256(station_code.encode("utf-8")).hexdigest()[:8], 16) % 13
+    return round(0.3 + bucket / 10, 1)
 
 
 @dataclass(frozen=True)
@@ -185,7 +192,9 @@ def seed_runtime_data(
     with engine.begin() as connection:
         station_lookup = {
             row.code: row.id
-            for row in connection.execute(text("SELECT id, code FROM stations")).all()
+            for row in connection.execute(
+                text("SELECT id, code FROM stations WHERE is_active")
+            ).all()
         }
         vehicle_lookup: dict[str, Any] = {}
         for row in connection.execute(
@@ -223,7 +232,8 @@ def seed_runtime_data(
                     "VALUES (:station_id, :rate, 'synthetic', CAST(:provenance AS jsonb)) "
                     "ON CONFLICT (station_id) DO UPDATE SET "
                     "baseline_arrival_rate_per_hour=EXCLUDED.baseline_arrival_rate_per_hour, "
-                    "data_source=EXCLUDED.data_source, provenance=EXCLUDED.provenance"
+                    "data_source=EXCLUDED.data_source, provenance=EXCLUDED.provenance "
+                    "WHERE station_arrival_rates.data_source = 'synthetic'"
                 ),
                 {
                     "station_id": station_lookup[rate["station_code"]],
@@ -234,6 +244,32 @@ def seed_runtime_data(
                             "provider": "queue_assumptions_fixture",
                             "source_ref": QUEUE_ASSUMPTIONS_SOURCE_REF,
                             "station_code": rate["station_code"],
+                        }
+                    ),
+                },
+            )
+
+        explicit_rate_codes = {rate["station_code"] for rate in bundle.station_rates}
+        for station_code, station_id in station_lookup.items():
+            if station_code in explicit_rate_codes:
+                continue
+            connection.execute(
+                text(
+                    "INSERT INTO station_arrival_rates "
+                    "(station_id, baseline_arrival_rate_per_hour, data_source, provenance) "
+                    "VALUES (:station_id, :rate, 'synthetic', CAST(:provenance AS jsonb)) "
+                    "ON CONFLICT (station_id) DO NOTHING"
+                ),
+                {
+                    "station_id": station_id,
+                    "rate": synthetic_arrival_rate(station_code),
+                    "provenance": json.dumps(
+                        {
+                            "origin": "synthetic",
+                            "provider": "deterministic_demo_fill_v1",
+                            "source_ref": "generated:station_code_sha256",
+                            "station_code": station_code,
+                            "synthetic_fields": ["baseline_arrival_rate_per_hour"],
                         }
                     ),
                 },
@@ -294,6 +330,6 @@ def seed_runtime_data(
 
     return {
         "planned_arrivals": len(bundle.planned_arrivals),
-        "station_arrival_rates": len(bundle.station_rates),
+        "station_arrival_rates": len(station_lookup),
         "app_config": 1,
     }

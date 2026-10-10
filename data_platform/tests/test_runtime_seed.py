@@ -5,8 +5,11 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
-
-from data_platform.runtime_seed import build_runtime_seed, load_runtime_seed
+from data_platform.runtime_seed import (
+    build_runtime_seed,
+    load_runtime_seed,
+    synthetic_arrival_rate,
+)
 
 DATA = Path(__file__).resolve().parents[1] / "data"
 
@@ -64,3 +67,10 @@ def test_runtime_seed_rejects_unknown_source_and_invalid_probability() -> None:
     planned[0]["arrival_probability"] = 1.1
     with pytest.raises(ValueError, match="must be at most 1"):
         build_runtime_seed(planned, queue)
+
+
+def test_synthetic_arrival_rate_is_reproducible_and_bounded() -> None:
+    first = synthetic_arrival_rate("CAND_ABC")
+
+    assert first == synthetic_arrival_rate("CAND_ABC")
+    assert 0.3 <= first <= 1.5

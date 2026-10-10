@@ -17,6 +17,7 @@ from backend.app.api_v1_models import (
 )
 from backend.app.app_config_repository import AppConfigRepository
 from backend.app.domain.forecasting import OccupancyForecastService
+from backend.app.domain.models import StationStatus
 from backend.app.domain.phase7_models import (
     DemoScenario,
     GeoPoint,
@@ -91,6 +92,10 @@ class SearchService:
             color = "yellow"
         else:
             color = "green"
+        synthetic_fields = set(station.properties.synthetic_fields)
+        if any(item.source.endswith(":synthetic") for item in station.properties.connectors):
+            synthetic_fields.add("connectors")
+        synthetic_fields.update(status.synthetic_fields)
         return StationSummary(
             id=station_id,
             name=station.properties.name,
@@ -101,7 +106,19 @@ class SearchService:
             total_ports=status.total_ports,
             connectors=tuple(item.type for item in station.properties.connectors),
             updated_at=status.timestamp,
+            synthetic_fields=tuple(sorted(synthetic_fields)),
         )
+
+    def _wait_synthetic_fields(
+        self,
+        station_id: str,
+        status: StationStatus,
+        scenario_id: str | None = None,
+    ) -> tuple[str, ...]:
+        fields = set(status.synthetic_fields)
+        if self._wait_estimator.baseline_source(station_id, scenario_id) == "synthetic":
+            fields.add("baseline_arrival_rate_per_hour")
+        return tuple(sorted(fields))
 
     def _nearest_station(self, origin: ApiPoint, vehicle):
         eligible = (
@@ -189,6 +206,7 @@ class SearchService:
                 direct_min=direct.duration_s / 60,
                 stations=(),
                 updated_at=generated_at,
+                generated_at=generated_at,
             )
         else:
             recommendation = self._recommendation.recommend_scenario(
@@ -255,6 +273,10 @@ class SearchService:
                         arrive_battery_pct=item.arrival_soc * 100,
                         prediction_source=item.prediction_source,
                         flags=item.flags,
+                        synthetic_fields=self._wait_synthetic_fields(
+                            item.station_id,
+                            self._statuses.get(item.station_id),
+                        ),
                     )
                 )
             ordered = sorted(options, key=lambda item: (item.total_min, item.station.id))
@@ -276,6 +298,7 @@ class SearchService:
                 ),
                 nearest_station=None if ranked else nearest,
                 updated_at=generated_at,
+                generated_at=generated_at,
             )
         search_id = self._store.put(provisional, created_at=generated_at)
         result = provisional.model_copy(update={"search_id": search_id})
@@ -417,6 +440,9 @@ class SearchService:
                     arrive_battery_pct=arrival_pct,
                     prediction_source=forecast.prediction_source,
                     flags=tuple(dict.fromkeys((*forecast.flags, *wait.flags))),
+                    synthetic_fields=self._wait_synthetic_fields(
+                        station.station_id, status
+                    ),
                 )
             )
         ordered = sorted(options, key=lambda item: (item.total_min, item.station.id))
@@ -436,6 +462,7 @@ class SearchService:
                 else max(0.0, nearest_km - reachable_km)
             ),
             updated_at=generated_at,
+            generated_at=generated_at,
         )
         search_id = self._store.put(provisional, created_at=generated_at)
         result = provisional.model_copy(update={"search_id": search_id})

@@ -16,7 +16,8 @@ def main() -> None:
     print(
         f"Synthetic runtime seed: {counts['stations']} stations, "
         f"{counts['port_status']} port statuses, "
-        f"{counts['station_live_metrics']} station metrics"
+        f"{counts['station_live_metrics']} station metrics, "
+        f"{counts['station_metadata']} station metadata rows enriched"
     )
 
 

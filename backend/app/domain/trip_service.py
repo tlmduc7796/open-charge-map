@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import secrets
 from datetime import UTC, datetime, timedelta
 
 from backend.app.api_v1_models import (
@@ -11,6 +13,7 @@ from backend.app.api_v1_models import (
     SearchStationsRequest,
     SearchStationsResponse,
     TripActionRequest,
+    TripCreatedResponse,
     TripCreateRequest,
     TripPositionRequest,
     TripResponse,
@@ -42,7 +45,11 @@ class TripService:
         self._statuses = statuses
         self._vehicles = vehicles
 
-    def create(self, payload: TripCreateRequest) -> TripResponse:
+    @staticmethod
+    def _token_hash(token: str) -> str:
+        return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+    def create(self, payload: TripCreateRequest) -> TripCreatedResponse:
         snapshot = self._searches.get(payload.search_id)
         if not isinstance(snapshot, SearchSnapshot):
             raise ValueError("searchId does not contain a trip-ready search")
@@ -68,7 +75,8 @@ class TripService:
             destination = (
                 request.destination if isinstance(request, SearchRouteRequest) else None
             )
-        return self._repository.create(
+        token = secrets.token_urlsafe(32)
+        trip = self._repository.create(
             search_id=payload.search_id,
             vehicle_id=request.vehicle_id,
             origin=request.origin,
@@ -79,13 +87,24 @@ class TripService:
             target_battery_pct=vehicle.default_target_soc * 100,
             route=route,
             option=option,
+            auth_token_hash=self._token_hash(token),
             created_at=datetime.now(UTC),
         )
 
-    def get(self, trip_id: str) -> TripResponse:
+        return TripCreatedResponse(**trip.model_dump(), trip_token=token)
+
+    def authorize(self, trip_id: str, token: str) -> None:
+        if not self._repository.token_matches(trip_id, self._token_hash(token)):
+            raise PermissionError("invalid trip token")
+
+    def get(self, trip_id: str, token: str) -> TripResponse:
+        self.authorize(trip_id, token)
         return self._repository.get(trip_id)
 
-    def position(self, trip_id: str, payload: TripPositionRequest) -> TripResponse:
+    def position(
+        self, trip_id: str, payload: TripPositionRequest, token: str
+    ) -> TripResponse:
+        self.authorize(trip_id, token)
         config = self._config.read()
         before = self._repository.snapshot(trip_id)
         station_available = True
@@ -161,7 +180,10 @@ class TripService:
             update={"position_accepted": True, "reroute_reasons": tuple(reasons)}
         )
 
-    def action(self, trip_id: str, payload: TripActionRequest) -> TripResponse:
+    def action(
+        self, trip_id: str, payload: TripActionRequest, token: str
+    ) -> TripResponse:
+        self.authorize(trip_id, token)
         if payload.action in {"accept", "decline"}:
             before = self._repository.snapshot(trip_id)
             if before["phase"] not in {"to_station", "to_destination"}:

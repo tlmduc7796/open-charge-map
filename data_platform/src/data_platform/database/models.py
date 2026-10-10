@@ -594,6 +594,10 @@ class Trip(Base):
             "ended_at IS NULL OR ended_at >= created_at",
             name="ck_trips_end_after_create",
         ),
+        CheckConstraint(
+            "auth_token_hash IS NULL OR char_length(auth_token_hash) = 64",
+            name="ck_trips_auth_token_hash_nonempty",
+        ),
         Index("ix_trips_vehicle_created", "vehicle_model_id", "created_at"),
         Index("ix_trips_station_created", "station_id", "created_at"),
     )
@@ -617,6 +621,7 @@ class Trip(Base):
     planned: Mapped[dict[str, Any]] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )
+    auth_token_hash: Mapped[str | None] = mapped_column(Text)
     last_reroute_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     declined_station_ids: Mapped[list[uuid.UUID]] = mapped_column(
         ARRAY(Uuid), nullable=False, server_default=text("'{}'::uuid[]")

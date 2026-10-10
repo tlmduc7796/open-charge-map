@@ -129,11 +129,12 @@ _STATUS_SELECT = """
         ssc.occupancy_ratio,
         ssc.queue_length,
         slm.avg_session_duration_min,
-        NOT EXISTS (
+        slm.data_origin::text AS metrics_origin,
+        EXISTS (
             SELECT 1 FROM ports p
             JOIN port_status ps ON ps.port_id = p.id
             WHERE p.station_id = s.id AND p.is_active
-              AND ps.data_origin::text <> 'synthetic'
+              AND ps.data_origin::text = 'synthetic'
         ) AS synthetic_status
     FROM stations s
     JOIN station_status_current ssc ON ssc.station_id = s.id
@@ -228,6 +229,11 @@ def _vehicle_from_row(row: Any) -> Vehicle:
 def _status_from_row(row: Any) -> StationStatus:
     unknown_ports = int(row["unknown_ports"])
     total_ports = int(row["total_ports"])
+    synthetic_fields: list[str] = []
+    if row["synthetic_status"]:
+        synthetic_fields.extend(("port_status", "occupancy_ratio"))
+    if row["metrics_origin"] == "synthetic":
+        synthetic_fields.extend(("queue_length", "avg_session_duration_min"))
     return StationStatus(
         station_id=row["code"],
         timestamp=row["reported_at"],
@@ -255,6 +261,7 @@ def _status_from_row(row: Any) -> StationStatus:
             if unknown_ports == total_ports
             else "synthetic" if row["synthetic_status"] else "database"
         ),
+        synthetic_fields=tuple(synthetic_fields),
     )
 
 

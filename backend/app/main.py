@@ -7,12 +7,14 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from time import perf_counter
+from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine
 
 from backend.app.api import router
+from backend.app.api_errors import install_api_error_handlers
 from backend.app.api_v1 import router as v1_router
 from backend.app.app_config_repository import AppConfigRepository
 from backend.app.arrival_rate_repository import DatabaseArrivalRateRepository
@@ -85,6 +87,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
+install_api_error_handlers(app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=list(settings.cors_origins),
@@ -216,6 +219,7 @@ app.include_router(v1_router)
 
 @app.middleware("http")
 async def integration_request_log(request, call_next):
+    request.state.request_id = request.headers.get("X-Request-ID") or uuid4().hex
     started_at = perf_counter()
     try:
         response = await call_next(request)
@@ -229,6 +233,7 @@ async def integration_request_log(request, call_next):
         response.status_code,
         (perf_counter() - started_at) * 1000,
     )
+    response.headers["X-Request-ID"] = request.state.request_id
     return response
 
 

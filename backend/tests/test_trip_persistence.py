@@ -59,9 +59,33 @@ def test_trip_search_gps_history_and_planned_arrival() -> None:
         )
         assert created.status_code == 201, created.text
         trip_id = created.json()["id"]
+        headers = {"Authorization": f"Bearer {created.json()['tripToken']}"}
         assert created.json()["phase"] == "to_station"
         assert created.json()["stationId"] == option["station"]["id"]
         assert DatabaseTripRepository(engine).get(trip_id).id == trip_id
+        missing_token = asyncio.run(_request("GET", f"/api/v1/trips/{trip_id}"))
+        wrong_token = asyncio.run(
+            _request(
+                "GET", f"/api/v1/trips/{trip_id}",
+                headers={"Authorization": "Bearer wrong-token"},
+            )
+        )
+        authorized = asyncio.run(
+            _request("GET", f"/api/v1/trips/{trip_id}", headers=headers)
+        )
+        assert missing_token.status_code == 401
+        assert missing_token.json()["error"]["code"] == "TRIP_TOKEN_REQUIRED"
+        assert wrong_token.status_code == 403
+        assert wrong_token.json()["error"]["code"] == "TRIP_TOKEN_INVALID"
+        assert authorized.status_code == 200
+        assert "tripToken" not in authorized.json()
+        with engine.connect() as connection:
+            stored_hash = connection.scalar(
+                text("SELECT auth_token_hash FROM trips WHERE id=CAST(:id AS uuid)"),
+                {"id": trip_id},
+            )
+        assert len(stored_hash) == 64
+        assert stored_hash != created.json()["tripToken"]
 
         recorded_at = datetime.now(UTC) + timedelta(seconds=1)
         ping = {
@@ -70,10 +94,10 @@ def test_trip_search_gps_history_and_planned_arrival() -> None:
             "batteryPct": 70,
         }
         arrived = asyncio.run(
-            _request("POST", f"/api/v1/trips/{trip_id}/position", json=ping)
+            _request("POST", f"/api/v1/trips/{trip_id}/position", json=ping, headers=headers)
         )
         duplicate = asyncio.run(
-            _request("POST", f"/api/v1/trips/{trip_id}/position", json=ping)
+            _request("POST", f"/api/v1/trips/{trip_id}/position", json=ping, headers=headers)
         )
         older = asyncio.run(
             _request(
@@ -81,6 +105,7 @@ def test_trip_search_gps_history_and_planned_arrival() -> None:
                 json={**ping, "recordedAt": (
                     recorded_at - timedelta(milliseconds=100)
                 ).isoformat()},
+                headers=headers,
             )
         )
         assert arrived.status_code == 200, arrived.text
@@ -150,17 +175,20 @@ def test_decline_accept_and_cancel_keep_planned_arrival_in_sync() -> None:
         )
         assert created.status_code == 201, created.text
         trip_id = created.json()["id"]
+        headers = {"Authorization": f"Bearer {created.json()['tripToken']}"}
         unchanged = asyncio.run(
             _request(
                 "PATCH", f"/api/v1/trips/{trip_id}",
                 json={"action": "accept", "stationId": stations[0]},
+                headers=headers,
             )
         )
         assert unchanged.status_code == 200, unchanged.text
         assert unchanged.json()["routeVersion"] == 0
         declined = asyncio.run(
             _request(
-                "PATCH", f"/api/v1/trips/{trip_id}", json={"action": "decline"}
+                "PATCH", f"/api/v1/trips/{trip_id}", json={"action": "decline"},
+                headers=headers,
             )
         )
         assert declined.status_code == 200, declined.text
@@ -171,6 +199,7 @@ def test_decline_accept_and_cancel_keep_planned_arrival_in_sync() -> None:
             _request(
                 "PATCH", f"/api/v1/trips/{trip_id}",
                 json={"action": "accept", "stationId": stations[2]},
+                headers=headers,
             )
         )
         assert accepted.status_code == 200, accepted.text
@@ -180,7 +209,8 @@ def test_decline_accept_and_cancel_keep_planned_arrival_in_sync() -> None:
 
         cancelled = asyncio.run(
             _request(
-                "PATCH", f"/api/v1/trips/{trip_id}", json={"action": "cancel"}
+                "PATCH", f"/api/v1/trips/{trip_id}", json={"action": "cancel"},
+                headers=headers,
             )
         )
         assert cancelled.status_code == 200, cancelled.text
@@ -245,12 +275,14 @@ def test_direct_trip_arrives_without_planned_station() -> None:
         )
         assert created.status_code == 201, created.text
         trip_id = created.json()["id"]
+        headers = {"Authorization": f"Bearer {created.json()['tripToken']}"}
         assert created.json()["phase"] == "to_destination"
         arrived = asyncio.run(
             _request(
                 "POST", f"/api/v1/trips/{trip_id}/position",
                 json={"location": destination,
                       "recordedAt": (datetime.now(UTC) + timedelta(seconds=1)).isoformat()},
+                headers=headers,
             )
         )
         assert arrived.status_code == 200, arrived.text
@@ -302,6 +334,7 @@ def test_off_route_replan_respects_cooldown(monkeypatch) -> None:
         )
         assert created.status_code == 201, created.text
         trip_id = created.json()["id"]
+        headers = {"Authorization": f"Bearer {created.json()['tripToken']}"}
         snapshot = app.state.search_result_store.get(search.json()["searchId"])
         old_option = snapshot.response.stations[0]
         rerouted_geometry = ((106.715, 10.700), *old_option.route.geometry[1:])
@@ -320,6 +353,7 @@ def test_off_route_replan_respects_cooldown(monkeypatch) -> None:
                 "POST", f"/api/v1/trips/{trip_id}/position",
                 json={"location": {"lat": 10.700, "lng": 106.715},
                       "recordedAt": t0.isoformat(), "batteryPct": 75},
+                headers=headers,
             )
         )
         assert first.status_code == 200, first.text
@@ -331,6 +365,7 @@ def test_off_route_replan_respects_cooldown(monkeypatch) -> None:
                 json={"location": {"lat": 10.695, "lng": 106.720},
                       "recordedAt": (t0 + timedelta(seconds=2)).isoformat(),
                       "batteryPct": 74},
+                headers=headers,
             )
         )
         assert second.status_code == 200, second.text
@@ -382,12 +417,14 @@ def test_route_trip_progresses_through_station_to_destination() -> None:
         )
         assert created.status_code == 201, created.text
         trip_id = created.json()["id"]
+        headers = {"Authorization": f"Bearer {created.json()['tripToken']}"}
         t0 = datetime.now(UTC) + timedelta(seconds=1)
         at_station = asyncio.run(
             _request(
                 "POST", f"/api/v1/trips/{trip_id}/position",
                 json={"location": option["station"]["location"],
                       "recordedAt": t0.isoformat(), "batteryPct": 12},
+                headers=headers,
             )
         )
         assert at_station.status_code == 200, at_station.text
@@ -396,12 +433,14 @@ def test_route_trip_progresses_through_station_to_destination() -> None:
             _request(
                 "PATCH", f"/api/v1/trips/{trip_id}",
                 json={"action": "correctBattery", "batteryPct": 80},
+                headers=headers,
             )
         )
         assert corrected.status_code == 200 and corrected.json()["batteryPct"] == 80
         departed = asyncio.run(
             _request(
-                "PATCH", f"/api/v1/trips/{trip_id}", json={"action": "depart"}
+                "PATCH", f"/api/v1/trips/{trip_id}", json={"action": "depart"},
+                headers=headers,
             )
         )
         assert departed.status_code == 200 and departed.json()["phase"] == "to_destination"
@@ -411,6 +450,7 @@ def test_route_trip_progresses_through_station_to_destination() -> None:
                 json={"location": destination,
                       "recordedAt": (t0 + timedelta(minutes=1)).isoformat(),
                       "batteryPct": 60},
+                headers=headers,
             )
         )
         assert arrived.status_code == 200, arrived.text
@@ -469,6 +509,7 @@ def test_replan_detects_battery_eta_and_station_failure(monkeypatch) -> None:
         )
         assert created.status_code == 201, created.text
         trip_id = created.json()["id"]
+        headers = {"Authorization": f"Bearer {created.json()['tripToken']}"}
         monkeypatch.setattr(
             service, "_reroute", lambda *args, **kwargs: repository.get(trip_id)
         )
@@ -479,6 +520,7 @@ def test_replan_detects_battery_eta_and_station_failure(monkeypatch) -> None:
                 "POST", f"/api/v1/trips/{trip_id}/position",
                 json={"location": origin, "recordedAt": t0.isoformat(),
                       "batteryPct": 0},
+                headers=headers,
             )
         )
         assert low_battery.status_code == 200, low_battery.text
@@ -489,6 +531,7 @@ def test_replan_detects_battery_eta_and_station_failure(monkeypatch) -> None:
                 json={"location": origin,
                       "recordedAt": (t0 + timedelta(minutes=10)).isoformat(),
                       "batteryPct": 80},
+                headers=headers,
             )
         )
         assert late.status_code == 200, late.text
@@ -503,6 +546,7 @@ def test_replan_detects_battery_eta_and_station_failure(monkeypatch) -> None:
                 json={"location": station_location,
                       "recordedAt": (t0 + timedelta(minutes=10, seconds=2)).isoformat(),
                       "batteryPct": 80},
+                headers=headers,
             )
         )
         assert offline.status_code == 200, offline.text

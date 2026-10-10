@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Literal
+from datetime import UTC, datetime
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 from pydantic.alias_generators import to_camel
 
 
@@ -17,13 +17,31 @@ class ApiModel(BaseModel):
         serialize_by_alias=True,
     )
 
+    @field_serializer("*", when_used="json")
+    def serialize_datetime_utc(self, value):
+        if isinstance(value, datetime):
+            return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
+        return value
+
 
 class ApiPoint(ApiModel):
     lat: float = Field(ge=-90, le=90)
     lng: float = Field(ge=-180, le=180)
 
 
+class ApiErrorBody(ApiModel):
+    code: str
+    message: str
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
+class ApiErrorResponse(ApiModel):
+    error: ApiErrorBody
+    request_id: str
+
+
 class ConfigResponse(ApiModel):
+    api_version: Literal["v1"] = "v1"
     reroute_deviation_m: int
     reroute_eta_delta_min: int
     near_station_radius_m: int
@@ -72,6 +90,7 @@ class StationSummary(ApiModel):
     total_ports: int = Field(ge=0)
     connectors: tuple[str, ...]
     updated_at: datetime
+    synthetic_fields: tuple[str, ...] = ()
 
 
 class ConnectorNow(ApiModel):
@@ -101,6 +120,7 @@ class StationAvailability(ApiModel):
     total_ports: int = Field(ge=0)
     prediction_source: str
     updated_at: datetime
+    synthetic_fields: tuple[str, ...] = ()
 
 
 class AvailabilityResponse(ApiModel):
@@ -108,6 +128,7 @@ class AvailabilityResponse(ApiModel):
     is_prediction: bool
     items: tuple[StationAvailability, ...]
     updated_at: datetime
+    generated_at: datetime
 
 
 class PortResponse(ApiModel):
@@ -117,6 +138,7 @@ class PortResponse(ApiModel):
     status: Literal["available", "charging", "out_of_service", "unknown"]
     minutes_to_finish: int | None = Field(default=None, ge=0)
     updated_at: datetime
+    data_source: Literal["observed", "inferred", "synthetic", "unknown"] = "unknown"
 
 
 class SearchStationsRequest(ApiModel):
@@ -155,6 +177,7 @@ class SearchStationOption(ApiModel):
     arrive_battery_pct: float
     prediction_source: str
     flags: tuple[str, ...]
+    synthetic_fields: tuple[str, ...] = ()
 
 
 class SearchExclusion(ApiModel):
@@ -170,6 +193,7 @@ class SearchStationsResponse(ApiModel):
     nearest_station: StationSummary | None = None
     missing_km: float | None = Field(default=None, ge=0)
     updated_at: datetime
+    generated_at: datetime
 
 
 class SearchRouteResponse(ApiModel):
@@ -182,6 +206,7 @@ class SearchRouteResponse(ApiModel):
     missing_km: float | None = Field(default=None, ge=0)
     nearest_station: StationSummary | None = None
     updated_at: datetime
+    generated_at: datetime
 
 
 class TripCreateRequest(ApiModel):
@@ -226,3 +251,7 @@ class TripResponse(ApiModel):
     updated_at: datetime
     position_accepted: bool | None = None
     reroute_reasons: tuple[str, ...] = ()
+
+
+class TripCreatedResponse(TripResponse):
+    trip_token: str = Field(min_length=32)

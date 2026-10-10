@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 from backend.app.api_v1_models import ApiPoint, SearchRouteRequest, SearchStationsRequest
 from backend.app.arrival_rate_repository import DatabaseArrivalRateRepository
@@ -47,7 +47,7 @@ def test_database_catalog_serves_active_records_and_synthetic_status() -> None:
         status_items = statuses.all()
         vehicle_items = vehicles.all()
 
-        assert station_items
+        assert len(station_items) == 102
         assert len({station.station_id for station in station_items}) == len(station_items)
         assert {status.station_id for status in status_items} == {
             station.station_id for station in station_items
@@ -55,6 +55,32 @@ def test_database_catalog_serves_active_records_and_synthetic_status() -> None:
         assert all(status.unknown_ports == 0 for status in status_items)
         assert all(status.data_source == "synthetic" for status in status_items)
         assert all(status.queue_length is not None for status in status_items)
+        assert all(
+            {
+                "port_status",
+                "occupancy_ratio",
+                "queue_length",
+                "avg_session_duration_min",
+            }
+            <= set(status.synthetic_fields)
+            for status in status_items
+        )
+        with engine.connect() as connection:
+            readiness = connection.execute(
+                text(
+                    "SELECT "
+                    "count(*) FILTER (WHERE opening_hours IS NULL "
+                    "OR opening_hours='null'::jsonb) AS missing_opening, "
+                    "count(*) FILTER (WHERE access_level='unknown') AS unknown_access, "
+                    "(SELECT count(*) FROM station_arrival_rates) AS arrival_rates "
+                    "FROM stations WHERE is_active"
+                )
+            ).mappings().one()
+        assert readiness == {
+            "missing_opening": 0,
+            "unknown_access": 0,
+            "arrival_rates": 102,
+        }
         assert len(vehicle_items) == 20
         assert all(vehicle.battery_capacity_kwh > 0 for vehicle in vehicle_items)
         assert all(vehicle.reserve_soc == 0.1 for vehicle in vehicle_items)

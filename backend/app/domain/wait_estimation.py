@@ -22,6 +22,10 @@ class ArrivalRateProvider(Protocol):
 
     def has_override(self, scenario_id: str, station_id: str) -> bool: ...
 
+    def baseline_source(
+        self, station_id: str, scenario_id: str | None = None
+    ) -> str: ...
+
 
 class WaitEstimator:
     def __init__(
@@ -34,6 +38,11 @@ class WaitEstimator:
             raise ValueError("scoring_wait_cap_min must be positive")
         self._assumptions = assumptions
         self._scoring_wait_cap_min = scoring_wait_cap_min
+
+    def baseline_source(
+        self, station_id: str, scenario_id: str | None = None
+    ) -> str:
+        return self._assumptions.baseline_source(station_id, scenario_id)
 
     def estimate_wait(
         self,

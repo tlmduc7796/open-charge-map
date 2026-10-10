@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hmac
 import json
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
@@ -116,6 +117,7 @@ class DatabaseTripRepository:
         target_battery_pct: float,
         route: SearchRouteSummary,
         option: SearchStationOption | None,
+        auth_token_hash: str,
         created_at: datetime,
     ) -> TripResponse:
         trip_id = uuid4()
@@ -170,7 +172,8 @@ class DatabaseTripRepository:
                     """
                     INSERT INTO trips
                     (id, mode, vehicle_model_id, origin, destination,
-                     start_battery_pct, station_id, route, phase, planned, created_at)
+                     start_battery_pct, station_id, route, phase, planned,
+                     auth_token_hash, created_at)
                     VALUES
                     (CAST(:trip_id AS uuid), :mode, :vehicle_uuid,
                      ST_SetSRID(ST_MakePoint(:origin_lng,:origin_lat),4326)::geography,
@@ -183,7 +186,7 @@ class DatabaseTripRepository:
                      END,
                      :battery_pct, :station_uuid,
                      ST_GeomFromGeoJSON(:geojson)::geography,
-                     :phase, CAST(:planned AS jsonb), :created_at)
+                     :phase, CAST(:planned AS jsonb), :auth_token_hash, :created_at)
                     """
                 ),
                 {
@@ -195,6 +198,7 @@ class DatabaseTripRepository:
                     "battery_pct": battery_pct, "station_uuid": station_uuid,
                     "geojson": geojson, "phase": phase,
                     "planned": json.dumps(planned), "created_at": created_at,
+                    "auth_token_hash": auth_token_hash,
                 },
             )
             if option is not None:
@@ -213,6 +217,19 @@ class DatabaseTripRepository:
                     {"stationId": option.station.id},
                 )
             return self._response(self._row(connection, str(trip_id)))
+
+    def token_matches(self, trip_id: str, auth_token_hash: str) -> bool:
+        with self._engine.connect() as connection:
+            stored = connection.scalar(
+                text(
+                    "SELECT auth_token_hash FROM trips "
+                    "WHERE id=CAST(:trip_id AS uuid)"
+                ),
+                {"trip_id": trip_id},
+            )
+        if stored is None:
+            return False
+        return hmac.compare_digest(stored, auth_token_hash)
 
     @staticmethod
     def _planned_arrival(

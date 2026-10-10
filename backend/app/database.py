@@ -5,7 +5,7 @@ from __future__ import annotations
 from sqlalchemy import Engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
-REQUIRED_DATABASE_REVISION = "0005_planned_arrivals"
+REQUIRED_DATABASE_REVISION = "0006_trip_tokens"
 
 
 def validate_database(engine: Engine) -> str:

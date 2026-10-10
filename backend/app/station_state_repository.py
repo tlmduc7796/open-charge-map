@@ -117,7 +117,8 @@ class DatabaseStationStateRepository:
                     SELECT p.id::text AS id, p.label, p.connector_code,
                            COALESCE(ps.status::text, 'unknown') AS status,
                            ps.estimated_finish_at,
-                           COALESCE(ps.reported_at, p.updated_at) AS updated_at
+                           COALESCE(ps.reported_at, p.updated_at) AS updated_at,
+                           COALESCE(ps.data_origin::text, 'unknown') AS data_source
                     FROM stations s
                     JOIN ports p ON p.station_id=s.id AND p.is_active
                     LEFT JOIN port_status ps ON ps.port_id=p.id

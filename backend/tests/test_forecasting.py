@@ -69,7 +69,7 @@ def test_model_adapter_gets_twelve_step_shape_and_clamps_output(
 ) -> None:
     predictor = FixedPredictor(1.2)
     result = OccupancyForecastService(predictor).forecast_occupancy(
-        deutsches_status, horizon_min=8
+        deutsches_status, horizon_min=8, occupancy_history=(0.75,) * 12
     )
 
     assert predictor.history_length == 12
@@ -78,12 +78,35 @@ def test_model_adapter_gets_twelve_step_shape_and_clamps_output(
     assert result.prediction_source == "model"
     assert "HORIZON_ALIGNED_TO_MODEL" in result.flags
     assert "PREDICTION_CLAMPED" in result.flags
-    assert "SYNTHETIC_HISTORY" in result.flags
+
+
+def test_loaded_model_requires_real_history(deutsches_status: StationStatus) -> None:
+    predictor = FixedPredictor(0.5)
+    result = OccupancyForecastService(predictor).forecast_occupancy(
+        deutsches_status, horizon_min=5
+    )
+
+    assert predictor.history_length == 0
+    assert result.prediction_source == "persistence"
+    assert "HISTORY_UNAVAILABLE" in result.flags
+
+
+def test_loaded_model_rejects_short_history_without_calling_model(
+    deutsches_status: StationStatus,
+) -> None:
+    predictor = FixedPredictor(0.5)
+    result = OccupancyForecastService(predictor).forecast_occupancy(
+        deutsches_status, horizon_min=5, occupancy_history=(0.75,) * 11
+    )
+
+    assert predictor.history_length == 0
+    assert result.prediction_source == "persistence"
+    assert "HISTORY_UNAVAILABLE" in result.flags
 
 
 def test_model_error_falls_back_to_persistence(deutsches_status: StationStatus) -> None:
     result = OccupancyForecastService(FailingPredictor()).forecast_occupancy(
-        deutsches_status, horizon_min=5
+        deutsches_status, horizon_min=5, occupancy_history=(0.75,) * 12
     )
 
     assert result.prediction_source == "persistence"

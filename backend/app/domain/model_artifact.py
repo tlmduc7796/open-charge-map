@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field, model_validator
 
@@ -15,20 +16,35 @@ class ModelMetric(DomainModel):
     rmse: float = Field(ge=0)
 
 
+class ArtifactFile(DomainModel):
+    path: str = Field(min_length=1)
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 class OccupancyModelMetadata(DomainModel):
+    model_name: str = Field(min_length=1)
     model_version: str = Field(min_length=1)
-    training_data_source: str = Field(min_length=1)
+    task: Literal["occupancy_forecasting"]
+    training_dataset: str = Field(min_length=1)
+    training_level: Literal["station", "zone"]
     feature_order: tuple[str, ...] = Field(min_length=1)
     lookback_steps: int = Field(default=12)
-    resolution_min: int = Field(default=5)
+    temporal_resolution_min: int = Field(default=5)
     supported_horizons_min: tuple[int, ...] = Field(min_length=1)
+    target: Literal["occupancy_ratio"]
     metrics_by_horizon: dict[int, ModelMetric]
+    persistence_metrics_by_horizon: dict[int, ModelMetric]
+    serving_decision: Literal["model", "persistence"]
+    random_seed: int
+    model_artifact: ArtifactFile
+    preprocessor_artifact: ArtifactFile
+    limitations: tuple[str, ...] = ()
 
     @model_validator(mode="after")
     def validate_contract(self) -> OccupancyModelMetadata:
         if self.lookback_steps != 12:
             raise ValueError("model metadata must declare a 12-step lookback")
-        if self.resolution_min != 5:
+        if self.temporal_resolution_min != 5:
             raise ValueError("model metadata must declare a 5-minute resolution")
         if len(self.feature_order) != len(set(self.feature_order)):
             raise ValueError("feature_order values must be unique")
@@ -37,6 +53,21 @@ class OccupancyModelMetadata(DomainModel):
             raise ValueError("unsupported forecast horizon")
         if set(self.metrics_by_horizon) != supported:
             raise ValueError("metrics must cover every supported horizon exactly")
+        if set(self.persistence_metrics_by_horizon) != supported:
+            raise ValueError("persistence metrics must cover every supported horizon exactly")
+        if self.serving_decision == "model":
+            insufficient = [
+                horizon
+                for horizon in supported
+                if self.persistence_metrics_by_horizon[horizon].mae <= 0
+                or self.metrics_by_horizon[horizon].mae
+                > self.persistence_metrics_by_horizon[horizon].mae * 0.95
+            ]
+            if insufficient:
+                raise ValueError(
+                    "serving model must improve persistence MAE by at least 5% "
+                    f"for every supported horizon: {sorted(insufficient)}"
+                )
         return self
 
 

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import replace
 from types import SimpleNamespace
 
+import httpx
 import pytest
 from fastapi import HTTPException
 
@@ -26,6 +28,12 @@ from backend.app.main import app
 from backend.app.search_store import SearchRateLimiter
 
 
+async def _request(method: str, path: str, **kwargs) -> httpx.Response:
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        return await client.request(method, path, **kwargs)
+
+
 @pytest.fixture
 def fake_request():
     return SimpleNamespace(app=app, client=SimpleNamespace(host="test-client"))
@@ -42,6 +50,10 @@ def test_config_and_station_contract_use_boundary_fields(fake_request) -> None:
     assert stations[0].location.model_dump(by_alias=True).keys() == {"lat", "lng"}
     assert stations[0].model_dump(by_alias=True)["availablePorts"] >= 0
     assert availability_result.is_prediction is False
+    assert availability_result.generated_at.tzinfo is not None
+    assert availability_result.model_dump(mode="json", by_alias=True)[
+        "generatedAt"
+    ].endswith("Z")
     assert ports
     assert detail.by_connector
     assert sum(group.now.total for group in detail.by_connector) == detail.total_ports
@@ -84,6 +96,26 @@ def test_openapi_exposes_versioned_contracts() -> None:
     assert "/api/v1/internal/port-status" in schema["paths"]
     assert "/api/v1/search/stations" in schema["paths"]
     assert "/api/v1/search/route" in schema["paths"]
+    trip_get = schema["paths"]["/api/v1/trips/{trip_id}"]["get"]
+    assert trip_get["security"] == [{"TripBearer": []}]
+    assert "ApiErrorResponse" in schema["components"]["schemas"]
+
+
+def test_v1_validation_error_uses_stable_envelope_and_request_id() -> None:
+    response = asyncio.run(
+        _request(
+            "POST",
+            "/api/v1/search/stations",
+            json={"origin": {"lat": 999, "lng": 106.7}},
+            headers={"X-Request-ID": "req-contract-test"},
+        )
+    )
+
+    assert response.status_code == 422
+    assert response.headers["X-Request-ID"] == "req-contract-test"
+    assert response.json()["requestId"] == "req-contract-test"
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert response.json()["error"]["details"]["issues"]
 
 
 def test_search_route_reports_no_route(fake_request, monkeypatch) -> None:

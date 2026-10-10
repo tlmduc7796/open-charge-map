@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import Engine, bindparam, text
+from sqlalchemy import Engine, text
 
 STATUSES = ("available", "charging", "out_of_service")
 
@@ -37,25 +37,54 @@ def seed_synthetic_port_statuses(engine: Engine, status_path: Path) -> dict[str,
     source_ids = tuple(item["station_id"] for item in templates)
     if not source_ids or len(source_ids) != len(set(source_ids)):
         raise ValueError("station status templates must have unique station IDs")
+    templates_by_station = {item["station_id"]: item for item in templates}
 
     with engine.begin() as connection:
+        enriched_stations = connection.execute(
+            text(
+                """
+                UPDATE stations
+                SET opening_hours=CASE WHEN opening_hours IS NULL
+                        OR opening_hours='null'::jsonb THEN '"24/7"'::jsonb
+                        ELSE opening_hours END,
+                    access_level=CASE WHEN access_level='unknown' THEN 'public'::access_level
+                        ELSE access_level END,
+                    provenance=provenance
+                        || CASE WHEN opening_hours IS NULL OR opening_hours='null'::jsonb
+                            THEN jsonb_build_object('opening_hours', jsonb_build_object(
+                                'origin','synthetic','provider','deterministic_demo_fill_v1',
+                                'note','Demo assumption: always open')) ELSE '{}'::jsonb END
+                        || CASE WHEN access_level='unknown'
+                            THEN jsonb_build_object('access_level', jsonb_build_object(
+                                'origin','synthetic','provider','deterministic_demo_fill_v1',
+                                'note','Demo assumption: public access')) ELSE '{}'::jsonb END
+                WHERE is_active AND (
+                    opening_hours IS NULL OR opening_hours='null'::jsonb
+                    OR access_level='unknown'
+                )
+                RETURNING id
+                """
+            )
+        ).scalars().all()
         statement = text(
             "SELECT s.id AS station_id, s.code, p.id AS port_id, p.label, "
             "ps.port_id IS NOT NULL AS has_status "
             "FROM stations s JOIN ports p ON p.station_id=s.id "
             "LEFT JOIN port_status ps ON ps.port_id=p.id "
-            "WHERE s.code NOT IN :source_ids AND s.is_active AND p.is_active "
-            "AND p.data_origin='synthetic' ORDER BY s.code, p.label"
-        ).bindparams(bindparam("source_ids", expanding=True))
+            "WHERE s.is_active AND p.is_active "
+            "ORDER BY s.code, p.label"
+        )
         by_station: dict[str, list[Any]] = defaultdict(list)
-        for row in connection.execute(statement, {"source_ids": source_ids}).mappings():
+        for row in connection.execute(statement).mappings():
             by_station[row["code"]].append(row)
 
         inserted_statuses = 0
         inserted_metrics = 0
         for station_code, ports in by_station.items():
             digest = hashlib.sha256(station_code.encode("utf-8")).digest()
-            template = templates[int.from_bytes(digest[:4], "big") % len(templates)]
+            template = templates_by_station.get(station_code) or templates[
+                int.from_bytes(digest[:4], "big") % len(templates)
+            ]
             statuses = _scaled_statuses(template, len(ports))
             reported_at = datetime.fromisoformat(template["timestamp"])
             for port, status in zip(ports, statuses):
@@ -102,4 +131,5 @@ def seed_synthetic_port_statuses(engine: Engine, status_path: Path) -> dict[str,
         "stations": len(by_station),
         "port_status": inserted_statuses,
         "station_live_metrics": inserted_metrics,
+        "station_metadata": len(enriched_stations),
     }

@@ -7,9 +7,11 @@ from datetime import UTC, datetime, timedelta
 from math import ceil
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from backend.app.api_v1_models import (
+    ApiErrorResponse,
     ApiPoint,
     AvailabilityResponse,
     ConfigResponse,
@@ -26,12 +28,20 @@ from backend.app.api_v1_models import (
     StationDetail,
     StationSummary,
     TripActionRequest,
+    TripCreatedResponse,
     TripCreateRequest,
     TripPositionRequest,
     TripResponse,
 )
 
-router = APIRouter(prefix="/api/v1")
+router = APIRouter(
+    prefix="/api/v1",
+    responses={
+        status: {"model": ApiErrorResponse}
+        for status in (400, 401, 403, 404, 409, 422, 429, 503)
+    },
+)
+trip_bearer = HTTPBearer(auto_error=False, scheme_name="TripBearer")
 
 
 def _bbox(value: str | None) -> tuple[float, float, float, float] | None:
@@ -74,6 +84,10 @@ def _summary(request: Request, station, *, green_min: int) -> StationSummary:
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="station status not found") from exc
     lon, lat = station.geometry.coordinates
+    synthetic_fields = set(station.properties.synthetic_fields)
+    if any(connector.source.endswith(":synthetic") for connector in station.properties.connectors):
+        synthetic_fields.add("connectors")
+    synthetic_fields.update(status.synthetic_fields)
     return StationSummary(
         id=station.station_id,
         name=station.properties.name,
@@ -89,6 +103,7 @@ def _summary(request: Request, station, *, green_min: int) -> StationSummary:
         total_ports=status.total_ports,
         connectors=tuple(connector.type for connector in station.properties.connectors),
         updated_at=status.timestamp,
+        synthetic_fields=tuple(sorted(synthetic_fields)),
     )
 
 
@@ -113,7 +128,7 @@ def _limit_search(request: Request) -> None:
 def config(request: Request) -> ConfigResponse:
     values = request.app.state.app_config_repository.read().__dict__
     return ConfigResponse.model_validate(
-        {key: values[key] for key in ConfigResponse.model_fields}
+        {key: values[key] for key in ConfigResponse.model_fields if key in values}
     )
 
 
@@ -174,6 +189,7 @@ def availability(
                 total_ports=status.total_ports,
                 prediction_source=source,
                 updated_at=status.timestamp,
+                synthetic_fields=status.synthetic_fields,
             )
         )
     updated_at = max((item.updated_at for item in items), default=datetime.now(UTC))
@@ -182,6 +198,7 @@ def availability(
         is_prediction=offset > 0,
         items=tuple(items),
         updated_at=updated_at,
+        generated_at=datetime.now(UTC),
     )
 
 
@@ -260,6 +277,9 @@ def station_ports(station_id: str, request: Request) -> tuple[PortResponse, ...]
                         connector=connector.type,
                         status=port_status,
                         updated_at=status.timestamp,
+                        data_source=(
+                            "synthetic" if status.data_source == "synthetic" else "unknown"
+                        ),
                     )
                 )
         return tuple(items)
@@ -280,6 +300,7 @@ def station_ports(station_id: str, request: Request) -> tuple[PortResponse, ...]
                 else None
             ),
             updated_at=row["updated_at"],
+            data_source=row["data_source"],
         )
         for row in rows
     )
@@ -391,8 +412,22 @@ def _trip_service(request: Request):
     return service
 
 
-@router.post("/trips", response_model=TripResponse, status_code=201, tags=["v1-trips"])
-def create_trip(payload: TripCreateRequest, request: Request) -> TripResponse:
+def _trip_token(
+    credentials: HTTPAuthorizationCredentials | None = Depends(trip_bearer),
+) -> str:
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise HTTPException(
+            status_code=401,
+            detail={"code": "TRIP_TOKEN_REQUIRED", "message": "trip bearer token required"},
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return credentials.credentials
+
+
+@router.post(
+    "/trips", response_model=TripCreatedResponse, status_code=201, tags=["v1-trips"]
+)
+def create_trip(payload: TripCreateRequest, request: Request) -> TripCreatedResponse:
     try:
         return _trip_service(request).create(payload)
     except KeyError as exc:
@@ -407,36 +442,59 @@ def create_trip(payload: TripCreateRequest, request: Request) -> TripResponse:
 
 
 @router.get("/trips/{trip_id}", response_model=TripResponse, tags=["v1-trips"])
-def get_trip(trip_id: UUID, request: Request) -> TripResponse:
+def get_trip(
+    trip_id: UUID, request: Request, token: str = Depends(_trip_token)
+) -> TripResponse:
     try:
-        return _trip_service(request).get(str(trip_id))
+        return _trip_service(request).get(str(trip_id), token)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="trip not found") from exc
+    except PermissionError as exc:
+        raise HTTPException(
+            status_code=403,
+            detail={"code": "TRIP_TOKEN_INVALID", "message": str(exc)},
+        ) from exc
 
 
 @router.post("/trips/{trip_id}/position", response_model=TripResponse, tags=["v1-trips"])
 def trip_position(
-    trip_id: UUID, payload: TripPositionRequest, request: Request
+    trip_id: UUID,
+    payload: TripPositionRequest,
+    request: Request,
+    token: str = Depends(_trip_token),
 ) -> TripResponse:
     try:
-        return _trip_service(request).position(str(trip_id), payload)
+        return _trip_service(request).position(str(trip_id), payload, token)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="trip not found") from exc
     except (ValueError, RuntimeError) as exc:
         raise HTTPException(
             status_code=409, detail={"code": "TRIP_CONFLICT", "message": str(exc)}
         ) from exc
+    except PermissionError as exc:
+        raise HTTPException(
+            status_code=403,
+            detail={"code": "TRIP_TOKEN_INVALID", "message": str(exc)},
+        ) from exc
 
 
 @router.patch("/trips/{trip_id}", response_model=TripResponse, tags=["v1-trips"])
 def update_trip(
-    trip_id: UUID, payload: TripActionRequest, request: Request
+    trip_id: UUID,
+    payload: TripActionRequest,
+    request: Request,
+    token: str = Depends(_trip_token),
 ) -> TripResponse:
     try:
-        return _trip_service(request).action(str(trip_id), payload)
+        return _trip_service(request).action(str(trip_id), payload, token)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="trip not found") from exc
     except (ValueError, RuntimeError) as exc:
         raise HTTPException(
             status_code=409, detail={"code": "TRIP_CONFLICT", "message": str(exc)}
+        ) from exc
+    except PermissionError as exc:
+        raise HTTPException(
+            status_code=403,
+            detail={"code": "TRIP_TOKEN_INVALID", "message": str(exc)},
         ) from exc

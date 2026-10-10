@@ -65,10 +65,22 @@ class OccupancyForecastService:
                 flags=tuple([*flags, "STATION_OFFLINE", "PERSISTENCE_FALLBACK"]),
             )
 
-        history = self._prepare_history(status, occupancy_history)
-        if self._predictor is not None and used_horizon in self._supported_model_horizons:
-            if occupancy_history is None:
-                flags.append("SYNTHETIC_HISTORY")
+        model_history_unavailable = (
+            self._predictor is not None
+            and used_horizon in self._supported_model_horizons
+            and (
+                occupancy_history is None
+                or len(occupancy_history) != self._lookback_steps
+            )
+        )
+        history = self._prepare_history(
+            status, None if model_history_unavailable else occupancy_history
+        )
+        if self._predictor is not None and used_horizon not in self._supported_model_horizons:
+            flags.append("MODEL_HORIZON_UNSUPPORTED")
+        elif model_history_unavailable:
+            flags.append("HISTORY_UNAVAILABLE")
+        elif self._predictor is not None:
             try:
                 raw_prediction = float(self._predictor.predict(history, used_horizon))
                 if not math.isfinite(raw_prediction):
@@ -86,9 +98,6 @@ class OccupancyForecastService:
                 )
             except Exception:  # Model adapter errors must degrade to the declared fallback.
                 flags.append("MODEL_INFERENCE_FAILED")
-        elif self._predictor is not None:
-            flags.append("MODEL_HORIZON_UNSUPPORTED")
-
         flags.append("PERSISTENCE_FALLBACK")
         return self._result(
             status,

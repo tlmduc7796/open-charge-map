@@ -29,7 +29,7 @@ EXPECTED_COUNTS = {
     "ports": 826,
     "predictions": 96,
     "planned_arrivals": 4,
-    "station_arrival_rates": 16,
+    "station_arrival_rates": 102,
     "station_amenities": 714,
     "station_external_refs": 14,
     "station_live_metrics": 102,

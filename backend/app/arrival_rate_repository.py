@@ -15,16 +15,20 @@ class DatabaseArrivalRateRepository:
     ) -> None:
         self._scenario_assumptions = scenario_assumptions
         with engine.connect() as connection:
+            rows = connection.execute(
+                text(
+                    "SELECT s.code AS station_code, "
+                    "r.baseline_arrival_rate_per_hour, r.data_source "
+                    "FROM station_arrival_rates r "
+                    "JOIN stations s ON s.id=r.station_id"
+                )
+            ).all()
             self._station_rates = {
                 row.station_code: float(row.baseline_arrival_rate_per_hour)
-                for row in connection.execute(
-                    text(
-                        "SELECT s.code AS station_code, "
-                        "r.baseline_arrival_rate_per_hour "
-                        "FROM station_arrival_rates r "
-                        "JOIN stations s ON s.id=r.station_id"
-                    )
-                )
+                for row in rows
+            }
+            self._station_rate_sources = {
+                row.station_code: str(row.data_source) for row in rows
             }
             window_min = connection.scalar(
                 text(
@@ -49,3 +53,8 @@ class DatabaseArrivalRateRepository:
 
     def has_override(self, scenario_id: str, station_id: str) -> bool:
         return self._scenario_assumptions.has_override(scenario_id, station_id)
+
+    def baseline_source(self, station_id: str, scenario_id: str | None = None) -> str:
+        if scenario_id is not None and self.has_override(scenario_id, station_id):
+            return self._scenario_assumptions.baseline_source(station_id, scenario_id)
+        return self._station_rate_sources[station_id]
