@@ -1,0 +1,86 @@
+{
+  "dataset": "ml\\data\\derived\\acn\\ctgan_behavior_2018_2021.parquet",
+  "model": "ml\\artifacts\\ctgan\\acn_caltech_behavior_2018_2021.pkl",
+  "held_out_records": 1394,
+  "categorical": {
+    "arrival_hour": {
+      "total_variation_distance": 0.2109
+    },
+    "arrival_weekday": {
+      "total_variation_distance": 0.08106
+    }
+  },
+  "continuous": {
+    "stay_min": {
+      "source_p10_p50_p90": [
+        57.58,
+        207.55,
+        535.0233
+      ],
+      "synthetic_p10_p50_p90": [
+        16.7635,
+        182.1048,
+        634.8927
+      ],
+      "median_relative_error": 0.1226,
+      "synthetic_negative_rate": 0.0
+    },
+    "charge_min": {
+      "source_p10_p50_p90": [
+        37.605,
+        89.85,
+        245.8033
+      ],
+      "synthetic_p10_p50_p90": [
+        48.848,
+        161.0269,
+        525.8029
+      ],
+      "median_relative_error": 0.79217,
+      "synthetic_negative_rate": 0.01435
+    },
+    "energy_kwh": {
+      "source_p10_p50_p90": [
+        1.9299,
+        5.9945,
+        16.1023
+      ],
+      "synthetic_p10_p50_p90": [
+        0.516,
+        4.6986,
+        19.7276
+      ],
+      "median_relative_error": 0.21618,
+      "synthetic_negative_rate": 0.0
+    },
+    "requested_energy_kwh": {
+      "source_p10_p50_p90": [
+        6.25,
+        17.05,
+        42.9
+      ],
+      "synthetic_p10_p50_p90": [
+        6.7097,
+        18.1645,
+        46.4623
+      ],
+      "median_relative_error": 0.06537,
+      "synthetic_negative_rate": 0.0
+    },
+    "minutes_available": {
+      "source_p10_p50_p90": [
+        120.0,
+        360.0,
+        534.0
+      ],
+      "synthetic_p10_p50_p90": [
+        70.0,
+        245.0,
+        525.0
+      ],
+      "median_relative_error": 0.31944,
+      "synthetic_negative_rate": 0.0
+    }
+  },
+  "interpretation": "source-domain fidelity only; not evidence of Vietnamese behavior"
+}

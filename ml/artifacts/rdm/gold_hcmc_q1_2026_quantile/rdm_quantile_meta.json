@@ -1,0 +1,35 @@
+{
+  "format_version": "rdm-quantile-1",
+  "created_at": "2026-10-05T04:44:23.377486+00:00",
+  "model_type": "xgboost_quantile_rdm",
+  "status": "experimental_not_serving_ready",
+  "dataset": "ml\\data\\gold\\hcmc_ctgan_q1_2026\\rdm_observations.parquet",
+  "target": "remaining_port_release_min",
+  "target_semantics": "disconnect_at - observed_at (physical port release)",
+  "feature_columns": [
+    "session_elapsed_min",
+    "energy_delivered_kwh",
+    "current_power_kw",
+    "station_id",
+    "port_id",
+    "connector_type"
+  ],
+  "quantiles": [
+    0.1,
+    0.5,
+    0.9
+  ],
+  "split_policy": "all observations of a session assigned by disconnect_at",
+  "validation_metrics": {
+    "mae_p50": 186.421273,
+    "median_absolute_error_p50": 137.009958,
+    "rmse_p50": 262.78588,
+    "coverage_p10": 0.111325,
+    "coverage_p50": 0.506279,
+    "coverage_p90": 0.876983,
+    "quantile_crossing_rate": 0.004273
+  },
+  "test_accessed": false,
+  "test_status": "not_accessed",
+  "serving_rule": "provider-reported duration wins; promote only after calibration/replay review"
+}

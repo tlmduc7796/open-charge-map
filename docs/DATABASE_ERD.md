@@ -202,19 +202,19 @@ có khóa ngoại.
 
 | Nhóm | Bảng | Số dòng |
 |---|---|---:|
-| Catalog trạm | `stations` | 102 |
+| Catalog trạm | `stations` | 16 |
 | Catalog trạm | `station_external_refs` | 14 |
 | Catalog trạm | `connector_types` | 4 |
-| Catalog trạm | `ports` | 826 |
-| Runtime | `port_status` | 826 |
-| Runtime | `station_live_metrics` | 102 |
-| Lịch sử | `port_status_history` | 826 |
+| Catalog trạm | `ports` | 211 |
+| Runtime | `port_status` | 211 |
+| Runtime | `station_live_metrics` | 16 |
+| Lịch sử | `port_status_history` | 211 |
 | Lịch sử | `station_occupancy_5m` | 4.624 |
 | Dự báo | `predictions` | 96 |
-| Ngữ cảnh | `station_amenities` | 714 |
+| Ngữ cảnh | `station_amenities` | 112 |
 | Xe | `vehicle_models` | 21 |
 | Xe | `vehicle_connectors` | 41 |
-| Queue | `station_arrival_rates` | 102 |
+| Queue | `station_arrival_rates` | 16 |
 | Queue | `planned_arrivals` | 4 |
 | Trip | `trips` | 0 |
 | Trip | `trip_positions` | 0 |
@@ -228,17 +228,18 @@ PostGIS/Tiger, không chỉ 18 bảng nghiệp vụ phía trên.
 
 | Hạng mục | Coverage hiện tại | Nguồn synthetic |
 |---|---:|---:|
-| Trạm active | 102/102 (100%) | Tùy từng field trong `provenance` |
-| Trạm có trạng thái cho toàn bộ port | 102/102 (100%) | 826/826 port status |
-| Trạm có queue/session live metrics | 102/102 (100%) | 102/102 |
-| Trạm có baseline arrival rate | 102/102 (100%) | 102/102 |
-| Trạm có opening hours | 102/102 (100%) | 95/102 được bổ sung |
-| Trạm có access xác định | 102/102 (100%) | 79/102 được bổ sung |
-| Trạm có occupancy history | 16/102 (15,7%) | 4.624/4.624 dòng |
-| Trạm có prediction | 16/102 (15,7%) | persistence fallback |
+| Trạm active | 16/16 (100%) | Tùy từng field trong `provenance` |
+| Trạm có trạng thái cho toàn bộ port | 16/16 (100%) | 211/211 port status |
+| Trạm có queue/session live metrics | 16/16 (100%) | 16/16 |
+| Trạm có baseline arrival rate | 16/16 (100%) | 16/16 |
+| Trạm có opening hours | 16/16 (100%) | 9/16 được bổ sung |
+| Trạm có access xác định | 16/16 (100%) | 0/16 được bổ sung |
+| Trạm có occupancy history | 16/16 (100%) | 4.624/4.624 dòng |
+| Trạm có prediction | 16/16 (100%) | persistence fallback |
 
-Arrival rate gồm **16** giá trị từ `queue_assumptions_fixture` và **86** giá trị được
-tạo deterministic bởi `deterministic_demo_fill_v1`. Seed không ghi đè dữ liệu observed.
+Catalog chỉ gồm 16 trạm master; 86 trạm demo bổ sung (mã `CAND_*`, cổng/trạng thái
+synthetic) đã bị loại khỏi snapshot. Cả 16 giá trị arrival rate đều lấy từ
+`queue_assumptions_fixture`. Seed không ghi đè dữ liệu observed.
 
 ## Phân bố chính
 
@@ -246,28 +247,27 @@ tạo deterministic bởi `deterministic_demo_fill_v1`. Seed không ghi đè d�
 
 | Access | Số trạm | Tỷ lệ |
 |---|---:|---:|
-| Public | 98 | 96,1% |
-| Customers | 3 | 2,9% |
-| Private | 1 | 1,0% |
+| Public | 15 | 93,8% |
+| Private | 1 | 6,3% |
 
-Phạm vi địa lý của 102 trạm: longitude `106.44254–107.05496`, latitude
-`10.53288–11.02709`.
+Phạm vi địa lý của 16 trạm: longitude `106.65922–106.72233`, latitude
+`10.70113–10.81201`.
 
 ### Cổng sạc
 
 | Connector | Số port | Tỷ lệ | Công suất min–max | Trung bình |
 |---|---:|---:|---:|---:|
-| CCS2 | 712 | 86,2% | 20–250 kW | 85,0 kW |
-| TYPE2 | 114 | 13,8% | 3,5–22 kW | 14,3 kW |
+| CCS2 | 183 | 86,7% | 20–250 kW | 71,1 kW |
+| TYPE2 | 28 | 13,3% | 3,5–22 kW | 9,3 kW |
 
 | Trạng thái hiện tại | Số port | Tỷ lệ |
 |---|---:|---:|
-| Available | 758 | 91,8% |
-| Charging | 55 | 6,7% |
-| Out of service | 13 | 1,6% |
+| Available | 206 | 97,6% |
+| Charging | 4 | 1,9% |
+| Out of service | 1 | 0,5% |
 
 Timestamp trạng thái nằm trong khoảng `2026-09-25T11:00:00Z` đến
-`2026-09-26T17:00:00Z`. Toàn bộ 826 trạng thái hiện tại mang nhãn synthetic.
+`2026-09-26T17:00:00Z`. Toàn bộ 211 trạng thái hiện tại mang nhãn synthetic.
 
 ### Dự báo và lịch sử
 
@@ -280,18 +280,18 @@ Timestamp trạng thái nằm trong khoảng `2026-09-25T11:00:00Z` đến
 ### Xe, tiện ích và planned arrival
 
 - 21 vehicle models, trong đó 20 active; 41 quan hệ vehicle–connector.
-- Tiện ích: parking 102 trạm, food 40, wifi 35, beverage 34, rest area 29,
-  retail 29 và restroom 26.
+- Tiện ích: parking 16 trạm, wifi 6, beverage 5, rest area 5, food 3,
+  restroom 3 và retail 3.
 - External refs: 8 EVCS và 6 Goong Places.
 - Planned arrivals: 2 planned, 1 cancelled và 1 expired.
 - Chưa có trip, GPS position hoặc trip event được lưu trong database hiện tại.
 
 ## Điểm cần lưu ý
 
-1. Catalog/runtime/ranking đã có input đầy đủ cho 102 trạm, nhưng phần lớn input được
-   bổ sung synthetic cho demo và phải tiếp tục hiển thị `syntheticFields`.
-2. Occupancy history và prediction mới phủ 16/102 trạm. Đây là khoảng trống dữ liệu cho
-   M4; 86 trạm còn lại chỉ có current status và persistence runtime.
+1. Catalog/runtime/ranking có input đầy đủ cho 16 trạm master, nhưng trạng thái cổng,
+   queue và amenity vẫn là synthetic và phải tiếp tục hiển thị `syntheticFields`.
+2. Occupancy history và prediction phủ cả 16 trạm nhưng toàn bộ là synthetic/persistence;
+   M4 vẫn cần artifact model thật.
 3. Timestamp port status là dữ liệu fixture cũ. Job stale cố ý không chuyển dữ liệu
    synthetic sang unknown; không nên diễn giải đây là telemetry thời gian thực.
 4. Các bảng trip đang trống là đúng với snapshot demo; migration 0006 đã sẵn sàng lưu

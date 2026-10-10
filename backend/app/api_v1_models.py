@@ -164,6 +164,13 @@ class SearchRouteSummary(ApiModel):
     geometry: tuple[tuple[float, float], ...]
 
 
+class WaitDistributionResponse(ApiModel):
+    p_wait: float = Field(ge=0, le=1)
+    expected_wait_min: float = Field(ge=0)
+    p90_wait_min: float = Field(ge=0)
+    source: Literal["model", "default"]
+
+
 class SearchStationOption(ApiModel):
     rank: int = Field(gt=0)
     station: StationSummary
@@ -171,6 +178,7 @@ class SearchStationOption(ApiModel):
     distance_km: float = Field(ge=0)
     travel_min: float = Field(ge=0)
     wait_min: float = Field(ge=0)
+    wait_distribution: WaitDistributionResponse | None = None
     charge_min: float = Field(ge=0)
     to_dest_min: float | None = Field(default=None, ge=0)
     total_min: float = Field(ge=0)

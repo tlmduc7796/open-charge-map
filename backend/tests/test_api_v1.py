@@ -69,7 +69,7 @@ def test_station_bbox_and_future_offset_validation(fake_request) -> None:
     assert invalid_bbox.value.status_code == 400
     assert invalid_bbox.value.detail["code"] == "VALIDATION_ERROR"
     assert future.is_prediction is True
-    assert all(item.prediction_source == "persistence" for item in future.items)
+    assert all(item.prediction_source == "default" for item in future.items)
     assert invalid_offset.value.status_code == 400
 
 

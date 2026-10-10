@@ -47,7 +47,7 @@ def test_database_catalog_serves_active_records_and_synthetic_status() -> None:
         status_items = statuses.all()
         vehicle_items = vehicles.all()
 
-        assert len(station_items) == 102
+        assert len(station_items) == 16
         assert len({station.station_id for station in station_items}) == len(station_items)
         assert {status.station_id for status in status_items} == {
             station.station_id for station in station_items
@@ -79,7 +79,7 @@ def test_database_catalog_serves_active_records_and_synthetic_status() -> None:
         assert readiness == {
             "missing_opening": 0,
             "unknown_access": 0,
-            "arrival_rates": 102,
+            "arrival_rates": 16,
         }
         assert len(vehicle_items) == 20
         assert all(vehicle.battery_capacity_kwh > 0 for vehicle in vehicle_items)
@@ -101,7 +101,7 @@ def test_database_catalog_serves_active_records_and_synthetic_status() -> None:
             5_000,
         )
         fixture_data = load_domain_data(load_settings().data_dir)
-        assert len(candidates) < len(station_items)
+        assert len(candidates) <= len(station_items)
         assert {station.station_id for station in fixture_data.stations.all()} <= {
             station.station_id for station in candidates
         }

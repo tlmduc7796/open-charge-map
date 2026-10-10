@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 from typing import Protocol
 
+from backend.app.domain.ml_gateway import MlGateway
 from backend.app.domain.models import OccupancyForecastResult, StationStatus
 
 
@@ -21,18 +22,27 @@ class OccupancyForecastService:
         *,
         lookback_steps: int = 12,
         supported_model_horizons: tuple[int, ...] = (5, 10, 15),
+        ml_gateway: MlGateway | None = None,
     ) -> None:
         if lookback_steps <= 0 or not supported_model_horizons:
             raise ValueError("forecast lookback and horizon must be positive")
         if any(horizon not in {5, 10, 15, 20, 25, 30} for horizon in supported_model_horizons):
             raise ValueError("model horizons must use supported five-minute offsets")
         self._predictor = predictor
+        self._gateway = ml_gateway
         self._lookback_steps = lookback_steps
         self._supported_model_horizons = tuple(sorted(set(supported_model_horizons)))
 
     @property
     def model_loaded(self) -> bool:
         return self._predictor is not None
+
+    @property
+    def prediction_source(self) -> str:
+        """Source reported for forecasts when the station is online and has no history."""
+        if self._predictor is not None:
+            return "model"
+        return "default" if self._gateway is not None else "persistence"
 
     def forecast_occupancy(
         self,
@@ -63,6 +73,23 @@ class OccupancyForecastService:
                 operational_ports=0,
                 prediction_source="persistence",
                 flags=tuple([*flags, "STATION_OFFLINE", "PERSISTENCE_FALLBACK"]),
+            )
+
+        if self._predictor is None and self._gateway is not None:
+            raw_ratio = float(
+                self._gateway.predict_occupancy_ratio(
+                    status.station_id, occupancy_history, used_horizon
+                )
+            )
+            if not math.isfinite(raw_ratio):
+                raise ValueError("default occupancy ratio must be finite")
+            return self._result(
+                status,
+                horizon_min,
+                used_horizon,
+                min(1.0, max(0.0, raw_ratio)),
+                "default",
+                [*flags, "ML_DEFAULT_VALUE"],
             )
 
         model_history_unavailable = (
@@ -132,8 +159,8 @@ class OccupancyForecastService:
             raise ValueError("occupancy history values must be between 0 and 1")
         return occupancy_history
 
-    @staticmethod
     def _result(
+        self,
         status: StationStatus,
         requested_horizon: int,
         used_horizon: int,
@@ -141,12 +168,24 @@ class OccupancyForecastService:
         source: str,
         flags: list[str],
     ) -> OccupancyForecastResult:
+        occupied = ratio * status.operational_ports
+        if self._gateway is not None:
+            occupied = min(
+                float(status.operational_ports),
+                max(
+                    0.0,
+                    self._gateway.adjust_for_herding(
+                        status.station_id, occupied, horizon_min=used_horizon
+                    ),
+                ),
+            )
+            ratio = occupied / status.operational_ports
         return OccupancyForecastResult(
             station_id=status.station_id,
             requested_horizon_min=requested_horizon,
             used_horizon_min=used_horizon,
             predicted_occupancy_ratio=ratio,
-            predicted_occupied_ports=ratio * status.operational_ports,
+            predicted_occupied_ports=occupied,
             operational_ports=status.operational_ports,
             prediction_source=source,
             flags=tuple(flags),

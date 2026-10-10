@@ -79,7 +79,7 @@ Các thành phần sau **không nằm trong data contract MVP**:
   nhưng không thể tạo thêm chuyển trạng thái nghiệp vụ.
 - `syntheticFields` liệt kê chính xác các trường dùng dữ liệu demo được tạo bổ sung.
   Dữ liệu synthetic không ghi đè trường observed. Demo 3B bổ sung deterministically
-  cho trường thiếu của 102 trạm; trạm vẫn có thể bị loại vì không tới được, không tương
+  cho trường thiếu của 16 trạm master; trạm vẫn có thể bị loại vì không tới được, không tương
   thích, private/closed đã xác minh hoặc provider không trả tuyến.
 
 ### Ánh xạ field API → nguồn dữ liệu/tính toán

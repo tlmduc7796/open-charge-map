@@ -255,7 +255,7 @@ export default function App() {
       {error && <div className="error-banner" role="alert"><span>{error}</span><button onClick={() => setError(null)}>Đóng</button></div>}
       {modelStatus && !modelStatus.release_ready && (
         <div className="fallback-banner" role="status">
-          Occupancy model chưa sẵn sàng — backend đang dùng persistence fallback cho demo.
+          Occupancy model chưa sẵn sàng — backend đang dùng {modelStatus.prediction_source === "default" ? "giá trị mặc định cố định" : "persistence fallback"} cho demo.
         </div>
       )}
 

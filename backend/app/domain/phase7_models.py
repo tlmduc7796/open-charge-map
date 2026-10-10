@@ -7,7 +7,7 @@ from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 
-from backend.app.domain.models import DomainModel
+from backend.app.domain.models import DomainModel, WaitDistribution
 
 
 class GeoPoint(DomainModel):
@@ -131,6 +131,7 @@ class RecommendationItem(DomainModel):
     predicted_occupancy_ratio: float | None = Field(default=None, ge=0, le=1)
     prediction_source: str
     estimated_wait_min: float = Field(ge=0)
+    wait_distribution: WaitDistribution | None = None
     estimated_charge_min: float = Field(ge=0)
     energy_to_add_kwh: float = Field(ge=0)
     wait_score: float = Field(ge=0, le=1)
@@ -228,7 +229,7 @@ class GeocodedPlace(DomainModel):
 
 
 class ModelStatus(DomainModel):
-    prediction_source: Literal["persistence", "model"]
+    prediction_source: Literal["persistence", "model", "default"]
     model_artifact_available: bool
     preprocessor_artifact_available: bool
     metadata_available: bool

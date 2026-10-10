@@ -39,7 +39,7 @@ def test_station_vehicle_route_and_model_endpoints() -> None:
     assert len(responses[3].json()) == 3
     assert len(responses[4].json()) == 4
     assert responses[5].json()["resolution_source"] == "cache"
-    assert responses[6].json()["prediction_source"] == "persistence"
+    assert responses[6].json()["prediction_source"] == "default"
 
 
 def test_demo_reset_requires_demo_mode() -> None:

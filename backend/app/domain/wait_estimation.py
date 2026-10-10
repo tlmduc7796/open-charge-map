@@ -6,6 +6,7 @@ import math
 from datetime import datetime, timedelta
 from typing import Protocol
 
+from backend.app.domain.ml_gateway import MlGateway
 from backend.app.domain.models import (
     OccupancyForecastResult,
     PlannedArrival,
@@ -33,9 +34,11 @@ class WaitEstimator:
         assumptions: ArrivalRateProvider,
         *,
         scoring_wait_cap_min: float = 120,
+        ml_gateway: MlGateway | None = None,
     ) -> None:
         if scoring_wait_cap_min <= 0:
             raise ValueError("scoring_wait_cap_min must be positive")
+        self._gateway = ml_gateway
         self._assumptions = assumptions
         self._scoring_wait_cap_min = scoring_wait_cap_min
 
@@ -244,5 +247,12 @@ class WaitEstimator:
             current_state_wait_min=current_state_wait,
             estimated_wait_min=estimated_wait,
             scoring_wait_cap_min=self._scoring_wait_cap_min,
+            wait_distribution=(
+                self._gateway.wait_distribution(
+                    status.station_id, point_estimate_min=estimated_wait
+                )
+                if self._gateway is not None
+                else None
+            ),
             flags=flags,
         )

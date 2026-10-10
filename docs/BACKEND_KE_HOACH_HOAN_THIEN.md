@@ -36,17 +36,17 @@
 
 - [x] Chốt schema `/api/v1` cho config, danh mục, availability, tìm kiếm, trip, nội bộ và WebSocket; quy định đơn vị, timezone, mã lỗi, `updatedAt` và version.
 - [x] Chốt payload bàn giao model: artifact, preprocessor, metadata, feature order, lookback 12 bước/5 phút, horizon, model version, metrics, nguồn dữ liệu và fallback.
-- [x] Chốt nguồn `queue_length`, session duration, arrival rate cho 102 trạm; xác định khi nào dữ liệu bị coi là stale/unknown. Phương án demo 3B bổ sung deterministic cho input thiếu và công khai `syntheticFields`.
+- [x] Chốt nguồn `queue_length`, session duration, arrival rate cho 16 trạm master; xác định khi nào dữ liệu bị coi là stale/unknown. Phương án demo 3B bổ sung deterministic cho input thiếu và công khai `syntheticFields`.
 - [x] Cập nhật [data contract](SMART_EV_JOURNEY_DATA_CONTRACT_MVP.md), [Phase 04](PHASE_04_OCCUPANCY_MODEL.md), [Phase 06](PHASE_06_BACKEND_FORECAST_WAIT.md) và mô tả OpenAPI trước khi đổi Frontend.
 
 **File thực tế:** `backend/app/api_v1_models.py`, `backend/app/api_errors.py`, `backend/app/domain/model_artifact.py`, các tài liệu trên.
-**Kiểm chứng:** data contract có bảng ánh xạ API ↔ DB/model; OpenAPI khai báo bearer auth và error envelope; test schema/lỗi đầu vào; migration + seed thực tế xác nhận 102 trạm có status, live metrics và arrival rate.
+**Kiểm chứng:** data contract có bảng ánh xạ API ↔ DB/model; OpenAPI khai báo bearer auth và error envelope; test schema/lỗi đầu vào; migration + seed thực tế xác nhận 16 trạm có status, live metrics và arrival rate.
 
 ### M1 — Trạng thái trạm có thể cập nhật
 
 - [x] Thêm API nội bộ có API key để nhận batch trạng thái cổng; ghi `port_status` và `port_status_history` trong cùng transaction, bỏ qua bản tin cũ hơn `reported_at` hiện tại.
 - [x] Job đánh dấu trạng thái quá hạn là unknown; availability và recommendation không coi unknown là cổng trống. Dữ liệu synthetic được giữ nguyên nhãn thay vì tự suy diễn là quan sát thật bị stale.
-- [x] Hoàn thiện arrival rate/queue/session duration cho các trạm được phép đề xuất. Với phương án demo 3B, trường còn thiếu của 102 trạm được bổ sung deterministic và gắn nhãn synthetic; dữ liệu observed không bị ghi đè. Trạm vẫn bị loại theo reachability, compatibility, access, opening-hours đã xác minh hoặc lỗi routing.
+- [x] Hoàn thiện arrival rate/queue/session duration cho các trạm được phép đề xuất. Với phương án demo 3B, trường còn thiếu của 16 trạm master được bổ sung deterministic và gắn nhãn synthetic; dữ liệu observed không bị ghi đè. Trạm vẫn bị loại theo reachability, compatibility, access, opening-hours đã xác minh hoặc lỗi routing.
 - [x] Thêm `GET /config`, danh sách trạm theo bbox, availability hiện tại, chi tiết theo connector và danh sách ports; xác định màu từ `app_config`.
 
 **File hiện có:** `backend/app/api.py`, `backend/app/catalog_repository.py`, `backend/app/arrival_rate_repository.py`, `backend/app/domain/recommendation.py`, `data_platform/migrations/versions/0001_initial_schema.py`, `data_platform/migrations/versions/0004_trips_config.py`. Migration mới chỉ tạo nếu schema hiện tại không biểu diễn được hợp đồng đã chốt.  

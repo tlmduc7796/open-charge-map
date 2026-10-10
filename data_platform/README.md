@@ -32,8 +32,9 @@ Lệnh cuối thực hiện toàn bộ quy trình:
 4. nạp `data/bootstrap/current_database.sql` trong một transaction;
 5. đối chiếu `data/static/vehicles.json` với `data/demo/vehicles.json` và nạp xe;
 6. nạp planned arrivals, arrival rate nền và cửa sổ tính từ fixture runtime/demo;
-7. tạo trạng thái cổng, lịch sử ban đầu và metric synthetic cho 86 trạm mới từ
-   `data/runtime/station_status.json` của 16 trạm gốc;
+7. bổ sung trạng thái cổng, lịch sử và metric synthetic còn thiếu từ
+   `data/runtime/station_status.json` (snapshot hiện tại đã đủ cho 16 trạm master nên bước
+   này chỉ còn bổ sung metadata thiếu);
 8. kiểm tra số row sau khi nạp.
 
 Với database đã bootstrap từ revision cũ, nâng schema và đồng bộ runtime seed mà không
@@ -70,30 +71,35 @@ Snapshot trạm được chụp ngày 04/10/2026; hồ sơ xe được nạp th�
 
 | Bảng | Số row | Nội dung |
 | --- | ---: | --- |
-| `stations` | 102 | 16 trạm master và 86 trạm demo bổ sung |
+| `stations` | 16 | 16 trạm master (không còn trạm demo bổ sung) |
 | `station_external_refs` | 14 | Mã trạm từ nguồn bên ngoài |
 | `connector_types` | 4 | CCS2, Type2 và hai chuẩn GB/T dành cho fixture demo |
-| `ports` | 826 | Cổng sạc của toàn bộ trạm |
-| `port_status` | 826 | 211 trạng thái gốc và 615 trạng thái synthetic cho trạm mới |
-| `station_live_metrics` | 102 | 16 metric gốc và 86 metric synthetic cho trạm mới |
-| `port_status_history` | 826 | 211 mốc gốc và 615 mốc khởi tạo synthetic |
+| `ports` | 211 | Cổng sạc của toàn bộ trạm |
+| `port_status` | 211 | Trạng thái hiện tại của từng cổng (synthetic) |
+| `station_live_metrics` | 16 | Queue và thời lượng phiên của từng trạm (synthetic) |
+| `port_status_history` | 211 | Mốc trạng thái khởi tạo của từng cổng |
 | `station_occupancy_5m` | 4.624 | Occupancy theo bucket 5 phút |
 | `predictions` | 96 | Prediction theo trạm và horizon |
-| `station_amenities` | 714 | Bảy amenity cho mỗi trạm |
+| `station_amenities` | 112 | Bảy amenity cho mỗi trạm |
 | `vehicle_models` | 21 | 20 hồ sơ nguồn hãng và một xe synthetic chỉ dành cho demo |
 | `vehicle_connectors` | 41 | Quan hệ cổng sạc của 21 xe |
 | `planned_arrivals` | 4 | Hai planned, một cancelled và một expired fixture synthetic |
-| `station_arrival_rates` | 102 | Arrival rate nền synthetic, 16 fixture và 86 giá trị deterministic bổ sung |
+| `station_arrival_rates` | 16 | Arrival rate nền lấy từ fixture `queue_assumptions.json` |
 | `trips` | 0 | Chưa có dữ liệu trong snapshot hiện tại |
 | `trip_positions` | 0 | Chưa có dữ liệu trong snapshot hiện tại |
 | `trip_events` | 0 | Chưa có dữ liệu trong snapshot hiện tại |
 | `app_config` | 1 | Cửa sổ tính planned-arrival rate, hiện là 15 phút |
 
-Trong 102 trạm có 52 trạm mang `review_status=synthetic` và `is_active=true`. Toàn bộ 714 amenity
-là dữ liệu synthetic. Trong 86 trạm mới, 34 trạm có `review_status=verified` đối với thông tin
-trạm, nhưng toàn bộ 615 cổng của 86 trạm đều có `data_origin=synthetic`. Trạng thái cổng và
-queue được mô phỏng từ 16 bản ghi JSON gốc, gắn `data_origin=synthetic`; nhãn review của trạm
-không bị thay đổi. Seeder chỉ bổ sung bản ghi thiếu và có thể chạy lại an toàn.
+Snapshot chỉ còn 16 trạm master (khớp `data/static/stations.geojson`). 86 trạm demo bổ sung
+(mã `CAND_*`, cổng và trạng thái hoàn toàn synthetic) đã bị loại cùng 615 cổng và 602 amenity
+của chúng; muốn thêm trạm phải promote candidate theo hướng dẫn ở README gốc. Toàn bộ 112 amenity,
+211 trạng thái cổng và queue của 16 trạm vẫn là dữ liệu synthetic (`data_origin=synthetic`),
+mô phỏng từ 16 bản ghi JSON gốc. Seeder chỉ bổ sung bản ghi thiếu và có thể chạy lại an toàn.
+
+Database đã bootstrap từ snapshot 102 trạm không tự thu nhỏ: tạo lại volume
+(`docker compose down -v` trong `data_platform/`, rồi chạy lại bootstrap) hoặc xóa trạm
+demo bổ sung bằng `DELETE FROM stations WHERE code LIKE 'CAND_%';`
+(các bảng con xóa theo cascade).
 
 Để bổ sung trạng thái cho database đã bootstrap trước thay đổi này:
 

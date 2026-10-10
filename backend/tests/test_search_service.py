@@ -59,7 +59,7 @@ def test_station_search_ranks_by_total_minutes_and_exposes_source() -> None:
     assert [item.total_min for item in result.stations] == sorted(
         item.total_min for item in result.stations
     )
-    assert all(item.prediction_source == "persistence" for item in result.stations)
+    assert all(item.prediction_source == "default" for item in result.stations)
 
 
 def test_route_search_with_low_battery_ranks_charge_stops_by_total_minutes() -> None:

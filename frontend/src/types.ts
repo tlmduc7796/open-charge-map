@@ -125,7 +125,7 @@ export interface JourneyRecommendation {
 }
 
 export interface ModelStatus {
-  prediction_source: "persistence" | "model";
+  prediction_source: "persistence" | "model" | "default";
   model_artifact_available: boolean;
   preprocessor_artifact_available: boolean;
   metadata_available: boolean;

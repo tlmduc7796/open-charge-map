@@ -14,10 +14,11 @@ from backend.app.api_v1_models import (
     SearchStationsRequest,
     SearchStationsResponse,
     StationSummary,
+    WaitDistributionResponse,
 )
 from backend.app.app_config_repository import AppConfigRepository
 from backend.app.domain.forecasting import OccupancyForecastService
-from backend.app.domain.models import StationStatus
+from backend.app.domain.models import StationStatus, WaitDistribution
 from backend.app.domain.phase7_models import (
     DemoScenario,
     GeoPoint,
@@ -30,6 +31,16 @@ from backend.app.domain.services import check_compatibility, estimate_charging
 from backend.app.domain.station_hours import is_confirmed_open
 from backend.app.domain.wait_estimation import WaitEstimator
 from backend.app.search_store import SearchResultStore, SearchSnapshot
+
+
+def _wait_distribution(
+    value: WaitDistribution | None,
+) -> WaitDistributionResponse | None:
+    return (
+        WaitDistributionResponse.model_validate(value.model_dump())
+        if value is not None
+        else None
+    )
 
 
 class SearchService:
@@ -267,6 +278,7 @@ class SearchService:
                         distance_km=item.route_distance_to_station_m / 1000,
                         travel_min=travel_min,
                         wait_min=item.estimated_wait_min,
+                        wait_distribution=_wait_distribution(item.wait_distribution),
                         charge_min=charging.estimated_charge_min,
                         to_dest_min=to_dest_min,
                         total_min=total_min,
@@ -435,6 +447,7 @@ class SearchService:
                     distance_km=route.distance_m / 1000,
                     travel_min=travel_min,
                     wait_min=wait.estimated_wait_min,
+                    wait_distribution=_wait_distribution(wait.wait_distribution),
                     charge_min=charging.estimated_charge_min,
                     total_min=total_min,
                     arrive_battery_pct=arrival_pct,

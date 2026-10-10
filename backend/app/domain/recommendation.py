@@ -338,6 +338,7 @@ class RecommendationService:
                     predicted_occupancy_ratio=forecast.predicted_occupancy_ratio,
                     prediction_source=forecast.prediction_source,
                     estimated_wait_min=wait.estimated_wait_min,
+                    wait_distribution=wait.wait_distribution,
                     estimated_charge_min=charging.estimated_charge_min,
                     energy_to_add_kwh=charging.energy_to_add_kwh,
                     wait_score=wait_score,

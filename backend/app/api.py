@@ -260,7 +260,8 @@ def model_status(request: Request) -> ModelStatus:
     model_available = settings.model_artifact_path.is_file()
     preprocessor_available = settings.model_preprocessor_path.is_file()
     metadata_available = settings.model_meta_path.is_file()
-    model_loaded = request.app.state.occupancy_forecast_service.model_loaded
+    forecasting = request.app.state.occupancy_forecast_service
+    model_loaded = forecasting.model_loaded
     artifacts_available = model_available and preprocessor_available and metadata_available
     release_ready = artifacts_available and model_loaded
     flags: tuple[str, ...] = ()
@@ -268,8 +269,10 @@ def model_status(request: Request) -> ModelStatus:
         flags = ("PHASE_04_ARTIFACTS_UNAVAILABLE",)
     elif not model_loaded:
         flags = ("MODEL_ADAPTER_NOT_LOADED",)
+    if not model_loaded and forecasting.prediction_source == "default":
+        flags = (*flags, "ML_DEFAULT_VALUES_ACTIVE")
     return ModelStatus(
-        prediction_source="model" if model_loaded else "persistence",
+        prediction_source=forecasting.prediction_source,
         model_artifact_available=model_available,
         preprocessor_artifact_available=preprocessor_available,
         metadata_available=metadata_available,

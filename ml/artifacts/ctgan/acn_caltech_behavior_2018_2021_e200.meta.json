@@ -1,0 +1,15 @@
+{
+  "model": "ml\\artifacts\\ctgan\\acn_caltech_behavior_2018_2021_e200.pkl",
+  "training_records": 12663,
+  "features": [
+    "arrival_hour",
+    "arrival_weekday",
+    "stay_min",
+    "charge_min",
+    "energy_kwh",
+    "requested_energy_kwh",
+    "minutes_available"
+  ],
+  "source_domain": "ACN-Data Caltech",
+  "usage": "behavior prior for synthetic evaluation only; not Vietnamese ground truth"
+}

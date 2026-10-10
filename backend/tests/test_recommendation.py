@@ -11,7 +11,7 @@ def test_normal_recommendation_is_explainable_and_excludes_private_station() -> 
     assert result.recommendations[0].station_id == "ST_VF_LA_VELA"
     assert [item.rank for item in result.recommendations] == list(range(1, 16))
     assert all(0 <= item.final_score <= 1 for item in result.recommendations)
-    assert all(item.prediction_source == "persistence" for item in result.recommendations)
+    assert all(item.prediction_source == "default" for item in result.recommendations)
     assert "cost" not in result.model_dump_json().lower()
     exclusions = {
         item.station_id: item.reason_codes for item in result.excluded_candidates

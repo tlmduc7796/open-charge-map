@@ -248,7 +248,7 @@ class OccupancyForecastResult(DomainModel):
     predicted_occupancy_ratio: float | None = Field(default=None, ge=0, le=1)
     predicted_occupied_ports: float = Field(ge=0)
     operational_ports: int = Field(ge=0)
-    prediction_source: Literal["model", "persistence"]
+    prediction_source: Literal["model", "persistence", "default"]
     flags: tuple[str, ...]
     data_source: Literal["derived"] = "derived"
 
@@ -259,6 +259,15 @@ class OccupancyForecastResult(DomainModel):
         if self.operational_ports == 0 and self.predicted_occupancy_ratio is not None:
             raise ValueError("occupancy ratio must be null when no ports are operational")
         return self
+
+
+class WaitDistribution(DomainModel):
+    """Wait-time summary returned by the ML boundary: P(W>0), E[W] and W90."""
+
+    p_wait: float = Field(ge=0, le=1)
+    expected_wait_min: float = Field(ge=0)
+    p90_wait_min: float = Field(ge=0)
+    source: Literal["model", "default"]
 
 
 class WaitEstimateResult(DomainModel):
@@ -278,5 +287,6 @@ class WaitEstimateResult(DomainModel):
     current_state_wait_min: float = Field(ge=0)
     estimated_wait_min: float = Field(ge=0)
     scoring_wait_cap_min: float = Field(gt=0)
+    wait_distribution: WaitDistribution | None = None
     flags: tuple[str, ...]
     data_source: Literal["derived"] = "derived"

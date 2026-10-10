@@ -144,8 +144,9 @@ PATCH phải gửi `Authorization: Bearer <tripToken>`; database chỉ lưu SHA-
 Response `/api/v1` dùng error envelope thống nhất và `X-Request-ID`; các kết quả tính toán
 có `generatedAt`, còn `updatedAt` chỉ thời điểm dữ liệu nguồn thay đổi.
 
-Trong demo 3B, bước seed bổ sung deterministically các trường còn thiếu để catalog 102 trạm
-có status, queue/session duration, arrival rate, access và opening-hours cần cho ranking.
+Trong demo 3B, bước seed bổ sung deterministically các trường còn thiếu để catalog 16 trạm
+master có status, queue/session duration, arrival rate, access và opening-hours cần cho ranking.
+Catalog chỉ gồm 16 trạm master; 86 trạm demo synthetic (`CAND_*`) đã bị loại khỏi snapshot.
 Mỗi response station/recommendation có `syntheticFields`; dữ liệu observed không bị ghi đè.
 Trạm vẫn có thể bị loại nếu private/đóng cửa đã xác minh, không tương thích, ngoài tầm pin
 hoặc provider routing không trả tuyến.
@@ -252,8 +253,10 @@ Phải dùng cùng hostname `127.0.0.1`; nếu mở frontend bằng `localhost`,
    xuất hiện, sau đó thử **Hủy planned arrival**.
 7. Nhấn **Reset demo** trước khi chạy lại scenario để xóa event và planned-arrival runtime.
 
-Banner `persistence fallback` là trạng thái dự kiến vì Phase 04 chưa có model artifact, không
-phải lỗi khởi động. Nếu thiếu Maptiles key hoặc Goong map lỗi lúc load, frontend tự chuyển sang
+Banner fallback là trạng thái dự kiến vì Phase 04 chưa có model artifact, không phải lỗi
+khởi động. Mọi lời gọi backend → ML hiện đi qua `backend/app/domain/ml_gateway.py` và trả giá
+trị mặc định cố định (`prediction_source=default`: occupancy tương lai = 0.5, phân phối chờ =
+ước lượng Erlang C, không hiệu chỉnh chống dồn tải); occupancy hiện tại (offset 0) vẫn là dữ liệu thật. Nếu thiếu Maptiles key hoặc Goong map lỗi lúc load, frontend tự chuyển sang
 Leaflet + OpenStreetMap. Fixed demo scenarios vẫn dùng route cache khi REST key/routing live lỗi.
 
 ## Kiểm tra
@@ -311,8 +314,8 @@ Sao chép `.env.example` thành `.env`. Không commit `.env` hoặc API key th�
 - `RECOMMEND_MAX_*`, `RECOMMEND_SOC_RISK_BUFFER`: fixed normalization thresholds;
   recommendation không dùng min-max theo candidate set.
 - `RECOMMEND_CANDIDATE_CORRIDOR_M`: bán kính hành lang PostGIS quanh đường thẳng nối origin và
-  destination, mặc định `5000` mét. Với snapshot hiện tại, nó giảm 102 trạm xuống 42 ứng viên
-  cho hành trình normal và vẫn giữ đủ 16 trạm có route cache.
+  destination, mặc định `5000` mét. Với snapshot 16 trạm hiện tại, hành trình normal giữ lại
+  cả 16 trạm (đều có route cache) nên hành lang không còn thu hẹp tập ứng viên.
 - `INTERNAL_API_KEY`: khóa bắt buộc cho các endpoint `/api/v1/internal`; không commit giá trị thật.
 - `STATION_STATUS_STALE_AFTER_S`: thời gian tối đa trước khi trạng thái cổng được đánh dấu
   `unknown`, mặc định 120 giây.

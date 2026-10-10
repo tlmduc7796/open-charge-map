@@ -28,6 +28,7 @@ from backend.app.database import validate_database
 from backend.app.domain import load_domain_data
 from backend.app.domain.forecasting import OccupancyForecastService
 from backend.app.domain.geocoding import GeocodingService, GoongGeocodingProvider
+from backend.app.domain.ml_gateway import DefaultMlGateway
 from backend.app.domain.recommendation import (
     RecommendationService,
     RecommendationThresholds,
@@ -97,7 +98,12 @@ app.add_middleware(
 )
 app.state.settings = settings
 app.state.domain_data = load_domain_data(settings.data_dir)
-app.state.occupancy_forecast_service = OccupancyForecastService()
+# Every backend -> ML call goes through this gateway; it returns fixed defaults until the
+# real models are integrated (see backend/app/domain/ml_gateway.py).
+app.state.ml_gateway = DefaultMlGateway()
+app.state.occupancy_forecast_service = OccupancyForecastService(
+    ml_gateway=app.state.ml_gateway
+)
 uses_database = (
     settings.catalog_storage == "database"
     or settings.planned_arrivals_storage == "database"
@@ -146,6 +152,7 @@ else:
 app.state.wait_estimator = WaitEstimator(
     app.state.arrival_rate_repository,
     scoring_wait_cap_min=settings.wait_scoring_cap_min,
+    ml_gateway=app.state.ml_gateway,
 )
 goong_geocoding_provider = (
     GoongGeocodingProvider(

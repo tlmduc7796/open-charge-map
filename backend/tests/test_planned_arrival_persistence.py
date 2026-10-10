@@ -93,7 +93,7 @@ def test_database_planned_arrival_lifecycle_persists_and_resets() -> None:
         catalog_request = request.model_copy(
             update={
                 "arrival_id": "ARR_DATABASE_CATALOG_REFS",
-                "station_id": "CAND_2089F3C5E056",
+                "station_id": "ST_VF_LA_VELA",
                 "vehicle_id": "VF8_ECO_VN",
             }
         )
@@ -101,7 +101,7 @@ def test_database_planned_arrival_lifecycle_persists_and_resets() -> None:
             catalog_request,
             created_at=datetime.fromisoformat("2026-10-08T10:00:00+07:00"),
         )
-        assert catalog_arrival.station_id == "CAND_2089F3C5E056"
+        assert catalog_arrival.station_id == "ST_VF_LA_VELA"
         assert catalog_arrival.vehicle_id == "VF8_ECO_VN"
 
         repository.reset()
