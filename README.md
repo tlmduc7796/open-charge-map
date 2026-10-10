@@ -91,7 +91,7 @@ Health endpoint: `http://127.0.0.1:8000/health`
 khi cần chẩn đoán fixture độc lập. API trả mọi station `is_active=true`; station chưa có
 telemetry có `data_source=unknown`, `unknown_ports=total_ports`, không được tính là available.
 Backend fail-fast nếu không kết nối được PostgreSQL hoặc revision Alembic không phải
-`0005_planned_arrivals`; `/health` cũng kiểm tra lại kết nối và revision khi đang chạy.
+`0006_trip_tokens`; `/health` cũng kiểm tra lại kết nối và revision khi đang chạy.
 
 Các demo endpoints và interactive schema:
 
@@ -139,6 +139,16 @@ ghi đè trạng thái. Quãng đường và pin không có telemetry trực ti�
 đoạn thẳng giữa hai ping; ETA dùng tiến độ theo tuyến hiện có. Re-plan dùng ngưỡng lệch
 tuyến, ETA tăng, khả dụng trạm và pin trong `app_config`, kèm cooldown 60 giây mặc định;
 những trạm đã decline không được đề xuất lại cho trip đó.
+Response tạo trip trả `tripToken` đúng một lần. Các request `GET /trips/{id}`, position và
+PATCH phải gửi `Authorization: Bearer <tripToken>`; database chỉ lưu SHA-256 hash của token.
+Response `/api/v1` dùng error envelope thống nhất và `X-Request-ID`; các kết quả tính toán
+có `generatedAt`, còn `updatedAt` chỉ thời điểm dữ liệu nguồn thay đổi.
+
+Trong demo 3B, bước seed bổ sung deterministically các trường còn thiếu để catalog 102 trạm
+có status, queue/session duration, arrival rate, access và opening-hours cần cho ranking.
+Mỗi response station/recommendation có `syntheticFields`; dữ liệu observed không bị ghi đè.
+Trạm vẫn có thể bị loại nếu private/đóng cửa đã xác minh, không tương thích, ngoài tầm pin
+hoặc provider routing không trả tuyến.
 
 ## Cài đặt frontend
 

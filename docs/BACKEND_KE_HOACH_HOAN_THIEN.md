@@ -1,7 +1,7 @@
 # Kế hoạch hoàn thiện Backend theo kế hoạch gốc
 
 **Cập nhật:** 2026-10-09  
-**Trạng thái:** M1–M3 đã triển khai và kiểm thử backend; chưa phải kết quả nghiệm thu/release.
+**Trạng thái:** M0–M3 đã triển khai và kiểm thử backend; chưa phải kết quả nghiệm thu/release.
 **Mục tiêu:** Hoàn thiện các phần C (Database), D (Backend) và phần kiểm thử liên quan ở [kế hoạch Rule-Based-AI](Rule-Based-AI-Ke-hoach-trien-khai.md). [Bộ Phase 00–11](PHASE_INDEX.md) tiếp tục được dùng để theo dõi kết quả đã đạt, nhưng `RELEASE PASS` chỉ được xét sau khi các chức năng và kiểm định của kế hoạch gốc hoàn tất.
 
 ## 1. Phạm vi và phân công
@@ -34,19 +34,19 @@
 
 ### M0 — Hợp đồng API và bàn giao dự báo
 
-- [ ] Chốt schema `/api/v1` cho config, danh mục, availability, tìm kiếm, trip, nội bộ và WebSocket; quy định đơn vị, timezone, mã lỗi, `updatedAt` và version.
-- [ ] Chốt payload bàn giao model: artifact, preprocessor, metadata, feature order, lookback 12 bước/5 phút, horizon, model version, metrics, nguồn dữ liệu và fallback.
-- [ ] Chốt nguồn `queue_length`, session duration, arrival rate cho 102 trạm; xác định khi nào dữ liệu bị coi là stale/unknown.
-- [ ] Cập nhật [data contract](SMART_EV_JOURNEY_DATA_CONTRACT_MVP.md), [Phase 04](PHASE_04_OCCUPANCY_MODEL.md), [Phase 06](PHASE_06_BACKEND_FORECAST_WAIT.md) và mô tả OpenAPI trước khi đổi Frontend.
+- [x] Chốt schema `/api/v1` cho config, danh mục, availability, tìm kiếm, trip, nội bộ và WebSocket; quy định đơn vị, timezone, mã lỗi, `updatedAt` và version.
+- [x] Chốt payload bàn giao model: artifact, preprocessor, metadata, feature order, lookback 12 bước/5 phút, horizon, model version, metrics, nguồn dữ liệu và fallback.
+- [x] Chốt nguồn `queue_length`, session duration, arrival rate cho 102 trạm; xác định khi nào dữ liệu bị coi là stale/unknown. Phương án demo 3B bổ sung deterministic cho input thiếu và công khai `syntheticFields`.
+- [x] Cập nhật [data contract](SMART_EV_JOURNEY_DATA_CONTRACT_MVP.md), [Phase 04](PHASE_04_OCCUPANCY_MODEL.md), [Phase 06](PHASE_06_BACKEND_FORECAST_WAIT.md) và mô tả OpenAPI trước khi đổi Frontend.
 
-**File dự kiến:** `backend/app/domain/phase7_models.py`, `backend/app/config.py`, `backend/app/api.py`, các tài liệu trên.  
-**Kiểm chứng:** bảng ánh xạ mọi trường API ↔ DB/model có đơn vị và nguồn; test schema cho lỗi đầu vào và tương thích route demo.
+**File thực tế:** `backend/app/api_v1_models.py`, `backend/app/api_errors.py`, `backend/app/domain/model_artifact.py`, các tài liệu trên.
+**Kiểm chứng:** data contract có bảng ánh xạ API ↔ DB/model; OpenAPI khai báo bearer auth và error envelope; test schema/lỗi đầu vào; migration + seed thực tế xác nhận 102 trạm có status, live metrics và arrival rate.
 
 ### M1 — Trạng thái trạm có thể cập nhật
 
 - [x] Thêm API nội bộ có API key để nhận batch trạng thái cổng; ghi `port_status` và `port_status_history` trong cùng transaction, bỏ qua bản tin cũ hơn `reported_at` hiện tại.
 - [x] Job đánh dấu trạng thái quá hạn là unknown; availability và recommendation không coi unknown là cổng trống. Dữ liệu synthetic được giữ nguyên nhãn thay vì tự suy diễn là quan sát thật bị stale.
-- [x] Hoàn thiện arrival rate/queue/session duration cho các trạm được phép đề xuất; nếu thiếu input, trả lý do loại trạm thay vì ước lượng không có căn cứ. Chỉ đề xuất trạm có giờ mở cửa xác nhận; 7 trạm luôn mở trong fixture PostgreSQL đáp ứng điều kiện này.
+- [x] Hoàn thiện arrival rate/queue/session duration cho các trạm được phép đề xuất. Với phương án demo 3B, trường còn thiếu của 102 trạm được bổ sung deterministic và gắn nhãn synthetic; dữ liệu observed không bị ghi đè. Trạm vẫn bị loại theo reachability, compatibility, access, opening-hours đã xác minh hoặc lỗi routing.
 - [x] Thêm `GET /config`, danh sách trạm theo bbox, availability hiện tại, chi tiết theo connector và danh sách ports; xác định màu từ `app_config`.
 
 **File hiện có:** `backend/app/api.py`, `backend/app/catalog_repository.py`, `backend/app/arrival_rate_repository.py`, `backend/app/domain/recommendation.py`, `data_platform/migrations/versions/0001_initial_schema.py`, `data_platform/migrations/versions/0004_trips_config.py`. Migration mới chỉ tạo nếu schema hiện tại không biểu diễn được hợp đồng đã chốt.  
@@ -69,7 +69,7 @@
 - [x] Thêm accept/decline/cancel và sửa pin; ghi `trip_events`; đồng bộ planned arrival khi đổi trạm, tới trạm hoặc hủy.
 - [x] Re-plan khi lệch tuyến, ETA tăng, trạm không còn dùng được hoặc pin không đủ; áp dụng cooldown/hysteresis và loại trạm đã từ chối. GPS dùng đoạn thẳng giữa các ping, ETA theo tiến độ tuyến; độ chính xác thực địa chưa được nghiệm thu.
 
-**Schema hiện có:** `data_platform/migrations/versions/0004_trips_config.py`, `data_platform/migrations/versions/0005_planned_arrivals.py`. **File mới dự kiến:** `backend/app/trip_repository.py`, `backend/app/domain/trips.py`, test vòng đời trip; mở rộng `backend/app/api.py`.  
+**Schema hiện có:** `data_platform/migrations/versions/0004_trips_config.py`, `data_platform/migrations/versions/0005_planned_arrivals.py`, `data_platform/migrations/versions/0006_trip_tokens.py`. **File hiện có:** `backend/app/trip_repository.py`, `backend/app/domain/trips.py`, test vòng đời trip; mở rộng `backend/app/api_v1.py`.
 **Kiểm chứng:** restart Backend vẫn đọc được trip; GPS gửi lặp/cũ không làm lùi trạng thái; re-plan chỉ tăng version khi đổi tuyến; trip kết thúc giải phóng planned arrival.
 
 ### M4 — Model prediction và phân phối wait

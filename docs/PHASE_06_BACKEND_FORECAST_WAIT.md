@@ -103,8 +103,8 @@ Chi tiết kiểm chứng: `data_platform/data/validation/phase6_forecast_wait_r
   `prediction_source=persistence` cùng flag `PERSISTENCE_FALLBACK`.
 - Horizon không được artifact hỗ trợ dùng persistence ở chính mốc contract và trả
   `MODEL_HORIZON_UNSUPPORTED`; mốc trên 15 phút đồng thời trả `BEYOND_MODEL_HORIZON`.
-- Nếu sau này model adapter được cắm nhưng chưa có history, service tạo 12 giá trị
-  lặp từ observation mới nhất và trả `SYNTHETIC_HISTORY`.
+- Nếu model adapter được cắm nhưng chưa có đủ history thật, service không gọi model;
+  dùng persistence và trả `HISTORY_UNAVAILABLE`.
 - Model output được clamp vào `[0, 1]`; lỗi inference tự hạ cấp sang persistence.
 - Station không còn operational port trả ratio `null`, occupied ports bằng 0 và
   flag `STATION_OFFLINE`.

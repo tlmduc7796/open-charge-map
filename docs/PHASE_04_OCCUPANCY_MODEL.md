@@ -82,6 +82,13 @@ Metadata phải ghi:
 - metrics;
 - limitations.
 
+Hợp đồng bàn giao chính thức dùng target `occupancy_ratio`; metadata phải kèm SHA-256
+của cả model và preprocessor, `feature_order`, random seed, MAE/RMSE của model và
+persistence trên cùng test split theo từng horizon. Chỉ đặt `serving_decision=model`
+khi MAE tốt hơn persistence ít nhất 5% ở mọi horizon được phục vụ. Backend không gọi
+model khi chưa có đủ 12 observation thật; trường hợp đó dùng persistence với
+`HISTORY_UNAVAILABLE`. +20/+25/+30 tiếp tục là persistence có nhãn nếu artifact không hỗ trợ.
+
 ## 4. Deliverables
 
 ```text

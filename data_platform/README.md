@@ -1,5 +1,7 @@
 # Smart EV data platform
 
+ERD và thống kê database hiện tại: [docs/DATABASE_ERD.md](../docs/DATABASE_ERD.md).
+
 Thư mục này tập trung toàn bộ dữ liệu của repository. Bootstrap PostgreSQL/PostGIS dùng
 snapshot SQL và hai file xe JSON; backend demo cùng các script thu thập/kiểm tra vẫn đọc
 các JSON/KML khác trong `data/`.
@@ -26,7 +28,7 @@ Lệnh cuối thực hiện toàn bộ quy trình:
 
 1. khởi động PostgreSQL/PostGIS bằng `compose.yaml`;
 2. chờ database sẵn sàng;
-3. chạy Alembic migrations đến revision `0005_planned_arrivals`;
+3. chạy Alembic migrations đến revision `0006_trip_tokens`;
 4. nạp `data/bootstrap/current_database.sql` trong một transaction;
 5. đối chiếu `data/static/vehicles.json` với `data/demo/vehicles.json` và nạp xe;
 6. nạp planned arrivals, arrival rate nền và cửa sổ tính từ fixture runtime/demo;
@@ -41,8 +43,13 @@ khôi phục lại snapshot tĩnh:
 Set-Location data_platform
 ..\.venv\Scripts\python.exe -m alembic upgrade head
 ..\.venv\Scripts\python.exe scripts\seed_runtime_data.py
+..\.venv\Scripts\python.exe scripts\seed_synthetic_port_statuses.py
 Set-Location ..
 ```
+
+Hai seed trên tạo dữ liệu demo 3B cho trường còn thiếu trên toàn bộ catalog active:
+arrival rate, port status, queue/session duration, access và opening hours. Giá trị được tạo
+deterministically, có `data_origin/provenance=synthetic` và không ghi đè dữ liệu observed.
 
 Database mặc định:
 
@@ -76,7 +83,7 @@ Snapshot trạm được chụp ngày 04/10/2026; hồ sơ xe được nạp th�
 | `vehicle_models` | 21 | 20 hồ sơ nguồn hãng và một xe synthetic chỉ dành cho demo |
 | `vehicle_connectors` | 41 | Quan hệ cổng sạc của 21 xe |
 | `planned_arrivals` | 4 | Hai planned, một cancelled và một expired fixture synthetic |
-| `station_arrival_rates` | 16 | Arrival rate nền synthetic cho các trạm demo |
+| `station_arrival_rates` | 102 | Arrival rate nền synthetic, 16 fixture và 86 giá trị deterministic bổ sung |
 | `trips` | 0 | Chưa có dữ liệu trong snapshot hiện tại |
 | `trip_positions` | 0 | Chưa có dữ liệu trong snapshot hiện tại |
 | `trip_events` | 0 | Chưa có dữ liệu trong snapshot hiện tại |

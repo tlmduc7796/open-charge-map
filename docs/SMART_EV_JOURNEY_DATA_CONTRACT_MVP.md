@@ -55,8 +55,12 @@ Các thành phần sau **không nằm trong data contract MVP**:
 - Domain và file dữ liệu tiếp tục dùng SOC `[0,1]` và tọa độ `{lat,lon}`.
 - API công khai nhận/trả pin theo phần trăm `[0,100]` và tọa độ `{lat,lng}`; adapter
   chuyển đổi tại ranh giới HTTP, không truyền đơn vị API vào domain.
-- Field JSON của `/api/v1` dùng `camelCase`; timestamp luôn có timezone và response có
-  `updatedAt` khi biểu diễn trạng thái có thể thay đổi.
+- Field JSON của `/api/v1` dùng `camelCase`; timestamp luôn có timezone. Snapshot dữ liệu
+  có `updatedAt` cho lần dữ liệu nguồn thay đổi; envelope availability/search được tính
+  tại request có thêm `generatedAt`. Backend serialize timestamp API về UTC (`Z`).
+- Lỗi `/api/v1` luôn có dạng
+  `{ "error": { "code", "message", "details" }, "requestId" }`; response đồng thời
+  trả header `X-Request-ID`. API version hiện tại là `v1` và được trả trong `/config`.
 - Forecast contract công khai hỗ trợ offset `0,5,10,15,20,25,30`. Mốc chưa có model
   tương ứng dùng persistence và phải trả nguồn/flag fallback, không nội suy như model thật.
 - `POST /api/v1/trips` nhận `searchId` còn hạn và `stationId` thuộc kết quả tìm kiếm;
@@ -69,6 +73,46 @@ Các thành phần sau **không nằm trong data contract MVP**:
   `correctBattery` hoặc `cancel`; `accept` cần `stationId`, `correctBattery` cần
   `batteryPct`. Re-plan chỉ tăng `routeVersion` khi tuyến hoặc trạm thay đổi;
   planned arrival của trip được cập nhật/hủy/đánh dấu đến cùng transaction.
+- Response tạo trip trả `tripToken` đúng một lần. Mọi thao tác đọc, GPS, cập nhật và
+  WebSocket của trip phải gửi `Authorization: Bearer <tripToken>`; PostgreSQL chỉ lưu
+  SHA-256 hash. Sau khi trip `arrived` hoặc `cancelled`, token vẫn cần để đọc lịch sử
+  nhưng không thể tạo thêm chuyển trạng thái nghiệp vụ.
+- `syntheticFields` liệt kê chính xác các trường dùng dữ liệu demo được tạo bổ sung.
+  Dữ liệu synthetic không ghi đè trường observed. Demo 3B bổ sung deterministically
+  cho trường thiếu của 102 trạm; trạm vẫn có thể bị loại vì không tới được, không tương
+  thích, private/closed đã xác minh hoặc provider không trả tuyến.
+
+### Ánh xạ field API → nguồn dữ liệu/tính toán
+
+| Response / field | Nguồn chuẩn | Đơn vị / quy tắc |
+|---|---|---|
+| `/config`: các ngưỡng reroute, radius, interval, low battery | `app_config`, fallback cấu hình tiến trình | mét, phút, giây, phần trăm |
+| `/config`: `stationsVersion`, `vehiclesVersion` | version catalog được nạp | string; `apiVersion=v1` |
+| Station: `id,name,address,location,openingHours` | `stations` | WGS84 `{lat,lng}`; metadata thiếu có provenance synthetic |
+| Station: `connectors,totalPorts` | `ports` + `connector_types` | công suất kW; chỉ port active |
+| Station: `color,availablePorts,updatedAt` | `station_status_current` + ngưỡng `app_config` | trạng thái hiện tại; UTC |
+| Port: `status,minutesToFinish,dataSource` | `port_status` | phút; nguồn observed/inferred/synthetic/unknown |
+| Availability: `predictionSource,availablePorts` | offset 0: current status; offset > 0: model hoặc persistence | horizon phút; không giả danh fallback là model |
+| Search: `route,distanceKm,travelMin,toDestMin` | routing provider/cache | km và phút |
+| Search: `waitMin` | occupancy forecast + `station_arrival_rates` + planned arrivals + Erlang C | phút; nguồn synthetic được gắn nhãn |
+| Search: `chargeMin,arriveBatteryPct` | `vehicle_models` + route distance + connector power | phút và phần trăm `[0,100]` |
+| Search: `totalMin,rank,flags,reasonCodes` | service ranking/filter | tổng phút tăng dần; lý do loại tường minh |
+| Trip: identity, phase, route/version, station, ETA | `trips` + `trip_events` | UTC; route version tăng khi route/station đổi |
+| Trip: battery/distance/position accepted | telemetry request + `trip_positions`; fallback suy ra từ quãng đường | phần trăm, km; ping cũ không ghi đè |
+| `tripToken` | sinh ngẫu nhiên lúc tạo trip | chỉ trả một lần; DB lưu SHA-256 |
+| `updatedAt`,`generatedAt` | nguồn mới nhất / clock tại lúc tạo response | UTC `Z` |
+| `syntheticFields` | provenance và `data_origin` của từng input | tên chính xác các field synthetic góp vào output |
+
+### Hợp đồng WebSocket M5 đã chốt trước triển khai
+
+- Endpoint: `/api/v1/ws`; client xác thực subscription trip bằng bearer token tương ứng.
+- Client gửi `{type:"subscribe"|"unsubscribe", channels:[...]}` với channel dạng
+  `bbox:<minLng,minLat,maxLng,maxLat>`, `station:<id>` hoặc `trip:<id>`.
+- Server gửi snapshot trước event delta. Envelope chung là
+  `{type, occurredAt, version, payload}`; event tối thiểu gồm `station.updated`,
+  `prediction.refreshed`, `trip.reroute` và `error`.
+- `version` tăng đơn điệu trong từng channel; client reconnect phải xin snapshot mới,
+  không suy đoán đã nhận đủ event trong lúc mất kết nối.
 
 ### `data_source`
 
@@ -672,13 +716,18 @@ Metadata đi kèm `occupancy_model.joblib`. File model binary không phải data
 | `task` | string | ✓ | `occupancy_forecasting` |
 | `training_dataset` | string | ✓ | Ví dụ `UrbanEV` |
 | `training_level` | enum | ✓ | `station` hoặc `zone` |
-| `temporal_resolution_min` | int | ✓ | Resolution train |
+| `temporal_resolution_min` | int | ✓ | Luôn `5` |
 | `lookback_steps` | int | ✓ | Số bước lịch sử đầu vào |
-| `forecast_steps` | int | ✓ | Số bước cần dự đoán |
-| `features` | array[string] | ✓ | Feature model sử dụng |
-| `target` | string | ✓ | `occupied_ports` hoặc `occupancy_ratio` |
-| `metrics` | object | ✓ | MAE/RMSE/... |
-| `notes` | array[string] |  | Limitation |
+| `supported_horizons_min` | array[int] | ✓ | Tập con của `5,10,15,20,25,30` |
+| `feature_order` | array[string] | ✓ | Thứ tự feature chính xác khi inference |
+| `target` | string | ✓ | Luôn `occupancy_ratio` trong `[0,1]` |
+| `metrics_by_horizon` | object | ✓ | MAE/RMSE model cho từng horizon |
+| `persistence_metrics_by_horizon` | object | ✓ | MAE/RMSE baseline cùng test split |
+| `serving_decision` | enum | ✓ | `model` hoặc `persistence` |
+| `random_seed` | int | ✓ | Seed tái lập thí nghiệm |
+| `model_artifact` | object | ✓ | `path` và SHA-256 |
+| `preprocessor_artifact` | object | ✓ | `path` và SHA-256 |
+| `limitations` | array[string] |  | Giới hạn đã biết |
 
 ## Mẫu
 
@@ -691,18 +740,28 @@ Metadata đi kèm `occupancy_model.joblib`. File model binary không phải data
   "training_level": "station",
   "temporal_resolution_min": 5,
   "lookback_steps": 12,
-  "forecast_steps": 3,
-  "features": [
+  "supported_horizons_min": [5, 10, 15],
+  "feature_order": [
     "occupied_ports",
     "occupancy_ratio",
     "total_ports"
   ],
-  "target": "occupied_ports",
-  "metrics": {
-    "mae": null,
-    "rmse": null
+  "target": "occupancy_ratio",
+  "metrics_by_horizon": {
+    "5": {"mae": 0.08, "rmse": 0.11},
+    "10": {"mae": 0.10, "rmse": 0.14},
+    "15": {"mae": 0.12, "rmse": 0.16}
   },
-  "notes": [
+  "persistence_metrics_by_horizon": {
+    "5": {"mae": 0.10, "rmse": 0.13},
+    "10": {"mae": 0.12, "rmse": 0.16},
+    "15": {"mae": 0.14, "rmse": 0.18}
+  },
+  "serving_decision": "model",
+  "random_seed": 42,
+  "model_artifact": {"path": "occupancy_model.joblib", "sha256": "<64 hex>"},
+  "preprocessor_artifact": {"path": "occupancy_preprocessor.joblib", "sha256": "<64 hex>"},
+  "limitations": [
     "Station identifiers are not transferable features across Shenzhen and Vietnam.",
     "Queue and waiting-time labels are not provided by UrbanEV."
   ]
