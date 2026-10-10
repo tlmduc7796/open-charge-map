@@ -38,8 +38,7 @@ Copy-Item .env.example .env
 ### Persistence profile cho backend (local/integration)
 
 Backend vẫn khởi động bằng fixture/in-memory ở cấu hình demo mặc định. Để kiểm thử tích hợp
-PostgreSQL/PostGIS local, xem hướng dẫn và provenance dữ liệu trong
-[`data_platform/README.md`](data_platform/README.md), sau đó bootstrap database. Snapshot này
+PostgreSQL/PostGIS local, xem hướng dẫn và provenance dữ liệu trong [`data_platform/README.md`](data_platform/README.md), sau đó bootstrap database. Snapshot này
 có dữ liệu synthetic; chỉ dùng cho local/integration, không dùng để provision database release:
 
 ```powershell
