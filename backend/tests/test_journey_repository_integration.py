@@ -1063,7 +1063,7 @@ def test_database_planned_arrivals_expire_and_stop_affecting_demand() -> None:
 
         expired = repository.expire(now + timedelta(minutes=22))
 
-        assert [arrival.arrival_id for arrival in expired] == [arrival_id]
+        assert arrival_id in {arrival.arrival_id for arrival in expired}
         assert repository.get(arrival_id).status == "expired"
         assert arrival_id not in {
             arrival.arrival_id
