@@ -110,8 +110,21 @@ class QueueLabMonteCarloSummary(DomainModel):
 
 
 class QueueLabSimulationResult(DomainModel):
-    estimated_start_at: datetime | None = None
-    estimated_wait_min: float | None = Field(default=None, ge=0)
+    estimated_start_at: datetime | None = Field(
+        default=None,
+        description=(
+            "Start time from one deterministic sample using the request seed; it is "
+            "not the Monte Carlo mean or a live station estimate."
+        ),
+    )
+    estimated_wait_min: float | None = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Wait from the single seeded timeline sample; use monte_carlo percentiles "
+            "for the synthetic duration distribution."
+        ),
+    )
     timeline: tuple[QueueLabTimelineEntry, ...] = ()
     monte_carlo: QueueLabMonteCarloSummary
     caveats: tuple[str, ...]
@@ -166,6 +179,7 @@ def _schedule(
     timeline: list[QueueLabTimelineEntry] = []
     caveats = [
         "SIMULATED_DURATION_INPUTS",
+        "SEEDED_TIMELINE_IS_ONE_SAMPLE",
         "CONFIRMED_QUEUE_ONLY",
         "CONNECTOR_COMPATIBILITY_APPLIED",
         "NOT_LIVE_STATION_TELEMETRY",

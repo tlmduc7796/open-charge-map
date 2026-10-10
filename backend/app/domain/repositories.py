@@ -9,6 +9,7 @@ from typing import Any
 
 from pydantic import TypeAdapter
 
+from backend.app.domain.geo import haversine_m
 from backend.app.domain.models import (
     PlannedArrival,
     QueueAssumptions,
@@ -30,6 +31,13 @@ class StationRepository:
         self._stations = stations
         self._by_id = {station.station_id: station for station in stations}
 
+    @staticmethod
+    def _is_synthetic(station: Station) -> bool:
+        return bool(station.properties.synthetic_fields) or any(
+            "synthetic" in connector.source.lower()
+            for connector in station.properties.connectors
+        )
+
     @classmethod
     def from_file(cls, path: Path) -> StationRepository:
         collection = StationCollection.model_validate(_read_json(path))
@@ -38,8 +46,87 @@ class StationRepository:
     def all(self) -> tuple[Station, ...]:
         return self._stations
 
+    def page(
+        self,
+        *,
+        limit: int,
+        after_station_id: str | None = None,
+        include_synthetic: bool = True,
+    ) -> tuple[Station, ...]:
+        stations = sorted(
+            (
+                station
+                for station in self._stations
+                if (after_station_id is None or station.station_id > after_station_id)
+                and (include_synthetic or not self._is_synthetic(station))
+            ),
+            key=lambda station: station.station_id,
+        )
+        return tuple(stations[:limit])
+
     def get(self, station_id: str) -> Station:
         return self._by_id[station_id]
+
+    def filter_ids(
+        self, station_ids: tuple[str, ...], *, include_synthetic: bool = True
+    ) -> tuple[str, ...]:
+        return tuple(
+            station_id
+            for station_id in station_ids
+            if station_id in self._by_id
+            and (include_synthetic or not self._is_synthetic(self._by_id[station_id]))
+        )
+
+    def within_radius(
+        self,
+        longitude: float,
+        latitude: float,
+        radius_m: float,
+        limit: int,
+        *,
+        include_synthetic: bool = True,
+    ) -> tuple[Station, ...]:
+        matches = sorted(
+            (
+                (haversine_m(latitude, longitude, station.geometry.coordinates[1],
+                              station.geometry.coordinates[0]), station)
+                for station in self._stations
+                if include_synthetic or not self._is_synthetic(station)
+            ),
+            key=lambda item: (item[0], item[1].station_id),
+        )
+        return tuple(station for distance, station in matches if distance <= radius_m)[:limit]
+
+    def within_bbox(
+        self,
+        west: float,
+        south: float,
+        east: float,
+        north: float,
+        limit: int,
+        *,
+        include_synthetic: bool = True,
+    ) -> tuple[Station, ...]:
+        def contains(longitude: float, latitude: float) -> bool:
+            longitude_matches = (
+                west <= longitude <= east
+                if west <= east
+                else longitude >= west or longitude <= east
+            )
+            return longitude_matches and south <= latitude <= north
+
+        matches = sorted(
+            (
+                station
+                for station in self._stations
+                if (include_synthetic or not self._is_synthetic(station))
+                if contains(
+                    station.geometry.coordinates[0], station.geometry.coordinates[1]
+                )
+            ),
+            key=lambda station: station.station_id,
+        )
+        return tuple(matches[:limit])
 
 
 class VehicleRepository:
@@ -79,6 +166,9 @@ class StationStatusRepository:
     def get(self, station_id: str) -> StationStatus:
         return self._by_id[station_id]
 
+    def get_many(self, station_ids: tuple[str, ...]) -> tuple[StationStatus, ...]:
+        return tuple(self._by_id[item] for item in station_ids if item in self._by_id)
+
 
 class PlannedArrivalRepository:
     def __init__(self, arrivals: tuple[PlannedArrival, ...]) -> None:
@@ -109,6 +199,10 @@ class QueueAssumptionsRepository:
             )
             for override in assumptions.scenario_overrides
         }
+
+    @property
+    def planned_arrival_window_min(self) -> int:
+        return self.assumptions.planned_arrival_window_min
 
     @classmethod
     def from_file(cls, path: Path) -> QueueAssumptionsRepository:

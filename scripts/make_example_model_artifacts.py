@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
-"""Write a tiny, valid example of the three Phase 04 artifacts (persistence estimators).
+"""Write an importable, unapproved example bundle for the Phase 04 contract.
 
-Shows the ML owner the exact file formats. The output is NOT a trained model, so it is
-written to a scratch directory by default and never into ml/artifacts/.
-
-    python scripts/make_example_model_artifacts.py --out build/example_artifacts
-    python scripts/make_example_model_artifacts.py --out build/example_artifacts --time-features
-    python scripts/validate_model_artifacts.py --dir build/example_artifacts
+The output is intentionally rejected by the release validator because it is
+not trained or evaluated. It is useful for inspecting the bundle structure.
 """
 
 from __future__ import annotations
@@ -22,47 +18,65 @@ if str(ROOT) not in sys.path:
 
 import joblib  # noqa: E402
 
-from backend.app.domain.occupancy_model import (  # noqa: E402
-    LAG_FEATURES,
-    SUPPORTED_HORIZONS_MIN,
-    TIME_FEATURES,
-    PersistenceEstimator,
+from backend.app.domain.example_models import PersistenceExampleEstimator  # noqa: E402
+from backend.app.domain.model_artifacts import (  # noqa: E402
+    SUPPORTED_FEATURES,
+    SUPPORTED_HORIZONS,
 )
+from backend.app.domain.model_contract import CONTRACT_VERSION  # noqa: E402
+
+
+def write_example_artifacts(output_dir: Path) -> None:
+    feature_names = list(SUPPORTED_FEATURES)
+    feature_names_by_horizon = {
+        str(horizon): feature_names for horizon in SUPPORTED_HORIZONS
+    }
+    model_bundle = {
+        "format_version": CONTRACT_VERSION,
+        "prediction_mode": "direct",
+        "feature_names_by_horizon": feature_names_by_horizon,
+        "models": {horizon: PersistenceExampleEstimator() for horizon in SUPPORTED_HORIZONS},
+    }
+    preprocessor_bundle = {
+        "format_version": CONTRACT_VERSION,
+        "prediction_mode": "direct",
+        "feature_names_by_horizon": feature_names_by_horizon,
+    }
+    metadata = {
+        "format_version": CONTRACT_VERSION,
+        "model_version": "example-unapproved",
+        "created_at": "example-only",
+        "model_type": "persistence_example",
+        "prediction_mode": "direct",
+        "profile": "baseline",
+        "feature_names": feature_names,
+        "feature_names_by_horizon": feature_names_by_horizon,
+        "lookback_steps": 12,
+        "horizons_min": list(SUPPORTED_HORIZONS),
+        "target": "occupancy_ratio",
+        "metrics": None,
+        "serving_ready": False,
+        "release_status": "example_only_not_evaluated",
+        "limitations": ["Not trained or evaluated; never use for release serving."],
+    }
+    output_dir.mkdir(parents=True, exist_ok=True)
+    joblib.dump(model_bundle, output_dir / "occupancy_model.joblib")
+    joblib.dump(preprocessor_bundle, output_dir / "occupancy_preprocessor.joblib")
+    (output_dir / "occupancy_model_meta.json").write_text(
+        json.dumps(metadata, indent=2) + "\n", encoding="utf-8"
+    )
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=Path("build/example_artifacts"))
-    parser.add_argument("--time-features", action="store_true", help="also declare time features")
     args = parser.parse_args()
     if args.out.resolve() == (ROOT / "ml" / "artifacts").resolve():
         print("Refusing to write example artifacts into ml/artifacts/; pick another --out.")
         return 1
-
-    features = [*LAG_FEATURES, *(TIME_FEATURES if args.time_features else ())]
-    newest_lag_index = features.index("lag_1")
-    models = {h: PersistenceEstimator(newest_lag_index) for h in SUPPORTED_HORIZONS_MIN}
-    meta = {
-        "model_name": "example_persistence",
-        "model_version": "0.0.0",
-        "task": "occupancy_forecasting",
-        "training_dataset": "UrbanEV",
-        "training_level": "station",
-        "temporal_resolution_min": 5,
-        "lookback_steps": 12,
-        "forecast_steps": 3,
-        "features": features,
-        "target": "occupancy_ratio",
-        "metrics": {"mae": None, "rmse": None},
-        "notes": ["Example only; not trained.", "Station IDs are not features."],
-    }
-    args.out.mkdir(parents=True, exist_ok=True)
-    joblib.dump(models, args.out / "occupancy_model.joblib")
-    joblib.dump(None, args.out / "occupancy_preprocessor.joblib")  # None = no scaling
-    (args.out / "occupancy_model_meta.json").write_text(
-        json.dumps(meta, indent=2) + "\n", encoding="utf-8"
-    )
-    print(f"Wrote example artifacts to {args.out}")
+    write_example_artifacts(args.out)
+    print(f"Wrote unapproved contract example to {args.out}")
+    print("It is not a trained model and must not be used for release serving.")
     return 0
 
 

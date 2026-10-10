@@ -1,0 +1,729 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.7035683,
+          10.7850877
+        ]
+      },
+      "properties": {
+        "station_id": "ST_EVO_AUDI_HCM",
+        "provider_station_id": null,
+        "name": "EV ONE – Audi Hồ Chí Minh",
+        "address": "6B Tôn Đức Thắng, Phường Sài Gòn, TP.HCM",
+        "operator": "EV ONE",
+        "zone_id": "HCMC_CENTRAL",
+        "total_ports": 4,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 180,
+            "count": 2,
+            "source": "synthetic"
+          },
+          {
+            "type": "Type2",
+            "current": "AC",
+            "max_power_kw": 11,
+            "count": 2,
+            "source": "synthetic"
+          }
+        ],
+        "amenities": [],
+        "opening_hours": null,
+        "access": "private",
+        "notes": [
+          "Trạm nội bộ dành cho xe Audi; không dùng làm candidate mặc định."
+        ],
+        "source_provider": "ev_one_official+osm_nominatim+manual_verification",
+        "source_updated_at": "2026-09-25T00:00:00+07:00",
+        "synthetic_fields": [
+          "connectors"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.7006195,
+          10.7818088
+        ]
+      },
+      "properties": {
+        "station_id": "ST_EVO_DEUTSCHES_HAUS",
+        "provider_station_id": null,
+        "name": "EV ONE – Deutsches Haus Ho Chi Minh City",
+        "address": "Tầng B3, 33 Lê Duẩn, Phường Sài Gòn, TP.HCM",
+        "operator": "EV ONE",
+        "zone_id": "HCMC_CENTRAL",
+        "total_ports": 4,
+        "connectors": [
+          {
+            "type": "Type2",
+            "current": "AC",
+            "max_power_kw": 22,
+            "count": 4,
+            "source": "synthetic"
+          }
+        ],
+        "amenities": [
+          "parking"
+        ],
+        "opening_hours": null,
+        "access": "public",
+        "notes": [],
+        "source_provider": "ev_one_official+osm_nominatim",
+        "source_updated_at": "2026-09-24T00:00:00+07:00",
+        "synthetic_fields": [
+          "connectors",
+          "amenities"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.7016553,
+          10.7271154
+        ]
+      },
+      "properties": {
+        "station_id": "ST_EVO_LAVIDA_Q7",
+        "provider_station_id": null,
+        "name": "EV ONE – Lavida Quận 7",
+        "address": "Khu dân cư Lavida, Phường Tân Hưng, TP.HCM",
+        "operator": "EV ONE",
+        "zone_id": "HCMC_CENTRAL_SOUTH",
+        "total_ports": 1,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 160,
+            "count": 1,
+            "source": "synthetic"
+          }
+        ],
+        "amenities": [
+          "parking"
+        ],
+        "opening_hours": null,
+        "access": "public",
+        "notes": [],
+        "source_provider": "ev_one_official+osm_nominatim",
+        "source_updated_at": "2026-09-24T00:00:00+07:00",
+        "synthetic_fields": [
+          "total_ports",
+          "connectors",
+          "amenities"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.6874054,
+          10.7936968
+        ]
+      },
+      "properties": {
+        "station_id": "ST_EVO_TRAN_KHANH_DU",
+        "provider_station_id": "a_CSbLqsWqBcI1GEvkGAT228UaCKfoONW05VZF4oZlIhyk3xOuXOEiF01a62MGoDnbUECGrxBoYxaXXc1i0Wi7l6TtSK5RnfIaKy-Tox8jOVolkkauhqcjGm-QTGMG_fM",
+        "name": "EV ONE – Trần Khánh Dư",
+        "address": "75 Trần Khánh Dư, Phường Tân Định, TP.HCM",
+        "operator": "EV ONE",
+        "zone_id": "HCMC_CENTRAL",
+        "total_ports": 1,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 1,
+            "source": "synthetic"
+          }
+        ],
+        "amenities": [],
+        "opening_hours": null,
+        "access": "public",
+        "notes": [
+          "EVCS did not expose an exact matching port inventory; one 60 kW CCS2 port is a project assumption."
+        ],
+        "source_provider": "goong_places+google_maps+synthetic_enrichment",
+        "source_updated_at": "2026-09-27T00:00:00+07:00",
+        "synthetic_fields": [
+          "total_ports",
+          "connectors"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.722328,
+          10.794891
+        ]
+      },
+      "properties": {
+        "station_id": "ST_VF_LANDMARK_81",
+        "provider_station_id": "evcs:hcm0031",
+        "name": "VinFast – Vinhomes Landmark 81 (hầm)",
+        "address": "208 Trần Trọng Kim, Phường 22, Bình Thạnh, TP.HCM",
+        "operator": "VinFast",
+        "zone_id": "HCMC_CENTRAL",
+        "total_ports": 8,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 2,
+            "source": "real"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 30,
+            "count": 2,
+            "source": "real"
+          },
+          {
+            "type": "Type2",
+            "current": "AC",
+            "max_power_kw": 11,
+            "count": 4,
+            "source": "real"
+          }
+        ],
+        "amenities": [
+          "parking"
+        ],
+        "opening_hours": "24/7",
+        "access": "public",
+        "notes": [
+          "Port inventory follows EVCS station HCM0031."
+        ],
+        "source_provider": "goong_places+google_maps+evcs",
+        "source_updated_at": "2026-09-27T00:00:00+07:00",
+        "synthetic_fields": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.6921292,
+          10.7648308
+        ]
+      },
+      "properties": {
+        "station_id": "ST_EVO_NGUYEN_CU_TRINH",
+        "provider_station_id": "lgiocaiwea5ggCdbrnye_3S9BSutU4acT5BEWpl9fupOvTVceppsmHqiaQLDCaDpe9mnJ1NTcf5-h6MCvAiOI_HmGbVy0YY7Wer5Isqhunvd7XFuEngiOnnmsUyOeCeXe",
+        "name": "EV ONE – Nguyễn Cư Trinh",
+        "address": "18 Nguyễn Cư Trinh, Quận 1, TP.HCM",
+        "operator": "EV ONE",
+        "zone_id": "HCMC_CENTRAL",
+        "total_ports": 1,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 1,
+            "source": "synthetic"
+          }
+        ],
+        "amenities": [],
+        "opening_hours": null,
+        "access": "public",
+        "notes": [
+          "EVCS did not expose an exact matching port inventory; one 60 kW CCS2 port is a project assumption."
+        ],
+        "source_provider": "goong_places+google_maps+synthetic_enrichment",
+        "source_updated_at": "2026-09-27T00:00:00+07:00",
+        "synthetic_fields": [
+          "total_ports",
+          "connectors"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.693804,
+          10.7766951
+        ]
+      },
+      "properties": {
+        "station_id": "ST_VF_HUYEN_TRAN_CONG_CHUA",
+        "provider_station_id": "evcs:hcm0653",
+        "name": "VinFast – Bãi đỗ xe công cộng Huyền Trân Công Chúa",
+        "address": "6 Huyền Trân Công Chúa, Phường Bến Thành, TP.HCM",
+        "operator": "VinFast",
+        "zone_id": "HCMC_CENTRAL",
+        "total_ports": 4,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 120,
+            "count": 4,
+            "source": "real"
+          }
+        ],
+        "amenities": [
+          "parking"
+        ],
+        "opening_hours": "24/7",
+        "access": "public",
+        "notes": [
+          "Port inventory follows EVCS station HCM0653."
+        ],
+        "source_provider": "goong_places+google_maps+evcs",
+        "source_updated_at": "2026-09-27T00:00:00+07:00",
+        "synthetic_fields": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.7078448,
+          10.7399577
+        ]
+      },
+      "properties": {
+        "station_id": "ST_VF_FGW_Q7",
+        "provider_station_id": "evcs:hcm1345",
+        "name": "VinFast – FGW Đường số 81",
+        "address": "3-5 Đường số 81, Phường Tân Hưng, TP.HCM",
+        "operator": "VinFast",
+        "zone_id": "HCMC_CENTRAL_SOUTH",
+        "total_ports": 32,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 120,
+            "count": 12,
+            "source": "real"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 8,
+            "source": "real"
+          },
+          {
+            "type": "Type2",
+            "current": "AC",
+            "max_power_kw": 7,
+            "count": 12,
+            "source": "real"
+          }
+        ],
+        "amenities": [
+          "parking"
+        ],
+        "opening_hours": "24/7",
+        "access": "public",
+        "notes": [
+          "Port inventory follows EVCS station HCM1345."
+        ],
+        "source_provider": "goong_places+google_maps+evcs",
+        "source_updated_at": "2026-09-27T00:00:00+07:00",
+        "synthetic_fields": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.6654643,
+          10.7590498
+        ]
+      },
+      "properties": {
+        "station_id": "ST_VF_NGO_QUYEN",
+        "provider_station_id": "QJmNpqaN6nl302Iool4TkUSNfjWrAtGWfKdYJKRZs_BF0XJTpliKlXObdDCVZpaRULZCOqdcasV00IVTpXRQ7PkJbO9E",
+        "name": "VinFast – Ngô Quyền",
+        "address": "147 Ngô Quyền, Phường Chợ Lớn, TP.HCM",
+        "operator": "VinFast",
+        "zone_id": "HCMC_CENTRAL",
+        "total_ports": 1,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 1,
+            "source": "synthetic"
+          }
+        ],
+        "amenities": [],
+        "opening_hours": null,
+        "access": "public",
+        "notes": [
+          "EVCS did not expose an exact matching port inventory; one 60 kW CCS2 port is a project assumption."
+        ],
+        "source_provider": "goong_places+google_maps+synthetic_enrichment",
+        "source_updated_at": "2026-09-27T00:00:00+07:00",
+        "synthetic_fields": [
+          "total_ports",
+          "connectors"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.7020535,
+          10.7779375
+        ]
+      },
+      "properties": {
+        "station_id": "ST_VF_VINCOM_DONG_KHOI",
+        "provider_station_id": "evcs:hcm0160+hcm0030",
+        "name": "VinFast – Vincom Center Đồng Khởi (B5-B6)",
+        "address": "Hầm B5-B6, Vincom Center Đồng Khởi, 72 Lê Thánh Tôn, TP.HCM",
+        "operator": "VinFast",
+        "zone_id": "HCMC_CENTRAL",
+        "total_ports": 73,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 80,
+            "count": 2,
+            "source": "real"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 38,
+            "source": "real"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 30,
+            "count": 11,
+            "source": "real"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 20,
+            "count": 16,
+            "source": "real"
+          },
+          {
+            "type": "Type2",
+            "current": "AC",
+            "max_power_kw": 3.5,
+            "count": 6,
+            "source": "real"
+          }
+        ],
+        "amenities": [
+          "parking"
+        ],
+        "opening_hours": "24/7",
+        "access": "public",
+        "notes": [
+          "Combined EVCS inventories for B6 (HCM0160) and B5 (HCM0030)."
+        ],
+        "source_provider": "goong_places+google_maps+evcs",
+        "source_updated_at": "2026-09-27T00:00:00+07:00",
+        "synthetic_fields": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.712302,
+          10.812013
+        ]
+      },
+      "properties": {
+        "station_id": "ST_VF_QL13_BINH_THANH",
+        "provider_station_id": "evcs:hcm0618",
+        "name": "VinFast – Bãi đỗ xe tư nhân Quốc lộ 13",
+        "address": "55 Quốc lộ 13, Phường 26, Bình Thạnh, TP.HCM",
+        "operator": "VinFast",
+        "zone_id": "HCMC_CENTRAL",
+        "total_ports": 30,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 120,
+            "count": 4,
+            "source": "real"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 26,
+            "source": "real"
+          }
+        ],
+        "amenities": [
+          "parking"
+        ],
+        "opening_hours": "24/7",
+        "access": "public",
+        "notes": [
+          "Port inventory follows EVCS station HCM0618."
+        ],
+        "source_provider": "goong_places+google_maps+evcs",
+        "source_updated_at": "2026-09-27T00:00:00+07:00",
+        "synthetic_fields": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.6592203,
+          10.8006382
+        ]
+      },
+      "properties": {
+        "station_id": "ST_VF_VINCOM_CONG_HOA",
+        "provider_station_id": "evcs:hcm0038",
+        "name": "VinFast – Vincom Plaza Cộng Hòa",
+        "address": "15-17 Cộng Hòa, Phường 4, Tân Bình, TP.HCM",
+        "operator": "VinFast",
+        "zone_id": "HCMC_CENTRAL",
+        "total_ports": 29,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 250,
+            "count": 1,
+            "source": "real"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 28,
+            "source": "real"
+          }
+        ],
+        "amenities": [
+          "parking"
+        ],
+        "opening_hours": "24/7",
+        "access": "public",
+        "notes": [
+          "Port inventory follows EVCS station HCM0038."
+        ],
+        "source_provider": "goong_places+google_maps+evcs",
+        "source_updated_at": "2026-09-27T00:00:00+07:00",
+        "synthetic_fields": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.7198716,
+          10.701131
+        ]
+      },
+      "properties": {
+        "station_id": "ST_VF_PHAM_HUU_LAU",
+        "provider_station_id": "Z4a3P1OcZLGWwHE7tUtRtIrcXzAtqEW9LuLSFSPNMb7Gdefk3ccNhtYVPhQeCdVG0lqVTKdZPZ7aew0NA_WdRtZ7CKAA",
+        "name": "VinFast – Phạm Hữu Lầu",
+        "address": "427 Phạm Hữu Lầu, Nhà Bè, TP.HCM",
+        "operator": "VinFast",
+        "zone_id": "HCMC_CENTRAL_SOUTH",
+        "total_ports": 19,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 150,
+            "count": 2,
+            "source": "synthetic"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 120,
+            "count": 16,
+            "source": "synthetic"
+          },
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 30,
+            "count": 1,
+            "source": "synthetic"
+          }
+        ],
+        "amenities": [],
+        "opening_hours": null,
+        "access": "public",
+        "notes": [
+          "Port counts were retained from the reviewed candidate; EVCS did not expose an exact station inventory at this address."
+        ],
+        "source_provider": "goong_places+google_maps+synthetic_enrichment",
+        "source_updated_at": "2026-09-27T00:00:00+07:00",
+        "synthetic_fields": [
+          "total_ports",
+          "connectors"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.6854854,
+          10.788882
+        ]
+      },
+      "properties": {
+        "station_id": "ST_VF_LA_VELA",
+        "provider_station_id": "evcs:hcm0462",
+        "name": "VinFast – La Vela Saigon Hotel",
+        "address": "103 Lý Chính Thắng / 280 Nam Kỳ Khởi Nghĩa, TP.HCM",
+        "operator": "VinFast",
+        "zone_id": "HCMC_CENTRAL",
+        "total_ports": 2,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 150,
+            "count": 2,
+            "source": "real"
+          }
+        ],
+        "amenities": [
+          "parking"
+        ],
+        "opening_hours": "24/7",
+        "access": "public",
+        "notes": [
+          "Port inventory follows EVCS station HCM0462; the two street addresses refer to the same hotel property."
+        ],
+        "source_provider": "goong_places+google_maps+evcs",
+        "source_updated_at": "2026-09-27T00:00:00+07:00",
+        "synthetic_fields": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.6993053,
+          10.8001021
+        ]
+      },
+      "properties": {
+        "station_id": "ST_VF_BUI_HUU_NGHIA",
+        "provider_station_id": "Qkqul254m3-0wXA6ZUyf47DDaweBCtJ_Bbkv4Nmu1pUp5nrYJwmeD3mCmbCa0dEmDUKRmhLVOKNdSwmZBt2af_FDDKQE",
+        "name": "VinFast – Bùi Hữu Nghĩa",
+        "address": "323 Bùi Hữu Nghĩa, Phường Gia Định, TP.HCM",
+        "operator": "VinFast",
+        "zone_id": "HCMC_CENTRAL",
+        "total_ports": 1,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 1,
+            "source": "synthetic"
+          }
+        ],
+        "amenities": [],
+        "opening_hours": null,
+        "access": "public",
+        "notes": [
+          "EVCS did not expose an exact matching port inventory; one 60 kW CCS2 port is a project assumption."
+        ],
+        "source_provider": "goong_places+google_maps+synthetic_enrichment",
+        "source_updated_at": "2026-09-27T00:00:00+07:00",
+        "synthetic_fields": [
+          "total_ports",
+          "connectors"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.674506,
+          10.739156
+        ]
+      },
+      "properties": {
+        "station_id": "ST_VF_TA_QUANG_BUU",
+        "provider_station_id": "crceeVQfW4p3k34GpXaKiG25Zgmlaaf6X6oiBLRFgYlvl78MQETzibCRuWmgNVnht5YveaBrksBez20Nu0W7ikCXbi-PMKfObalfeIlLieBsk0wfv0SZiW67HzSJR5PLJ",
+        "name": "VinFast – Tạ Quang Bửu",
+        "address": "23/20 Tạ Quang Bửu, Phường 4, Quận 8, TP.HCM",
+        "operator": "VinFast",
+        "zone_id": "HCMC_CENTRAL_SOUTH",
+        "total_ports": 1,
+        "connectors": [
+          {
+            "type": "CCS2",
+            "current": "DC",
+            "max_power_kw": 60,
+            "count": 1,
+            "source": "synthetic"
+          }
+        ],
+        "amenities": [],
+        "opening_hours": null,
+        "access": "public",
+        "notes": [
+          "EVCS did not expose an exact matching port inventory for this address; one 60 kW CCS2 port is a project assumption."
+        ],
+        "source_provider": "goong_places+google_maps+synthetic_enrichment",
+        "source_updated_at": "2026-09-27T00:00:00+07:00",
+        "synthetic_fields": [
+          "total_ports",
+          "connectors"
+        ]
+      }
+    }
+  ]
+}

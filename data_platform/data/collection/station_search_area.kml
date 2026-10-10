@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Smart EV Journey - Các trạm đã duyệt</name>
+    <description>Chỉ hiển thị các trạm đã được xác minh.</description>
+    <Style id="existing-station">
+      <IconStyle><color>ffff7800</color><scale>1.05</scale></IconStyle>
+      <LabelStyle><scale>0.9</scale></LabelStyle>
+    </Style>
+    <Style id="newly-approved-station">
+      <IconStyle><color>ff00a545</color><scale>1.15</scale></IconStyle>
+      <LabelStyle><scale>1.0</scale></LabelStyle>
+    </Style>
+
+    <Folder>
+      <name>Trạm đã có trong cơ sở dữ liệu (16)</name>
+      <Placemark>
+        <name>EV ONE – Audi Hồ Chí Minh</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: riêng tư | Địa chỉ: 6B Tôn Đức Thắng, Phường Sài Gòn, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.7035683,10.7850877,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>EV ONE – Deutsches Haus Ho Chi Minh City</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: công cộng | Địa chỉ: Tầng B3, 33 Lê Duẩn, Phường Sài Gòn, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.7006195,10.7818088,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>EV ONE – Lavida Quận 7</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: công cộng | Địa chỉ: Khu dân cư Lavida, Phường Tân Hưng, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.7016553,10.7271154,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>EV ONE – Trần Khánh Dư</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: công cộng | Địa chỉ: 75 Trần Khánh Dư, Phường Tân Định, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.6874054,10.7936968,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – Vinhomes Landmark 81 (hầm)</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: công cộng | Địa chỉ: 208 Trần Trọng Kim, Phường 22, Bình Thạnh, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.722328,10.794891,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>EV ONE – Nguyễn Cư Trinh</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: công cộng | Địa chỉ: 18 Nguyễn Cư Trinh, Quận 1, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.6921292,10.7648308,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – Bãi đỗ xe công cộng Huyền Trân Công Chúa</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: công cộng | Địa chỉ: 6 Huyền Trân Công Chúa, Phường Bến Thành, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.693804,10.7766951,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – FGW Đường số 81</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: công cộng | Địa chỉ: 3-5 Đường số 81, Phường Tân Hưng, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.7078448,10.7399577,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – Ngô Quyền</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: công cộng | Địa chỉ: 147 Ngô Quyền, Phường Chợ Lớn, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.6654643,10.7590498,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – Vincom Center Đồng Khởi (B5-B6)</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: công cộng | Địa chỉ: Hầm B5-B6, Vincom Center Đồng Khởi, 72 Lê Thánh Tôn, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.7020535,10.7779375,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – Bãi đỗ xe tư nhân Quốc lộ 13</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: công cộng | Địa chỉ: 55 Quốc lộ 13, Phường 26, Bình Thạnh, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.712302,10.812013,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – Vincom Plaza Cộng Hòa</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: công cộng | Địa chỉ: 15-17 Cộng Hòa, Phường 4, Tân Bình, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.6592203,10.8006382,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – Phạm Hữu Lầu</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: công cộng | Địa chỉ: 427 Phạm Hữu Lầu, Nhà Bè, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.7198716,10.701131,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – La Vela Saigon Hotel</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: công cộng | Địa chỉ: 103 Lý Chính Thắng / 280 Nam Kỳ Khởi Nghĩa, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.6854854,10.788882,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – Bùi Hữu Nghĩa</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: công cộng | Địa chỉ: 323 Bùi Hữu Nghĩa, Phường Gia Định, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.6993053,10.8001021,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – Tạ Quang Bửu</name>
+        <description>Trạng thái: đã duyệt | Quyền truy cập: công cộng | Địa chỉ: 23/20 Tạ Quang Bửu, Phường 4, Quận 8, TP.HCM</description>
+        <styleUrl>#existing-station</styleUrl>
+        <Point><coordinates>106.674506,10.739156,0</coordinates></Point>
+      </Placemark>
+    </Folder>
+
+    <Folder>
+      <name>Ứng viên mới được duyệt (7)</name>
+      <Placemark>
+        <name>VinFast – Bãi đỗ xe 24E – Thạnh Xuân</name>
+        <description>Trạng thái: mới duyệt | Quyền truy cập: công cộng | Địa chỉ: Số 24E, tổ 26, khu phố 2, Phường Thạnh Xuân, TP.HCM</description>
+        <styleUrl>#newly-approved-station</styleUrl>
+        <Point><coordinates>106.6740862,10.8830051,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – Bãi đỗ xe Nhà Hàng Gành Hào 2</name>
+        <description>Trạng thái: mới duyệt | Quyền truy cập: công cộng | Địa chỉ: Số 09, đường Hạ Long, Phường 2, Vũng Tàu</description>
+        <styleUrl>#newly-approved-station</styleUrl>
+        <Point><coordinates>107.0716646,10.3395004,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – Nhượng quyền tư nhân Kim Thành Phát</name>
+        <description>Trạng thái: mới duyệt | Quyền truy cập: công cộng | Địa chỉ: Số 780, đường Phạm Hùng, Phường Long Toàn, Bà Rịa</description>
+        <styleUrl>#newly-approved-station</styleUrl>
+        <Point><coordinates>107.1886896,10.4921865,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – Bãi đỗ xe tư nhân Phạm Ân</name>
+        <description>Trạng thái: mới duyệt | Quyền truy cập: công cộng | Địa chỉ: 36 Võ Thị Sáu, Phường Long Tâm, Bà Rịa</description>
+        <styleUrl>#newly-approved-station</styleUrl>
+        <Point><coordinates>107.2121714,10.4954617,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – Cửa hàng xăng dầu số 4</name>
+        <description>Trạng thái: mới duyệt | Quyền truy cập: công cộng | Địa chỉ: Đường 3/2, Phường 12, Vũng Tàu</description>
+        <styleUrl>#newly-approved-station</styleUrl>
+        <Point><coordinates>107.155843,10.40995,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – Bãi đỗ xe Marina Bay</name>
+        <description>Trạng thái: mới duyệt | Quyền truy cập: công cộng | Địa chỉ: Số 115, đường Trần Phú, Phường 5, Vũng Tàu</description>
+        <styleUrl>#newly-approved-station</styleUrl>
+        <Point><coordinates>107.05589536,10.38088749,0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>VinFast – Xưởng dịch vụ VinFast Vũng Tàu</name>
+        <description>Trạng thái: mới duyệt | Quyền truy cập: công cộng | Địa chỉ: Số 55, đường 30 Tháng 4, Phường Rạch Dừa, Vũng Tàu</description>
+        <styleUrl>#newly-approved-station</styleUrl>
+        <Point><coordinates>107.092484,10.380315,0</coordinates></Point>
+      </Placemark>
+    </Folder>
+  </Document>
+</kml>

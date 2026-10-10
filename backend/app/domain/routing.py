@@ -3,17 +3,21 @@
 from __future__ import annotations
 
 import hashlib
-import math
+from collections.abc import Callable
+from datetime import UTC, datetime
 from typing import Any, Protocol
 
 import httpx
 
+from backend.app.domain.geo import haversine_m as _haversine_m
 from backend.app.domain.phase7_models import (
     GeoPoint,
     LineStringGeometry,
+    RouteLeg,
     RouteResult,
     RouteWaypoint,
 )
+from backend.app.domain.provider_http import get_with_retry
 from backend.app.domain.repositories import RouteRepository
 
 
@@ -85,8 +89,9 @@ class GoongRoutingProvider:
             "vehicle": "car",
             "api_key": self._api_key,
         }
-        response = self._client.get("https://rsapi.goong.io/Direction", params=params)
-        response.raise_for_status()
+        response = get_with_retry(
+            self._client, "https://rsapi.goong.io/Direction", params=params
+        )
         payload = response.json()
         routes = payload.get("routes", [])
         if not routes:
@@ -99,6 +104,22 @@ class GoongRoutingProvider:
         if not encoded:
             raise RuntimeError("Goong route has no overview polyline")
         points: tuple[GeoPoint, ...] = (origin, *waypoints, destination)
+        retrieved_at = datetime.now(UTC)
+        route_legs = (
+            tuple(
+                RouteLeg(
+                    origin=start,
+                    destination=end,
+                    distance_m=float(leg["distance"]["value"]),
+                    duration_s=float(leg["duration"]["value"]),
+                    provider="goong",
+                    retrieved_at=retrieved_at,
+                )
+                for start, end, leg in zip(points[:-1], points[1:], legs, strict=True)
+            )
+            if len(legs) == len(points) - 1
+            else ()
+        )
         return RouteResult(
             route_id=_route_id("LIVE_GOONG", points),
             provider="goong",
@@ -111,6 +132,7 @@ class GoongRoutingProvider:
             ),
             distance_m=distance_m,
             duration_s=duration_s,
+            legs=route_legs,
             flags=(),
         )
 
@@ -119,9 +141,11 @@ class OsrmRoutingProvider:
     def __init__(
         self,
         *,
+        base_url: str = "https://router.project-osrm.org",
         timeout_s: float = 8,
         client: httpx.Client | None = None,
     ) -> None:
+        self._base_url = base_url.rstrip("/")
         self._client = client or httpx.Client(timeout=timeout_s)
 
     def route(
@@ -132,15 +156,32 @@ class OsrmRoutingProvider:
     ) -> RouteResult:
         points: tuple[GeoPoint, ...] = (origin, *waypoints, destination)
         coordinate_path = ";".join(f"{point.lon},{point.lat}" for point in points)
-        response = self._client.get(
-            f"https://router.project-osrm.org/route/v1/driving/{coordinate_path}",
+        response = get_with_retry(
+            self._client,
+            f"{self._base_url}/route/v1/driving/{coordinate_path}",
             params={"overview": "full", "geometries": "geojson", "steps": "false"},
         )
-        response.raise_for_status()
         payload: dict[str, Any] = response.json()
         if payload.get("code") != "Ok" or not payload.get("routes"):
             raise RuntimeError("OSRM returned no route")
         route = payload["routes"][0]
+        legs = route.get("legs", [])
+        retrieved_at = datetime.now(UTC)
+        route_legs = (
+            tuple(
+                RouteLeg(
+                    origin=start,
+                    destination=end,
+                    distance_m=float(leg["distance"]),
+                    duration_s=float(leg["duration"]),
+                    provider="osrm",
+                    retrieved_at=retrieved_at,
+                )
+                for start, end, leg in zip(points[:-1], points[1:], legs, strict=True)
+            )
+            if len(legs) == len(points) - 1
+            else ()
+        )
         return RouteResult(
             route_id=_route_id("LIVE_OSRM", points),
             provider="osrm",
@@ -151,6 +192,7 @@ class OsrmRoutingProvider:
             geometry=LineStringGeometry.model_validate(route["geometry"]),
             distance_m=route["distance"],
             duration_s=route["duration"],
+            legs=route_legs,
             flags=("OSRM_FALLBACK",),
         )
 
@@ -162,10 +204,14 @@ class RoutingService:
         *,
         goong: RoutingProvider | None,
         osrm: RoutingProvider | None,
+        require_leg_metrics: bool = False,
+        record_provider_event: Callable[[str, str], None] | None = None,
     ) -> None:
         self._routes = routes
         self._goong = goong
         self._osrm = osrm
+        self._require_leg_metrics = require_leg_metrics
+        self._record_provider_event = record_provider_event
 
     def route(
         self,
@@ -175,32 +221,83 @@ class RoutingService:
         *,
         preferred_route_id: str | None = None,
     ) -> RouteResult:
-        if preferred_route_id is not None:
-            return self.cached_route(preferred_route_id)
+        cached_result = (
+            self._from_cache(preferred_route_id)
+            if preferred_route_id is not None
+            else None
+        )
+        if cached_result is None:
+            cached = self._find_exact_cache(origin, destination, waypoints)
+            if cached is not None:
+                cached_result = self._from_cache(cached.route_id)
+        if cached_result is not None and (
+            not self._require_leg_metrics or has_complete_leg_metrics(cached_result)
+        ):
+            return cached_result
 
-        cached = self._find_exact_cache(origin, destination, waypoints)
-        if cached is not None:
-            return self._from_cache(cached.route_id)
-
-        flags: list[str] = []
+        flags: list[str] = (
+            ["ROUTE_CACHE_LEG_METRICS_UNAVAILABLE"]
+            if cached_result is not None
+            else []
+        )
         if self._goong is not None:
             try:
-                return self._goong.route(origin, destination, waypoints)
+                result = self._goong.route(origin, destination, waypoints)
             except Exception:
+                self._record_provider("goong", "failure")
                 flags.append("GOONG_FAILED")
+            else:
+                if self._require_leg_metrics and not has_complete_leg_metrics(
+                    result, waypoints
+                ):
+                    self._record_provider("goong", "failure")
+                    flags.append("GOONG_LEG_METRICS_UNAVAILABLE")
+                else:
+                    self._record_provider("goong", "success")
+                    return result
         else:
+            self._record_provider("goong", "not_configured")
             flags.append("GOONG_NOT_CONFIGURED")
 
         if self._osrm is not None:
             try:
                 result = self._osrm.route(origin, destination, waypoints)
-                return result.model_copy(update={"flags": tuple([*flags, *result.flags])})
             except Exception:
+                self._record_provider("osrm", "failure")
                 flags.append("OSRM_FAILED")
+            else:
+                if self._require_leg_metrics and not has_complete_leg_metrics(
+                    result, waypoints
+                ):
+                    self._record_provider("osrm", "failure")
+                    flags.append("OSRM_LEG_METRICS_UNAVAILABLE")
+                else:
+                    self._record_provider(
+                        "osrm",
+                        "fallback"
+                        if {
+                            "GOONG_FAILED",
+                            "GOONG_NOT_CONFIGURED",
+                            "GOONG_LEG_METRICS_UNAVAILABLE",
+                        }.intersection(flags)
+                        else "success",
+                    )
+                    return result.model_copy(
+                        update={"flags": tuple([*flags, *result.flags])}
+                    )
+        if cached_result is not None and not self._require_leg_metrics:
+            return cached_result.model_copy(update={"flags": tuple(flags)})
         raise RuntimeError(f"routing unavailable ({', '.join(flags)})")
 
+    def _record_provider(self, provider: str, event: str) -> None:
+        if self._record_provider_event is not None:
+            self._record_provider_event(provider, event)
+
     def cached_route(self, route_id: str) -> RouteResult:
-        return self._from_cache(route_id)
+        result = self._from_cache(route_id)
+        if self._require_leg_metrics and not has_complete_leg_metrics(result):
+            raise RuntimeError("cached route has no complete per-leg metrics")
+        return result
 
     def _from_cache(self, route_id: str) -> RouteResult:
         route = self._routes.get(route_id)
@@ -214,6 +311,7 @@ class RoutingService:
             geometry=route.geometry,
             distance_m=route.distance_m,
             duration_s=route.duration_s,
+            legs=route.legs,
             flags=("ROUTE_CACHE",),
         )
 
@@ -244,6 +342,13 @@ def route_metrics_to_station(route: RouteResult, station_id: str) -> tuple[float
     if waypoint is None:
         raise ValueError(f"route {route.route_id} has no waypoint for {station_id}")
 
+    waypoint_index = route.waypoints.index(waypoint)
+    if len(route.legs) == len(route.waypoints) + 1:
+        return (
+            sum(leg.distance_m for leg in route.legs[: waypoint_index + 1]),
+            sum(leg.duration_s for leg in route.legs[: waypoint_index + 1]),
+        )
+
     coordinates = route.geometry.coordinates
     nearest_index = min(
         range(len(coordinates)),
@@ -265,14 +370,11 @@ def route_metrics_to_station(route: RouteResult, station_id: str) -> tuple[float
     return route.distance_m * fraction, route.duration_s * fraction
 
 
-def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    radius_m = 6_371_000
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    delta_phi = math.radians(lat2 - lat1)
-    delta_lambda = math.radians(lon2 - lon1)
-    value = (
-        math.sin(delta_phi / 2) ** 2
-        + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
-    )
-    return 2 * radius_m * math.atan2(math.sqrt(value), math.sqrt(1 - value))
+def has_complete_leg_metrics(
+    route: RouteResult,
+    requested_waypoints: tuple[RouteWaypoint, ...] | None = None,
+) -> bool:
+    # A direct route's whole-route metrics are its single leg. Waypoint routes
+    # need provider-reported metrics for every segment.
+    waypoints = route.waypoints if requested_waypoints is None else requested_waypoints
+    return not waypoints or len(route.legs) == len(waypoints) + 1

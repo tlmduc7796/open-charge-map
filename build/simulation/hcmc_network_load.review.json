@@ -1,0 +1,102 @@
+{
+  "data_source": "synthetic",
+  "data_domain": "hcmc_synthetic_demo",
+  "release_evidence": false,
+  "training_data": false,
+  "seed": 42,
+  "duration_hours": 24.0,
+  "network_arrivals_per_hour": 12.0,
+  "capacity_wait_multiplier": 1,
+  "station_count": 16,
+  "arrival_count": 505,
+  "methodology": {
+    "nearest": "minimum synthetic straight-line road-time proxy",
+    "load_aware": "minimum road-time proxy plus estimated queue wait",
+    "wait_estimator": "backend WaitEstimator with persistence forecast and synthetic queue inputs",
+    "service_duration": "exponential with synthetic station mean",
+    "occupancy_sampling_min": 5,
+    "limitations": [
+      "not calibrated to observed HCMC arrivals or service durations",
+      "road time is a straight-line distance proxy, not provider routing",
+      "wait estimates use synthetic event state and do not validate operational calibration",
+      "persistence MAE is measured only against synthetic generated occupancy"
+    ]
+  },
+  "input_hashes": {
+    "station_catalog_sha256": "bd4e54426a2c25d9ee64a916f7bf113b755ba645130ad3fc1efa1149af9e8a0b",
+    "station_status_sha256": "b7649b09a9801ef73681d6fdd583ae156bfd49a31752d33719cebcec2a0cdd4b",
+    "arrival_assumptions_sha256": "196fa3ab5824110e82492e957db9ad8fc8c420cd0f8ff731e1ae73e3de109de3"
+  },
+  "results": [
+    {
+      "policy": "nearest",
+      "network_customer_count": 295,
+      "baseline_customer_count": 210,
+      "mean_network_drive_min": 5.213,
+      "mean_network_wait_min": 125.694,
+      "network_p90_wait_min": 477.859,
+      "network_predicted_wait_mae_min": 85.334,
+      "network_predicted_wait_p90_coverage": 0.661,
+      "mean_wait_min": 94.352,
+      "p90_wait_min": 441.925,
+      "mean_charge_min": 37.604,
+      "mean_network_trip_service_min": 167.085,
+      "mean_sampled_occupancy_ratio": 0.356,
+      "peak_sampled_occupancy_ratio": 1.0,
+      "next_bucket_persistence_mae": 0.02964,
+      "network_assignments_by_station": {
+        "ST_EVO_AUDI_HCM": 6,
+        "ST_EVO_DEUTSCHES_HAUS": 2,
+        "ST_EVO_LAVIDA_Q7": 50,
+        "ST_EVO_NGUYEN_CU_TRINH": 19,
+        "ST_EVO_TRAN_KHANH_DU": 16,
+        "ST_VF_BUI_HUU_NGHIA": 12,
+        "ST_VF_FGW_Q7": 34,
+        "ST_VF_HUYEN_TRAN_CONG_CHUA": 7,
+        "ST_VF_LANDMARK_81": 6,
+        "ST_VF_LA_VELA": 14,
+        "ST_VF_NGO_QUYEN": 16,
+        "ST_VF_PHAM_HUU_LAU": 12,
+        "ST_VF_QL13_BINH_THANH": 10,
+        "ST_VF_TA_QUANG_BUU": 53,
+        "ST_VF_VINCOM_CONG_HOA": 22,
+        "ST_VF_VINCOM_DONG_KHOI": 16
+      }
+    },
+    {
+      "policy": "load_aware",
+      "network_customer_count": 295,
+      "baseline_customer_count": 210,
+      "mean_network_drive_min": 6.963,
+      "mean_network_wait_min": 0.0,
+      "network_p90_wait_min": 0.0,
+      "network_predicted_wait_mae_min": 0.0,
+      "network_predicted_wait_p90_coverage": 1.0,
+      "mean_wait_min": 6.334,
+      "p90_wait_min": 1.858,
+      "mean_charge_min": 41.133,
+      "mean_network_trip_service_min": 49.181,
+      "mean_sampled_occupancy_ratio": 0.3363,
+      "peak_sampled_occupancy_ratio": 1.0,
+      "next_bucket_persistence_mae": 0.05268,
+      "network_assignments_by_station": {
+        "ST_EVO_AUDI_HCM": 10,
+        "ST_EVO_DEUTSCHES_HAUS": 3,
+        "ST_EVO_LAVIDA_Q7": 21,
+        "ST_EVO_NGUYEN_CU_TRINH": 8,
+        "ST_EVO_TRAN_KHANH_DU": 9,
+        "ST_VF_BUI_HUU_NGHIA": 5,
+        "ST_VF_FGW_Q7": 81,
+        "ST_VF_HUYEN_TRAN_CONG_CHUA": 19,
+        "ST_VF_LANDMARK_81": 6,
+        "ST_VF_LA_VELA": 16,
+        "ST_VF_NGO_QUYEN": 15,
+        "ST_VF_PHAM_HUU_LAU": 30,
+        "ST_VF_QL13_BINH_THANH": 12,
+        "ST_VF_TA_QUANG_BUU": 15,
+        "ST_VF_VINCOM_CONG_HOA": 28,
+        "ST_VF_VINCOM_DONG_KHOI": 17
+      }
+    }
+  ]
+}

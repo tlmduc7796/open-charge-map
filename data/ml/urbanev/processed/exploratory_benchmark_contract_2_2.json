@@ -1,0 +1,589 @@
+{
+  "created_at": "2026-10-09T11:04:31.397817+00:00",
+  "benchmark_scope": "exploratory_source_domain_benchmark",
+  "dataset": "data/ml/urbanev/processed/urbanev_processed.parquet",
+  "dataset_sha256": "f9e594a41fb58643108512484f2925fe861699542dd7c2d84a2971a4785a9c7f",
+  "source_archive_sha256": "9d3f0aec34434546d082509efcdeeaea116eaa841701cc5854a9b62a27881a79",
+  "serving_contract_version": "2.2",
+  "horizons_min": [
+    5,
+    10,
+    15,
+    20,
+    25,
+    30
+  ],
+  "deployment_eligible": false,
+  "test_status": "Previously inspected; not an untouched final holdout.",
+  "final_independent_holdout_required": true,
+  "objective": "reg:absoluteerror",
+  "models": [
+    "persistence",
+    "daily_naive",
+    "weekly_naive",
+    "gated_residual_xgboost"
+  ],
+  "confidence_statement": "No confidence estimate is produced. The gate is residual magnitude only.",
+  "daily_weekly_definition": "At target t+h, use occupancy at target-24h and target-7d.",
+  "required_winning_horizons": 6,
+  "residual_winning_horizons": 6,
+  "phase_04_test_mae_gain_threshold": 0.05,
+  "historical_test_horizons_meeting_threshold": 0,
+  "historical_test_all_horizons_meet_threshold": false,
+  "training_config": {
+    "seed": 42,
+    "max_train_rows_per_horizon": 200000,
+    "objective": "reg:absoluteerror",
+    "n_estimators": 500,
+    "max_depth": 8,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "tree_method": "hist",
+    "n_jobs": 1,
+    "xgboost_version": "2.1.4"
+  },
+  "verdict": "NO_GO_HISTORICAL_TEST_MAE_THRESHOLD",
+  "per_horizon": {
+    "5": {
+      "sample_counts": {
+        "train": 1872000,
+        "val": 230350,
+        "test": 403150
+      },
+      "daily_offset_steps": 287,
+      "weekly_offset_steps": 2015,
+      "residual_magnitude_gate": {
+        "alpha": 1.0,
+        "threshold": 3.6e-07,
+        "validation_mae": 0.0069351,
+        "description": "Gate on predicted residual magnitude; this is not confidence or uncertainty."
+      },
+      "validation": {
+        "persistence": {
+          "mae": 0.007779,
+          "median_absolute_error": 0.0,
+          "rmse": 0.05482,
+          "calibration_ece_10bin": 0.003938,
+          "calibration_slope": 0.973152,
+          "calibration_intercept": 0.006125
+        },
+        "daily_naive": {
+          "mae": 0.060032,
+          "median_absolute_error": 0.0,
+          "rmse": 0.123815,
+          "calibration_ece_10bin": 0.029023,
+          "calibration_slope": 0.861415,
+          "calibration_intercept": 0.032973
+        },
+        "weekly_naive": {
+          "mae": 0.107197,
+          "median_absolute_error": 0.055556,
+          "rmse": 0.177726,
+          "calibration_ece_10bin": 0.059225,
+          "calibration_slope": 0.696152,
+          "calibration_intercept": 0.067708
+        },
+        "gated_residual_xgboost": {
+          "mae": 0.006935,
+          "median_absolute_error": 0.0,
+          "rmse": 0.043947,
+          "calibration_ece_10bin": 0.001775,
+          "calibration_slope": 0.995596,
+          "calibration_intercept": 0.002287
+        }
+      },
+      "test_exploratory_only": {
+        "persistence": {
+          "mae": 0.005501,
+          "median_absolute_error": 0.0,
+          "rmse": 0.034006,
+          "calibration_ece_10bin": 0.00169,
+          "calibration_slope": 0.991442,
+          "calibration_intercept": 0.002173
+        },
+        "daily_naive": {
+          "mae": 0.070059,
+          "median_absolute_error": 0.0,
+          "rmse": 0.149147,
+          "calibration_ece_10bin": 0.033316,
+          "calibration_slope": 0.836947,
+          "calibration_intercept": 0.041484
+        },
+        "weekly_naive": {
+          "mae": 0.134727,
+          "median_absolute_error": 0.083333,
+          "rmse": 0.222699,
+          "calibration_ece_10bin": 0.069822,
+          "calibration_slope": 0.639845,
+          "calibration_intercept": 0.095094
+        },
+        "gated_residual_xgboost": {
+          "mae": 0.005554,
+          "median_absolute_error": 0.0,
+          "rmse": 0.031792,
+          "calibration_ece_10bin": 0.001167,
+          "calibration_slope": 0.995162,
+          "calibration_intercept": 0.001461
+        }
+      },
+      "historical_test_gate_diagnostic": {
+        "mae_gain_vs_persistence": -0.009635,
+        "required_gain": 0.05,
+        "meets_threshold": false,
+        "decision_use": "diagnostic_only_test_window_was_previously_inspected"
+      },
+      "decision": "RESIDUAL_WINS"
+    },
+    "10": {
+      "sample_counts": {
+        "train": 1872000,
+        "val": 230300,
+        "test": 403100
+      },
+      "daily_offset_steps": 286,
+      "weekly_offset_steps": 2014,
+      "residual_magnitude_gate": {
+        "alpha": 1.0,
+        "threshold": 2.3e-07,
+        "validation_mae": 0.00888662,
+        "description": "Gate on predicted residual magnitude; this is not confidence or uncertainty."
+      },
+      "validation": {
+        "persistence": {
+          "mae": 0.009999,
+          "median_absolute_error": 0.0,
+          "rmse": 0.058012,
+          "calibration_ece_10bin": 0.004823,
+          "calibration_slope": 0.969908,
+          "calibration_intercept": 0.006866
+        },
+        "daily_naive": {
+          "mae": 0.060028,
+          "median_absolute_error": 0.0,
+          "rmse": 0.123811,
+          "calibration_ece_10bin": 0.029022,
+          "calibration_slope": 0.8614,
+          "calibration_intercept": 0.032971
+        },
+        "weekly_naive": {
+          "mae": 0.107206,
+          "median_absolute_error": 0.055556,
+          "rmse": 0.177736,
+          "calibration_ece_10bin": 0.059231,
+          "calibration_slope": 0.696104,
+          "calibration_intercept": 0.067713
+        },
+        "gated_residual_xgboost": {
+          "mae": 0.008887,
+          "median_absolute_error": 0.0,
+          "rmse": 0.047576,
+          "calibration_ece_10bin": 0.002334,
+          "calibration_slope": 0.992858,
+          "calibration_intercept": 0.002894
+        }
+      },
+      "test_exploratory_only": {
+        "persistence": {
+          "mae": 0.007319,
+          "median_absolute_error": 0.0,
+          "rmse": 0.038002,
+          "calibration_ece_10bin": 0.002172,
+          "calibration_slope": 0.98932,
+          "calibration_intercept": 0.002724
+        },
+        "daily_naive": {
+          "mae": 0.070046,
+          "median_absolute_error": 0.0,
+          "rmse": 0.149123,
+          "calibration_ece_10bin": 0.033308,
+          "calibration_slope": 0.837013,
+          "calibration_intercept": 0.041484
+        },
+        "weekly_naive": {
+          "mae": 0.134718,
+          "median_absolute_error": 0.083333,
+          "rmse": 0.222688,
+          "calibration_ece_10bin": 0.069815,
+          "calibration_slope": 0.6399,
+          "calibration_intercept": 0.095092
+        },
+        "gated_residual_xgboost": {
+          "mae": 0.007341,
+          "median_absolute_error": 0.0,
+          "rmse": 0.035777,
+          "calibration_ece_10bin": 0.001609,
+          "calibration_slope": 0.993309,
+          "calibration_intercept": 0.001932
+        }
+      },
+      "historical_test_gate_diagnostic": {
+        "mae_gain_vs_persistence": -0.003006,
+        "required_gain": 0.05,
+        "meets_threshold": false,
+        "decision_use": "diagnostic_only_test_window_was_previously_inspected"
+      },
+      "decision": "RESIDUAL_WINS"
+    },
+    "15": {
+      "sample_counts": {
+        "train": 1872000,
+        "val": 230250,
+        "test": 403050
+      },
+      "daily_offset_steps": 285,
+      "weekly_offset_steps": 2013,
+      "residual_magnitude_gate": {
+        "alpha": 1.0,
+        "threshold": 1.31e-06,
+        "validation_mae": 0.00959959,
+        "description": "Gate on predicted residual magnitude; this is not confidence or uncertainty."
+      },
+      "validation": {
+        "persistence": {
+          "mae": 0.010305,
+          "median_absolute_error": 0.0,
+          "rmse": 0.057728,
+          "calibration_ece_10bin": 0.004612,
+          "calibration_slope": 0.970168,
+          "calibration_intercept": 0.006807
+        },
+        "daily_naive": {
+          "mae": 0.060023,
+          "median_absolute_error": 0.0,
+          "rmse": 0.123807,
+          "calibration_ece_10bin": 0.02902,
+          "calibration_slope": 0.861386,
+          "calibration_intercept": 0.032968
+        },
+        "weekly_naive": {
+          "mae": 0.107213,
+          "median_absolute_error": 0.055556,
+          "rmse": 0.177745,
+          "calibration_ece_10bin": 0.059235,
+          "calibration_slope": 0.696058,
+          "calibration_intercept": 0.067718
+        },
+        "gated_residual_xgboost": {
+          "mae": 0.0096,
+          "median_absolute_error": 0.0,
+          "rmse": 0.048286,
+          "calibration_ece_10bin": 0.002417,
+          "calibration_slope": 0.992372,
+          "calibration_intercept": 0.002923
+        }
+      },
+      "test_exploratory_only": {
+        "persistence": {
+          "mae": 0.008765,
+          "median_absolute_error": 0.0,
+          "rmse": 0.041144,
+          "calibration_ece_10bin": 0.00259,
+          "calibration_slope": 0.98749,
+          "calibration_intercept": 0.003202
+        },
+        "daily_naive": {
+          "mae": 0.070033,
+          "median_absolute_error": 0.0,
+          "rmse": 0.149099,
+          "calibration_ece_10bin": 0.0333,
+          "calibration_slope": 0.837082,
+          "calibration_intercept": 0.041485
+        },
+        "weekly_naive": {
+          "mae": 0.13471,
+          "median_absolute_error": 0.083333,
+          "rmse": 0.222676,
+          "calibration_ece_10bin": 0.069807,
+          "calibration_slope": 0.639956,
+          "calibration_intercept": 0.09509
+        },
+        "gated_residual_xgboost": {
+          "mae": 0.008777,
+          "median_absolute_error": 0.0,
+          "rmse": 0.039028,
+          "calibration_ece_10bin": 0.001953,
+          "calibration_slope": 0.991608,
+          "calibration_intercept": 0.002366
+        }
+      },
+      "historical_test_gate_diagnostic": {
+        "mae_gain_vs_persistence": -0.001369,
+        "required_gain": 0.05,
+        "meets_threshold": false,
+        "decision_use": "diagnostic_only_test_window_was_previously_inspected"
+      },
+      "decision": "RESIDUAL_WINS"
+    },
+    "20": {
+      "sample_counts": {
+        "train": 1872000,
+        "val": 230200,
+        "test": 403000
+      },
+      "daily_offset_steps": 284,
+      "weekly_offset_steps": 2012,
+      "residual_magnitude_gate": {
+        "alpha": 1.0,
+        "threshold": 9.65e-06,
+        "validation_mae": 0.01125005,
+        "description": "Gate on predicted residual magnitude; this is not confidence or uncertainty."
+      },
+      "validation": {
+        "persistence": {
+          "mae": 0.012498,
+          "median_absolute_error": 0.0,
+          "rmse": 0.062005,
+          "calibration_ece_10bin": 0.005631,
+          "calibration_slope": 0.965571,
+          "calibration_intercept": 0.007855
+        },
+        "daily_naive": {
+          "mae": 0.060016,
+          "median_absolute_error": 0.0,
+          "rmse": 0.123796,
+          "calibration_ece_10bin": 0.029016,
+          "calibration_slope": 0.861407,
+          "calibration_intercept": 0.032961
+        },
+        "weekly_naive": {
+          "mae": 0.107222,
+          "median_absolute_error": 0.055556,
+          "rmse": 0.177754,
+          "calibration_ece_10bin": 0.05924,
+          "calibration_slope": 0.696014,
+          "calibration_intercept": 0.067722
+        },
+        "gated_residual_xgboost": {
+          "mae": 0.01125,
+          "median_absolute_error": 0.0,
+          "rmse": 0.051269,
+          "calibration_ece_10bin": 0.003034,
+          "calibration_slope": 0.989767,
+          "calibration_intercept": 0.00349
+        }
+      },
+      "test_exploratory_only": {
+        "persistence": {
+          "mae": 0.010107,
+          "median_absolute_error": 0.0,
+          "rmse": 0.043782,
+          "calibration_ece_10bin": 0.002937,
+          "calibration_slope": 0.985842,
+          "calibration_intercept": 0.003635
+        },
+        "daily_naive": {
+          "mae": 0.07002,
+          "median_absolute_error": 0.0,
+          "rmse": 0.149075,
+          "calibration_ece_10bin": 0.033291,
+          "calibration_slope": 0.837152,
+          "calibration_intercept": 0.041485
+        },
+        "weekly_naive": {
+          "mae": 0.134702,
+          "median_absolute_error": 0.083333,
+          "rmse": 0.222664,
+          "calibration_ece_10bin": 0.0698,
+          "calibration_slope": 0.640011,
+          "calibration_intercept": 0.095088
+        },
+        "gated_residual_xgboost": {
+          "mae": 0.010111,
+          "median_absolute_error": 0.0,
+          "rmse": 0.041872,
+          "calibration_ece_10bin": 0.002304,
+          "calibration_slope": 0.990018,
+          "calibration_intercept": 0.002791
+        }
+      },
+      "historical_test_gate_diagnostic": {
+        "mae_gain_vs_persistence": -0.000396,
+        "required_gain": 0.05,
+        "meets_threshold": false,
+        "decision_use": "diagnostic_only_test_window_was_previously_inspected"
+      },
+      "decision": "RESIDUAL_WINS"
+    },
+    "25": {
+      "sample_counts": {
+        "train": 1872000,
+        "val": 230150,
+        "test": 402950
+      },
+      "daily_offset_steps": 283,
+      "weekly_offset_steps": 2011,
+      "residual_magnitude_gate": {
+        "alpha": 1.0,
+        "threshold": 1.249e-05,
+        "validation_mae": 0.01191537,
+        "description": "Gate on predicted residual magnitude; this is not confidence or uncertainty."
+      },
+      "validation": {
+        "persistence": {
+          "mae": 0.012491,
+          "median_absolute_error": 0.0,
+          "rmse": 0.059986,
+          "calibration_ece_10bin": 0.005166,
+          "calibration_slope": 0.967744,
+          "calibration_intercept": 0.007362
+        },
+        "daily_naive": {
+          "mae": 0.060014,
+          "median_absolute_error": 0.0,
+          "rmse": 0.123796,
+          "calibration_ece_10bin": 0.029015,
+          "calibration_slope": 0.861408,
+          "calibration_intercept": 0.032959
+        },
+        "weekly_naive": {
+          "mae": 0.107229,
+          "median_absolute_error": 0.055556,
+          "rmse": 0.177763,
+          "calibration_ece_10bin": 0.059244,
+          "calibration_slope": 0.695976,
+          "calibration_intercept": 0.067726
+        },
+        "gated_residual_xgboost": {
+          "mae": 0.011915,
+          "median_absolute_error": 0.0,
+          "rmse": 0.051603,
+          "calibration_ece_10bin": 0.00297,
+          "calibration_slope": 0.98958,
+          "calibration_intercept": 0.003534
+        }
+      },
+      "test_exploratory_only": {
+        "persistence": {
+          "mae": 0.011484,
+          "median_absolute_error": 0.0,
+          "rmse": 0.046899,
+          "calibration_ece_10bin": 0.003398,
+          "calibration_slope": 0.983757,
+          "calibration_intercept": 0.004177
+        },
+        "daily_naive": {
+          "mae": 0.070007,
+          "median_absolute_error": 0.0,
+          "rmse": 0.149052,
+          "calibration_ece_10bin": 0.033282,
+          "calibration_slope": 0.837217,
+          "calibration_intercept": 0.041486
+        },
+        "weekly_naive": {
+          "mae": 0.134693,
+          "median_absolute_error": 0.083333,
+          "rmse": 0.222653,
+          "calibration_ece_10bin": 0.069793,
+          "calibration_slope": 0.640061,
+          "calibration_intercept": 0.095087
+        },
+        "gated_residual_xgboost": {
+          "mae": 0.01145,
+          "median_absolute_error": 0.0,
+          "rmse": 0.044916,
+          "calibration_ece_10bin": 0.002732,
+          "calibration_slope": 0.988166,
+          "calibration_intercept": 0.003296
+        }
+      },
+      "historical_test_gate_diagnostic": {
+        "mae_gain_vs_persistence": 0.002961,
+        "required_gain": 0.05,
+        "meets_threshold": false,
+        "decision_use": "diagnostic_only_test_window_was_previously_inspected"
+      },
+      "decision": "RESIDUAL_WINS"
+    },
+    "30": {
+      "sample_counts": {
+        "train": 1872000,
+        "val": 230100,
+        "test": 402900
+      },
+      "daily_offset_steps": 282,
+      "weekly_offset_steps": 2010,
+      "residual_magnitude_gate": {
+        "alpha": 1.0,
+        "threshold": 5.787e-05,
+        "validation_mae": 0.0133902,
+        "description": "Gate on predicted residual magnitude; this is not confidence or uncertainty."
+      },
+      "validation": {
+        "persistence": {
+          "mae": 0.014498,
+          "median_absolute_error": 0.0,
+          "rmse": 0.064116,
+          "calibration_ece_10bin": 0.006183,
+          "calibration_slope": 0.963128,
+          "calibration_intercept": 0.008413
+        },
+        "daily_naive": {
+          "mae": 0.060009,
+          "median_absolute_error": 0.0,
+          "rmse": 0.123789,
+          "calibration_ece_10bin": 0.029012,
+          "calibration_slope": 0.861388,
+          "calibration_intercept": 0.032957
+        },
+        "weekly_naive": {
+          "mae": 0.107234,
+          "median_absolute_error": 0.055556,
+          "rmse": 0.177768,
+          "calibration_ece_10bin": 0.05925,
+          "calibration_slope": 0.695934,
+          "calibration_intercept": 0.067729
+        },
+        "gated_residual_xgboost": {
+          "mae": 0.01339,
+          "median_absolute_error": 0.0,
+          "rmse": 0.054335,
+          "calibration_ece_10bin": 0.003522,
+          "calibration_slope": 0.98722,
+          "calibration_intercept": 0.00402
+        }
+      },
+      "test_exploratory_only": {
+        "persistence": {
+          "mae": 0.01267,
+          "median_absolute_error": 0.0,
+          "rmse": 0.049442,
+          "calibration_ece_10bin": 0.003779,
+          "calibration_slope": 0.98195,
+          "calibration_intercept": 0.004648
+        },
+        "daily_naive": {
+          "mae": 0.069995,
+          "median_absolute_error": 0.0,
+          "rmse": 0.149028,
+          "calibration_ece_10bin": 0.033274,
+          "calibration_slope": 0.837281,
+          "calibration_intercept": 0.041486
+        },
+        "weekly_naive": {
+          "mae": 0.134685,
+          "median_absolute_error": 0.083333,
+          "rmse": 0.222641,
+          "calibration_ece_10bin": 0.069786,
+          "calibration_slope": 0.640111,
+          "calibration_intercept": 0.095086
+        },
+        "gated_residual_xgboost": {
+          "mae": 0.012634,
+          "median_absolute_error": 0.0,
+          "rmse": 0.047569,
+          "calibration_ece_10bin": 0.003098,
+          "calibration_slope": 0.986273,
+          "calibration_intercept": 0.003755
+        }
+      },
+      "historical_test_gate_diagnostic": {
+        "mae_gain_vs_persistence": 0.002841,
+        "required_gain": 0.05,
+        "meets_threshold": false,
+        "decision_use": "diagnostic_only_test_window_was_previously_inspected"
+      },
+      "decision": "RESIDUAL_WINS"
+    }
+  }
+}

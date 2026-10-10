@@ -1,0 +1,77 @@
+{
+  "planned_arrival_window_min": 15,
+  "station_rates": [
+    {
+      "station_id": "ST_EVO_AUDI_HCM",
+      "baseline_arrival_rate_per_hour": 0.4
+    },
+    {
+      "station_id": "ST_EVO_DEUTSCHES_HAUS",
+      "baseline_arrival_rate_per_hour": 1.4
+    },
+    {
+      "station_id": "ST_EVO_LAVIDA_Q7",
+      "baseline_arrival_rate_per_hour": 0.6
+    },
+    {
+      "station_id": "ST_EVO_TRAN_KHANH_DU",
+      "baseline_arrival_rate_per_hour": 0.5
+    },
+    {
+      "station_id": "ST_VF_LANDMARK_81",
+      "baseline_arrival_rate_per_hour": 0.5
+    },
+    {
+      "station_id": "ST_EVO_NGUYEN_CU_TRINH",
+      "baseline_arrival_rate_per_hour": 0.5
+    },
+    {
+      "station_id": "ST_VF_HUYEN_TRAN_CONG_CHUA",
+      "baseline_arrival_rate_per_hour": 0.5
+    },
+    {
+      "station_id": "ST_VF_FGW_Q7",
+      "baseline_arrival_rate_per_hour": 0.5
+    },
+    {
+      "station_id": "ST_VF_NGO_QUYEN",
+      "baseline_arrival_rate_per_hour": 0.5
+    },
+    {
+      "station_id": "ST_VF_VINCOM_DONG_KHOI",
+      "baseline_arrival_rate_per_hour": 0.5
+    },
+    {
+      "station_id": "ST_VF_QL13_BINH_THANH",
+      "baseline_arrival_rate_per_hour": 0.5
+    },
+    {
+      "station_id": "ST_VF_VINCOM_CONG_HOA",
+      "baseline_arrival_rate_per_hour": 0.5
+    },
+    {
+      "station_id": "ST_VF_PHAM_HUU_LAU",
+      "baseline_arrival_rate_per_hour": 0.5
+    },
+    {
+      "station_id": "ST_VF_LA_VELA",
+      "baseline_arrival_rate_per_hour": 0.5
+    },
+    {
+      "station_id": "ST_VF_BUI_HUU_NGHIA",
+      "baseline_arrival_rate_per_hour": 0.5
+    },
+    {
+      "station_id": "ST_VF_TA_QUANG_BUU",
+      "baseline_arrival_rate_per_hour": 0.5
+    }
+  ],
+  "scenario_overrides": [
+    {
+      "scenario_id": "SCN_CONGESTION_REROUTE",
+      "station_id": "ST_VF_LA_VELA",
+      "baseline_arrival_rate_per_hour": 2.8
+    }
+  ],
+  "data_source": "synthetic"
+}

@@ -13,6 +13,7 @@ from backend.app.domain.phase7_models import (
     GeoPoint,
     PlaceSuggestion,
 )
+from backend.app.domain.provider_http import get_with_retry
 
 
 class GeocodingProvider(Protocol):
@@ -33,7 +34,8 @@ class GoongGeocodingProvider:
         self._client = client or httpx.Client(timeout=timeout_s)
 
     def autocomplete(self, query: str) -> tuple[PlaceSuggestion, ...]:
-        response = self._client.get(
+        response = get_with_retry(
+            self._client,
             "https://rsapi.goong.io/Place/AutoComplete",
             params={
                 "api_key": self._api_key,
@@ -41,7 +43,6 @@ class GoongGeocodingProvider:
                 "location": "10.7769,106.7009",
             },
         )
-        response.raise_for_status()
         predictions: list[dict[str, Any]] = response.json().get("predictions", [])
         return tuple(
             PlaceSuggestion(
@@ -60,11 +61,11 @@ class GoongGeocodingProvider:
         )
 
     def details(self, place_id: str) -> GeocodedPlace:
-        response = self._client.get(
+        response = get_with_retry(
+            self._client,
             "https://rsapi.goong.io/Place/Detail",
             params={"api_key": self._api_key, "place_id": place_id},
         )
-        response.raise_for_status()
         result: dict[str, Any] = response.json().get("result") or {}
         location = result.get("geometry", {}).get("location", {})
         if "lat" not in location or "lng" not in location:
@@ -86,8 +87,10 @@ class GeocodingService:
         scenarios: tuple[DemoScenario, ...],
         *,
         goong: GeocodingProvider | None,
+        allow_demo_fallback: bool = True,
     ) -> None:
         self._goong = goong
+        self._allow_demo_fallback = allow_demo_fallback
         self._demo_places: dict[str, GeocodedPlace] = {}
         for scenario in scenarios:
             self._add_demo_point(scenario.origin)
@@ -97,13 +100,19 @@ class GeocodingService:
         normalized = query.strip()
         if len(normalized) < 2:
             return ()
-        if self._goong is not None:
+        if self._goong is None:
+            if not self._allow_demo_fallback:
+                raise RuntimeError("geocoding provider is not configured")
+        else:
             try:
                 results = self._goong.autocomplete(normalized)
-                if results:
+                if results or not self._allow_demo_fallback:
                     return results
-            except Exception:
-                pass
+            except Exception as exc:
+                if not self._allow_demo_fallback:
+                    raise RuntimeError("geocoding provider is unavailable") from exc
+        if not self._allow_demo_fallback:
+            return ()
         needle = normalized.casefold()
         return tuple(
             PlaceSuggestion(
@@ -119,10 +128,15 @@ class GeocodingService:
 
     def details(self, place_id: str) -> GeocodedPlace:
         if place_id.startswith("demo:"):
+            if not self._allow_demo_fallback:
+                raise KeyError(place_id)
             return self._demo_places[place_id]
         if self._goong is None:
             raise RuntimeError("Goong geocoding is not configured")
-        return self._goong.details(place_id)
+        try:
+            return self._goong.details(place_id)
+        except (httpx.HTTPError, RuntimeError) as exc:
+            raise RuntimeError("geocoding provider is unavailable") from exc
 
     def _add_demo_point(self, point: GeoPoint) -> None:
         label = point.label or f"{point.lat:.6f}, {point.lon:.6f}"

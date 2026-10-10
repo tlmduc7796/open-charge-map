@@ -1,0 +1,4 @@
+# Minimal, bounded dependencies for the reproducible UrbanEV preprocessing step.
+numpy==1.26.4
+pandas==2.2.3
+pyarrow==18.1.0

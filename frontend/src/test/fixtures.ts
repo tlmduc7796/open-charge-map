@@ -14,13 +14,21 @@ export const station: Station = {
   geometry: { type: "Point", coordinates: [106.7016553, 10.7271154] },
   properties: {
     station_id: "ST_EVO_LAVIDA_Q7",
+    provider_station_id: null,
     name: "EV ONE – Lavida Quận 7",
     address: "Khu dân cư Lavida, TP.HCM",
     operator: "EV ONE",
+    zone_id: null,
     total_ports: 1,
     connectors: [{ type: "CCS2", current: "DC", max_power_kw: 160, count: 1, source: "real" }],
+    amenities: [],
+    opening_hours: null,
     access: "public",
     notes: [],
+    source_provider: "fixture",
+    source_updated_at: null,
+    source_updated_at_basis: "missing",
+    synthetic_fields: [],
   },
 };
 
@@ -32,10 +40,12 @@ export const status: StationStatus = {
   occupied_ports: 0,
   available_ports: 1,
   offline_ports: 0,
+  unknown_ports: 0,
   occupancy_ratio: 0,
   queue_length: 0,
   avg_session_duration_min: 30,
   data_source: "synthetic",
+  is_stale: false,
 };
 
 export const vehicle: Vehicle = {
@@ -44,10 +54,18 @@ export const vehicle: Vehicle = {
   model: "VF 5",
   variant: "Plus",
   battery_capacity_kwh: 37.23,
+  usable_battery_kwh: 37.23,
+  ac_connectors: ["Type2"],
+  dc_connectors: ["CCS2"],
   max_ac_power_kw: 6.6,
   max_dc_power_kw: 50,
+  consumption_wh_km: 150,
   reserve_soc: 0.1,
   default_target_soc: 0.8,
+  charging_efficiency: 0.9,
+  source: "fixture",
+  is_synthetic: false,
+  synthetic_fields: [],
 };
 
 export const scenario: DemoScenario = {
@@ -68,12 +86,14 @@ export const route: RouteResult = {
   resolution_source: "cache",
   origin: scenario.origin,
   destination: scenario.destination,
+  waypoints: [],
   geometry: {
     type: "LineString",
     coordinates: [[106.705, 10.7075], [106.701, 10.727], [106.687, 10.806]],
   },
   distance_m: 15654,
   duration_s: 1157,
+  legs: [],
   flags: ["ROUTE_CACHE"],
 };
 
@@ -87,13 +107,27 @@ export const recommendationItem: RecommendationItem = {
   effective_power_kw: 50,
   route_distance_to_station_m: 2200,
   route_duration_to_station_s: 240,
+  drive_to_station_min: 4,
+  drive_station_to_destination_min: 15,
   detour_min: 3.3,
   arrival_soc: 0.52,
+  destination_soc: 0.45,
+  minimum_soc: 0.45,
   predicted_occupied_ports: 0,
   predicted_occupancy_ratio: 0,
+  predicted_free_ports: 2,
   prediction_source: "persistence",
+  model_version: null,
   estimated_wait_min: 0,
+  wait_expected_min: 0,
+  wait_probability: 0,
+  wait_p90_min: 0,
+  wait_method: "erlang_c",
+  wait_data_source: "derived",
   estimated_charge_min: 14,
+  charge_min: 14,
+  soc_after_charge: 0.8,
+  total_time_min: 33,
   energy_to_add_kwh: 10.4,
   wait_score: 1,
   detour_score: 0.89,
@@ -106,12 +140,19 @@ export const recommendationItem: RecommendationItem = {
 
 export const recommendation: JourneyRecommendation = {
   scenario_id: scenario.scenario_id,
+  journey_id: null,
   generated_at: "2026-09-25T18:00:00+07:00",
   vehicle_id: vehicle.vehicle_id,
   direct_route: { ...route, route_id: "ROUTE_BASE_DIRECT" },
+  outcome: "charging_stops",
   recommendations: [recommendationItem],
   excluded_candidates: [],
+  fallback_candidate: null,
   active_event_ids: [],
+  flags: [],
+  candidate_limit: null,
+  ranking_policy_version: "total_expected_time_v1",
+  scoring_method: "fixed_threshold_weighted_sum",
 };
 
 export const modelStatus: ModelStatus = {
@@ -122,4 +163,7 @@ export const modelStatus: ModelStatus = {
   model_adapter_loaded: false,
   release_ready: false,
   flags: ["PHASE_04_ARTIFACTS_UNAVAILABLE"],
+  model_version: null,
+  model_profile: null,
+  serving_reason: "PHASE_04_ARTIFACTS_UNAVAILABLE",
 };

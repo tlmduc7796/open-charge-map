@@ -116,12 +116,17 @@ Pipeline lọc cố định:
 public access → operational ports → connector compatibility → route → reserve-SOC reachability
 ```
 
-Score cao hơn là tốt hơn và dùng fixed thresholds từ environment:
+Trong phiên bản demo, score cao hơn là tốt hơn và dùng fixed thresholds từ environment:
 
 ```text
 component_score = 1 - min(value / configured_max, 1)
 final_score = weighted sum(wait, detour, charging time, SOC safety)
 ```
+
+Đây là score chẩn đoán/legacy còn được trả để tương thích và phân tích; nó không quyết
+định `rank` trong release. Hợp đồng hiện hành được chốt tại
+[`from_demo_to_release.md`](from_demo_to_release.md#3-tiêu-chí-xếp-hạng-đã-chốt):
+xếp theo `total_time_min` với `ranking_policy_version` và tie-break xác định.
 
 SOC score dùng khoảng cách từ arrival SOC tới reserve SOC. Không có price/cost component.
 

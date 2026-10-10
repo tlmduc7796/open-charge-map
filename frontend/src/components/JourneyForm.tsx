@@ -4,9 +4,10 @@ import type { DemoScenario, GeoPoint, Vehicle } from "../types";
 import LocationInput from "./LocationInput";
 
 interface JourneyFormProps {
+  demoMode: boolean;
   scenarios: DemoScenario[];
   vehicles: Vehicle[];
-  scenario: DemoScenario;
+  scenario: DemoScenario | null;
   vehicleId: string;
   initialSoc: number;
   targetSoc: number;
@@ -118,25 +119,22 @@ export default function JourneyForm(props: JourneyFormProps) {
 
       {showAdvanced && (
         <div className="advanced-options">
-          <label>
-            Kịch bản
-            <select
-              value={props.scenario.scenario_id}
-              disabled={props.submitting}
-              onChange={(event) =>
-                props.onScenarioChange(event.target.value)
-              }
-            >
-              {props.scenarios.map((scenario) => (
-                <option
-                  key={scenario.scenario_id}
-                  value={scenario.scenario_id}
-                >
-                  {scenario.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          {props.demoMode && props.scenario && (
+            <label>
+              Kịch bản
+              <select
+                value={props.scenario.scenario_id}
+                disabled={props.submitting}
+                onChange={(event) => props.onScenarioChange(event.target.value)}
+              >
+                {props.scenarios.map((scenario) => (
+                  <option key={scenario.scenario_id} value={scenario.scenario_id}>
+                    {scenario.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
 
           <label>
             SOC mục tiêu
@@ -157,37 +155,35 @@ export default function JourneyForm(props: JourneyFormProps) {
             </div>
           </label>
 
-          <label className="event-toggle">
-            <input
-              type="checkbox"
-              checked={props.applyEvents}
-              disabled={
-                props.submitting ||
-                props.scenario.event_ids.length === 0
-              }
-              onChange={(event) =>
-                props.onApplyEventsChange(event.target.checked)
-              }
-            />
+          {props.demoMode && props.scenario && (
+            <>
+              <label className="event-toggle">
+                <input
+                  type="checkbox"
+                  checked={props.applyEvents}
+                  disabled={props.submitting || props.scenario.event_ids.length === 0}
+                  onChange={(event) => props.onApplyEventsChange(event.target.checked)}
+                />
+                <span>
+                  Áp dụng event của kịch bản
+                  <small>
+                    {props.scenario.event_ids.length
+                      ? props.scenario.event_ids.join(", ")
+                      : "Không có event"}
+                  </small>
+                </span>
+              </label>
 
-            <span>
-              Áp dụng event của kịch bản
-              <small>
-                {props.scenario.event_ids.length
-                  ? props.scenario.event_ids.join(", ")
-                  : "Không có event"}
-              </small>
-            </span>
-          </label>
-
-          <button
-            className="secondary-button"
-            type="button"
-            disabled={props.submitting}
-            onClick={props.onReset}
-          >
-            Reset demo
-          </button>
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={props.submitting}
+                onClick={props.onReset}
+              >
+                Reset demo
+              </button>
+            </>
+          )}
         </div>
       )}
     </form>

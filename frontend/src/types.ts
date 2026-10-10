@@ -1,5 +1,12 @@
 export type Coordinates = [number, number];
 
+export interface StationBounds {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+}
+
 export interface StationConnector {
   type: string;
   current: "AC" | "DC";
@@ -13,13 +20,21 @@ export interface Station {
   geometry: { type: "Point"; coordinates: Coordinates };
   properties: {
     station_id: string;
+    provider_station_id: string | null;
     name: string;
     address: string;
     operator: string | null;
+    zone_id: string | null;
     total_ports: number;
     connectors: StationConnector[];
+    amenities: string[];
+    opening_hours: string | Record<string, unknown> | null;
     access: "public" | "customers" | "private" | "unknown";
     notes: string[];
+    source_provider: string;
+    source_updated_at: string | null;
+    source_updated_at_basis: "source" | "database_updated_at" | "missing";
+    synthetic_fields: string[];
   };
 }
 
@@ -31,10 +46,39 @@ export interface StationStatus {
   occupied_ports: number;
   available_ports: number;
   offline_ports: number;
+  unknown_ports: number;
   occupancy_ratio: number | null;
-  queue_length: number;
-  avg_session_duration_min: number;
+  queue_length: number | null;
+  avg_session_duration_min: number | null;
   data_source: string;
+  is_stale: boolean;
+}
+
+export interface StationOccupancyForecast {
+  station_id: string;
+  generated_at: string;
+  target_at: string;
+  requested_horizon_min: number;
+  used_horizon_min: number;
+  predicted_occupancy_ratio: number | null;
+  predicted_occupied_ports: number;
+  operational_ports: number;
+  prediction_source: "model" | "persistence";
+  model_version: string | null;
+  confidence: number | null;
+  flags: string[];
+  data_source: "derived";
+}
+
+export interface StationOccupancyObservation {
+  station_id: string;
+  bucket_at: string;
+  total_ports: number;
+  operational_ports: number;
+  occupied_ports: number;
+  occupancy_ratio: number | null;
+  queue_length: number | null;
+  data_source: "observed";
 }
 
 export interface Vehicle {
@@ -43,10 +87,18 @@ export interface Vehicle {
   model: string;
   variant: string | null;
   battery_capacity_kwh: number;
+  usable_battery_kwh: number | null;
+  ac_connectors: string[];
+  dc_connectors: string[];
   max_ac_power_kw: number;
   max_dc_power_kw: number;
+  consumption_wh_km: number;
   reserve_soc: number;
   default_target_soc: number;
+  charging_efficiency: number;
+  source: string;
+  is_synthetic: boolean;
+  synthetic_fields: string[];
 }
 
 export interface GeoPoint {
@@ -73,9 +125,26 @@ export interface RouteResult {
   resolution_source: "cache" | "live";
   origin: GeoPoint;
   destination: GeoPoint;
+  waypoints: RouteWaypoint[];
   geometry: { type: "LineString"; coordinates: Coordinates[] };
   distance_m: number;
   duration_s: number;
+  legs: RouteLeg[];
+  flags: string[];
+}
+
+export interface RouteWaypoint extends GeoPoint {
+  station_id?: string | null;
+}
+
+export interface RouteLeg {
+  origin: GeoPoint;
+  destination: GeoPoint;
+  distance_m: number;
+  duration_s: number;
+  geometry: { type: "LineString"; coordinates: Coordinates[] } | null;
+  provider: "goong" | "osrm";
+  retrieved_at: string;
   flags: string[];
 }
 
@@ -89,18 +158,34 @@ export interface RecommendationItem {
   effective_power_kw: number;
   route_distance_to_station_m: number;
   route_duration_to_station_s: number;
+  drive_to_station_min: number;
+  drive_station_to_destination_min: number;
   detour_min: number;
   arrival_soc: number;
+  destination_soc: number;
+  minimum_soc: number;
   predicted_occupied_ports: number;
   predicted_occupancy_ratio: number | null;
+  predicted_free_ports: number | null;
   prediction_source: string;
+  model_version: string | null;
   estimated_wait_min: number;
+  wait_expected_min: number | null;
+  wait_probability: number | null;
+  wait_p90_min: number | null;
+  wait_method: "erlang_c" | "scoring_cap";
+  wait_data_source: "derived";
   estimated_charge_min: number;
+  charge_min: number | null;
+  soc_after_charge: number | null;
+  total_time_min: number;
   energy_to_add_kwh: number;
+  /** Diagnostic component score; does not determine rank. */
   wait_score: number;
   detour_score: number;
   charging_time_score: number;
   soc_risk_score: number;
+  /** Legacy weighted diagnostic score; rank follows ranking_policy_version. */
   final_score: number;
   rank: number;
   flags: string[];
@@ -111,14 +196,48 @@ export interface CandidateExclusion {
   reason_codes: string[];
 }
 
+export interface UnreachableStationFallback {
+  station_id: string;
+  station_name: string;
+  straight_line_distance_m: number;
+  is_reachable: false;
+  reason_codes: string[];
+}
+
+export type StationIncidentType =
+  | "port_unavailable"
+  | "queue_inaccurate"
+  | "access_problem"
+  | "safety_concern"
+  | "other";
+
+export interface StationIncidentReport {
+  incident_id: string;
+  journey_id: string;
+  station_id: string;
+  incident_type: StationIncidentType;
+  description: string;
+  status: "open" | "triaged" | "resolved" | "rejected";
+  created_at: string;
+  data_source: "user_report";
+}
+
 export interface JourneyRecommendation {
-  scenario_id: string;
+  scenario_id: string | null;
+  journey_id: string | null;
+  journey_access_token?: string | null;
   generated_at: string;
   vehicle_id: string;
   direct_route: RouteResult;
+  outcome: "direct_no_charge" | "charging_stops" | "no_reachable_station";
   recommendations: RecommendationItem[];
   excluded_candidates: CandidateExclusion[];
+  fallback_candidate: UnreachableStationFallback | null;
   active_event_ids: string[];
+  flags: string[];
+  candidate_limit: number | null;
+  ranking_policy_version: string;
+  scoring_method: "fixed_threshold_weighted_sum";
 }
 
 export interface ModelStatus {
@@ -129,20 +248,55 @@ export interface ModelStatus {
   model_adapter_loaded: boolean;
   release_ready: boolean;
   flags: string[];
-  model_version?: string | null;
-  model_profile?: string | null;
-  serving_reason?: string | null;
+  model_version: string | null;
+  model_profile: string | null;
+  serving_reason: string | null;
 }
 
 export interface JourneyRequest {
-  scenario_id: string;
-  apply_scenario_events: boolean;
+  scenario_id?: string;
+  apply_scenario_events?: boolean;
   vehicle_id: string;
   initial_soc: number;
   target_soc: number;
   origin: GeoPoint;
   destination: GeoPoint;
   departure_at: string;
+}
+
+export interface JourneyPositionRequest {
+  recorded_at: string;
+  location: GeoPoint;
+  speed_kmh?: number;
+  heading?: number;
+  battery_pct: number;
+  distance_km?: number;
+}
+
+export interface StationIncidentCreateRequest {
+  journey_id: string;
+  idempotency_key: string;
+  incident_type: StationIncidentType;
+  description: string;
+}
+
+export interface RouteRequest {
+  origin: GeoPoint;
+  destination: GeoPoint;
+  waypoints?: RouteWaypoint[];
+  preferred_route_id?: string | null;
+}
+
+export interface PlannedArrivalCommitRequest {
+  arrival_id: string;
+  journey_id?: string | null;
+  station_id: string;
+  vehicle_id: string;
+  departure_at: string;
+  route_id: string;
+  route_duration_to_station_s: number;
+  expected_energy_kwh: number;
+  expected_charge_duration_min: number;
 }
 
 export interface PlaceSuggestion {
@@ -162,11 +316,20 @@ export interface GeocodedPlace {
 
 export interface PlannedArrival {
   arrival_id: string;
+  journey_id: string | null;
   station_id: string;
   vehicle_id: string | null;
+  created_at: string;
   eta_at: string;
+  eta_window_start: string;
+  eta_window_end: string;
+  expected_energy_kwh: number;
+  expected_charge_duration_min: number;
+  arrival_probability: number;
+  expires_at: string;
   route_id: string | null;
   status: "planned" | "arrived" | "cancelled" | "expired";
+  data_source: string;
 }
 
 export interface SyntheticDuration {

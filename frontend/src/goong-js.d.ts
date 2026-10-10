@@ -1,27 +1,33 @@
 declare module "@goongmaps/goong-js" {
-  interface GoongSource {
+  export interface GoongSource {
     setData(data: unknown): void;
   }
 
-  interface GoongMap {
+  export interface GoongMap {
     on(event: string, handler: (event?: unknown) => void): void;
     addControl(control: unknown, position?: string): void;
     addSource(id: string, source: unknown): void;
     addLayer(layer: unknown): void;
     getSource(id: string): GoongSource | undefined;
     getLayer(id: string): unknown;
+    getBounds(): {
+      getWest(): number;
+      getSouth(): number;
+      getEast(): number;
+      getNorth(): number;
+    };
     removeLayer(id: string): void;
     removeSource(id: string): void;
     remove(): void;
   }
 
-  interface GoongMarker {
+  export interface GoongMarker {
     setLngLat(coordinates: [number, number]): GoongMarker;
     addTo(map: GoongMap): GoongMarker;
     remove(): void;
   }
 
-  interface GoongStatic {
+  export interface GoongStatic {
     accessToken: string;
     supported(): boolean;
     Map: new (options: Record<string, unknown>) => GoongMap;

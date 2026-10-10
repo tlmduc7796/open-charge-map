@@ -20,6 +20,7 @@ def test_fixed_demo_is_28_minutes_for_deterministic_and_monte_carlo_runs() -> No
     assert result.monte_carlo.p50_wait_min == 28
     assert result.monte_carlo.p90_wait_min == 28
     assert result.monte_carlo.probability_wait_over_threshold == 0
+    assert "SEEDED_TIMELINE_IS_ONE_SAMPLE" in result.caveats
     assert [(entry.port_id, entry.vehicle_id) for entry in result.timeline] == [
         ("A", "ACTIVE_A"),
         ("B", "ACTIVE_B"),
@@ -45,7 +46,13 @@ def test_uniform_duration_is_reproducible_with_a_fixed_seed() -> None:
         }
     )
 
-    assert simulate_queue_lab(request).monte_carlo == simulate_queue_lab(request).monte_carlo
+    first = simulate_queue_lab(request)
+    second = simulate_queue_lab(request)
+
+    assert first.monte_carlo == second.monte_carlo
+    assert first.monte_carlo.p10_wait_min < first.monte_carlo.p50_wait_min
+    assert first.monte_carlo.p50_wait_min < first.monte_carlo.p90_wait_min
+    assert 0 < first.monte_carlo.probability_wait_over_threshold < 1
 
 
 def test_queue_lab_api_exposes_demo_and_simulation() -> None:

@@ -1,0 +1,4 @@
+# Reproducible six-horizon exploratory benchmark environment.
+-r requirements-preprocess.txt
+scikit-learn==1.5.2
+xgboost==2.1.4

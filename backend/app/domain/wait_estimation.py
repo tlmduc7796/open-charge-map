@@ -32,6 +32,7 @@ class WaitEstimator:
         forecast: OccupancyForecastResult,
         *,
         evaluation_at: datetime,
+        compatible_connector_types: tuple[str, ...] | None = None,
         planned_arrivals: tuple[PlannedArrival, ...] = (),
         include_planned_arrivals: bool = True,
         scenario_id: str | None = None,
@@ -41,10 +42,74 @@ class WaitEstimator:
             raise ValueError("evaluation_at must include a timezone")
         if status.station_id != forecast.station_id:
             raise ValueError("status and forecast must reference the same station")
+
+        connector_scope_approximation = False
+        if compatible_connector_types and status.port_runtime_statuses is not None:
+            compatible = set(compatible_connector_types)
+            ports = tuple(
+                port
+                for port in status.port_runtime_statuses
+                if compatible.intersection(port.connector_types)
+            )
+            if not ports:
+                raise ValueError("telemetry has no ports for compatible connectors")
+            operational = sum(
+                port.state in {"available", "charging"} for port in ports
+            )
+            occupied = sum(port.state == "charging" for port in ports)
+            offline = sum(
+                port.state in {"offline", "out_of_service"} for port in ports
+            )
+            unknown = sum(port.state == "unknown" for port in ports)
+            queue_length = status.queue_length
+            if status.queue_connector_types is not None:
+                queue_length = sum(
+                    bool(compatible.intersection(connectors))
+                    for connectors in status.queue_connector_types
+                )
+            status = status.model_copy(
+                update={
+                    "total_ports": len(ports),
+                    "operational_ports": operational,
+                    "occupied_ports": occupied,
+                    "available_ports": operational - occupied,
+                    "offline_ports": offline,
+                    "unknown_ports": unknown,
+                    "occupancy_ratio": occupied / operational if operational else None,
+                    "queue_length": queue_length,
+                    "port_runtime_statuses": ports,
+                }
+            )
+            if forecast.operational_ports:
+                station_occupancy_ratio = (
+                    forecast.predicted_occupied_ports / forecast.operational_ports
+                )
+                scoped_occupancy = min(
+                    operational, station_occupancy_ratio * operational
+                )
+            else:
+                scoped_occupancy = 0.0
+            forecast = forecast.model_copy(
+                update={
+                    "operational_ports": operational,
+                    "predicted_occupied_ports": scoped_occupancy,
+                    "predicted_occupancy_ratio": (
+                        scoped_occupancy / operational if operational else None
+                    ),
+                }
+            )
+            connector_scope_approximation = True
+
         if forecast.predicted_occupied_ports > status.operational_ports:
             raise ValueError("predicted occupied ports exceed current operational capacity")
+        if status.queue_length is None or status.avg_session_duration_min is None:
+            raise ValueError(
+                "queue length and average session duration are required for wait estimation"
+            )
 
         flags: list[str] = []
+        if connector_scope_approximation:
+            flags.append("CONNECTOR_SCOPED_WAIT_APPROXIMATED")
         baseline_rate = self._assumptions.baseline_rate(status.station_id, scenario_id)
         if scenario_id is not None and self._assumptions.has_override(
             scenario_id, status.station_id
@@ -76,8 +141,11 @@ class WaitEstimator:
                 traffic_intensity=None,
                 probability_wait=None,
                 erlang_wait=0,
+                erlang_wait_p90=None,
                 current_state_wait=self._scoring_wait_cap_min,
                 estimated_wait=self._scoring_wait_cap_min,
+                estimated_wait_p90=self._scoring_wait_cap_min,
+                method="scoring_cap",
                 flags=tuple([*flags, "STATION_OFFLINE", "CAPPED_WAIT"]),
             )
 
@@ -103,13 +171,20 @@ class WaitEstimator:
                 traffic_intensity=traffic_intensity,
                 probability_wait=1,
                 erlang_wait=self._scoring_wait_cap_min,
+                erlang_wait_p90=None,
                 current_state_wait=current_state_wait,
                 estimated_wait=self._scoring_wait_cap_min,
+                estimated_wait_p90=self._scoring_wait_cap_min,
+                method="scoring_cap",
                 flags=tuple([*flags, "OVERLOADED", "CAPPED_WAIT"]),
             )
 
         probability_wait, erlang_wait = self._erlang_c(
             total_arrival_rate, service_rate, servers
+        )
+        erlang_wait_p90 = self._erlang_c_p90(
+            probability_wait,
+            servers * service_rate - total_arrival_rate,
         )
         projected_available_ports = servers - forecast.predicted_occupied_ports
         if projected_available_ports >= 1 and status.queue_length == 0:
@@ -117,8 +192,16 @@ class WaitEstimator:
         else:
             uncapped_wait = max(current_state_wait, erlang_wait)
         estimated_wait = min(uncapped_wait, self._scoring_wait_cap_min)
+        estimated_wait_p90 = min(
+            max(current_state_wait, erlang_wait_p90), self._scoring_wait_cap_min
+        )
         if estimated_wait < uncapped_wait:
             flags.append("CAPPED_WAIT")
+        if estimated_wait_p90 < max(current_state_wait, erlang_wait_p90):
+            flags.append("CAPPED_WAIT_P90")
+        flags.append("ERLANG_C_P90_APPROXIMATION")
+        if current_state_wait > erlang_wait_p90:
+            flags.append("CURRENT_STATE_WAIT_FLOOR")
 
         return self._result(
             status,
@@ -131,8 +214,11 @@ class WaitEstimator:
             traffic_intensity=traffic_intensity,
             probability_wait=probability_wait,
             erlang_wait=erlang_wait,
+            erlang_wait_p90=erlang_wait_p90,
             current_state_wait=current_state_wait,
             estimated_wait=estimated_wait,
+            estimated_wait_p90=estimated_wait_p90,
+            method="erlang_c",
             flags=tuple(flags),
         )
 
@@ -143,7 +229,7 @@ class WaitEstimator:
         arrivals: tuple[PlannedArrival, ...],
         excluded_arrival_id: str | None,
     ) -> float:
-        window_min = self._assumptions.assumptions.planned_arrival_window_min
+        window_min = self._assumptions.planned_arrival_window_min
         window_end = evaluation_at + timedelta(minutes=window_min)
         probability_sum = sum(
             arrival.arrival_probability
@@ -177,18 +263,33 @@ class WaitEstimator:
             return 0.0, 0.0
         offered_load = arrival_rate_per_hour / service_rate_per_server
         traffic_intensity = offered_load / servers
-        finite_sum = sum(
-            offered_load**customers / math.factorial(customers)
-            for customers in range(servers)
+        # Compute Erlang B recursively, then transform it to Erlang C. The
+        # direct powers/factorials overflow for ordinary large stations even
+        # though each intermediate probability is bounded in [0, 1].
+        blocking_probability = 1.0
+        for customers in range(1, servers + 1):
+            blocking_probability = (
+                offered_load * blocking_probability
+                / (customers + offered_load * blocking_probability)
+            )
+        probability_wait = blocking_probability / (
+            1 - traffic_intensity + traffic_intensity * blocking_probability
         )
-        wait_term = offered_load**servers / (
-            math.factorial(servers) * (1 - traffic_intensity)
-        )
-        probability_wait = wait_term / (finite_sum + wait_term)
         expected_wait_hours = probability_wait / (
             servers * service_rate_per_server - arrival_rate_per_hour
         )
         return probability_wait, expected_wait_hours * 60
+
+    @staticmethod
+    def _erlang_c_p90(probability_wait: float, slack_rate_per_hour: float) -> float:
+        """Unconditional P90 of the Erlang-C exponential waiting-time tail."""
+        if slack_rate_per_hour <= 0:
+            raise ValueError("Erlang-C tail requires positive service slack")
+        quantile = 0.90
+        if probability_wait <= 1 - quantile:
+            return 0.0
+        tail_probability = (1 - quantile) / probability_wait
+        return -math.log(tail_probability) / slack_rate_per_hour * 60
 
     def _result(
         self,
@@ -203,8 +304,11 @@ class WaitEstimator:
         traffic_intensity: float | None,
         probability_wait: float | None,
         erlang_wait: float,
+        erlang_wait_p90: float | None,
         current_state_wait: float,
         estimated_wait: float,
+        estimated_wait_p90: float,
+        method: str,
         flags: tuple[str, ...],
     ) -> WaitEstimateResult:
         return WaitEstimateResult(
@@ -221,8 +325,11 @@ class WaitEstimator:
             traffic_intensity=traffic_intensity,
             erlang_c_probability_wait=probability_wait,
             erlang_expected_wait_min=erlang_wait,
+            erlang_wait_p90_min=erlang_wait_p90,
             current_state_wait_min=current_state_wait,
             estimated_wait_min=estimated_wait,
+            estimated_wait_p90_min=estimated_wait_p90,
+            method=method,
             scoring_wait_cap_min=self._scoring_wait_cap_min,
             flags=flags,
         )

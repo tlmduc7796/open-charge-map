@@ -25,22 +25,28 @@ export default function LocationInput({
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (query.trim() === selectedLabel || query.trim().length < 2) return;
+    const normalizedQuery = query.trim();
+    if (normalizedQuery === selectedLabel || normalizedQuery.length < 2) return;
+    const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setLoading(true);
       setMessage(null);
       try {
-        const results = await api.geocodeSuggestions(query.trim());
+        const results = await api.geocodeSuggestions(normalizedQuery, controller.signal);
         setSuggestions(results);
         if (!results.length) setMessage("Không tìm thấy địa điểm phù hợp.");
       } catch (caught) {
+        if (controller.signal.aborted) return;
         setSuggestions([]);
         setMessage(caught instanceof Error ? caught.message : "Geocoding không khả dụng.");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }, 300);
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
   }, [query, selectedLabel]);
 
   const choose = async (suggestion: PlaceSuggestion) => {
@@ -70,6 +76,8 @@ export default function LocationInput({
         onChange={(event) => {
           setQuery(event.target.value);
           setSuggestions([]);
+          setLoading(false);
+          setMessage(null);
           onValidityChange(event.target.value.trim() === selectedLabel);
         }}
       />

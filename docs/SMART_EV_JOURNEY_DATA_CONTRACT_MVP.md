@@ -825,7 +825,7 @@ Lưu các thành phần đã normalize và score cuối cho từng candidate sta
 | `detour_score` | float | Score chuẩn hóa cho detour |
 | `charging_time_score` | float | Score chuẩn hóa cho charging time |
 | `soc_risk_score` | float | Score chuẩn hóa cho SOC risk |
-| `final_score` | float | Score tổng |
+| `final_score` | float | Score tổng legacy để chẩn đoán; không quyết định `rank` trong release (xem `ranking_policy_version`) |
 | `rank` | int | Thứ hạng |
 | `data_source` | string | `derived` |
 

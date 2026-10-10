@@ -8,7 +8,8 @@ per-port state and resolvable session durations.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+from math import isfinite
 from threading import RLock
 from typing import Literal, Protocol
 
@@ -17,14 +18,38 @@ from pydantic import Field, model_validator
 from backend.app.domain.models import DomainModel
 
 
+def validate_observation_timestamp(
+    observed_at: datetime,
+    *,
+    now: datetime,
+    max_future_skew_s: float,
+) -> None:
+    """Reject timestamps that could poison monotonic telemetry or history."""
+    if observed_at.tzinfo is None or now.tzinfo is None:
+        raise ValueError("observation timestamps require timezone")
+    if not isfinite(max_future_skew_s) or max_future_skew_s <= 0:
+        raise ValueError("maximum future clock skew must be positive")
+    latest_accepted = now.astimezone(UTC) + timedelta(seconds=max_future_skew_s)
+    if observed_at.astimezone(UTC) > latest_accepted:
+        raise ValueError("observed_at is too far in the future")
+
+
 class ChargingPortTelemetry(DomainModel):
     """One physical port at the instant a station provider observed it."""
 
-    port_id: str = Field(min_length=1)
-    connector_types: tuple[str, ...] = Field(min_length=1)
-    state: Literal["available", "charging", "offline"]
+    port_id: str = Field(min_length=1, max_length=128)
+    connector_types: tuple[str, ...] = Field(min_length=1, max_length=16)
+    state: Literal["available", "charging", "offline", "out_of_service", "unknown"]
     session_id: str | None = None
     reported_remaining_port_release_min: float | None = Field(default=None, gt=0)
+
+    @property
+    def is_operational(self) -> bool:
+        return self.state in {"available", "charging"}
+
+    @property
+    def is_out_of_service(self) -> bool:
+        return self.state in {"offline", "out_of_service"}
 
     @model_validator(mode="after")
     def validate_session_state(self) -> ChargingPortTelemetry:
@@ -44,10 +69,10 @@ class QueueVehicleTelemetry(DomainModel):
     arrivals until a station/camera observation confirms presence.
     """
 
-    queue_id: str = Field(min_length=1)
+    queue_id: str = Field(min_length=1, max_length=128)
     queue_position: int = Field(gt=0)
     entered_queue_at: datetime
-    compatible_connector_types: tuple[str, ...] = Field(min_length=1)
+    compatible_connector_types: tuple[str, ...] = Field(min_length=1, max_length=16)
     expected_charge_duration_min: float = Field(gt=0)
 
     @model_validator(mode="after")
@@ -60,10 +85,11 @@ class QueueVehicleTelemetry(DomainModel):
 class StationTelemetrySnapshot(DomainModel):
     """Validated state that can be fed by a simulator or a station adapter."""
 
-    station_id: str = Field(min_length=1)
+    station_id: str = Field(min_length=1, max_length=128)
     observed_at: datetime
-    ports: tuple[ChargingPortTelemetry, ...] = Field(min_length=1)
-    queue: tuple[QueueVehicleTelemetry, ...] = ()
+    ports: tuple[ChargingPortTelemetry, ...] = Field(min_length=1, max_length=1000)
+    queue: tuple[QueueVehicleTelemetry, ...] | None = Field(default=None, max_length=2000)
+    avg_session_duration_min: float | None = Field(default=None, gt=0)
     data_source: Literal["simulated", "station_api", "camera_vision", "combined"]
 
     @model_validator(mode="after")
@@ -71,8 +97,8 @@ class StationTelemetrySnapshot(DomainModel):
         if self.observed_at.tzinfo is None:
             raise ValueError("observed_at requires timezone")
         port_ids = [port.port_id for port in self.ports]
-        queue_positions = [vehicle.queue_position for vehicle in self.queue]
-        queue_ids = [vehicle.queue_id for vehicle in self.queue]
+        queue_positions = [vehicle.queue_position for vehicle in self.queue or ()]
+        queue_ids = [vehicle.queue_id for vehicle in self.queue or ()]
         if len(port_ids) != len(set(port_ids)):
             raise ValueError("port_id values must be unique per snapshot")
         if len(queue_positions) != len(set(queue_positions)):
@@ -127,11 +153,23 @@ class DESWaitResult(DomainModel):
     snapshot_observed_at: datetime
     method: Literal["discrete_event_simulation"] = "discrete_event_simulation"
     operational_ports: int = Field(ge=0)
-    confirmed_queue_length: int = Field(ge=0)
+    unknown_ports: int = Field(default=0, ge=0)
+    confirmed_queue_length: int | None = Field(default=None, ge=0)
     estimated_wait_min: float | None = Field(default=None, ge=0)
     predicted_charge_start_at: datetime | None = None
     duration_sources: tuple[str, ...]
     flags: tuple[str, ...]
+
+    @model_validator(mode="after")
+    def validate_result_timestamps(self) -> DESWaitResult:
+        timestamps = (
+            self.evaluation_at,
+            self.snapshot_observed_at,
+            self.predicted_charge_start_at,
+        )
+        if any(timestamp is not None and timestamp.tzinfo is None for timestamp in timestamps):
+            raise ValueError("wait result timestamps must include a timezone")
+        return self
 
 
 class DiscreteEventWaitSimulator:
@@ -148,10 +186,35 @@ class DiscreteEventWaitSimulator:
         if request.evaluation_at < snapshot.observed_at:
             raise ValueError("evaluation_at cannot precede the telemetry snapshot")
 
+        unknown_ports = sum(port.state == "unknown" for port in snapshot.ports)
+        unavailable_reasons = []
+        if unknown_ports:
+            unavailable_reasons.append("PORT_STATE_UNKNOWN")
+        if snapshot.queue is None:
+            unavailable_reasons.append("QUEUE_STATE_UNKNOWN")
+        if unavailable_reasons:
+            flags = ["CONFIRMED_QUEUE_ONLY", "UNOBSERVED_ARRIVALS_EXCLUDED"]
+            if request.evaluation_at > snapshot.observed_at:
+                flags.append("SNAPSHOT_ADVANCED_WITHOUT_NEW_TELEMETRY")
+            return DESWaitResult(
+                station_id=snapshot.station_id,
+                evaluation_at=request.evaluation_at,
+                snapshot_observed_at=snapshot.observed_at,
+                operational_ports=sum(port.is_operational for port in snapshot.ports),
+                unknown_ports=unknown_ports,
+                confirmed_queue_length=(
+                    len(snapshot.queue) if snapshot.queue is not None else None
+                ),
+                estimated_wait_min=None,
+                predicted_charge_start_at=None,
+                duration_sources=(),
+                flags=tuple([*flags, *unavailable_reasons]),
+            )
+
         duration_sources: list[str] = []
         slots: list[tuple[datetime, ChargingPortTelemetry]] = []
         for port in snapshot.ports:
-            if port.state == "offline":
+            if port.is_out_of_service:
                 continue
             if port.state == "available":
                 slots.append((request.evaluation_at, port))
@@ -173,14 +236,16 @@ class DiscreteEventWaitSimulator:
                 evaluation_at=request.evaluation_at,
                 snapshot_observed_at=snapshot.observed_at,
                 operational_ports=0,
-                confirmed_queue_length=len(snapshot.queue),
+                confirmed_queue_length=(
+                    len(snapshot.queue) if snapshot.queue is not None else None
+                ),
                 estimated_wait_min=None,
                 predicted_charge_start_at=None,
                 duration_sources=tuple(dict.fromkeys(duration_sources)),
                 flags=tuple([*flags, "NO_OPERATIONAL_PORTS"]),
             )
 
-        for vehicle in sorted(snapshot.queue, key=lambda entry: entry.queue_position):
+        for vehicle in sorted(snapshot.queue or (), key=lambda entry: entry.queue_position):
             index = self._earliest_compatible_slot(
                 slots, vehicle.compatible_connector_types
             )
@@ -206,7 +271,7 @@ class DiscreteEventWaitSimulator:
             evaluation_at=request.evaluation_at,
             snapshot_observed_at=snapshot.observed_at,
             operational_ports=len(slots),
-            confirmed_queue_length=len(snapshot.queue),
+            confirmed_queue_length=len(snapshot.queue or ()),
             estimated_wait_min=max(
                 0.0, (start_at - request.evaluation_at).total_seconds() / 60
             ),
@@ -238,8 +303,11 @@ class DiscreteEventWaitSimulator:
             station_id=snapshot.station_id,
             evaluation_at=request.evaluation_at,
             snapshot_observed_at=snapshot.observed_at,
-            operational_ports=sum(port.state != "offline" for port in snapshot.ports),
-            confirmed_queue_length=len(snapshot.queue),
+            operational_ports=sum(port.is_operational for port in snapshot.ports),
+            unknown_ports=sum(port.state == "unknown" for port in snapshot.ports),
+            confirmed_queue_length=(
+                len(snapshot.queue) if snapshot.queue is not None else None
+            ),
             estimated_wait_min=None,
             predicted_charge_start_at=None,
             duration_sources=tuple(dict.fromkeys(duration_sources)),
@@ -252,20 +320,46 @@ class RealtimeTelemetryStore:
 
     def __init__(self) -> None:
         self._snapshots: dict[str, StationTelemetrySnapshot] = {}
+        self._history: dict[tuple[str, datetime], StationTelemetrySnapshot] = {}
         self._lock = RLock()
 
     def upsert(self, snapshot: StationTelemetrySnapshot) -> StationTelemetrySnapshot:
+        return self.upsert_with_change(snapshot)[0]
+
+    def upsert_with_change(
+        self, snapshot: StationTelemetrySnapshot
+    ) -> tuple[StationTelemetrySnapshot, bool]:
         with self._lock:
+            key = (snapshot.station_id, snapshot.observed_at)
+            existing = self._history.get(key)
+            if existing is not None:
+                if existing != snapshot:
+                    raise ValueError(
+                        "a different telemetry snapshot already exists at this timestamp"
+                    )
+                return snapshot, False
             previous = self._snapshots.get(snapshot.station_id)
             if previous is not None and snapshot.observed_at < previous.observed_at:
                 raise ValueError("telemetry snapshot is older than the stored snapshot")
+            self._history[key] = snapshot
             self._snapshots[snapshot.station_id] = snapshot
-            return snapshot
+            return snapshot, True
 
     def get(self, station_id: str) -> StationTelemetrySnapshot:
         with self._lock:
             return self._snapshots[station_id]
 
+    def all(self) -> tuple[StationTelemetrySnapshot, ...]:
+        with self._lock:
+            return tuple(self._snapshots.values())
+
+    def get_many(self, station_ids: tuple[str, ...]) -> tuple[StationTelemetrySnapshot, ...]:
+        with self._lock:
+            return tuple(
+                self._snapshots[item] for item in station_ids if item in self._snapshots
+            )
+
     def reset(self) -> None:
         with self._lock:
             self._snapshots.clear()
+            self._history.clear()

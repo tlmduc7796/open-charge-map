@@ -1,0 +1,254 @@
+{
+  "snapshot": {
+    "retrieved_at": "2026-10-06",
+    "market": "VN",
+    "publisher": "VinFast; BYD Auto Vietnam",
+    "method": "Manufacturer product pages, FAQs and official brochures; consumption inferred from published battery capacity and test-cycle range where noted (usable capacity only where explicitly stated)",
+    "catalog_complete": false,
+    "calculation_defaults": {
+      "reserve_soc": 0.1,
+      "default_target_soc": 0.8,
+      "charging_efficiency": 0.9,
+      "unknown_ac_planning_kw": 3.3,
+      "unknown_dc_planning_kw": 50,
+      "origin": "synthetic",
+      "provider": "project_demo_policy",
+      "note": "Shared planning assumptions from the legacy demo; unknown charging-power fallbacks are demo estimates, not manufacturer specifications."
+    }
+  },
+  "vehicles": [
+    {
+      "code": "VF5_PLUS_VN", "brand": "VinFast", "model": "VF 5", "variant": "Plus", "model_year": null, "market": "VN",
+      "battery_kwh": 37.23, "consumption_kwh_per_100km": 11.42, "max_ac_kw": 6.6, "max_dc_kw": 50,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf5", "confidence": 1.0, "note": "Published usable capacity."},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf5", "confidence": 0.8, "note": "37.23 kWh / 326 km NEDC × 100; test-cycle estimate, not real-world consumption."},
+        "max_ac_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf5", "confidence": 1.0},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf5", "confidence": 0.9, "note": "Manufacturer states approximately 50 kW."},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard; model-specific inlet not independently documented."}
+      }
+    },
+    {
+      "code": "VF6_ECO_VN", "brand": "VinFast", "model": "VF 6", "variant": "Eco", "model_year": null, "market": "VN",
+      "battery_kwh": 59.6, "consumption_kwh_per_100km": 12.289, "max_ac_kw": 7.2, "max_dc_kw": 100,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf6", "confidence": 1.0},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf6", "confidence": 0.8, "note": "59.6 kWh / 485 km NEDC × 100; test-cycle estimate."},
+        "max_ac_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf6", "confidence": 1.0},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf6", "confidence": 1.0},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard."}
+      }
+    },
+    {
+      "code": "VF6_PLUS_VN", "brand": "VinFast", "model": "VF 6", "variant": "Plus", "model_year": null, "market": "VN",
+      "battery_kwh": 59.6, "consumption_kwh_per_100km": 12.957, "max_ac_kw": 7.2, "max_dc_kw": 100,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf6", "confidence": 1.0},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf6", "confidence": 0.8, "note": "59.6 kWh / 460 km NEDC × 100; test-cycle estimate."},
+        "max_ac_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf6", "confidence": 1.0},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf6", "confidence": 1.0},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard."}
+      }
+    },
+    {
+      "code": "VF7_ECO_VN", "brand": "VinFast", "model": "VF 7", "variant": "Eco", "model_year": null, "market": "VN",
+      "battery_kwh": 59.6, "consumption_kwh_per_100km": 13.545, "max_ac_kw": 7.2, "max_dc_kw": 100,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf7", "confidence": 1.0},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf7", "confidence": 0.8, "note": "59.6 kWh / 440 km NEDC × 100; test-cycle estimate."},
+        "max_ac_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf7", "confidence": 1.0},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf7", "confidence": 1.0},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard."}
+      }
+    },
+    {
+      "code": "VF7_PLUS_FWD_VN", "brand": "VinFast", "model": "VF 7", "variant": "Plus FWD", "model_year": null, "market": "VN",
+      "battery_kwh": 70, "consumption_kwh_per_100km": 13.986, "max_ac_kw": 7.2, "max_dc_kw": 110,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf7", "confidence": 1.0},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf7", "confidence": 0.8, "note": "70 kWh / 500.5 km NEDC × 100; test-cycle estimate."},
+        "max_ac_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf7", "confidence": 1.0},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf7", "confidence": 1.0},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard."}
+      }
+    },
+    {
+      "code": "VF7_PLUS_AWD_VN", "brand": "VinFast", "model": "VF 7", "variant": "Plus AWD", "model_year": null, "market": "VN",
+      "battery_kwh": 70, "consumption_kwh_per_100km": 14.925, "max_ac_kw": 7.2, "max_dc_kw": 110,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf7", "confidence": 1.0},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf7", "confidence": 0.8, "note": "70 kWh / 469 km NEDC × 100; test-cycle estimate."},
+        "max_ac_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf7", "confidence": 1.0},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf7", "confidence": 1.0},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard."}
+      }
+    },
+    {
+      "code": "VF8_ECO_VN", "brand": "VinFast", "model": "VF 8", "variant": "Eco", "model_year": null, "market": "VN",
+      "battery_kwh": 87.7, "consumption_kwh_per_100km": 13.811, "max_ac_kw": 11, "max_dc_kw": 149,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-vf8", "confidence": 1.0},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-vf8", "confidence": 0.8, "note": "87.7 kWh / 635 km NEDC × 100; test-cycle estimate."},
+        "max_ac_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-vf8", "confidence": 1.0, "note": "Maximum on three-phase AC supply."},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-vf8", "confidence": 1.0},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard."}
+      }
+    },
+    {
+      "code": "VF8_PLUS_VN", "brand": "VinFast", "model": "VF 8", "variant": "Plus", "model_year": null, "market": "VN",
+      "battery_kwh": 87.7, "consumption_kwh_per_100km": 18.463, "max_ac_kw": 11, "max_dc_kw": 149,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-vf8", "confidence": 1.0},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-vf8", "confidence": 0.8, "note": "87.7 kWh / 475 km NEDC × 100; test-cycle estimate."},
+        "max_ac_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-vf8", "confidence": 1.0, "note": "Maximum on three-phase AC supply."},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-vf8", "confidence": 1.0},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard."}
+      }
+    },
+    {
+      "code": "VF9_ECO_VN", "brand": "VinFast", "model": "VF 9", "variant": "Eco CATL", "model_year": null, "market": "VN",
+      "battery_kwh": 123, "consumption_kwh_per_100km": 19.649, "max_ac_kw": 11, "max_dc_kw": null,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwd7a5ae21/raisinghands/documents/VF9_Brochure_VN.pdf", "confidence": 1.0, "note": "CATL usable capacity."},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwd7a5ae21/raisinghands/documents/VF9_Brochure_VN.pdf", "confidence": 0.8, "note": "123 kWh / 626 km WLTP × 100; test-cycle estimate."},
+        "max_ac_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwd7a5ae21/raisinghands/documents/VF9_Brochure_VN.pdf", "confidence": 1.0, "note": "Maximum on three-phase AC supply; 6.6 kW on single-phase."},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard."}
+      }
+    },
+    {
+      "code": "VF9_PLUS_VN", "brand": "VinFast", "model": "VF 9", "variant": "Plus CATL", "model_year": null, "market": "VN",
+      "battery_kwh": 123, "consumption_kwh_per_100km": 20.432, "max_ac_kw": 11, "max_dc_kw": null,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwd7a5ae21/raisinghands/documents/VF9_Brochure_VN.pdf", "confidence": 1.0, "note": "CATL usable capacity."},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwd7a5ae21/raisinghands/documents/VF9_Brochure_VN.pdf", "confidence": 0.8, "note": "123 kWh / 602 km WLTP × 100; test-cycle estimate."},
+        "max_ac_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwd7a5ae21/raisinghands/documents/VF9_Brochure_VN.pdf", "confidence": 1.0, "note": "Maximum on three-phase AC supply; 6.6 kW on single-phase."},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard."}
+      }
+    },
+    {
+      "code": "VF3_ECO_VN", "brand": "VinFast", "model": "VF 3", "variant": "Eco", "model_year": null, "market": "VN",
+      "battery_kwh": 18.64, "consumption_kwh_per_100km": 8.67, "max_ac_kw": null, "max_dc_kw": 24,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf3", "confidence": 1.0},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf3", "confidence": 0.8, "note": "18.64 kWh / 215 km NEDC × 100; test-cycle estimate."},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf3", "confidence": 1.0},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard; AC power is unpublished."}
+      }
+    },
+    {
+      "code": "VF3_PLUS_VN", "brand": "VinFast", "model": "VF 3", "variant": "Plus", "model_year": null, "market": "VN",
+      "battery_kwh": 18.64, "consumption_kwh_per_100km": 8.67, "max_ac_kw": null, "max_dc_kw": 24,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf3", "confidence": 1.0},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf3", "confidence": 0.8, "note": "18.64 kWh / 215 km NEDC × 100; test-cycle estimate."},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf3", "confidence": 1.0},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard; AC power is unpublished."}
+      }
+    },
+    {
+      "code": "MINIO_GREEN_VN", "brand": "VinFast", "model": "Minio Green", "variant": null, "model_year": null, "market": "VN",
+      "battery_kwh": 18.3, "consumption_kwh_per_100km": 8.714, "max_ac_kw": 3.3, "max_dc_kw": 24,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/minio-green", "confidence": 1.0},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://vinfastauto.com/vn_vi/minio-green", "confidence": 0.8, "note": "18.3 kWh / 210 km NEDC × 100; test-cycle estimate."},
+        "max_ac_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/minio-green", "confidence": 1.0},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/minio-green", "confidence": 0.9, "note": "Manufacturer states approximately 24 kW."},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard."}
+      }
+    },
+    {
+      "code": "HERIO_GREEN_VN", "brand": "VinFast", "model": "Herio Green", "variant": null, "model_year": null, "market": "VN",
+      "battery_kwh": 37.23, "consumption_kwh_per_100km": 11.42, "max_ac_kw": 6.6, "max_dc_kw": 50,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/herio-green", "confidence": 1.0},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://vinfastauto.com/vn_vi/herio-green", "confidence": 0.8, "note": "37.23 kWh / 326 km NEDC × 100; test-cycle estimate."},
+        "max_ac_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/herio-green", "confidence": 1.0},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/herio-green", "confidence": 0.9, "note": "Manufacturer product page states approximately 50 kW."},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard."}
+      }
+    },
+    {
+      "code": "NERIO_GREEN_VN", "brand": "VinFast", "model": "Nerio Green", "variant": null, "model_year": null, "market": "VN",
+      "battery_kwh": 41.9, "consumption_kwh_per_100km": 13.151, "max_ac_kw": 6.6, "max_dc_kw": 60,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw9d854c87/Document/250416_Brochure_Nerio_Green_VN.pdf", "confidence": 1.0},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw9d854c87/Document/250416_Brochure_Nerio_Green_VN.pdf", "confidence": 0.8, "note": "41.9 kWh / 318.6 km NEDC × 100; test-cycle estimate."},
+        "max_ac_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw9d854c87/Document/250416_Brochure_Nerio_Green_VN.pdf", "confidence": 1.0},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw9d854c87/Document/250416_Brochure_Nerio_Green_VN.pdf", "confidence": 1.0},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard."}
+      }
+    },
+    {
+      "code": "LIMO_GREEN_VN", "brand": "VinFast", "model": "Limo Green", "variant": null, "model_year": null, "market": "VN",
+      "battery_kwh": 60.13, "consumption_kwh_per_100km": 13.362, "max_ac_kw": 6.9, "max_dc_kw": 80,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/limo-green", "confidence": 1.0},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://vinfastauto.com/vn_vi/limo-green", "confidence": 0.8, "note": "60.13 kWh / 450 km NEDC × 100; test-cycle estimate."},
+        "max_ac_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/limo-green", "confidence": 1.0},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/limo-green", "confidence": 1.0},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard."}
+      }
+    },
+    {
+      "code": "EC_VAN_VN", "brand": "VinFast", "model": "EC Van", "variant": null, "model_year": null, "market": "VN",
+      "battery_kwh": 18.23, "consumption_kwh_per_100km": 10.417, "max_ac_kw": null, "max_dc_kw": 24.2,
+      "connectors": ["CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/vinfast-ecvan", "confidence": 1.0, "note": "Current product page; older brochure lists a different battery version."},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://vinfastauto.com/vn_vi/vinfast-ecvan", "confidence": 0.8, "note": "18.23 kWh / 175 km NEDC × 100; test-cycle estimate."},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/vinfast-ecvan", "confidence": 1.0},
+        "connectors": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw65e227db/Document/ECVan_Brochure.pdf", "confidence": 0.8, "note": "Official brochure specifies CCS2; current product page does not list inlet type."}
+      }
+    },
+    {
+      "code": "VF_MPV7_VN", "brand": "VinFast", "model": "VF MPV 7", "variant": null, "model_year": null, "market": "VN",
+      "battery_kwh": 60.13, "consumption_kwh_per_100km": 13.362, "max_ac_kw": 6.9, "max_dc_kw": 80,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-vf-mpv7", "confidence": 1.0},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-vf-mpv7", "confidence": 0.8, "note": "60.13 kWh / 450 km NEDC × 100; test-cycle estimate."},
+        "max_ac_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-vf-mpv7", "confidence": 1.0},
+        "max_dc_kw": {"origin": "observed", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/dat-coc-xe-vf-mpv7", "confidence": 1.0},
+        "connectors": {"origin": "inferred", "provider": "vinfast_official", "source_ref": "https://vinfastauto.com/vn_vi/cac-loai-cong-sac-o-to-dien", "confidence": 0.8, "note": "Manufacturer-wide Vietnam charging standard."}
+      }
+    },
+    {
+      "code": "BYD_ATTO3_DYNAMIC_2024_VN", "brand": "BYD", "model": "ATTO 3", "variant": "Dynamic", "model_year": 2024, "market": "VN",
+      "battery_kwh": 49.92, "consumption_kwh_per_100km": 12.176, "max_ac_kw": null, "max_dc_kw": 70,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 1.0, "note": "Manufacturer-published battery capacity; usable capacity is not specified."},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 0.7, "note": "49.92 kWh / 410 km NEDC × 100; cycle estimate using published total capacity, not measured consumption."},
+        "max_dc_kw": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 1.0, "note": "2024 Vietnam brochure lists CCS2 70 kW."},
+        "connectors": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 1.0, "note": "Type 2 AC and CCS 2 DC."}
+      }
+    },
+    {
+      "code": "BYD_ATTO3_PREMIUM_2024_VN", "brand": "BYD", "model": "ATTO 3", "variant": "Premium", "model_year": 2024, "market": "VN",
+      "battery_kwh": 60.48, "consumption_kwh_per_100km": 12.6, "max_ac_kw": null, "max_dc_kw": 70,
+      "connectors": ["Type2", "CCS2"], "is_active": true,
+      "provenance": {
+        "battery_kwh": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 1.0, "note": "Manufacturer-published battery capacity; usable capacity is not specified."},
+        "consumption_kwh_per_100km": {"origin": "inferred", "provider": "smart_ev_data_platform", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 0.7, "note": "60.48 kWh / 480 km NEDC × 100; cycle estimate using published total capacity, not measured consumption."},
+        "max_dc_kw": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 1.0, "note": "2024 Vietnam brochure lists CCS2 70 kW."},
+        "connectors": {"origin": "observed", "provider": "byd_vietnam_official", "source_ref": "https://www.byd.com/material/byd-site/vn/proudct-specs/new-catalogue-2024/Brochure_Catalogue_ATTO3_VN_view.pdf", "confidence": 1.0, "note": "Type 2 AC and CCS 2 DC."}
+      }
+    }
+  ]
+}

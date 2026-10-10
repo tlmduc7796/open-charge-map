@@ -1,0 +1,14 @@
+.git
+.venv
+backups
+**/__pycache__
+**/*.py[cod]
+.pytest-tmp
+.pytest_cache
+pytest-cache-files-*
+.ruff_cache
+frontend/node_modules
+frontend/dist
+frontend/.env.local
+data/ml/urbanev/raw
+data/ml/urbanev/*.zip

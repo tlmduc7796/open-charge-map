@@ -35,6 +35,89 @@ python -m pip install -r backend\requirements-dev.txt
 Copy-Item .env.example .env
 ```
 
+### Persistence profile cho backend (local/integration)
+
+Backend vẫn khởi động bằng fixture/in-memory ở cấu hình demo mặc định. Để kiểm thử tích hợp
+PostgreSQL/PostGIS local, xem hướng dẫn và provenance dữ liệu trong
+[`data_platform/README.md`](data_platform/README.md), sau đó bootstrap database. Snapshot này
+có dữ liệu synthetic; chỉ dùng cho local/integration, không dùng để provision database release:
+
+```powershell
+Set-Location data_platform
+python -m pip install -e .
+python scripts\bootstrap_database.py
+Set-Location ..
+```
+
+Trong `.env`, cấu hình `DATABASE_URL`, `CATALOG_STORAGE=database` và
+`PLANNED_ARRIVALS_STORAGE=database`; bật thêm `REALTIME_TELEMETRY_STORAGE=database`
+và `JOURNEY_STORAGE=database` để lưu snapshot telemetry, hành trình và kết quả recommendation;
+đặt `OCCUPANCY_HISTORY_STORAGE=database` để serving truy vấn các bucket occupancy đã quan sát.
+GPS re-plan dùng `REPLAN_DEVIATION_THRESHOLD_M` và `REPLAN_MIN_INTERVAL_MIN`.
+Khi `DEMO_MODE=false`, backend cũng yêu cầu `REDIS_URL`; release compose cấu hình Redis nội bộ cho rate limiting, SSE pub/sub và cache model forecast theo snapshot/horizon (TTL mặc định 300 giây, cấu hình qua `OCCUPANCY_FORECAST_CACHE_TTL_S`). Cache chỉ lưu dự báo model; lỗi cache tự fallback sang inference, còn persistence không bị cache.
+PostgreSQL local chạy trên cổng `5433` theo compose của data platform. Trong môi trường release,
+hãy giữ `DEMO_MODE=false` để endpoint demo/reset bị khóa;
+trong `frontend/.env.local`, đặt `VITE_DEMO_MODE=false` để ẩn Queue Lab và các điều khiển
+demo. Chỉ bật demo mode trong môi trường demo riêng. Database snapshot có trường synthetic và
+không được xem là telemetry thật.
+
+### Đóng gói Docker cho release
+
+Release stack gồm PostgreSQL/PostGIS, Redis, API, frontend Nginx và Prometheus; web proxy REST và SSE qua cùng origin. Redis yêu cầu password, chỉ mở trong mạng Docker, và không lưu state bền vững. Prometheus chỉ bind loopback ở cổng `9090`; API metrics được scrape trên Docker network và không public qua Nginx. Đóng gói không làm dữ liệu seed synthetic trở thành dữ liệu vận hành thật.
+
+```powershell
+Copy-Item .env.release.example .env.release
+```
+
+Replace the sample values with unique production secrets before continuing.
+Set `OIDC_ISSUER`, `OIDC_AUDIENCE`, `OIDC_JWKS_URL`, and the public `OIDC_CLIENT_ID` in `.env.release`. The frontend image receives the issuer, client ID, and scope at build time; register `https://<deployment-host>/auth/callback` as the OIDC redirect URI. The demo `frontend/.env.example` includes the same `VITE_OIDC_*` names for local reference, but release Compose builds with `VITE_DEMO_MODE=false`.
+
+```powershell
+python scripts\preflight_release.py
+```
+
+Khởi tạo schema release bằng PostgreSQL và migration. Không chạy `bootstrap_database.py` hoặc seed runtime ở profile này: các lệnh đó nạp snapshot demo/synthetic và không tạo database đủ điều kiện release.
+
+```powershell
+docker compose --env-file .env.release -f compose.release.yaml build api
+docker compose --env-file .env.release -f compose.release.yaml up -d postgres
+docker compose --env-file .env.release -f compose.release.yaml run --rm migrate
+```
+
+Preview catalog station/port và vehicle đã được duyệt; chỉ apply sau khi người vận hành xác minh nguồn, phạm vi và provenance. Cần cài backend requirements và data-platform package trước khi chạy importer:
+
+```powershell
+python -m pip install -r backend\requirements.txt -e .\data_platform
+python data_platform\scripts\import_release_catalog.py `
+  --stations C:\SecureInput\stations.reviewed.json `
+  --vehicles C:\SecureInput\vehicles.reviewed.json
+python data_platform\scripts\import_release_catalog.py `
+  --stations C:\SecureInput\stations.reviewed.json `
+  --vehicles C:\SecureInput\vehicles.reviewed.json `
+  --apply --reviewed-by "operator@example.com"
+```
+
+Khởi động ứng dụng sau khi catalog đã được nạp:
+
+```powershell
+docker compose --env-file .env.release -f compose.release.yaml up -d --build
+```
+
+Adapter telemetry phải gửi snapshot vận hành đầy đủ, còn hạn cho ít nhất một trạm eligible trước khi `/api/health/ready` chuyển sang `ready`; readiness sẽ fail closed nếu thiếu catalog hoặc telemetry. Trước cutover, chạy `python scripts\smoke_release.py --allow-persistence` để kiểm tra stack; gate nghiêm ngặt không có flag này còn yêu cầu model occupancy đã promote. Frontend được phục vụ nội bộ tại `http://127.0.0.1:8080`; Compose bind cổng web vào loopback để reverse proxy TLS trên host là lối truy cập công khai. API liveness tại `/api/health/live`, health Nginx tại `/health/live`, còn PostgreSQL cũng chỉ bind vào loopback. Hiện nguồn telemetry của workspace vẫn mô phỏng và chưa có aggregator được chọn, nên không thể hoàn tất bước ingest vận hành hoặc cutover release bằng dữ liệu hiện có.
+
+Prometheus UI nội bộ trên host mở tại `http://127.0.0.1:9090`; metric `smart_ev_http_responses_total` và `smart_ev_http_response_start_duration_seconds` dùng route template, method và status code, không dùng path chứa ID. `smart_ev_occupancy_forecasts_total` và `smart_ev_occupancy_fallbacks_total` theo dõi model/persistence và nhóm nguyên nhân fallback.
+
+Encrypted backup creation, verification, restore, and retention instructions are in [`data_platform/README.md`](data_platform/README.md#encrypted-backups-verification-restore-and-retention).
+
+Sau khi deploy, chạy smoke gate từ thư mục gốc:
+
+```powershell
+python scripts\smoke_release.py --allow-persistence # checks web/API, DB/Redis, catalogs and station-status provenance; allows persistence fallback
+python scripts\smoke_release.py                    # strict release gate; requires a promoted occupancy model
+```
+
+Lệnh thứ nhất chỉ chứng minh stack phục vụ được với persistence fallback, không phải `RELEASE PASS`. Lệnh thứ hai cũng yêu cầu catalog không chứa fixture synthetic và model status báo `release_ready=true`.
+
 Nếu chưa có UrbanEV raw archive:
 
 ```powershell

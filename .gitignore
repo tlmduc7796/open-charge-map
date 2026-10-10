@@ -1,4 +1,6 @@
 .env
+.env.release
+backups/
 frontend/.env.local
 .venv/
 __pycache__/
@@ -12,3 +14,4 @@ ml/artifacts/*.joblib
 data/ml/urbanev/raw/*.zip
 data/ml/urbanev/raw/*.part
 AGENTS.md
+.secrets/

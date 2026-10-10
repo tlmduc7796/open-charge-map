@@ -1,0 +1,12 @@
+.env
+.venv/
+.tmp/
+.test-tmp*/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.pyc
+*.egg-info/
+trash/
+artifacts/*
+!artifacts/.gitkeep

@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 
 import pytest
@@ -5,7 +6,7 @@ from pydantic import ValidationError
 
 from backend.app.config import load_settings
 from backend.app.domain.forecasting import OccupancyForecastService
-from backend.app.domain.models import StationStatus
+from backend.app.domain.models import PortRuntimeStatus, StationStatus
 from backend.app.domain.repositories import DomainData, load_domain_data
 from backend.app.domain.wait_estimation import WaitEstimator
 
@@ -47,6 +48,8 @@ def test_available_ports_produce_near_zero_wait(
 
     assert result.current_state_wait_min == 0
     assert result.estimated_wait_min == 0
+    assert result.method == "erlang_c"
+    assert result.estimated_wait_p90_min >= result.estimated_wait_min
 
 
 def test_empty_single_port_station_has_no_immediate_wait(
@@ -120,11 +123,59 @@ def test_port_outage_cannot_reduce_wait(
     ).estimated_wait_min
 
 
+def test_wait_capacity_and_queue_are_scoped_to_compatible_connectors(
+    domain_data: DomainData, estimator: WaitEstimator
+) -> None:
+    base = domain_data.station_statuses.get("ST_EVO_AUDI_HCM")
+    status = _status(
+        base,
+        operational_ports=4,
+        occupied_ports=1,
+        available_ports=3,
+        offline_ports=0,
+        unknown_ports=0,
+        occupancy_ratio=0.25,
+        queue_length=2,
+        port_runtime_statuses=(
+            PortRuntimeStatus(connector_types=("CCS2",), state="charging"),
+            PortRuntimeStatus(connector_types=("CCS2",), state="available"),
+            PortRuntimeStatus(connector_types=("Type2",), state="available"),
+            PortRuntimeStatus(connector_types=("Type2",), state="available"),
+        ),
+        queue_connector_types=(("CCS2",), ("Type2",)),
+    )
+    forecast = OccupancyForecastService().forecast_occupancy(status, horizon_min=5)
+
+    result = estimator.estimate_wait(
+        status,
+        forecast,
+        evaluation_at=datetime.fromisoformat("2026-09-25T18:00:00+07:00"),
+        compatible_connector_types=("CCS2",),
+    )
+
+    assert result.operational_ports == 2
+    assert result.current_queue_length == 1
+    assert result.predicted_occupied_ports == pytest.approx(0.5)
+    assert "CONNECTOR_SCOPED_WAIT_APPROXIMATED" in result.flags
+
+
 def test_invalid_capacity_is_rejected(domain_data: DomainData) -> None:
     base = domain_data.station_statuses.get("ST_EVO_LAVIDA_Q7")
 
     with pytest.raises(ValidationError, match="operational_ports.*offline_ports"):
         _status(base, operational_ports=0, offline_ports=0)
+
+
+def test_wait_result_rejects_naive_evaluation_timestamp(
+    domain_data: DomainData, estimator: WaitEstimator
+) -> None:
+    status = domain_data.station_statuses.get("ST_EVO_LAVIDA_Q7")
+    result = _estimate(estimator, status)
+    payload = result.model_dump()
+    payload["evaluation_at"] = datetime(2026, 9, 25, 18, 0)
+
+    with pytest.raises(ValidationError, match="evaluation_at must include a timezone"):
+        type(result).model_validate(payload)
 
 
 def test_planned_arrivals_can_be_toggled_and_trigger_overload(
@@ -154,12 +205,43 @@ def test_planned_arrivals_can_be_toggled_and_trigger_overload(
     assert with_planned.estimated_wait_min >= without_planned.estimated_wait_min
     assert "OVERLOADED" in with_planned.flags
     assert with_planned.estimated_wait_min == 120
+    assert with_planned.estimated_wait_p90_min == 120
+
+
+def test_erlang_c_p90_uses_unconditional_wait_probability() -> None:
+    assert WaitEstimator._erlang_c_p90(0.05, 2.0) == 0
+    expected_p90 = -math.log(0.1 / 0.95) / 2.0 * 60
+    assert WaitEstimator._erlang_c_p90(0.95, 2.0) == pytest.approx(expected_p90)
+
+
+def test_erlang_c_matches_single_server_closed_form() -> None:
+    probability, expected_wait_min = WaitEstimator._erlang_c(
+        arrival_rate_per_hour=3,
+        service_rate_per_server=4,
+        servers=1,
+    )
+
+    assert probability == pytest.approx(0.75)
+    assert expected_wait_min == pytest.approx(45)
+
+
+def test_erlang_c_is_finite_at_maximum_supported_station_capacity() -> None:
+    probability, expected_wait_min = WaitEstimator._erlang_c(
+        arrival_rate_per_hour=990,
+        service_rate_per_server=1,
+        servers=1000,
+    )
+
+    assert math.isfinite(probability)
+    assert math.isfinite(expected_wait_min)
+    assert 0 < probability < 1
+    assert expected_wait_min > 0
 
 
 def test_scenario_override_applies_only_to_requested_station(
     domain_data: DomainData, estimator: WaitEstimator
 ) -> None:
-    status = domain_data.station_statuses.get("ST_EVO_DEUTSCHES_HAUS")
+    status = domain_data.station_statuses.get("ST_VF_LA_VELA")
     forecast = OccupancyForecastService().forecast_occupancy(status, horizon_min=5)
 
     result = estimator.estimate_wait(

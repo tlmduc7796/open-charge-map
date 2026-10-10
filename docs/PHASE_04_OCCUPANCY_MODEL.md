@@ -36,14 +36,14 @@ Có thể thêm:
 
 ### 3.2 Model
 
-Model candidate chính là XGBoost với lag/time features. Dùng 12 bước lookback ở resolution 5 phút và ba model trực tiếp cho horizon +5, +10, +15 phút. Không dùng station/entity ID, queue hoặc wait làm feature.
+Model candidate uses 12 lag inputs and direct horizons +5, +10, +15, +20, +25, +30 minutes, matching the MVP serving contract. Do not use station/entity ID, queue, or wait as model features.
 
 ### 3.3 Experiment contract
 
 Chốt:
 
 - lookback window = 12 bước / 60 phút;
-- forecast horizon = +5, +10, +15 phút;
+- forecast horizons = +5, +10, +15, +20, +25, +30 minutes;
 - temporal resolution = 5 phút;
 - feature list;
 - target;

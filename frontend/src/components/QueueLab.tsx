@@ -112,7 +112,8 @@ export default function QueueLab() {
   }, []);
 
   useEffect(() => {
-    void loadScenario();
+    const timer = window.setTimeout(() => void loadScenario(), 0);
+    return () => window.clearTimeout(timer);
   }, [loadScenario]);
 
   const setPort = (index: number, update: Partial<QueueLabPort>) => {
@@ -359,9 +360,9 @@ function QueueResults({ result }: { result: QueueLabResult }) {
   return (
     <div className="queue-results">
       <div className="queue-result-card primary-result">
-        <span>Estimated start</span>
+        <span>Giờ bắt đầu trong mẫu có seed</span>
         <strong>{result.estimated_start_at ? displayTime(result.estimated_start_at) : "Không có port tương thích"}</strong>
-        <small>Wait: {result.estimated_wait_min ?? "—"} phút</small>
+        <small>Thời gian chờ trong mẫu này: {result.estimated_wait_min ?? "—"} phút</small>
       </div>
       <div className="queue-result-card">
         <span>Monte Carlo · {monteCarlo.trials.toLocaleString("vi-VN")} lần</span>

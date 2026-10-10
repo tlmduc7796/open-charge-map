@@ -1,0 +1,100 @@
+groups:
+  - name: smart-ev-api
+    rules:
+      - alert: SmartEvApiHigh5xxRate
+        expr: |
+          sum(rate(smart_ev_http_responses_total{status=~"5.."}[5m]))
+          /
+          clamp_min(sum(rate(smart_ev_http_responses_total[5m])), 0.1)
+          > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Smart EV API has an elevated server error rate
+          description: More than 5% of API responses have been 5xx for 10 minutes.
+      - alert: SmartEvApiSlowResponseStart
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(smart_ev_http_response_start_duration_seconds_bucket[5m]))
+          ) > 1.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Smart EV API response headers are slow
+          description: The 5-minute p95 response-start latency exceeded 1.5 seconds for 10 minutes.
+      - alert: SmartEvModelInferenceFailing
+        expr: increase(smart_ev_occupancy_fallbacks_total{reason="model_inference_failed"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Occupancy model inference failed
+          description: The API fell back to persistence after a model inference error.
+      - alert: SmartEvPredictionPersistenceFailing
+        expr: increase(smart_ev_occupancy_prediction_persistence_failures_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Occupancy forecasts could not be persisted
+          description: Forecast responses continue, but prediction rows are not being stored in PostgreSQL.
+      - alert: SmartEvNoFreshStationStatus
+        expr: |
+          smart_ev_station_status_records{freshness="eligible"} > 0
+          and on() smart_ev_station_status_records{freshness="fresh"} == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: No eligible charging station has a fresh status
+          description: Every eligible station status is stale or unavailable for 10 minutes.
+      - alert: SmartEvStationStatusesMostlyStale
+        expr: |
+          sum(smart_ev_station_status_records{freshness="stale"})
+          / clamp_min(
+              sum(smart_ev_station_status_records{freshness=~"fresh|stale"}),
+              1
+            ) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Most eligible charging station statuses are stale
+          description: More than half of eligible station statuses are stale for 10 minutes.
+      - alert: SmartEvStationStatusMetricsRefreshFailing
+        expr: smart_ev_station_status_metrics_refresh_error > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Station status freshness metrics could not be refreshed
+          description: The API could not read its catalog/runtime repositories for monitoring.
+      - alert: SmartEvObservedOccupancyHistoryIncomplete
+        expr: |
+          smart_ev_occupancy_history_stations{coverage="eligible"} > 0
+          and on() smart_ev_occupancy_history_coverage_ratio < 1
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Some eligible stations lack the model lookback history
+          description: At least one eligible station lacks 12 contiguous fresh observed occupancy buckets.
+      - alert: SmartEvOccupancyHistoryMetricsRefreshFailing
+        expr: smart_ev_occupancy_history_metrics_refresh_error > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Occupancy history coverage metrics could not be refreshed
+          description: The API failed to query observed history coverage for eligible stations.
+      - alert: SmartEvApiMetricsTargetDown
+        expr: up{job="smart-ev-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Prometheus cannot scrape the Smart EV API
+          description: The API metrics target has been unavailable for 2 minutes.
