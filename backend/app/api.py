@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 
 from backend.app.domain.phase7_models import ModelStatus, RouteRequest, RouteResult
 
@@ -44,6 +44,18 @@ def autocomplete_location(query: str, request: Request):
 def geocoding_details(place_id: str, request: Request):
     try:
         return request.app.state.geocoding_service.details(place_id)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@router.get("/geocoding/reverse", tags=["geocoding"])
+def geocoding_reverse(
+    request: Request,
+    lat: float = Query(ge=-90, le=90),
+    lon: float = Query(ge=-180, le=180),
+):
+    try:
+        return request.app.state.geocoding_service.reverse(lat, lon)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 

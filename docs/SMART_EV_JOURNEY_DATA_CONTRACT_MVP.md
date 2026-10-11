@@ -64,7 +64,8 @@ Các thành phần sau **không nằm trong data contract MVP**:
 - Forecast contract công khai hỗ trợ offset `0,5,10,15,20,25,30`. Mốc chưa có model
   tương ứng dùng persistence và phải trả nguồn/flag fallback, không nội suy như model thật.
 - `POST /api/v1/trips` nhận `searchId` còn hạn và `stationId` thuộc kết quả tìm kiếm;
-  hành trình `enough` có thể không chọn trạm. Trip trả `phase`, `routeVersion`, `etaAt`,
+  hành trình `enough` có thể không chọn trạm, hoặc chọn một trạm trong kết quả của lần tìm có
+  `includeOptionalStops=true`. Trip trả `phase`, `routeVersion`, `etaAt`,
   `batteryPct`, `distanceKm`, `predictionSource` và tuyến với nguồn routing.
 - `POST /api/v1/trips/{id}/position` nhận `{location,recordedAt,batteryPct?,speedKmh?,heading?}`;
   bản tin không mới hơn GPS cuối được bỏ qua (`positionAccepted=false`). Nếu không có
@@ -275,7 +276,7 @@ Hồ sơ xe EV chuẩn hóa để kiểm tra connector compatibility, reachabili
   "dc_connectors": ["CCS2"],
   "consumption_wh_km": 205,
   "reserve_soc": 0.10,
-  "default_target_soc": 0.80,
+  "default_target_soc": 1.00,
   "charging_efficiency": 0.90,
   "source": "manual",
   "is_synthetic": false,

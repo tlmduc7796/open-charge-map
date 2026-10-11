@@ -16,6 +16,7 @@ from backend.app.api_v1 import (
     list_stations,
     search_route,
     search_stations,
+    station_availability,
     station_detail,
     station_ports,
 )
@@ -71,6 +72,23 @@ def test_station_bbox_and_future_offset_validation(fake_request) -> None:
     assert future.is_prediction is True
     assert all(item.prediction_source == "default" for item in future.items)
     assert invalid_offset.value.status_code == 400
+
+
+def test_station_availability_forecast_covers_next_30_minutes(fake_request) -> None:
+    forecast = station_availability("ST_EVO_LAVIDA_Q7", fake_request)
+    live = availability(fake_request, None, 0)
+    live_item = next(item for item in live.items if item.station_id == "ST_EVO_LAVIDA_Q7")
+
+    assert [point.offset for point in forecast.points] == [0, 5, 10, 15, 20, 25, 30]
+    assert forecast.points[0].available_ports == live_item.available_ports
+    assert all(
+        0 <= point.available_ports <= forecast.operational_ports for point in forecast.points
+    )
+    assert all(point.prediction_source == "default" for point in forecast.points[1:])
+    assert "ML_DEFAULT_VALUE" in forecast.points[1].flags
+    with pytest.raises(HTTPException) as missing:
+        station_availability("ST_DOES_NOT_EXIST", fake_request)
+    assert missing.value.status_code == 404
 
 
 def test_internal_port_status_requires_configuration_and_key(fake_request) -> None:
@@ -138,19 +156,18 @@ def test_search_route_reports_no_route(fake_request, monkeypatch) -> None:
     assert error.value.detail["code"] == "NO_ROUTE"
 
 
-def test_out_of_range_includes_nearest_station(fake_request) -> None:
+def test_out_of_range_returns_empty_result_with_nearest_station(fake_request) -> None:
     payload = SearchStationsRequest(
         origin=ApiPoint(lat=10.7075, lng=106.705),
         vehicle_id="EV_VF5_PLUS",
         battery_pct=1,
     )
 
-    with pytest.raises(HTTPException) as error:
-        search_stations(payload, fake_request)
+    result = search_stations(payload, fake_request)
 
-    assert error.value.status_code == 422
-    assert error.value.detail["code"] == "OUT_OF_RANGE"
-    assert error.value.detail["nearestStation"] is not None
+    assert result.stations == ()
+    assert result.nearest_station is not None
+    assert result.missing_km is not None
 
 
 def test_search_endpoint_rejects_excess_requests(fake_request, monkeypatch) -> None:

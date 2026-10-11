@@ -514,3 +514,48 @@ def test_replan_detects_battery_eta_and_station_failure(monkeypatch) -> None:
                     {"id": trip_id},
                 )
         engine.dispose()
+
+
+@pytest.mark.skipif(not TEST_DATABASE_URL, reason="PostgreSQL test database required")
+def test_enough_trip_can_visit_an_optional_station() -> None:
+    engine = create_engine(TEST_DATABASE_URL, pool_pre_ping=True)
+    old_service = app.state.trip_service
+    app.state.trip_service = TripService(
+        DatabaseTripRepository(engine), app.state.search_result_store,
+        AppConfigRepository(app.state.settings, engine), app.state.search_service,
+        app.state.station_repository, app.state.station_status_repository,
+        app.state.vehicle_repository,
+    )
+    trip_id = None
+    try:
+        search = asyncio.run(
+            _request(
+                "POST", "/api/v1/search/route",
+                json={"origin": {"lat": 10.7075, "lng": 106.705},
+                      "destination": {"lat": 10.806, "lng": 106.687},
+                      "vehicleId": "EV_VF7_ECO", "batteryPct": 80,
+                      "includeOptionalStops": True},
+            )
+        )
+        assert search.status_code == 200, search.text
+        assert search.json()["case"] == "enough"
+        stations = [item["station"]["id"] for item in search.json()["stations"]]
+        assert stations
+        created = asyncio.run(
+            _request(
+                "POST", "/api/v1/trips",
+                json={"searchId": search.json()["searchId"], "stationId": stations[0]},
+            )
+        )
+        assert created.status_code == 201, created.text
+        trip_id = created.json()["id"]
+        assert created.json()["stationId"] == stations[0]
+    finally:
+        app.state.trip_service = old_service
+        if trip_id is not None:
+            with engine.begin() as connection:
+                connection.execute(
+                    text("DELETE FROM trips WHERE id=CAST(:id AS uuid)"),
+                    {"id": trip_id},
+                )
+        engine.dispose()

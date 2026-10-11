@@ -143,7 +143,7 @@ def _station_from_row(row: Any) -> Station:
 
 # Planning assumptions applied to every catalog vehicle (the catalog no longer stores them).
 ASSUMED_RESERVE_SOC = 0.1
-ASSUMED_TARGET_SOC = 0.8
+ASSUMED_TARGET_SOC = 1.0
 ASSUMED_CHARGING_EFFICIENCY = 0.9
 ASSUMED_AC_POWER_KW = 3.3  # used only when the catalog has no AC maximum
 ASSUMED_DC_POWER_KW = 50.0  # used only when the catalog has no DC maximum

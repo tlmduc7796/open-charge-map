@@ -38,6 +38,25 @@ export interface StationStatus {
   data_source: string;
 }
 
+/** Availability colour computed by the backend (thresholds come from its `app_config`). */
+export type StationColor = "green" | "yellow" | "red" | "grey";
+
+export interface AvailabilityPoint {
+  /** Minutes from now; 0 is the live reading, 5..30 are predictions. */
+  offset_min: number;
+  available_ports: number;
+  prediction_source: string;
+  flags: string[];
+}
+
+export interface StationForecast {
+  station_id: string;
+  total_ports: number;
+  operational_ports: number;
+  points: AvailabilityPoint[];
+  generated_at: string;
+}
+
 export interface Vehicle {
   vehicle_id: string;
   make: string;
@@ -57,6 +76,9 @@ export interface GeoPoint {
   lon: number;
   label?: string | null;
 }
+
+/** Which journey endpoint the next map click will set. */
+export type PickTarget = "origin" | "destination";
 
 export interface RouteResult {
   route_id: string;
@@ -115,6 +137,8 @@ export interface SearchRequest {
   destination: GeoPoint;
   vehicle_id: string;
   battery_pct: number;
+  /** Battery already reaches the destination: also rank stations to visit voluntarily. */
+  include_optional_stops?: boolean;
 }
 
 export interface SearchStationsRequest {

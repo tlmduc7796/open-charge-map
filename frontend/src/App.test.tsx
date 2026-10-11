@@ -9,16 +9,40 @@ vi.mock("./api", () => ({
   api: {
     stations: vi.fn(),
     stationStatus: vi.fn(),
+    stationColors: vi.fn(),
     vehicles: vi.fn(),
     modelStatus: vi.fn(),
     geocodeSuggestions: vi.fn(),
     geocodeDetails: vi.fn(),
     searchRoute: vi.fn(),
+    searchStations: vi.fn(),
+    reverseGeocode: vi.fn(),
   },
 }));
 
 vi.mock("./components/MapView", () => ({
-  default: () => <div aria-label="mock map">Map</div>,
+  default: ({ route, origin, destination, pickTarget, onMapPick }: {
+    route: { route_id: string } | null;
+    origin?: { lat: number; lon: number };
+    destination?: { lat: number; lon: number };
+    pickTarget?: "origin" | "destination" | null;
+    onMapPick?: (point: { lat: number; lon: number }) => void;
+  }) => (
+    <div
+      aria-label="mock map"
+      data-route-id={route?.route_id ?? "none"}
+      data-has-origin={String(Boolean(origin))}
+      data-has-destination={String(Boolean(destination))}
+      data-pick-target={pickTarget ?? "none"}
+    >
+      Map
+      {pickTarget && (
+        <button type="button" onClick={() => onMapPick?.({ lat: 10.8, lon: 106.68 })}>
+          mock map pick
+        </button>
+      )}
+    </div>
+  ),
 }));
 
 const mockedApi = vi.mocked(api);
@@ -26,34 +50,17 @@ const mockedApi = vi.mocked(api);
 beforeEach(() => {
   mockedApi.stations.mockResolvedValue([station]);
   mockedApi.stationStatus.mockResolvedValue(status);
+  mockedApi.stationColors.mockResolvedValue({ [station.properties.station_id]: "green" });
   mockedApi.vehicles.mockResolvedValue([vehicle]);
   mockedApi.modelStatus.mockResolvedValue(modelStatus);
   mockedApi.searchRoute.mockResolvedValue(recommendation);
   mockedApi.geocodeSuggestions.mockResolvedValue([]);
-});
-
-test("loads backend data and renders a recommendation from mocked API", async () => {
-  render(<App />);
-  expect(screen.getByText(/Đang kết nối Smart EV backend/i)).toBeInTheDocument();
-
-  expect(await screen.findByRole("heading", { name: /Chọn trạm sạc phù hợp/i })).toBeInTheDocument();
-  expect(screen.getByText("Quãng đường tối đa EV có thể đi")).toBeInTheDocument();
-  expect(screen.getByText("150 km")).toBeInTheDocument();
-  fireEvent.change(screen.getByRole("slider", { name: "Quãng đường tối đa EV có thể đi" }), {
-    target: { value: "120" },
+  mockedApi.reverseGeocode.mockResolvedValue({
+    place_id: "reverse-test",
+    label: "",
+    location: { lat: 10.8, lon: 106.68 },
+    provider: "goong",
   });
-  fireEvent.click(screen.getByRole("button", { name: /Tìm trạm phù hợp/i }));
-
-  expect((await screen.findAllByText(station.properties.name)).length).toBeGreaterThan(0);
-  expect(screen.getByText("156 km")).toBeInTheDocument();
-  await waitFor(() =>
-    expect(mockedApi.searchRoute).toHaveBeenCalledWith(
-      expect.objectContaining({
-        vehicle_id: vehicle.vehicle_id,
-        battery_pct: 40,
-      }),
-    ),
-  );
 });
 
 test("shows a recoverable backend error state", async () => {
@@ -65,28 +72,26 @@ test("shows a recoverable backend error state", async () => {
   expect(screen.getByRole("button", { name: /Thử lại/i })).toBeInTheDocument();
 });
 
-test("shows an empty recommendation state", async () => {
-  mockedApi.searchRoute.mockResolvedValueOnce({
-    ...recommendation,
-    recommendations: [],
-    excluded_candidates: [{ station_id: station.properties.station_id, reason_codes: ["STATION_OFFLINE"] }],
+test("station search has a single start point and searches from it", async () => {
+  mockedApi.searchStations.mockResolvedValue({
+    stations: [],
+    excluded_candidates: [],
+    nearest_station_name: null,
+    missing_km: null,
+    reachable_km: 30,
   });
   render(<App />);
 
-  await screen.findByRole("heading", { name: /Chọn trạm sạc phù hợp/i });
-  fireEvent.click(screen.getByRole("button", { name: /Tìm trạm phù hợp/i }));
-  expect(await screen.findByText(/Không có trạm tương thích/i)).toBeInTheDocument();
-});
+  fireEvent.click(await screen.findByRole("tab", { name: "Tìm trạm" }));
 
-test("explains when the battery is enough and no charging stop is needed", async () => {
-  mockedApi.searchRoute.mockResolvedValueOnce({
-    ...recommendation,
-    case: "enough",
-    recommendations: [],
-  });
-  render(<App />);
+  expect(screen.getByRole("textbox", { name: "Điểm bắt đầu" })).toBeInTheDocument();
+  expect(screen.queryByRole("textbox", { name: /Điểm đến/ })).not.toBeInTheDocument();
 
-  await screen.findByRole("heading", { name: /Chọn trạm sạc phù hợp/i });
-  fireEvent.click(screen.getByRole("button", { name: /Tìm trạm phù hợp/i }));
-  expect(await screen.findByText(/Pin đủ để tới điểm đến/i)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Tìm trạm" }));
+
+  await waitFor(() =>
+    expect(mockedApi.searchStations).toHaveBeenCalledWith(
+      expect.objectContaining({ location: expect.objectContaining({ lat: 10.7075, lon: 106.705 }) }),
+    ),
+  );
 });

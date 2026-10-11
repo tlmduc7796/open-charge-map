@@ -5,11 +5,14 @@ declare module "@goongmaps/goong-js" {
 
   interface GoongMap {
     on(event: string, handler: (event?: unknown) => void): void;
+    off(event: string, handler: (event?: unknown) => void): void;
+    getCanvas(): HTMLCanvasElement;
     addControl(control: unknown, position?: string): void;
     addSource(id: string, source: unknown): void;
     addLayer(layer: unknown): void;
     getSource(id: string): GoongSource | undefined;
     getLayer(id: string): unknown;
+    flyTo(options: Record<string, unknown>): void;
     removeLayer(id: string): void;
     removeSource(id: string): void;
     remove(): void;

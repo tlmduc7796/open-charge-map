@@ -99,7 +99,7 @@ def test_database_catalog_serves_stations_with_unknown_port_status() -> None:
         assert len(vehicle_items) == 18
         assert all(vehicle.battery_capacity_kwh > 0 for vehicle in vehicle_items)
         assert all(vehicle.reserve_soc == 0.1 for vehicle in vehicle_items)
-        assert all(vehicle.default_target_soc == 0.8 for vehicle in vehicle_items)
+        assert all(vehicle.default_target_soc == 1.0 for vehicle in vehicle_items)
         assert all(vehicle.charging_efficiency == 0.9 for vehicle in vehicle_items)
         assert all(vehicle.make == "VinFast" for vehicle in vehicle_items)
         vf9 = next(vehicle for vehicle in vehicle_items if vehicle.vehicle_id == "VF9_ECO_VN")

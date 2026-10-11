@@ -13,6 +13,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from backend.app.api_v1_models import (
     ApiErrorResponse,
     ApiPoint,
+    AvailabilityPoint,
     AvailabilityResponse,
     ConfigResponse,
     ConnectorDetail,
@@ -25,6 +26,7 @@ from backend.app.api_v1_models import (
     SearchStationsRequest,
     SearchStationsResponse,
     StationAvailability,
+    StationAvailabilityForecast,
     StationDetail,
     StationSummary,
     TripActionRequest,
@@ -107,6 +109,17 @@ def _summary(request: Request, station, *, green_min: int) -> StationSummary:
     )
 
 
+def _available_at(request: Request, status, offset: int) -> tuple[int, str, tuple[str, ...]]:
+    """Free ports, source and flags at `offset` minutes; offset 0 is the live reading."""
+    if offset == 0:
+        return status.available_ports, status.data_source, ()
+    forecast = request.app.state.occupancy_forecast_service.forecast_occupancy(
+        status, horizon_min=offset
+    )
+    available = max(0, status.operational_ports - ceil(forecast.predicted_occupied_ports))
+    return available, forecast.prediction_source, forecast.flags
+
+
 def _require_internal_key(request: Request, supplied: str | None) -> None:
     expected = request.app.state.settings.internal_api_key
     if expected is None:
@@ -164,18 +177,7 @@ def availability(
     items: list[StationAvailability] = []
     for station in stations:
         status = request.app.state.station_status_repository.get(station.station_id)
-        if offset == 0:
-            available_ports = status.available_ports
-            source = status.data_source
-        else:
-            forecast = request.app.state.occupancy_forecast_service.forecast_occupancy(
-                status, horizon_min=offset
-            )
-            available_ports = max(
-                0,
-                status.operational_ports - ceil(forecast.predicted_occupied_ports),
-            )
-            source = forecast.prediction_source
+        available_ports, source, _ = _available_at(request, status, offset)
         items.append(
             StationAvailability(
                 station_id=station.station_id,
@@ -198,6 +200,39 @@ def availability(
         is_prediction=offset > 0,
         items=tuple(items),
         updated_at=updated_at,
+        generated_at=datetime.now(UTC),
+    )
+
+
+@router.get(
+    "/stations/{station_id}/availability",
+    response_model=StationAvailabilityForecast,
+    tags=["v1-stations"],
+)
+def station_availability(station_id: str, request: Request) -> StationAvailabilityForecast:
+    try:
+        status = request.app.state.station_status_repository.get(station_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="station not found") from exc
+    green_min = request.app.state.app_config_repository.read().availability_green_min
+    points: list[AvailabilityPoint] = []
+    for offset in (0, 5, 10, 15, 20, 25, 30):
+        available, source, flags = _available_at(request, status, offset)
+        points.append(
+            AvailabilityPoint(
+                offset=offset,
+                available_ports=available,
+                color=_color(available, status.total_ports, status.unknown_ports, green_min),
+                prediction_source=source,
+                flags=flags,
+            )
+        )
+    return StationAvailabilityForecast(
+        station_id=station_id,
+        total_ports=status.total_ports,
+        operational_ports=status.operational_ports,
+        points=tuple(points),
+        updated_at=status.timestamp,
         generated_at=datetime.now(UTC),
     )
 
@@ -364,23 +399,6 @@ def search_stations(
             status_code=404,
             detail={"code": "VEHICLE_NOT_FOUND", "message": str(exc.args[0])},
         ) from exc
-    if not result.stations:
-        raise HTTPException(
-            status_code=422,
-            detail={
-                "code": "OUT_OF_RANGE",
-                "message": "no reachable compatible station was found",
-                "nearestStation": (
-                    result.nearest_station.model_dump(by_alias=True, mode="json")
-                    if result.nearest_station else None
-                ),
-                "missingKm": result.missing_km,
-                "excludedCandidates": [
-                    item.model_dump(by_alias=True)
-                    for item in result.excluded_candidates
-                ],
-            },
-        )
     return result
 
 

@@ -300,11 +300,11 @@ API công khai gồm 12 endpoint REST (/api/v1) và 1 kênh WebSocket, không c�
 
 #### `POST /search/route`
 
-- Request: {origin, destination, vehicleId, batteryPct}.
+- Request: {origin, destination, vehicleId, batteryPct, includeOptionalStops?}. `includeOptionalStops` (mặc định false) chỉ có tác dụng khi pin đã đủ tới đích (case = enough).
 
 - Response: {searchId, case, directRoute, directMin, stations:\[… như trên + toDestMin\]}.
 
-- case = enough: chỉ có directRoute, directMin, stations rỗng. needCharge: stations xếp theo travelMin + waitMin + chargeMin + toDestMin, mỗi phương án có route đủ hai chặng. fallback: nearestStation + missingKm để hiện cảnh báo đỏ.
+- case = enough: chỉ có directRoute, directMin, stations rỗng; khi request có includeOptionalStops = true, stations là các trạm tuỳ chọn ghé dọc đường (cùng cấu trúc như needCharge, xếp theo totalMin, chargeMin tính tới mức sạc mặc định), case vẫn là enough và người dùng có thể đi thẳng không ghé. needCharge: stations xếp theo travelMin + waitMin + chargeMin + toDestMin, mỗi phương án có route đủ hai chặng. fallback: nearestStation + missingKm để hiện cảnh báo đỏ.
 
 - Lỗi: NO_ROUTE nếu không có đường giữa hai điểm.
 
@@ -359,7 +359,7 @@ từ số cổng trống (thật hoặc dự đoán) và ngưỡng trong app_con
 
 4.  waitMin = dự đoán tại mốc gần nhất với thời điểm đến (T + travelMin, làm tròn về bước 5 phút, tối đa T+30).
 
-5.  chargeMin = năng lượng cần nạp ÷ công suất hiệu dụng (nhỏ hơn giữa cổng và xe). Năng lượng cần nạp: tìm đường = đủ đến đích + biên an toàn; tìm trạm = sạc đến mức mặc định (ví dụ 80%).
+5.  chargeMin = năng lượng cần nạp ÷ công suất hiệu dụng (nhỏ hơn giữa cổng và xe). Năng lượng cần nạp: tìm đường = đủ đến đích + biên an toàn; tìm trạm = sạc đến mức mặc định (ví dụ 80%); ghé trạm tuỳ chọn khi pin đã đủ (enough + includeOptionalStops) = sạc đến mức mặc định, không thấp hơn mức đủ tới đích.
 
 6.  toDestMin từ routing engine (chỉ tìm đường); xếp theo totalMin, trả top limit.
 

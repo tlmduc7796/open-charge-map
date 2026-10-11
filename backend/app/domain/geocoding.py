@@ -14,6 +14,8 @@ class GeocodingProvider(Protocol):
 
     def details(self, place_id: str) -> GeocodedPlace: ...
 
+    def reverse(self, lat: float, lon: float) -> GeocodedPlace: ...
+
 
 class GoongGeocodingProvider:
     def __init__(
@@ -73,6 +75,23 @@ class GoongGeocodingProvider:
             provider="goong",
         )
 
+    def reverse(self, lat: float, lon: float) -> GeocodedPlace:
+        response = self._client.get(
+            "https://rsapi.goong.io/Geocode",
+            params={"api_key": self._api_key, "latlng": f"{lat},{lon}"},
+        )
+        response.raise_for_status()
+        results: list[dict[str, Any]] = response.json().get("results") or []
+        label = results[0].get("formatted_address") if results else None
+        if not label:
+            raise RuntimeError("Goong has no address for this location")
+        return GeocodedPlace(
+            place_id=results[0].get("place_id") or f"{lat},{lon}",
+            label=label,
+            location=GeoPoint(lat=lat, lon=lon, label=label),
+            provider="goong",
+        )
+
 
 class GeocodingService:
     def __init__(self, *, goong: GeocodingProvider | None) -> None:
@@ -91,3 +110,13 @@ class GeocodingService:
         if self._goong is None:
             raise RuntimeError("Goong geocoding is not configured")
         return self._goong.details(place_id)
+
+    def reverse(self, lat: float, lon: float) -> GeocodedPlace:
+        if self._goong is None:
+            raise RuntimeError("Goong geocoding is not configured")
+        try:
+            return self._goong.reverse(lat, lon)
+        except RuntimeError:
+            raise
+        except Exception as exc:
+            raise RuntimeError("Reverse geocoding is unavailable") from exc

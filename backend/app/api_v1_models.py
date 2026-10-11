@@ -131,6 +131,25 @@ class AvailabilityResponse(ApiModel):
     generated_at: datetime
 
 
+class AvailabilityPoint(ApiModel):
+    offset: Literal[0, 5, 10, 15, 20, 25, 30]
+    available_ports: int = Field(ge=0)
+    color: Literal["green", "yellow", "red", "grey"]
+    prediction_source: str
+    flags: tuple[str, ...] = ()
+
+
+class StationAvailabilityForecast(ApiModel):
+    """Free ports of one station at T+0..T+30 min (offset 0 is the live reading)."""
+
+    station_id: str
+    total_ports: int = Field(ge=0)
+    operational_ports: int = Field(ge=0)
+    points: tuple[AvailabilityPoint, ...]
+    updated_at: datetime
+    generated_at: datetime
+
+
 class PortResponse(ApiModel):
     id: str
     label: str
@@ -154,6 +173,10 @@ class SearchRouteRequest(ApiModel):
     vehicle_id: str = Field(min_length=1)
     battery_pct: float = Field(ge=0, le=100)
     limit: int = Field(default=10, ge=1, le=25)
+    # Only matters when the battery already reaches the destination ("enough"): also rank the
+    # stations a driver could voluntarily stop at. Off by default: it routes through every
+    # candidate station.
+    include_optional_stops: bool = False
 
 
 class SearchRouteSummary(ApiModel):

@@ -183,6 +183,100 @@ class SearchService:
             ),
         )
 
+    def _route_options(
+        self,
+        payload: SearchRouteRequest,
+        vehicle,
+        generated_at: datetime,
+        *,
+        voluntary: bool,
+    ) -> tuple[tuple[SearchStationOption, ...], tuple[SearchExclusion, ...]]:
+        """Rank the stations on the way to the destination by total trip time.
+
+        `voluntary` controls whether optional stops are considered when the vehicle can already
+        reach the destination. Suggested stops target a full battery in either case.
+        """
+        recommendation = self._recommendation.recommend(
+            self._query(
+                origin=payload.origin,
+                destination=payload.destination,
+                vehicle_id=payload.vehicle_id,
+                battery_pct=payload.battery_pct,
+                departure_at=generated_at,
+            ),
+            require_confirmed_open=True,
+        )
+        options: list[SearchStationOption] = []
+        exclusions = [
+            SearchExclusion(
+                station_id=item.station_id,
+                reason_codes=item.reason_codes,
+            )
+            for item in recommendation.excluded_candidates
+        ]
+        for item in recommendation.recommendations:
+            travel_min = item.route_duration_to_station_s / 60
+            to_dest_min = max(0.0, item.route.duration_s / 60 - travel_min)
+            to_dest_distance_km = max(
+                0.0,
+                (item.route.distance_m - item.route_distance_to_station_m) / 1000,
+            )
+            required_soc = vehicle.reserve_soc + (
+                to_dest_distance_km * vehicle.consumption_wh_km / 1000
+                / vehicle.calculation_battery_kwh
+            )
+            if required_soc > 1:
+                exclusions.append(
+                    SearchExclusion(
+                        station_id=item.station_id,
+                        reason_codes=("DESTINATION_OUT_OF_RANGE",),
+                    )
+                )
+                continue
+            target_soc = max(required_soc, vehicle.default_target_soc)
+            if voluntary:
+                target_soc = min(1.0, max(vehicle.default_target_soc, required_soc))
+            charging = estimate_charging(
+                vehicle,
+                self._stations.get(item.station_id),
+                arrival_soc=item.arrival_soc,
+                target_soc=target_soc,
+                effective_power_kw=item.effective_power_kw,
+            )
+            total_min = (
+                travel_min
+                + item.estimated_wait_min
+                + charging.estimated_charge_min
+                + to_dest_min
+            )
+            options.append(
+                SearchStationOption(
+                    rank=1,
+                    station=self._station_summary(item.station_id),
+                    route=self._route_summary(item.route),
+                    distance_km=item.route_distance_to_station_m / 1000,
+                    travel_min=travel_min,
+                    wait_min=item.estimated_wait_min,
+                    wait_distribution=_wait_distribution(item.wait_distribution),
+                    charge_min=charging.estimated_charge_min,
+                    to_dest_min=to_dest_min,
+                    total_min=total_min,
+                    arrive_battery_pct=item.arrival_soc * 100,
+                    prediction_source=item.prediction_source,
+                    flags=item.flags,
+                    synthetic_fields=self._wait_synthetic_fields(
+                        item.station_id,
+                        self._statuses.get(item.station_id),
+                    ),
+                )
+            )
+        ordered = sorted(options, key=lambda item: (item.total_min, item.station.id))
+        ranked = tuple(
+            item.model_copy(update={"rank": index})
+            for index, item in enumerate(ordered[: payload.limit], start=1)
+        )
+        return ranked, tuple(exclusions)
+
     def search_route(
         self, payload: SearchRouteRequest, *, now: datetime | None = None
     ) -> SearchRouteResponse:
@@ -205,91 +299,25 @@ class SearchService:
             * 1000,
         )
         if arrival_soc >= vehicle.reserve_soc:
+            stops: tuple[SearchStationOption, ...] = ()
+            stop_exclusions: tuple[SearchExclusion, ...] = ()
+            if payload.include_optional_stops:
+                stops, stop_exclusions = self._route_options(
+                    payload, vehicle, generated_at, voluntary=True
+                )
             provisional = SearchRouteResponse(
                 search_id="pending",
                 case="enough",
                 direct_route=self._route_summary(direct),
                 direct_min=direct.duration_s / 60,
-                stations=(),
+                stations=stops,
+                excluded_candidates=stop_exclusions,
                 updated_at=generated_at,
                 generated_at=generated_at,
             )
         else:
-            recommendation = self._recommendation.recommend(
-                self._query(
-                    origin=payload.origin,
-                    destination=payload.destination,
-                    vehicle_id=payload.vehicle_id,
-                    battery_pct=payload.battery_pct,
-                    departure_at=generated_at,
-                ),
-                require_confirmed_open=True,
-            )
-            options = []
-            exclusions = [
-                SearchExclusion(
-                    station_id=item.station_id,
-                    reason_codes=item.reason_codes,
-                )
-                for item in recommendation.excluded_candidates
-            ]
-            for item in recommendation.recommendations:
-                travel_min = item.route_duration_to_station_s / 60
-                to_dest_min = max(0.0, item.route.duration_s / 60 - travel_min)
-                to_dest_distance_km = max(
-                    0.0,
-                    (item.route.distance_m - item.route_distance_to_station_m) / 1000,
-                )
-                required_soc = vehicle.reserve_soc + (
-                    to_dest_distance_km * vehicle.consumption_wh_km / 1000
-                    / vehicle.calculation_battery_kwh
-                )
-                if required_soc > 1:
-                    exclusions.append(
-                        SearchExclusion(
-                            station_id=item.station_id,
-                            reason_codes=("DESTINATION_OUT_OF_RANGE",),
-                        )
-                    )
-                    continue
-                charging = estimate_charging(
-                    vehicle,
-                    self._stations.get(item.station_id),
-                    arrival_soc=item.arrival_soc,
-                    target_soc=required_soc,
-                    effective_power_kw=item.effective_power_kw,
-                )
-                total_min = (
-                    travel_min
-                    + item.estimated_wait_min
-                    + charging.estimated_charge_min
-                    + to_dest_min
-                )
-                options.append(
-                    SearchStationOption(
-                        rank=1,
-                        station=self._station_summary(item.station_id),
-                        route=self._route_summary(item.route),
-                        distance_km=item.route_distance_to_station_m / 1000,
-                        travel_min=travel_min,
-                        wait_min=item.estimated_wait_min,
-                        wait_distribution=_wait_distribution(item.wait_distribution),
-                        charge_min=charging.estimated_charge_min,
-                        to_dest_min=to_dest_min,
-                        total_min=total_min,
-                        arrive_battery_pct=item.arrival_soc * 100,
-                        prediction_source=item.prediction_source,
-                        flags=item.flags,
-                        synthetic_fields=self._wait_synthetic_fields(
-                            item.station_id,
-                            self._statuses.get(item.station_id),
-                        ),
-                    )
-                )
-            ordered = sorted(options, key=lambda item: (item.total_min, item.station.id))
-            ranked = tuple(
-                item.model_copy(update={"rank": index})
-                for index, item in enumerate(ordered[: payload.limit], start=1)
+            ranked, exclusions = self._route_options(
+                payload, vehicle, generated_at, voluntary=False
             )
             nearest, nearest_km = self._nearest_station(payload.origin)
             provisional = SearchRouteResponse(
@@ -298,7 +326,7 @@ class SearchService:
                 direct_route=self._route_summary(direct),
                 direct_min=direct.duration_s / 60,
                 stations=ranked,
-                excluded_candidates=tuple(exclusions),
+                excluded_candidates=exclusions,
                 missing_km=(
                     None if ranked or nearest_km is None
                     else max(0.0, nearest_km - reachable_km)

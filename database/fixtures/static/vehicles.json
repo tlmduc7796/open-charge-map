@@ -7,7 +7,7 @@
     "catalog_complete": false,
     "calculation_defaults": {
       "reserve_soc": 0.1,
-      "default_target_soc": 0.8,
+      "default_target_soc": 1.0,
       "charging_efficiency": 0.9,
       "unknown_ac_planning_kw": 3.3,
       "unknown_dc_planning_kw": 50,

@@ -41,6 +41,81 @@ def test_route_search_returns_enough_without_station_when_battery_is_sufficient(
     )
 
 
+def test_enough_with_optional_stops_ranks_voluntary_charging_stops() -> None:
+    request = dict(
+        origin=ORIGIN,
+        destination=DESTINATION,
+        vehicle_id="EV_VF7_ECO",
+        battery_pct=55,
+    )
+    plain = app.state.search_service.search_route(SearchRouteRequest(**request), now=NOW)
+    with_stops = app.state.search_service.search_route(
+        SearchRouteRequest(**request, include_optional_stops=True), now=NOW
+    )
+
+    # Still "enough": the stops are optional, and the default response is unchanged.
+    assert plain.stations == ()
+    assert with_stops.case == "enough"
+    assert with_stops.stations
+    assert [item.rank for item in with_stops.stations] == list(
+        range(1, len(with_stops.stations) + 1)
+    )
+    assert [item.total_min for item in with_stops.stations] == sorted(
+        item.total_min for item in with_stops.stations
+    )
+    assert all(item.to_dest_min is not None for item in with_stops.stations)
+    assert with_stops.search_id != plain.search_id
+    # The result is stored like any other, so a trip can pick one of the stops.
+    stored = app.state.search_result_store.get(
+        with_stops.search_id, now=NOW + timedelta(seconds=1)
+    )
+    assert stored.response.stations == with_stops.stations
+
+
+def test_optional_stop_charges_to_the_vehicle_default_target() -> None:
+    vehicle = app.state.vehicle_repository.get("EV_VF7_ECO")
+    result = app.state.search_service.search_route(
+        SearchRouteRequest(
+            origin=ORIGIN,
+            destination=DESTINATION,
+            vehicle_id="EV_VF7_ECO",
+            battery_pct=55,
+            include_optional_stops=True,
+        ),
+        now=NOW,
+    )
+
+    for option in result.stations:
+        arrival = option.arrive_battery_pct / 100
+        to_add = max(0.0, vehicle.default_target_soc - arrival)
+        # Voluntary stops charge to the default target, not just "enough to arrive".
+        if to_add > 0:
+            assert option.charge_min > 0
+        else:
+            assert option.charge_min == 0
+
+
+def test_optional_stops_flag_does_not_change_the_need_charge_case() -> None:
+    base = dict(
+        origin=ORIGIN,
+        destination=DESTINATION,
+        vehicle_id="EV_VF5_PLUS",
+        battery_pct=14,
+    )
+    off = app.state.search_service.search_route(SearchRouteRequest(**base), now=NOW)
+    on = app.state.search_service.search_route(
+        SearchRouteRequest(**base, include_optional_stops=True), now=NOW
+    )
+
+    assert off.case == on.case == "needCharge"
+    assert [item.station.id for item in off.stations] == [
+        item.station.id for item in on.stations
+    ]
+    assert [round(item.charge_min, 6) for item in off.stations] == [
+        round(item.charge_min, 6) for item in on.stations
+    ]
+
+
 def test_station_search_ranks_by_total_minutes_and_exposes_source() -> None:
     result = app.state.search_service.search_stations(
         SearchStationsRequest(
