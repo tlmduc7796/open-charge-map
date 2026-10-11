@@ -14,3 +14,7 @@ database/fixtures/ml/urbanev/raw/*.part
 database/fixtures/ml/urbanev/eda/
 AGENTS.md
 references/
+
+# simulator: snapshot DB, CSV sinh ra và báo cáo mỗi lần chạy
+simulator/data/
+simulator/**/*.csv
