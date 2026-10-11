@@ -35,7 +35,7 @@ Lấy trực tiếp từ bảng `ports` của database qua snapshot: mỗi cổn
 | `current` | enum `AC`, `DC` | Loại dòng điện | `AC` |
 | `max_power_kw` | float > 0 | **Công suất định mức của cổng** | `22` |
 
-Với database seed hiện tại: 11 trạm VinFast, 178 cổng CCS2 DC 80 kW (xem `database/tables.toml`).
+Với database seed hiện tại: 11 trạm VinFast, 189 cổng CCS2 DC 80 kW (xem `database/tables.toml`).
 
 ## 4. Bảng `sessions`: một dòng cho mỗi phiên sạc
 

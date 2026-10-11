@@ -1,8 +1,11 @@
--- catalog.ports: 178 rows, CCS2 only, rated at 80 kW.
+-- catalog.ports: 189 rows, CCS2 only, rated at 80 kW.
 -- Cột kiểm toán (created_at/updated_at/ingested_at) không xuất; DB tự điền lúc nạp.
 
 INSERT INTO public.ports (id, station_id, connector_code, external_id, label, max_power_kw, is_active) VALUES
     ('3ad68aff-a8a8-53d1-b7a0-10e025a588fa', 'e02d241b-1c5c-5f30-9951-a34e0507705e', 'CCS2', NULL, 'ST_VF_BUI_HUU_NGHIA-CCS2-80KW-001', 80.00, true),
+    ('1c032cc8-f816-5b36-9c39-b7b1ce778906', 'e02d241b-1c5c-5f30-9951-a34e0507705e', 'CCS2', NULL, 'ST_VF_BUI_HUU_NGHIA-CCS2-80KW-002', 80.00, true),
+    ('a4bbb64f-a7c6-5904-a0a4-f666f881b849', 'e02d241b-1c5c-5f30-9951-a34e0507705e', 'CCS2', NULL, 'ST_VF_BUI_HUU_NGHIA-CCS2-80KW-003', 80.00, true),
+    ('1e8c03bf-2e5e-5326-9e13-c8b539a4ef02', 'e02d241b-1c5c-5f30-9951-a34e0507705e', 'CCS2', NULL, 'ST_VF_BUI_HUU_NGHIA-CCS2-80KW-004', 80.00, true),
     ('5c295983-13d4-5e37-8e6f-393d1ffd5fef', '62f6e1db-464f-504e-a35d-79dfd1173cf1', 'CCS2', NULL, 'ST_VF_FGW_Q7-CCS2-80KW-001', 80.00, true),
     ('2ce46896-7a48-5f65-b1fc-91dd9473a00c', '62f6e1db-464f-504e-a35d-79dfd1173cf1', 'CCS2', NULL, 'ST_VF_FGW_Q7-CCS2-80KW-002', 80.00, true),
     ('c30e0515-f488-5270-b7d7-048a53b74a16', '62f6e1db-464f-504e-a35d-79dfd1173cf1', 'CCS2', NULL, 'ST_VF_FGW_Q7-CCS2-80KW-003', 80.00, true),
@@ -33,7 +36,12 @@ INSERT INTO public.ports (id, station_id, connector_code, external_id, label, ma
     ('65371c4f-036a-5ac3-b7ec-2594a5a8f34f', 'c5de2350-64c1-5eab-ba21-899423a60785', 'CCS2', NULL, 'ST_VF_LANDMARK_81-CCS2-80KW-004', 80.00, true),
     ('0578c2be-1014-5865-bcca-2217ef78a6b8', '13b3730f-74d2-50a5-9904-fbcfb20ea3c7', 'CCS2', NULL, 'ST_VF_LA_VELA-CCS2-80KW-001', 80.00, true),
     ('2299301e-9b1a-5b3a-bc81-315699df2ccf', '13b3730f-74d2-50a5-9904-fbcfb20ea3c7', 'CCS2', NULL, 'ST_VF_LA_VELA-CCS2-80KW-002', 80.00, true),
+    ('24d44cba-f3e3-5bec-a21d-d8e4ae23855c', '13b3730f-74d2-50a5-9904-fbcfb20ea3c7', 'CCS2', NULL, 'ST_VF_LA_VELA-CCS2-80KW-003', 80.00, true),
+    ('4e182301-ad04-54be-a1f4-b02f169414c8', '13b3730f-74d2-50a5-9904-fbcfb20ea3c7', 'CCS2', NULL, 'ST_VF_LA_VELA-CCS2-80KW-004', 80.00, true),
     ('cf9aab76-1c81-5efd-9036-7e474cc81756', '08f21d89-c979-5bd0-a279-94c2f6fcba0d', 'CCS2', NULL, 'ST_VF_NGO_QUYEN-CCS2-80KW-001', 80.00, true),
+    ('d76c8357-7aa2-56f0-884f-d11fadc38eda', '08f21d89-c979-5bd0-a279-94c2f6fcba0d', 'CCS2', NULL, 'ST_VF_NGO_QUYEN-CCS2-80KW-002', 80.00, true),
+    ('1daa2b72-bc19-5830-b2cb-575616cc1fe7', '08f21d89-c979-5bd0-a279-94c2f6fcba0d', 'CCS2', NULL, 'ST_VF_NGO_QUYEN-CCS2-80KW-003', 80.00, true),
+    ('ad7d1efc-e9cd-5634-9ea0-1ca0a81108d1', '08f21d89-c979-5bd0-a279-94c2f6fcba0d', 'CCS2', NULL, 'ST_VF_NGO_QUYEN-CCS2-80KW-004', 80.00, true),
     ('cb78a4d3-89b0-59c1-9659-0ae37e48a057', 'ef80702c-3856-56f3-bbcd-ff41128fe47f', 'CCS2', NULL, 'ST_VF_PHAM_HUU_LAU-CCS2-80KW-001', 80.00, true),
     ('1cc5fb51-0c61-541c-a416-fd69afc931a4', 'ef80702c-3856-56f3-bbcd-ff41128fe47f', 'CCS2', NULL, 'ST_VF_PHAM_HUU_LAU-CCS2-80KW-002', 80.00, true),
     ('3bdbf26d-0c19-5ad1-ab53-fea340190762', 'ef80702c-3856-56f3-bbcd-ff41128fe47f', 'CCS2', NULL, 'ST_VF_PHAM_HUU_LAU-CCS2-80KW-003', 80.00, true),
@@ -84,6 +92,9 @@ INSERT INTO public.ports (id, station_id, connector_code, external_id, label, ma
     ('6675ceb5-a5fb-524c-8fa6-91e2cdea19c6', '0f4ac863-9975-592c-8e05-90c8a223985e', 'CCS2', NULL, 'ST_VF_QL13_BINH_THANH-CCS2-80KW-029', 80.00, true),
     ('21533ae8-dd00-5cad-9725-be697b01cfdb', '0f4ac863-9975-592c-8e05-90c8a223985e', 'CCS2', NULL, 'ST_VF_QL13_BINH_THANH-CCS2-80KW-030', 80.00, true),
     ('7eae3f40-c2f5-5941-af59-b3654e820f80', '77ec1977-cbb7-5b39-baa0-046d7b9fe764', 'CCS2', NULL, 'ST_VF_TA_QUANG_BUU-CCS2-80KW-001', 80.00, true),
+    ('172d6179-9445-5ede-a2f5-42b202a94b40', '77ec1977-cbb7-5b39-baa0-046d7b9fe764', 'CCS2', NULL, 'ST_VF_TA_QUANG_BUU-CCS2-80KW-002', 80.00, true),
+    ('31e23ff0-1bf0-5fdf-a2ec-b33b52ff1cd0', '77ec1977-cbb7-5b39-baa0-046d7b9fe764', 'CCS2', NULL, 'ST_VF_TA_QUANG_BUU-CCS2-80KW-003', 80.00, true),
+    ('73b5039a-478d-5f16-92ec-c430d03f7bda', '77ec1977-cbb7-5b39-baa0-046d7b9fe764', 'CCS2', NULL, 'ST_VF_TA_QUANG_BUU-CCS2-80KW-004', 80.00, true),
     ('3641503f-27eb-5c8d-8d4f-24fcfb98fa48', 'fd693206-ef9c-54c4-9cc8-64ff8c99921a', 'CCS2', NULL, 'ST_VF_VINCOM_CONG_HOA-CCS2-80KW-001', 80.00, true),
     ('f7d0358e-714d-5fd5-b8f2-2c66d731ff4a', 'fd693206-ef9c-54c4-9cc8-64ff8c99921a', 'CCS2', NULL, 'ST_VF_VINCOM_CONG_HOA-CCS2-80KW-002', 80.00, true),
     ('a439134d-6e73-5409-bc19-7d09bf3f4a30', 'fd693206-ef9c-54c4-9cc8-64ff8c99921a', 'CCS2', NULL, 'ST_VF_VINCOM_CONG_HOA-CCS2-80KW-003', 80.00, true),

@@ -1,8 +1,11 @@
--- runtime.port_status: 178 rows, one status record for each retained CCS2 port.
+-- runtime.port_status: 189 rows, one status record for each retained CCS2 port.
 -- Cột kiểm toán (created_at/updated_at/ingested_at) không xuất; DB tự điền lúc nạp.
 
 INSERT INTO public.port_status (port_id, status, session_started_at, estimated_finish_at, reported_at) VALUES
     ('3ad68aff-a8a8-53d1-b7a0-10e025a588fa', 'unknown', NULL, NULL, NULL),
+    ('1c032cc8-f816-5b36-9c39-b7b1ce778906', 'unknown', NULL, NULL, NULL),
+    ('a4bbb64f-a7c6-5904-a0a4-f666f881b849', 'unknown', NULL, NULL, NULL),
+    ('1e8c03bf-2e5e-5326-9e13-c8b539a4ef02', 'unknown', NULL, NULL, NULL),
     ('5c295983-13d4-5e37-8e6f-393d1ffd5fef', 'unknown', NULL, NULL, NULL),
     ('2ce46896-7a48-5f65-b1fc-91dd9473a00c', 'unknown', NULL, NULL, NULL),
     ('c30e0515-f488-5270-b7d7-048a53b74a16', 'unknown', NULL, NULL, NULL),
@@ -33,7 +36,12 @@ INSERT INTO public.port_status (port_id, status, session_started_at, estimated_f
     ('65371c4f-036a-5ac3-b7ec-2594a5a8f34f', 'unknown', NULL, NULL, NULL),
     ('0578c2be-1014-5865-bcca-2217ef78a6b8', 'unknown', NULL, NULL, NULL),
     ('2299301e-9b1a-5b3a-bc81-315699df2ccf', 'unknown', NULL, NULL, NULL),
+    ('24d44cba-f3e3-5bec-a21d-d8e4ae23855c', 'unknown', NULL, NULL, NULL),
+    ('4e182301-ad04-54be-a1f4-b02f169414c8', 'unknown', NULL, NULL, NULL),
     ('cf9aab76-1c81-5efd-9036-7e474cc81756', 'unknown', NULL, NULL, NULL),
+    ('d76c8357-7aa2-56f0-884f-d11fadc38eda', 'unknown', NULL, NULL, NULL),
+    ('1daa2b72-bc19-5830-b2cb-575616cc1fe7', 'unknown', NULL, NULL, NULL),
+    ('ad7d1efc-e9cd-5634-9ea0-1ca0a81108d1', 'unknown', NULL, NULL, NULL),
     ('cb78a4d3-89b0-59c1-9659-0ae37e48a057', 'unknown', NULL, NULL, NULL),
     ('1cc5fb51-0c61-541c-a416-fd69afc931a4', 'unknown', NULL, NULL, NULL),
     ('3bdbf26d-0c19-5ad1-ab53-fea340190762', 'unknown', NULL, NULL, NULL),
@@ -84,6 +92,9 @@ INSERT INTO public.port_status (port_id, status, session_started_at, estimated_f
     ('6675ceb5-a5fb-524c-8fa6-91e2cdea19c6', 'unknown', NULL, NULL, NULL),
     ('21533ae8-dd00-5cad-9725-be697b01cfdb', 'unknown', NULL, NULL, NULL),
     ('7eae3f40-c2f5-5941-af59-b3654e820f80', 'unknown', NULL, NULL, NULL),
+    ('172d6179-9445-5ede-a2f5-42b202a94b40', 'unknown', NULL, NULL, NULL),
+    ('31e23ff0-1bf0-5fdf-a2ec-b33b52ff1cd0', 'unknown', NULL, NULL, NULL),
+    ('73b5039a-478d-5f16-92ec-c430d03f7bda', 'unknown', NULL, NULL, NULL),
     ('3641503f-27eb-5c8d-8d4f-24fcfb98fa48', 'unknown', NULL, NULL, NULL),
     ('f7d0358e-714d-5fd5-b8f2-2c66d731ff4a', 'unknown', NULL, NULL, NULL),
     ('a439134d-6e73-5409-bc19-7d09bf3f4a30', 'unknown', NULL, NULL, NULL),
