@@ -47,7 +47,7 @@ def test_config_and_station_contract_use_boundary_fields(fake_request) -> None:
     ports = station_ports("ST_EVO_LAVIDA_Q7", fake_request)
     detail = station_detail("ST_EVO_LAVIDA_Q7", fake_request)
 
-    assert config_result.station_status_stale_after_sec == 120
+    assert config_result.station_status_stale_after_sec == 900
     assert stations[0].location.model_dump(by_alias=True).keys() == {"lat", "lng"}
     assert stations[0].model_dump(by_alias=True)["availablePorts"] >= 0
     assert availability_result.is_prediction is False
@@ -112,6 +112,7 @@ def test_openapi_exposes_versioned_contracts() -> None:
 
     assert "/api/v1/config" in schema["paths"]
     assert "/api/v1/internal/port-status" in schema["paths"]
+    assert "/api/v1/internal/station-occupancy" in schema["paths"]
     assert "/api/v1/search/stations" in schema["paths"]
     assert "/api/v1/search/route" in schema["paths"]
     trip_get = schema["paths"]["/api/v1/trips/{trip_id}"]["get"]

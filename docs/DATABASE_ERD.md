@@ -143,9 +143,14 @@ erDiagram
     TRIPS ||--o{ TRIP_EVENTS : "records lifecycle"
 ```
 
-`port_status_history` và `station_occupancy_5m` được partition theo tháng (09, 10 và 11/2026).
+`port_status_history` và `station_occupancy_5m` được partition theo tháng. Partition tháng được tạo
+bằng `ensure_month_partition()` lúc nạp lịch sử và mỗi lần backend ghi occupancy; mỗi bảng có thêm
+partition `DEFAULT` làm lưới an toàn.
+`station_occupancy_profile` (trạm × thứ × bước 5 phút) là bảng dẫn xuất từ `station_occupancy_5m`.
 `app_config` là bảng cấu hình độc lập nên không có khóa ngoại. Hai view:
-`station_capacity` và `station_status_current` (backend đọc khi khởi động).
+`station_capacity` và `station_status_current` (backend đọc khi khởi động). `station_status_current`
+lấy bucket **mới nhất** của `station_occupancy_5m` cho mỗi trạm (số cổng đang dùng, không cần biết
+cổng cụ thể); `port_status` không tham gia.
 
 ## Số lượng bản ghi sau bootstrap
 
@@ -156,9 +161,10 @@ erDiagram
 | `catalog` | `ports` | 200 | 178 CCS2 (20–250 kW), 22 TYPE2 (3,5–11 kW) |
 | `vehicles` | `vehicle_models` | 18 | 18 mẫu xe VinFast |
 | `vehicles` | `vehicle_connectors` | 35 | |
-| `runtime` | `port_status` | 200 | mỗi cổng một dòng, `status='unknown'`, `reported_at` NULL |
-| `history` | `port_status_history` | 0 | backend ghi dần |
-| `history` | `station_occupancy_5m` | 0 | không seed |
+| `runtime` | `port_status` | 200 | tuỳ chọn; mỗi cổng một dòng, `status='unknown'`, `reported_at` NULL |
+| `history` | `port_status_history` | 0 | backend ghi dần (chỉ khi có báo từng cổng) |
+| `history` | `station_occupancy_5m` | 0 | không seed; nạp 30 ngày từ simulator lúc khởi động Docker, sau đó ghi dần qua `POST /api/v1/internal/station-occupancy` |
+| `history` | `station_occupancy_profile` | 0 | dẫn xuất từ `station_occupancy_5m` bằng `refresh_station_occupancy_profile()` |
 | `forecast` | `predictions` | 66 | 11 trạm × 6 mốc; chỉ có khóa, mọi giá trị NULL |
 | `trips` | `trips`, `trip_positions`, `trip_events` | 0 | do backend tạo |
 | `config` | `app_config` | 1 | `planned_arrival_window_min = 15` |
@@ -173,11 +179,13 @@ Phạm vi địa lý của 11 trạm: longitude `106.65922–106.72233`, latitud
 
 ## Điểm cần lưu ý
 
-1. **Trạng thái chưa có.** Mọi cổng ở `unknown`, nên `station_status_current` báo
-   `operational_ports = 0` và backend coi mọi trạm là offline cho tới khi nhận trạng thái qua
-   `POST /api/v1/internal/port-status`.
-2. **Không có nguồn hàng đợi.** `queue_length` của view luôn NULL và không còn bảng metrics, nên
-   ước lượng chờ trả `WAIT_INPUT_UNAVAILABLE` cho tới khi backend có nguồn queue/session.
+1. **Trạng thái trạm = bucket occupancy mới nhất.** `station_status_current` tính
+   `available = operational − occupied`, `offline = total − operational`. Trạm chưa có bucket nào
+   báo `operational_ports = 0`, `unknown_ports = total_ports` cho tới khi nhận số cổng đang dùng qua
+   `POST /api/v1/internal/station-occupancy` (khởi động Docker đã nạp sẵn 30 ngày lịch sử).
+2. **Hàng đợi chỉ có nếu bucket có.** `queue_length` lấy từ `station_occupancy_5m.queue_length`
+   (nullable, hiện NULL), nên ước lượng chờ trả `WAIT_INPUT_UNAVAILABLE` cho tới khi có nguồn
+   queue/session.
 3. **`predictions` là bảng slot.** Backend UPDATE tại chỗ; không lưu lịch sử các lượt chạy.
    Enum `prediction_source` chỉ gồm `persistence` và `model` (API trả thêm `default`).
 4. **Arrival/planned arrival nằm trong bộ nhớ.** Trip không còn ghi cam kết mềm vào database;

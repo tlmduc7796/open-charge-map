@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hmac
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from math import ceil
 from uuid import UUID
@@ -28,6 +29,8 @@ from backend.app.api_v1_models import (
     StationAvailability,
     StationAvailabilityForecast,
     StationDetail,
+    StationOccupancyBatchRequest,
+    StationOccupancyBatchResponse,
     StationSummary,
     TripActionRequest,
     TripCreatedResponse,
@@ -118,6 +121,52 @@ def _available_at(request: Request, status, offset: int) -> tuple[int, str, tupl
     )
     available = max(0, status.operational_ports - ceil(forecast.predicted_occupied_ports))
     return available, forecast.prediction_source, forecast.flags
+
+
+def _apportion(total: int, capacities: Sequence[int]) -> list[int]:
+    """Split `total` over groups in proportion to `capacities` (largest remainder).
+
+    The parts sum to `min(total, sum(capacities))` and never exceed a group's capacity.
+    """
+    capacity = sum(capacities)
+    total = max(0, min(total, capacity))
+    if total == 0:
+        return [0] * len(capacities)
+    parts = [total * size // capacity for size in capacities]
+    by_remainder = sorted(
+        range(len(capacities)), key=lambda i: (-(total * capacities[i] % capacity), i)
+    )
+    for i in by_remainder[: total - sum(parts)]:
+        parts[i] += 1
+    return parts
+
+
+def infer_connector_statuses(
+    groups: Sequence[tuple[str, int]], *, occupied: int, offline: int, unknown: int
+) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    """Per connector group, the port statuses implied by station-level counts.
+
+    Each state is spread over the groups' remaining free slots proportionally, so a station with
+    10 CCS2 and 2 Type2 ports and 6 busy ports shows 5 and 1 charging rather than all 6 on the
+    first connector. Whatever is left is `available`.
+    """
+    remaining = [count for _, count in groups]
+    columns: list[tuple[str, list[int]]] = []
+    for status_name, amount in (
+        ("charging", occupied),
+        ("out_of_service", offline),
+        ("unknown", unknown),
+    ):
+        parts = _apportion(amount, remaining)
+        remaining = [free - part for free, part in zip(remaining, parts, strict=True)]
+        columns.append((status_name, parts))
+    result: list[tuple[str, tuple[str, ...]]] = []
+    for i, (code, _) in enumerate(groups):
+        statuses = ["available"] * remaining[i]
+        for status_name, parts in columns:
+            statuses.extend([status_name] * parts[i])
+        result.append((code, tuple(statuses)))
+    return tuple(result)
 
 
 def _require_internal_key(request: Request, supplied: str | None) -> None:
@@ -282,63 +331,44 @@ def station_detail(station_id: str, request: Request) -> StationDetail:
     tags=["v1-stations"],
 )
 def station_ports(station_id: str, request: Request) -> tuple[PortResponse, ...]:
-    repository = request.app.state.station_state_repository
-    if repository is None:
+    """Ports of a station, derived from its station-level counts.
+
+    The feed reports only how many ports are in use, never which ones, so the per-port list is
+    inferred: the busy/offline/unknown counts are spread over the connector groups in proportion
+    to their size and always add up to the station status.
+    """
+    try:
         station = request.app.state.station_repository.get(station_id)
         status = request.app.state.station_status_repository.get(station_id)
-        items: list[PortResponse] = []
-        index = 0
-        remaining_available = status.available_ports
-        remaining_charging = status.occupied_ports
-        remaining_offline = status.offline_ports
-        for connector in station.properties.connectors:
-            for connector_index in range(connector.count):
-                index += 1
-                if remaining_available:
-                    port_status = "available"
-                    remaining_available -= 1
-                elif remaining_charging:
-                    port_status = "charging"
-                    remaining_charging -= 1
-                elif remaining_offline:
-                    port_status = "out_of_service"
-                    remaining_offline -= 1
-                else:
-                    port_status = "unknown"
-                items.append(
-                    PortResponse(
-                        id=f"{station_id}:{index}",
-                        label=f"{connector.type}-{connector_index + 1}",
-                        connector=connector.type,
-                        status=port_status,
-                        updated_at=status.timestamp,
-                        data_source=(
-                            "synthetic" if status.data_source == "synthetic" else "unknown"
-                        ),
-                    )
-                )
-        return tuple(items)
-    try:
-        rows = repository.ports(station_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="station not found") from exc
-    now = datetime.now(UTC)
-    return tuple(
-        PortResponse(
-            id=row["id"],
-            label=row["label"],
-            connector=row["connector_code"],
-            status=row["status"],
-            minutes_to_finish=(
-                max(0, ceil((row["estimated_finish_at"] - now).total_seconds() / 60))
-                if row["estimated_finish_at"] is not None
-                else None
-            ),
-            updated_at=row["updated_at"],
-            data_source=row["data_source"],
-        )
-        for row in rows
+    data_source = {"synthetic": "synthetic", "database": "inferred"}.get(
+        status.data_source, "unknown"
     )
+    groups = tuple(
+        (connector.type, connector.count) for connector in station.properties.connectors
+    )
+    items: list[PortResponse] = []
+    index = 0
+    for connector_code, statuses in infer_connector_statuses(
+        groups,
+        occupied=status.occupied_ports,
+        offline=status.offline_ports,
+        unknown=status.unknown_ports,
+    ):
+        for connector_index, port_status in enumerate(statuses, start=1):
+            index += 1
+            items.append(
+                PortResponse(
+                    id=f"{station_id}:{index}",
+                    label=f"{connector_code}-{connector_index}",
+                    connector=connector_code,
+                    status=port_status,
+                    updated_at=status.timestamp,
+                    data_source=data_source,
+                )
+            )
+    return tuple(items)
 
 
 @router.post(
@@ -362,6 +392,35 @@ def update_port_status(
         raise HTTPException(status_code=404, detail=f"port not found: {exc.args[0]}") from exc
     request.app.state.runtime_state.refresh()
     return PortStatusBatchResponse(updated=updated, ignored=ignored, updated_at=now)
+
+
+@router.post(
+    "/internal/station-occupancy",
+    response_model=StationOccupancyBatchResponse,
+    tags=["v1-internal"],
+)
+def update_station_occupancy(
+    payload: StationOccupancyBatchRequest,
+    request: Request,
+    x_api_key: str | None = Header(default=None),
+) -> StationOccupancyBatchResponse:
+    """Record, per station, how many ports are in use (the 5-minute occupancy feed)."""
+    _require_internal_key(request, x_api_key)
+    repository = request.app.state.station_state_repository
+    if repository is None:
+        raise HTTPException(status_code=503, detail="database station state is unavailable")
+    try:
+        updated = repository.record_occupancy(payload.updates)
+    except KeyError as exc:
+        raise HTTPException(
+            status_code=404, detail=f"station not found: {exc.args[0]}"
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=422, detail={"code": "VALIDATION_ERROR", "message": str(exc)}
+        ) from exc
+    request.app.state.runtime_state.refresh()
+    return StationOccupancyBatchResponse(updated=updated, updated_at=datetime.now(UTC))
 
 
 @router.post("/internal/port-status/mark-stale", tags=["v1-internal"])

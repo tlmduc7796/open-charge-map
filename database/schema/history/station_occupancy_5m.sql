@@ -1,6 +1,14 @@
 -- history.station_occupancy_5m — occupancy của trạm theo bucket 5 phút (chuỗi thời gian).
--- Là nguồn dữ liệu huấn luyện/dự báo; backend hiện chưa đọc bảng này.
--- Partition theo tháng trên bucket_at. Dữ liệu lớn nên nằm ở bulk/*.csv, không phải data/*.sql.
+-- NGUỒN SỰ THẬT của trạng thái trạm: bucket mới nhất của mỗi trạm là số cổng đang dùng hiện tại
+-- (view station_status_current). Cũng là nguồn huấn luyện/dự báo và của station_occupancy_profile.
+-- Ghi bởi: (1) lúc khởi tạo container, nạp 30 ngày lịch sử từ simulator
+-- (database/docker/sql/load_history.sql); (2) backend, POST /api/v1/internal/station-occupancy,
+-- mỗi 5 phút một dòng cho mỗi trạm.
+--
+-- Partition theo tháng trên bucket_at. Partition tháng được tạo bằng
+-- public.ensure_month_partition() trước khi ghi (lúc nạp lịch sử và trong
+-- DatabaseStationStateRepository.record_occupancy); partition DEFAULT chỉ là lưới an toàn để một
+-- lần ghi không bao giờ thất bại vì thiếu partition.
 
 CREATE TABLE public.station_occupancy_5m (
     id                uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -27,9 +35,4 @@ CREATE TABLE public.station_occupancy_5m (
 CREATE INDEX ix_station_occupancy_5m_station_bucket
     ON public.station_occupancy_5m (station_id, bucket_at);
 
-CREATE TABLE public.station_occupancy_5m_2026_09 PARTITION OF public.station_occupancy_5m
-    FOR VALUES FROM ('2026-09-01 00:00:00+00') TO ('2026-10-01 00:00:00+00');
-CREATE TABLE public.station_occupancy_5m_2026_10 PARTITION OF public.station_occupancy_5m
-    FOR VALUES FROM ('2026-10-01 00:00:00+00') TO ('2026-11-01 00:00:00+00');
-CREATE TABLE public.station_occupancy_5m_2026_11 PARTITION OF public.station_occupancy_5m
-    FOR VALUES FROM ('2026-11-01 00:00:00+00') TO ('2026-12-01 00:00:00+00');
+CREATE TABLE public.station_occupancy_5m_default PARTITION OF public.station_occupancy_5m DEFAULT;

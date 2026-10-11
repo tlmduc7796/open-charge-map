@@ -52,6 +52,10 @@ Khối `advanced` (hệ số theo giờ/thứ, trễ cắm, idle, rút sớm, gi
 | `run_manifest.json` | seed, sha256 snapshot/config/`sessions.csv`, số dòng |
 | `station_occupancy_5m.csv` | do `occupancy` sinh; cột bảng `station_occupancy_5m` trừ `id`, `queue_length` |
 
+> **Nạp vào database:** `database/compose.yaml` bind-mount thư mục `simulator/data/` và nạp 30 ngày gần
+> nhất của `station_occupancy_5m.csv` mỗi khi container Postgres khởi động (xem `database/README.md`).
+> Cần chạy `python -m script run` và `python -m script occupancy` trước.
+
 `occupancy` đọc `sessions.csv`, `ports.csv` và ánh xạ mã trạm → UUID từ
 `database/data/catalog/stations.sql` (không cần DB). Mỗi trạm × mỗi mốc 5 phút của các ngày trọn
 vẹn có phiên (hoặc `--start-date/--end-date`): `occupied_ports` là số cổng có xe đang cắm tại đúng

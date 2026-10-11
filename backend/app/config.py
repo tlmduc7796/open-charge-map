@@ -71,6 +71,7 @@ class Settings:
     availability_green_min: int
     search_rate_limit_per_min: int
     cors_origins: tuple[str, ...]
+    demo_random_simulation: bool
 
     def required_data_paths(self) -> tuple[Path, ...]:
         return (
@@ -133,10 +134,12 @@ def load_settings() -> Settings:
         recommend_candidate_corridor_m=_read_positive_float(
             "RECOMMEND_CANDIDATE_CORRIDOR_M", 5_000
         ),
+        # Occupancy arrives every 5 minutes, so tolerate three buckets before a station is unknown.
         station_status_stale_after_s=_read_positive_float(
-            "STATION_STATUS_STALE_AFTER_S", 120
+            "STATION_STATUS_STALE_AFTER_S", 900
         ),
         availability_green_min=availability_green_min,
         search_rate_limit_per_min=search_rate_limit_per_min,
         cors_origins=_read_csv("CORS_ORIGINS", "http://127.0.0.1:5173"),
+        demo_random_simulation=_read_bool("DEMO_RANDOM_SIMULATION", False),
     )

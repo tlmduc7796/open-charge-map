@@ -69,14 +69,14 @@ async def _simulation_loop(app: FastAPI, stop: asyncio.Event) -> None:
     while not stop.is_set():
         tick_at = _simulation_tick_at(datetime.now(UTC))
         try:
-            ports_updated, predictions_updated = await asyncio.to_thread(
+            stations_updated, predictions_updated = await asyncio.to_thread(
                 app.state.simulation_repository.update_tick,
                 changed_at=tick_at,
             )
             await asyncio.to_thread(app.state.runtime_state.refresh)
             logger.info(
-                "database_simulation_tick_complete ports=%d predictions=%d",
-                ports_updated,
+                "database_simulation_tick_complete stations=%d predictions=%d",
+                stations_updated,
                 predictions_updated,
             )
         except Exception:
@@ -136,13 +136,19 @@ if settings.catalog_storage == "database":
     app.state.station_repository = DatabaseStationRepository(app.state.database_engine)
     app.state.vehicle_repository = DatabaseVehicleRepository(app.state.database_engine)
     app.state.station_status_repository = DatabaseStationStatusRepository(
-        app.state.database_engine
+        app.state.database_engine,
+        stale_after_s=settings.station_status_stale_after_s,
     )
     app.state.station_state_repository = DatabaseStationStateRepository(
         app.state.database_engine
     )
-    app.state.simulation_repository = DatabaseSimulationRepository(
-        app.state.database_engine
+    # The 5-minute random occupancy is a demo-only data source. It stays off by default so it
+    # cannot pollute station_occupancy_5m with noise; real status arrives through
+    # POST /api/v1/internal/station-occupancy.
+    app.state.simulation_repository = (
+        DatabaseSimulationRepository(app.state.database_engine)
+        if settings.demo_random_simulation
+        else None
     )
 else:
     app.state.station_repository = app.state.domain_data.stations

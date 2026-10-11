@@ -5,7 +5,14 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 from pydantic.alias_generators import to_camel
 
 
@@ -77,6 +84,42 @@ class PortStatusBatchRequest(ApiModel):
 class PortStatusBatchResponse(ApiModel):
     updated: int = Field(ge=0)
     ignored: int = Field(ge=0)
+    updated_at: datetime
+
+
+class StationOccupancyUpdate(ApiModel):
+    """Number of ports in use at one station; which ports are busy is not reported."""
+
+    station_id: str = Field(min_length=1)
+    reported_at: datetime
+    # Defaults to the catalog's active port count when omitted.
+    total_ports: int | None = Field(default=None, gt=0)
+    operational_ports: int = Field(ge=0)
+    occupied_ports: int = Field(ge=0)
+    queue_length: int | None = Field(default=None, ge=0)
+
+    @field_validator("reported_at")
+    @classmethod
+    def reported_at_requires_timezone(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            raise ValueError("reportedAt requires timezone")
+        return value
+
+    @model_validator(mode="after")
+    def validate_port_counts(self) -> StationOccupancyUpdate:
+        if self.occupied_ports > self.operational_ports:
+            raise ValueError("occupiedPorts cannot exceed operationalPorts")
+        if self.total_ports is not None and self.operational_ports > self.total_ports:
+            raise ValueError("operationalPorts cannot exceed totalPorts")
+        return self
+
+
+class StationOccupancyBatchRequest(ApiModel):
+    updates: tuple[StationOccupancyUpdate, ...] = Field(min_length=1, max_length=1000)
+
+
+class StationOccupancyBatchResponse(ApiModel):
+    updated: int = Field(ge=0)
     updated_at: datetime
 
 

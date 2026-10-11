@@ -84,31 +84,22 @@ echo.
 echo [5/5] PostgreSQL/PostGIS database...
 pushd database
 echo.
-docker compose up -d postgres
-if errorlevel 1 goto fail_popd
-
-set /a tries=0
-:wait_pg
-docker compose exec -T postgres pg_isready -U smart_ev -d postgres >nul 2>&1
-if not errorlevel 1 goto pg_ready
-set /a tries+=1
-if %tries% geq 60 (
-    echo [ERROR] PostgreSQL did not become ready within 60 seconds.
+rem The container itself creates the schema, loads the seed data and the 30-day simulator history
+rem (database/docker/); --wait returns once the database reports healthy. Needs
+rem simulator\data\station_occupancy_5m.csv (python -m script run, then python -m script occupancy).
+docker compose up -d --wait postgres
+if errorlevel 1 (
+    echo [ERROR] PostgreSQL failed to start or load its data. See: docker compose logs postgres
     goto fail_popd
 )
-timeout /t 1 /nobreak >nul
-goto wait_pg
 
-:pg_ready
-rem bootstrap_database.py refuses a database that already holds rows, so skip it then.
 set "STATIONS=0"
 for /f "usebackq delims=" %%i in (`docker compose exec -T postgres psql -U smart_ev -d smart_ev_data -tAc "SELECT count(*) FROM stations" 2^>nul`) do set "STATIONS=%%i"
-if not "%STATIONS%"=="0" (
-    echo Database already populated with %STATIONS% stations, skipping bootstrap.
-) else (
-    "..\.venv\Scripts\python.exe" scripts\bootstrap_database.py
-    if errorlevel 1 goto fail_popd
+if "%STATIONS%"=="0" (
+    echo [ERROR] Database is empty after startup. See: docker compose logs postgres
+    goto fail_popd
 )
+echo Database ready with %STATIONS% stations.
 popd
 
 echo.

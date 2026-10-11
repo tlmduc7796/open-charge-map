@@ -26,26 +26,15 @@ if errorlevel 1 (
 
 echo.
 echo Starting PostgreSQL...
+echo (a freshly started container wipes its volume and reloads the schema, seed data and the
+echo  30-day simulator history; this takes a few seconds)
 pushd database
-docker compose up -d postgres
+docker compose up -d --wait postgres
 if errorlevel 1 (
     popd
+    echo [ERROR] PostgreSQL failed to start or load its data. See: docker compose logs postgres
     goto fail
 )
-set /a tries=0
-:wait_pg
-docker compose exec -T postgres pg_isready -U smart_ev -d smart_ev_data >nul 2>&1
-if not errorlevel 1 goto pg_ready
-set /a tries+=1
-if %tries% geq 60 (
-    popd
-    echo [ERROR] PostgreSQL did not become ready within 60 seconds.
-    goto fail
-)
-timeout /t 1 /nobreak >nul
-goto wait_pg
-
-:pg_ready
 popd
 
 echo Starting backend  - http://127.0.0.1:8000

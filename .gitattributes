@@ -1,0 +1,4 @@
+# Script chạy trong container Linux phải dùng LF dù checkout trên Windows (core.autocrlf).
+*.sh text eol=lf
+*.awk text eol=lf
+database/docker/** text eol=lf

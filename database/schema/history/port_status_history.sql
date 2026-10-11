@@ -1,5 +1,7 @@
 -- history.port_status_history — nhật ký mỗi lần cổng đổi trạng thái (append-only).
--- Partition theo tháng trên changed_at; thêm partition mới trước khi dữ liệu tháng đó xuất hiện.
+-- Partition theo tháng trên changed_at. Partition tháng được tạo bằng
+-- public.ensure_month_partition(); partition DEFAULT chỉ là lưới an toàn để một lần ghi không
+-- bao giờ thất bại vì thiếu partition.
 
 CREATE TABLE public.port_status_history (
     id                uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -13,9 +15,4 @@ CREATE TABLE public.port_status_history (
 
 CREATE INDEX ix_port_status_history_changed_at ON public.port_status_history (changed_at);
 
-CREATE TABLE public.port_status_history_2026_09 PARTITION OF public.port_status_history
-    FOR VALUES FROM ('2026-09-01 00:00:00+00') TO ('2026-10-01 00:00:00+00');
-CREATE TABLE public.port_status_history_2026_10 PARTITION OF public.port_status_history
-    FOR VALUES FROM ('2026-10-01 00:00:00+00') TO ('2026-11-01 00:00:00+00');
-CREATE TABLE public.port_status_history_2026_11 PARTITION OF public.port_status_history
-    FOR VALUES FROM ('2026-11-01 00:00:00+00') TO ('2026-12-01 00:00:00+00');
+CREATE TABLE public.port_status_history_default PARTITION OF public.port_status_history DEFAULT;

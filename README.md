@@ -78,7 +78,8 @@ POST /api/v1/trips                      # tạo từ searchId (giữ 10 phút tr
 GET  /api/v1/trips/{id}
 POST /api/v1/trips/{id}/position        # GPS, recordedAt có timezone
 PATCH /api/v1/trips/{id}                # accept/decline/depart/correctBattery/cancel
-POST /api/v1/internal/port-status       # yêu cầu X-API-Key
+POST /api/v1/internal/station-occupancy # số cổng đang dùng mỗi trạm (5 phút/lần), yêu cầu X-API-Key
+POST /api/v1/internal/port-status       # trạng thái từng cổng (tuỳ chọn), yêu cầu X-API-Key
 POST /api/v1/internal/port-status/mark-stale
 ```
 
@@ -92,10 +93,13 @@ Quy ước:
   phải gửi `Authorization: Bearer <tripToken>` (database chỉ lưu SHA-256). GPS lặp/cũ không ghi
   đè trạng thái; re-plan dùng ngưỡng trong `app_config`, có cooldown và bỏ qua trạm đã từ chối.
 - `searchId` và giới hạn tần suất nằm trong bộ nhớ từng process.
-- Mọi cổng seed ở trạng thái `unknown`, nên trạm được coi là offline và chưa được gợi ý cho tới
-  khi nhận trạng thái qua `POST /api/v1/internal/port-status`; `queue_length` chưa có nguồn nên ước
-  lượng chờ báo `WAIT_INPUT_UNAVAILABLE`. Kết quả tính toán có `generatedAt`; `updatedAt` là thời
-  điểm dữ liệu nguồn đổi.
+- Trạng thái trạm lấy từ bucket occupancy 5 phút mới nhất (`station_occupancy_5m`): số cổng trống
+  = `operational − occupied`; không cần biết cổng nào đang dùng, nên `/stations/{id}/ports` và
+  `byConnector` được suy ra từ số đếm (`dataSource = inferred`). Trạm chưa có bucket, hoặc bucket
+  cũ hơn `STATION_STATUS_STALE_AFTER_S`, là `unknown` và chưa được gợi ý cho tới khi nhận số liệu
+  qua `POST /api/v1/internal/station-occupancy`; `queue_length` chưa có nguồn nên ước lượng chờ báo
+  `WAIT_INPUT_UNAVAILABLE`. Kết quả tính toán có `generatedAt`; `updatedAt` là thời điểm dữ liệu
+  nguồn đổi.
 
 ## Cấu hình (`.env`)
 
@@ -109,7 +113,7 @@ Quy ước:
 | `WAIT_SCORING_CAP_MIN` | Trần thời gian chờ khi chấm điểm |
 | `RECOMMEND_MAX_*`, `RECOMMEND_SOC_RISK_BUFFER` | Ngưỡng chuẩn hóa cố định |
 | `RECOMMEND_CANDIDATE_CORRIDOR_M` | Bán kính hành lang PostGIS quanh đường thẳng đi–đến (mặc định 5000 m) |
-| `STATION_STATUS_STALE_AFTER_S` | Quá hạn thì cổng quan sát được chuyển `unknown` (mặc định 120 s) |
+| `STATION_STATUS_STALE_AFTER_S` | Bucket occupancy mới nhất của trạm cũ hơn ngưỡng này thì trạm là `unknown` (mặc định 900 s; dữ liệu về mỗi 5 phút) |
 | `AVAILABILITY_GREEN_MIN` | Số cổng trống tối thiểu để trạm là `green` (mặc định 2) |
 | `SEARCH_RATE_LIMIT_PER_MIN` | Giới hạn tìm kiếm mỗi IP mỗi process (mặc định 30) |
 | `INTERNAL_API_KEY` | Bắt buộc cho `/api/v1/internal/*`; để trống thì endpoint trả 503 |

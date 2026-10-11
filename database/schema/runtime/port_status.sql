@@ -1,7 +1,10 @@
--- runtime.port_status — trạng thái HIỆN TẠI của cổng, đúng một dòng mỗi cổng.
--- Seed tạo sẵn mỗi cổng với status = 'unknown' (chưa biết có bị chiếm hay không);
--- reported_at để NULL cho tới khi backend ghi lần đầu.
+-- runtime.port_status — trạng thái HIỆN TẠI của từng cổng (tuỳ chọn), đúng một dòng mỗi cổng.
+-- Seed tạo sẵn mỗi cổng với status = 'unknown'; reported_at để NULL cho tới khi backend ghi.
 -- Ghi bởi POST /api/v1/internal/port-status và job đánh dấu stale.
+--
+-- Bảng này KHÔNG quyết định số cổng trống của trạm: trạng thái trạm lấy từ
+-- history.station_occupancy_5m (số cổng đang dùng, gửi về mỗi 5 phút) qua view
+-- station_status_current. port_status chỉ là chi tiết từng cổng nếu sau này có nguồn.
 
 CREATE TABLE public.port_status (
     port_id             uuid PRIMARY KEY REFERENCES public.ports(id) ON DELETE CASCADE,

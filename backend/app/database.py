@@ -12,6 +12,7 @@ REQUIRED_RELATIONS = (
     "port_status",
     "port_status_history",
     "ports",
+    "station_occupancy_5m",
     "station_status_current",
     "stations",
     "trip_events",

@@ -89,6 +89,12 @@ rows = 0
 load = "none"
 
 [[table]]
+name = "station_occupancy_profile"
+group = "history"
+rows = 0
+load = "none"
+
+[[table]]
 name = "predictions"
 group = "forecast"
 rows = 66

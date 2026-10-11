@@ -1,23 +1,45 @@
 # Fixed project name keeps the existing container and named volume (data_platform_*) after the
 # directory was renamed from data_platform to database.
+#
+# MỘT LỆNH dựng lại toàn bộ database (xoá volume cũ, nạp schema + seed + 30 ngày lịch sử simulator):
+#     docker compose up -d --force-recreate --wait
+# (`docker compose restart postgres` cũng reset vì entrypoint chạy lại.) Đặt RESET_ON_START=0 để giữ
+# dữ liệu giữa các lần khởi động. Chi tiết: database/README.md, mục "Khởi động bằng Docker".
 name: data_platform
 
 services:
   postgres:
     image: postgis/postgis:16-3.4
+    # Entrypoint bọc ngoài: xoá PGDATA khi RESET_ON_START=1 rồi gọi entrypoint chính thức, để mọi
+    # lần start đều chạy lại initdb và /docker-entrypoint-initdb.d.
+    entrypoint: ["/bin/sh", "/docker/reset-entrypoint.sh"]
+    command: ["postgres"]
     environment:
       POSTGRES_DB: smart_ev_data
       POSTGRES_USER: smart_ev
       POSTGRES_PASSWORD: smart_ev
+      RESET_ON_START: "${RESET_ON_START:-1}"
+      HISTORY_DAYS: "${HISTORY_DAYS:-30}"
+      HISTORY_REQUIRED: "${HISTORY_REQUIRED:-1}"
     ports:
       - "5433:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U smart_ev -d smart_ev_data"]
+      # TCP (-h) chứ không phải unix socket: trong lúc initdb, server tạm chỉ nghe socket, nên kiểm tra
+      # socket sẽ báo "sẵn sàng" quá sớm khi các script nạp dữ liệu vẫn đang chạy.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U smart_ev -d smart_ev_data"]
       interval: 5s
       timeout: 5s
       retries: 12
+      start_period: 180s
     volumes:
       - smart_ev_postgres_data:/var/lib/postgresql/data
+      # Script init thay thế thư mục init của image postgis; schema/_base/extensions.sql tự tạo postgis.
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+      - ./docker:/docker:ro
+      # schema/, data/, bulk/ và tables.toml (nguồn sự thật của lớp SQL).
+      - ./:/db:ro
+      # CSV simulator (python -m script occupancy trong simulator/).
+      - ../simulator/data:/sim:ro
 
 volumes:
   smart_ev_postgres_data:

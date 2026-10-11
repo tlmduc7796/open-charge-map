@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import Engine, text
@@ -95,6 +96,7 @@ _STATUS_SELECT = """
     SELECT
         s.code,
         COALESCE(ssc.reported_at, s.updated_at) AS reported_at,
+        ssc.reported_at AS observed_at,
         ssc.total_ports,
         ssc.operational_ports,
         ssc.occupied_ports,
@@ -176,9 +178,38 @@ def _vehicle_from_row(row: Any) -> Vehicle:
     )
 
 
-def _status_from_row(row: Any) -> StationStatus:
-    unknown_ports = int(row["unknown_ports"])
+def _status_from_row(
+    row: Any,
+    *,
+    stale_after_s: float | None = None,
+    now: datetime | None = None,
+) -> StationStatus:
+    """Station status from the latest occupancy bucket.
+
+    A station with no bucket, or whose newest bucket is older than `stale_after_s`, has no
+    usable reading: every port is `unknown` and the station is not offered as available.
+    """
     total_ports = int(row["total_ports"])
+    observed_at = row["observed_at"]
+    stale = observed_at is None or (
+        stale_after_s is not None
+        and ((now or datetime.now(UTC)) - observed_at).total_seconds() > stale_after_s
+    )
+    if stale:
+        return StationStatus(
+            station_id=row["code"],
+            timestamp=row["reported_at"],
+            total_ports=total_ports,
+            operational_ports=0,
+            occupied_ports=0,
+            available_ports=0,
+            offline_ports=0,
+            unknown_ports=total_ports,
+            occupancy_ratio=None,
+            queue_length=None,
+            avg_session_duration_min=None,
+            data_source="unknown",
+        )
     return StationStatus(
         station_id=row["code"],
         timestamp=row["reported_at"],
@@ -187,7 +218,7 @@ def _status_from_row(row: Any) -> StationStatus:
         occupied_ports=int(row["occupied_ports"]),
         available_ports=int(row["available_ports"]),
         offline_ports=int(row["offline_ports"]),
-        unknown_ports=unknown_ports,
+        unknown_ports=int(row["unknown_ports"]),
         occupancy_ratio=(
             float(row["occupancy_ratio"])
             if row["occupancy_ratio"] is not None
@@ -201,7 +232,7 @@ def _status_from_row(row: Any) -> StationStatus:
             if row["avg_session_duration_min"] is not None
             else None
         ),
-        data_source="unknown" if unknown_ports == total_ports else "database",
+        data_source="database",
     )
 
 
@@ -325,13 +356,24 @@ class DatabaseVehicleRepository:
 
 
 class DatabaseStationStatusRepository:
-    def __init__(self, engine: Engine) -> None:
+    """Station status read from the newest `station_occupancy_5m` bucket of each station.
+
+    `stale_after_s` (the 5-minute feed's tolerance, `STATION_STATUS_STALE_AFTER_S`) turns a
+    station whose newest bucket is older than that into `unknown`; None disables the check.
+    """
+
+    def __init__(self, engine: Engine, stale_after_s: float | None = None) -> None:
         self._engine = engine
+        self._stale_after_s = stale_after_s
 
     def all(self) -> tuple[StationStatus, ...]:
         with self._engine.connect() as connection:
             rows = connection.execute(text(_STATUS_SELECT + " ORDER BY s.code")).mappings()
-            return tuple(_status_from_row(row) for row in rows)
+            now = datetime.now(UTC)
+            return tuple(
+                _status_from_row(row, stale_after_s=self._stale_after_s, now=now)
+                for row in rows
+            )
 
     def get(self, station_id: str) -> StationStatus:
         with self._engine.connect() as connection:
@@ -341,4 +383,4 @@ class DatabaseStationStatusRepository:
             ).mappings().one_or_none()
         if row is None:
             raise KeyError(station_id)
-        return _status_from_row(row)
+        return _status_from_row(row, stale_after_s=self._stale_after_s)

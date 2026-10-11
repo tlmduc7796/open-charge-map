@@ -22,6 +22,7 @@ def test_default_paths_are_rooted_at_project(monkeypatch) -> None:
         "GOONG_API_KEY",
         "DATABASE_URL",
         "CATALOG_STORAGE",
+        "DEMO_RANDOM_SIMULATION",
     ]:
         monkeypatch.delenv(name, raising=False)
     settings = load_settings()
@@ -43,7 +44,7 @@ def test_default_paths_are_rooted_at_project(monkeypatch) -> None:
     assert settings.recommend_max_charge_min == 90
     assert settings.recommend_soc_risk_buffer == 0.20
     assert settings.recommend_candidate_corridor_m == 5_000
-    assert settings.station_status_stale_after_s == 120
+    assert settings.station_status_stale_after_s == 900
     assert settings.availability_green_min == 2
     assert settings.search_rate_limit_per_min == 30
     assert settings.internal_api_key is None
@@ -51,9 +52,18 @@ def test_default_paths_are_rooted_at_project(monkeypatch) -> None:
     assert settings.goong_api_key is None
     assert settings.database_url.endswith("@127.0.0.1:5433/smart_ev_data")
     assert settings.catalog_storage == "database"
+    assert settings.demo_random_simulation is False
 
 
 def test_required_phase_data_exists() -> None:
     missing = [path for path in load_settings().required_data_paths() if not path.is_file()]
 
     assert missing == []
+
+
+def test_demo_random_simulation_is_opt_in(monkeypatch) -> None:
+    monkeypatch.setenv("DEMO_RANDOM_SIMULATION", "true")
+    assert load_settings().demo_random_simulation is True
+
+    monkeypatch.setenv("DEMO_RANDOM_SIMULATION", "0")
+    assert load_settings().demo_random_simulation is False
