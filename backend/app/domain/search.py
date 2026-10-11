@@ -20,8 +20,8 @@ from backend.app.app_config_repository import AppConfigRepository
 from backend.app.domain.forecasting import OccupancyForecastService
 from backend.app.domain.models import StationStatus, WaitDistribution
 from backend.app.domain.phase7_models import (
-    DemoScenario,
     GeoPoint,
+    JourneyQuery,
     RecommendationPreference,
 )
 from backend.app.domain.recommendation import RecommendationService
@@ -52,7 +52,6 @@ class SearchService:
         stations,
         statuses,
         runtime: RuntimeStateStore,
-        planned_arrivals,
         forecasting: OccupancyForecastService,
         wait_estimator: WaitEstimator,
         store: SearchResultStore,
@@ -65,7 +64,6 @@ class SearchService:
         self._stations = stations
         self._statuses = statuses
         self._runtime = runtime
-        self._planned_arrivals = planned_arrivals
         self._forecasting = forecasting
         self._wait_estimator = wait_estimator
         self._store = store
@@ -124,10 +122,9 @@ class SearchService:
         self,
         station_id: str,
         status: StationStatus,
-        scenario_id: str | None = None,
     ) -> tuple[str, ...]:
         fields = set(status.synthetic_fields)
-        if self._wait_estimator.baseline_source(station_id, scenario_id) == "synthetic":
+        if self._wait_estimator.baseline_source(station_id) == "synthetic":
             fields.add("baseline_arrival_rate_per_hour")
         return tuple(sorted(fields))
 
@@ -159,7 +156,7 @@ class SearchService:
         ) / 1000
         return self._station_summary(nearest.station_id), distance_km
 
-    def _scenario(
+    def _query(
         self,
         *,
         origin: ApiPoint,
@@ -167,11 +164,9 @@ class SearchService:
         vehicle_id: str,
         battery_pct: float,
         departure_at: datetime,
-    ) -> DemoScenario:
+    ) -> JourneyQuery:
         vehicle = self._vehicles.get(vehicle_id)
-        return DemoScenario(
-            scenario_id="GENERAL_SEARCH",
-            name="General API search",
+        return JourneyQuery(
             vehicle_id=vehicle_id,
             initial_soc=battery_pct / 100,
             target_soc=vehicle.default_target_soc,
@@ -184,8 +179,6 @@ class SearchService:
                 charging_time_weight=0.25,
                 soc_risk_weight=0.25,
             ),
-            event_ids=(),
-            route_ids=(),
         )
 
     def search_route(
@@ -220,8 +213,8 @@ class SearchService:
                 generated_at=generated_at,
             )
         else:
-            recommendation = self._recommendation.recommend_scenario(
-                self._scenario(
+            recommendation = self._recommendation.recommend(
+                self._query(
                     origin=payload.origin,
                     destination=payload.destination,
                     vehicle_id=payload.vehicle_id,
@@ -335,9 +328,6 @@ class SearchService:
         candidates = self._stations.nearby(
             payload.origin.lng, payload.origin.lat, reachable_km * 1000
         )
-        planned_arrivals = self._planned_arrivals.active_for_stations(
-            tuple(station.station_id for station in candidates)
-        )
         options: list[SearchStationOption] = []
         exclusions: list[SearchExclusion] = []
         for station in candidates:
@@ -386,10 +376,9 @@ class SearchService:
                 continue
             lon, lat = station.geometry.coordinates
             try:
-                route = self._routing.route_to_station(
+                route = self._routing.route(
                     self._point(payload.origin),
                     GeoPoint(lat=lat, lon=lon),
-                    station.station_id,
                 )
             except RuntimeError:
                 exclusions.append(
@@ -421,8 +410,6 @@ class SearchService:
                     status,
                     forecast,
                     evaluation_at=generated_at + timedelta(minutes=travel_min),
-                    planned_arrivals=planned_arrivals,
-                    scenario_id=None,
                 )
             except (KeyError, ValueError):
                 exclusions.append(

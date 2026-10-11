@@ -1,28 +1,22 @@
-import type { DemoScenario, GeoPoint, Vehicle } from "../types";
+import type { GeoPoint, Vehicle } from "../types";
 import { fullRangeKm, rangeKmToSoc, socToRangeKm } from "../vehicleRange";
 import LocationInput from "./LocationInput";
 
 interface JourneyFormProps {
-  scenarios: DemoScenario[];
   vehicles: Vehicle[];
-  scenario: DemoScenario;
   vehicleId: string;
   initialSoc: number;
-  applyEvents: boolean;
   origin: GeoPoint;
   destination: GeoPoint;
   locationsValid: boolean;
   submitting: boolean;
-  onScenarioChange: (scenarioId: string) => void;
   onVehicleChange: (vehicleId: string) => void;
   onInitialSocChange: (soc: number) => void;
-  onApplyEventsChange: (enabled: boolean) => void;
   onOriginChange: (point: GeoPoint) => void;
   onDestinationChange: (point: GeoPoint) => void;
   onOriginValidityChange: (valid: boolean) => void;
   onDestinationValidityChange: (valid: boolean) => void;
   onSubmit: () => void;
-  onReset: () => void;
 }
 
 export default function JourneyForm(props: JourneyFormProps) {
@@ -39,22 +33,7 @@ export default function JourneyForm(props: JourneyFormProps) {
           <span className="step-label">01 · Hành trình</span>
           <h1>Chọn trạm sạc phù hợp</h1>
         </div>
-        <span className="demo-pill">Demo backend-first</span>
       </div>
-
-      <label>
-        Kịch bản
-        <select
-          value={props.scenario.scenario_id}
-          onChange={(event) => props.onScenarioChange(event.target.value)}
-        >
-          {props.scenarios.map((scenario) => (
-            <option key={scenario.scenario_id} value={scenario.scenario_id}>
-              {scenario.name}
-            </option>
-          ))}
-        </select>
-      </label>
 
       <div className="route-inputs">
         <LocationInput
@@ -75,14 +54,14 @@ export default function JourneyForm(props: JourneyFormProps) {
           onValidityChange={props.onDestinationValidityChange}
         />
       </div>
-      <p className="field-note">Chọn gợi ý Goong để đổi địa điểm; điểm scenario vẫn dùng route cache khi API lỗi.</p>
+      <p className="field-note">Chọn gợi ý Goong để đổi địa điểm.</p>
 
       <label>
         Xe điện
         <select value={props.vehicleId} onChange={(event) => props.onVehicleChange(event.target.value)}>
-          {props.vehicles.map((vehicle) => (
-            <option key={vehicle.vehicle_id} value={vehicle.vehicle_id}>
-              {vehicle.make} {vehicle.model} {vehicle.variant ?? ""}
+          {props.vehicles.map((item) => (
+            <option key={item.vehicle_id} value={item.vehicle_id}>
+              {item.make} {item.model} {item.variant ?? ""}
             </option>
           ))}
         </select>
@@ -105,25 +84,9 @@ export default function JourneyForm(props: JourneyFormProps) {
         </label>
       )}
 
-      <label className="event-toggle">
-        <input
-          type="checkbox"
-          checked={props.applyEvents}
-          disabled={props.scenario.event_ids.length === 0}
-          onChange={(event) => props.onApplyEventsChange(event.target.checked)}
-        />
-        <span>
-          Áp dụng event của kịch bản
-          <small>{props.scenario.event_ids.length ? props.scenario.event_ids.join(", ") : "Không có event"}</small>
-        </span>
-      </label>
-
       <div className="form-actions">
         <button className="primary-button" type="submit" disabled={props.submitting || !props.locationsValid}>
           {props.submitting ? "Đang tính toán…" : "Tìm trạm phù hợp"}
-        </button>
-        <button className="secondary-button" type="button" onClick={props.onReset}>
-          Reset demo
         </button>
       </div>
     </form>

@@ -37,7 +37,7 @@ class StationCollectorTests(unittest.TestCase):
     def test_hcm_config_uses_only_pre_2025_city_search_areas(self):
         config_path = (
             Path(__file__).resolve().parents[1]
-            / "data_platform"
+            / "database"
             / "config"
             / "hcm_station_collector.json"
         )

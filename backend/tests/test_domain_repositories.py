@@ -14,11 +14,7 @@ def test_phase5_data_loads_with_complete_station_coverage() -> None:
     assert {station.station_id for station in stations} == {
         status.station_id for status in statuses
     }
-    assert len(domain_data.planned_arrivals.all()) == 4
     assert domain_data.queue_assumptions.baseline_rate("ST_EVO_LAVIDA_Q7") == 0.6
-    assert len(domain_data.routes.all()) == 16
-    assert len(domain_data.demo_events.all()) == 4
-    assert len(domain_data.demo_scenarios.all()) == 4
 
 
 def test_repository_lookup_returns_validated_records() -> None:

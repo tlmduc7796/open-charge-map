@@ -4,7 +4,6 @@ import asyncio
 import os
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
-from uuid import UUID
 
 import httpx
 import pytest
@@ -25,7 +24,7 @@ async def _request(method: str, path: str, **kwargs) -> httpx.Response:
 
 
 @pytest.mark.skipif(not TEST_DATABASE_URL, reason="PostgreSQL test database required")
-def test_trip_search_gps_history_and_planned_arrival() -> None:
+def test_trip_search_gps_and_history() -> None:
     engine = create_engine(TEST_DATABASE_URL, pool_pre_ping=True)
     repository = DatabaseTripRepository(engine)
     old_service = app.state.trip_service
@@ -116,28 +115,15 @@ def test_trip_search_gps_history_and_planned_arrival() -> None:
         assert older.status_code == 200 and older.json()["positionAccepted"] is False
 
         with engine.connect() as connection:
-            row = connection.execute(
-                text(
-                    "SELECT status, provenance FROM planned_arrivals "
-                    "WHERE arrival_id=:arrival_id"
-                ),
-                {"arrival_id": f"TRIP_{UUID(trip_id).hex}"},
-            ).mappings().one()
             position_count = connection.scalar(
                 text("SELECT count(*) FROM trip_positions WHERE trip_id=CAST(:id AS uuid)"),
                 {"id": trip_id},
             )
-        assert row["status"] == "arrived"
-        assert row["provenance"]["tripId"] == trip_id
         assert position_count == 1
     finally:
         app.state.trip_service = old_service
         if trip_id is not None:
             with engine.begin() as connection:
-                connection.execute(
-                    text("DELETE FROM planned_arrivals WHERE provenance->>'tripId'=:id"),
-                    {"id": trip_id},
-                )
                 connection.execute(
                     text("DELETE FROM trips WHERE id=CAST(:id AS uuid)"),
                     {"id": trip_id},
@@ -146,7 +132,7 @@ def test_trip_search_gps_history_and_planned_arrival() -> None:
 
 
 @pytest.mark.skipif(not TEST_DATABASE_URL, reason="PostgreSQL test database required")
-def test_decline_accept_and_cancel_keep_planned_arrival_in_sync() -> None:
+def test_decline_accept_and_cancel_are_recorded_as_events() -> None:
     engine = create_engine(TEST_DATABASE_URL, pool_pre_ping=True)
     old_service = app.state.trip_service
     app.state.trip_service = TripService(
@@ -216,28 +202,16 @@ def test_decline_accept_and_cancel_keep_planned_arrival_in_sync() -> None:
         assert cancelled.status_code == 200, cancelled.text
         assert cancelled.json()["phase"] == "cancelled"
         with engine.connect() as connection:
-            statuses = connection.execute(
-                text(
-                    "SELECT status FROM planned_arrivals "
-                    "WHERE provenance->>'tripId'=:id ORDER BY created_at"
-                ),
-                {"id": trip_id},
-            ).scalars().all()
             versions = connection.scalar(
                 text("SELECT count(*) FROM trip_events WHERE trip_id=CAST(:id AS uuid) "
                      "AND type='reroute'"),
                 {"id": trip_id},
             )
-        assert statuses == ["cancelled", "cancelled", "cancelled"]
         assert versions == 2
     finally:
         app.state.trip_service = old_service
         if trip_id is not None:
             with engine.begin() as connection:
-                connection.execute(
-                    text("DELETE FROM planned_arrivals WHERE provenance->>'tripId'=:id"),
-                    {"id": trip_id},
-                )
                 connection.execute(
                     text("DELETE FROM trips WHERE id=CAST(:id AS uuid)"),
                     {"id": trip_id},
@@ -287,12 +261,6 @@ def test_direct_trip_arrives_without_planned_station() -> None:
         )
         assert arrived.status_code == 200, arrived.text
         assert arrived.json()["phase"] == "arrived"
-        with engine.connect() as connection:
-            count = connection.scalar(
-                text("SELECT count(*) FROM planned_arrivals WHERE provenance->>'tripId'=:id"),
-                {"id": trip_id},
-            )
-        assert count == 0
     finally:
         app.state.trip_service = old_service
         if trip_id is not None:
@@ -375,10 +343,6 @@ def test_off_route_replan_respects_cooldown(monkeypatch) -> None:
         if trip_id is not None:
             with engine.begin() as connection:
                 connection.execute(
-                    text("DELETE FROM planned_arrivals WHERE provenance->>'tripId'=:id"),
-                    {"id": trip_id},
-                )
-                connection.execute(
                     text("DELETE FROM trips WHERE id=CAST(:id AS uuid)"),
                     {"id": trip_id},
                 )
@@ -455,21 +419,10 @@ def test_route_trip_progresses_through_station_to_destination() -> None:
         )
         assert arrived.status_code == 200, arrived.text
         assert arrived.json()["phase"] == "arrived"
-        with engine.connect() as connection:
-            status = connection.scalar(
-                text("SELECT status FROM planned_arrivals "
-                     "WHERE provenance->>'tripId'=:id"),
-                {"id": trip_id},
-            )
-        assert status == "arrived"
     finally:
         app.state.trip_service = old_service
         if trip_id is not None:
             with engine.begin() as connection:
-                connection.execute(
-                    text("DELETE FROM planned_arrivals WHERE provenance->>'tripId'=:id"),
-                    {"id": trip_id},
-                )
                 connection.execute(
                     text("DELETE FROM trips WHERE id=CAST(:id AS uuid)"),
                     {"id": trip_id},
@@ -556,10 +509,6 @@ def test_replan_detects_battery_eta_and_station_failure(monkeypatch) -> None:
         app.state.trip_service = old_service
         if trip_id is not None:
             with engine.begin() as connection:
-                connection.execute(
-                    text("DELETE FROM planned_arrivals WHERE provenance->>'tripId'=:id"),
-                    {"id": trip_id},
-                )
                 connection.execute(
                     text("DELETE FROM trips WHERE id=CAST(:id AS uuid)"),
                     {"id": trip_id},

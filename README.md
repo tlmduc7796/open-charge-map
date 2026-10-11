@@ -1,342 +1,148 @@
 # Smart EV Journey
 
-MVP đề xuất trạm sạc phù hợp cho hành trình EV dựa trên compatibility, reachability, occupancy forecast, estimated wait và detour.
+MVP đề xuất trạm sạc cho hành trình xe điện: xếp hạng trạm theo tổng thời gian (di chuyển + chờ +
+sạc) dựa trên khả năng tương thích đầu sạc, tầm với của pin và dự báo occupancy tại thời điểm tới.
+Phạm vi: TP.HCM.
 
-Phase 00–02 cung cấp dữ liệu và skeleton chạy được. Trên nhánh demo backend-first,
-Phase 05 đã bổ sung domain core cho compatibility, reachability và charging estimate;
-Phase 06 đã bổ sung persistence occupancy forecast và Erlang C wait estimator.
-Phase 07 đã bổ sung route cache/Goong/OSRM, recommendation, runtime events,
-planned-arrival lifecycle và backend demo APIs.
-Phase 08 đã bổ sung frontend dùng API thật, Goong Maps chính với Leaflet/OSM fallback,
-journey controls, station details, recommendation, route và event/model indicators.
-Phase 09 đã hoàn thiện journey tích hợp: Goong Places, origin/destination động, live/cache
-routing, route geometry trong recommendation và planned-arrival commit/cancel.
-Phase 10 đã khóa bốn scenario deterministic, route cache cho toàn bộ 15 trạm public,
-reset/replay và API regression tests cho low-SOC, congestion và outage reranking.
-Phase 03–04 vẫn deferred và chưa được đánh dấu hoàn thành, vì vậy Phase 06 chỉ đạt
-demo gate chứ chưa đạt release gate. Bản demo không claim đã có occupancy ML artifact:
-`prediction_source=persistence` là trạng thái chủ động và được hiển thị trên UI.
+Trạng thái hiện tại:
 
-Toàn bộ dữ liệu nguồn của repo được lưu tại `data_platform/data/`. Backend vẫn đọc fixture
-JSON cho event, scenario và route cache. Mặc định API catalog đọc station, vehicle và runtime
-status từ PostgreSQL; planned arrivals, arrival rate nền và cửa sổ tính tải cũng được đọc/ghi
-qua PostgreSQL sau một lần bootstrap. Mỗi request recommendation làm mới telemetry từ database
-và dùng PostGIS lọc trạm trong hành lang điểm đi–điểm đến trước khi routing. Fixture chỉ còn giữ
-event, scenario và các route cache deterministic.
+- **Database** là SQL viết tay (`database/schema/*.sql`), không dùng migration; xem
+  [database/README.md](database/README.md).
+- **ML** chưa tích hợp: mọi lời gọi backend → ML trả giá trị mặc định cố định
+  (`backend/app/domain/ml_gateway.py`, `prediction_source=default`).
+- **Kịch bản demo đã được gỡ** (scenario, event giả lập, route cache, `/planned-arrivals`); phần
+  này sẽ thiết kế lại sau. Frontend dùng `/api/v1/search/route`.
+- Phase 03–04 (UrbanEV preprocessing, model occupancy) chưa hoàn thành nên chưa có `RELEASE PASS`.
 
 ## Yêu cầu
 
 - Python 3.12
-- Node.js 20.19+ hoặc 22.12+
-- pnpm 11.19+
+- Node.js 20.19+ hoặc 22.12+, pnpm 11.19+
+- Docker Desktop (PostgreSQL/PostGIS)
 
-## Cài đặt backend
+## Chạy nhanh (Windows)
 
-PowerShell:
+```powershell
+setup.bat      # một lần: venv backend, pnpm install, Postgres, nạp database
+start.bat      # Postgres + backend (:8000) + frontend (:5173)
+```
+
+Điền `GOONG_API_KEY` vào `.env` (routing, Places) và `VITE_GOONG_MAPTILES_KEY` vào
+`frontend/.env.local` (bản đồ). Hai key khác nhau; không dùng key này cho biến kia.
+
+## Cài đặt thủ công
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
 python -m pip install -r backend\requirements-dev.txt
 Copy-Item .env.example .env
+Copy-Item frontend\.env.example frontend\.env.local
+
+# database (chỉ cần Python + Docker, không cần venv riêng)
+python database\scripts\bootstrap_database.py
+
+# backend
+python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+
+# frontend
+pnpm --dir frontend install --frozen-lockfile
+pnpm --dir frontend dev --host 127.0.0.1
 ```
 
-Khởi tạo PostgreSQL một lần trước khi chạy backend (Docker Desktop phải đang chạy):
+- Frontend: `http://127.0.0.1:5173`; health: `http://127.0.0.1:8000/health`; schema:
+  `http://127.0.0.1:8000/docs`.
+- Dùng cùng hostname `127.0.0.1`; nếu mở bằng `localhost` thì đặt `CORS_ORIGINS` tương ứng.
+- Vite không đọc `.env` ở thư mục gốc; key frontend nằm trong `frontend/.env.local`.
 
-```powershell
-Set-Location data_platform
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e .
-.\.venv\Scripts\python.exe scripts\bootstrap_database.py
-Set-Location ..
-```
+## API
 
-Nếu chưa có UrbanEV raw archive:
-
-```powershell
-python scripts\acquire_urbanev.py
-```
-
-## EDA UrbanEV trước preprocessing
-
-Trước khi điều chỉnh dữ liệu synthetic trong `station_status.json`, chạy notebook EDA để
-đánh giá thủ công chất lượng dữ liệu UrbanEV station-level:
-
-```powershell
-python -m pip install -r requirements-eda.txt
-python -m jupyter lab notebooks\urbanev_eda.ipynb
-```
-
-Notebook mặc định quét một mẫu xác định trước để kiểm tra nhanh. Sau khi xác nhận pipeline,
-đặt `FULL_SCAN = True` trong cell cấu hình để quét toàn bộ trạm và xuất kết quả vào
-`data_platform/data/ml/urbanev/eda/`. Kết quả EDA chỉ dùng để đưa ra quyết định preprocessing; notebook
-không sửa hay sinh `station_status.json`.
-
-Kiểm tra toàn bộ input Phase 0–1:
-
-```powershell
-python scripts\check_data_paths.py
-```
-
-Chạy backend:
-
-```powershell
-python -m uvicorn backend.app.main:app --reload
-```
-
-Health endpoint: `http://127.0.0.1:8000/health`
-
-`CATALOG_STORAGE=database` là chế độ vận hành mặc định. Chỉ đặt `memory` trong unit test hoặc
-khi cần chẩn đoán fixture độc lập. API trả mọi station `is_active=true`; station chưa có
-telemetry có `data_source=unknown`, `unknown_ports=total_ports`, không được tính là available.
-Backend fail-fast nếu không kết nối được PostgreSQL hoặc revision Alembic không phải
-`0006_trip_tokens`; `/health` cũng kiểm tra lại kết nối và revision khi đang chạy.
-
-Các demo endpoints và interactive schema:
+Catalog và tiện ích (chế độ cũ, không gắn kịch bản):
 
 ```text
-http://127.0.0.1:8000/docs
-POST /journey/recommend
+GET  /stations   /stations/{id}   /stations/{id}/status   /vehicles   /model/status
+GET  /geocoding/autocomplete?query=   /geocoding/details/{place_id}   # cần GOONG_API_KEY
 POST /route
-POST /demo/events/{event_id}/apply
-POST /demo/reset                       # chỉ khả dụng khi DEMO_MODE=true
-GET  /model/status
-GET  /demo/scenarios
-GET  /geocoding/autocomplete
-GET  /geocoding/details/{place_id}
-POST /planned-arrivals/commit
 ```
 
-Các endpoint hợp đồng mới chạy song song với demo API:
+Hợp đồng `/api/v1`:
 
 ```text
 GET  /api/v1/config
 GET  /api/v1/stations?bbox=minLng,minLat,maxLng,maxLat
 GET  /api/v1/stations/availability?offset=0|5|10|15|20|25|30
-GET  /api/v1/stations/{id}/ports
+GET  /api/v1/stations/{id}   /api/v1/stations/{id}/ports
 POST /api/v1/search/stations
 POST /api/v1/search/route
-POST /api/v1/trips                      # tạo từ searchId (10 phút)
+POST /api/v1/trips                      # tạo từ searchId (giữ 10 phút trong bộ nhớ)
 GET  /api/v1/trips/{id}
-POST /api/v1/trips/{id}/position         # GPS, recordedAt có timezone
-PATCH /api/v1/trips/{id}                 # accept/decline/depart/correctBattery/cancel
-POST /api/v1/internal/port-status        # yêu cầu X-API-Key
+POST /api/v1/trips/{id}/position        # GPS, recordedAt có timezone
+PATCH /api/v1/trips/{id}                # accept/decline/depart/correctBattery/cancel
+POST /api/v1/internal/port-status       # yêu cầu X-API-Key
 POST /api/v1/internal/port-status/mark-stale
 ```
 
-API `/api/v1` dùng `{lat,lng}`, pin phần trăm `[0,100]` và JSON `camelCase`. Domain và dữ liệu
-nội bộ vẫn dùng `{lat,lon}` và SOC `[0,1]`.
-Search chỉ đề xuất trạm có giờ mở cửa được xác nhận (`24/7` hoặc `always_open=true`);
-trạm thiếu metadata này được trả trong `excludedCandidates`. `searchId` và giới hạn tần suất
-hiện nằm trong bộ nhớ của từng process; Redis dùng chung giữa các worker thuộc M5.
-Các ngưỡng cấu hình đọc từ `app_config` khi có key tương ứng, nếu thiếu dùng mặc định trong
-backend. Job tự đánh dấu telemetry quan sát quá hạn thành `unknown` mỗi phút; dữ liệu
-synthetic demo vẫn giữ nguồn `synthetic` và không bị job này đổi trạng thái.
-Trip API chỉ khả dụng khi Backend kết nối PostgreSQL. Trip, GPS, sự kiện và planned arrival
-được lưu bền; `searchId` chỉ tồn tại trong bộ nhớ process trong 10 phút. GPS lặp/cũ không
-ghi đè trạng thái. Quãng đường và pin không có telemetry trực tiếp được ước tính từ các
-đoạn thẳng giữa hai ping; ETA dùng tiến độ theo tuyến hiện có. Re-plan dùng ngưỡng lệch
-tuyến, ETA tăng, khả dụng trạm và pin trong `app_config`, kèm cooldown 60 giây mặc định;
-những trạm đã decline không được đề xuất lại cho trip đó.
-Response tạo trip trả `tripToken` đúng một lần. Các request `GET /trips/{id}`, position và
-PATCH phải gửi `Authorization: Bearer <tripToken>`; database chỉ lưu SHA-256 hash của token.
-Response `/api/v1` dùng error envelope thống nhất và `X-Request-ID`; các kết quả tính toán
-có `generatedAt`, còn `updatedAt` chỉ thời điểm dữ liệu nguồn thay đổi.
+Quy ước:
 
-Trong demo 3B, bước seed bổ sung deterministically các trường còn thiếu để catalog 16 trạm
-master có status, queue/session duration, arrival rate, access và opening-hours cần cho ranking.
-Catalog chỉ gồm 16 trạm master; 86 trạm demo synthetic (`CAND_*`) đã bị loại khỏi snapshot.
-Mỗi response station/recommendation có `syntheticFields`; dữ liệu observed không bị ghi đè.
-Trạm vẫn có thể bị loại nếu private/đóng cửa đã xác minh, không tương thích, ngoài tầm pin
-hoặc provider routing không trả tuyến.
+- `/api/v1` dùng `{lat,lng}`, pin phần trăm `[0,100]`, JSON `camelCase`, error envelope thống nhất
+  và `X-Request-ID`. Domain và dữ liệu nội bộ dùng `{lat,lon}` và SOC `[0,1]`.
+- Search chỉ đề xuất trạm có giờ mở cửa xác nhận (`24/7` hoặc `always_open=true`); trạm khác nằm
+  trong `excludedCandidates` kèm mã lý do.
+- Trip được lưu bền trong PostgreSQL. `POST /trips` trả `tripToken` đúng một lần; các request sau
+  phải gửi `Authorization: Bearer <tripToken>` (database chỉ lưu SHA-256). GPS lặp/cũ không ghi
+  đè trạng thái; re-plan dùng ngưỡng trong `app_config`, có cooldown và bỏ qua trạm đã từ chối.
+- `searchId` và giới hạn tần suất nằm trong bộ nhớ từng process.
+- Mọi cổng seed ở trạng thái `unknown`, nên trạm được coi là offline và chưa được gợi ý cho tới
+  khi nhận trạng thái qua `POST /api/v1/internal/port-status`; `queue_length` chưa có nguồn nên ước
+  lượng chờ báo `WAIT_INPUT_UNAVAILABLE`. Kết quả tính toán có `generatedAt`; `updatedAt` là thời
+  điểm dữ liệu nguồn đổi.
 
-## Cài đặt frontend
+## Cấu hình (`.env`)
 
-Kiểm tra `pnpm` trước:
-
-```powershell
-pnpm --version
-```
-
-Nếu PowerShell báo `pnpm is not recognized`, cài đúng phiên bản dùng cho project rồi
-đóng và mở lại terminal:
-
-```powershell
-npm install --global pnpm@11.19.0
-pnpm --version
-```
-
-Sau đó chạy:
-
-```powershell
-Set-Location frontend
-pnpm install --frozen-lockfile
-pnpm dev
-```
-
-Frontend mặc định chạy tại `http://127.0.0.1:5173`.
-
-## Chạy và kiểm tra demo
-
-Hướng dẫn chi tiết và expected result: [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md).
-
-### 1. Chuẩn bị environment
-
-Chạy tại repository root:
-
-```powershell
-Copy-Item .env.example .env
-Copy-Item frontend\.env.example frontend\.env.local
-```
-
-Điền hai key khác nhau:
-
-- `.env` → `GOONG_API_KEY`: REST key dùng cho Places và Directions ở backend.
-- `frontend/.env.local` → `VITE_GOONG_MAPTILES_KEY`: Maptiles key dùng để render Goong map.
-
-Không dùng REST key cho biến `VITE_*` và không commit hai file environment này.
-
-### 2. Khởi động hai service
-
-Terminal 1 — backend:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-Terminal 2 — frontend, chạy từ repository root:
-
-```powershell
-pnpm --dir frontend dev --host 127.0.0.1
-```
-
-Nếu terminal đang đứng sẵn trong thư mục `frontend`, dùng lệnh tương đương sau (không
-thêm `--dir frontend` lần nữa):
-
-```powershell
-pnpm dev --host 127.0.0.1
-```
-
-Fallback tạm thời khi chưa cài được `pnpm` nhưng đã có Node.js/npm:
-
-```powershell
-npm --prefix frontend install --no-package-lock
-npm --prefix frontend run dev -- --host 127.0.0.1
-```
-
-Project vẫn ưu tiên `pnpm` để cài dependency đúng theo `frontend/pnpm-lock.yaml`.
-
-Mở:
-
-- Frontend: `http://127.0.0.1:5173`
-- Backend health: `http://127.0.0.1:8000/health`
-- API documentation: `http://127.0.0.1:8000/docs`
-
-Phải dùng cùng hostname `127.0.0.1`; nếu mở frontend bằng `localhost`, cập nhật
-`CORS_ORIGINS` tương ứng rồi restart backend.
-
-### 3. Smoke test đề xuất
-
-1. **Normal journey:** giữ nguyên scenario, nhấn **Tìm trạm phù hợp**. Kiểm tra có ranked
-   candidates, route trên map và station detail.
-2. **Địa điểm động:** nhập `Cho Ben Thanh`, chọn một gợi ý Goong rồi tìm lại. Kiểm tra route
-   và detour thay đổi; request live có thể cần vài giây.
-3. **Low-SOC:** chọn `Low-SOC journey`. Kiểm tra vẫn có candidate an toàn và danh sách loại
-   có lý do phương tiện không đủ pin để tới.
-4. **Congestion:** chọn `Congestion triggers reranking`, chạy một lần khi chưa bật event, sau đó
-   bật event và chạy lại. La Vela phải mất hạng đầu vì thời gian chờ tăng.
-5. **Port outage:** reset, chọn `La Vela outage triggers reroute`, bật event rồi tìm. La Vela
-   phải bị loại vì offline và recommendation đầu tiên phải đổi.
-6. **Planned arrival:** chọn một recommendation, nhấn **Xác nhận tuyến đến trạm**, kiểm tra ETA
-   xuất hiện, sau đó thử **Hủy planned arrival**.
-7. Nhấn **Reset demo** trước khi chạy lại scenario để xóa event và planned-arrival runtime.
-
-Banner fallback là trạng thái dự kiến vì Phase 04 chưa có model artifact, không phải lỗi
-khởi động. Mọi lời gọi backend → ML hiện đi qua `backend/app/domain/ml_gateway.py` và trả giá
-trị mặc định cố định (`prediction_source=default`: occupancy tương lai = 0.5, phân phối chờ =
-ước lượng Erlang C, không hiệu chỉnh chống dồn tải); occupancy hiện tại (offset 0) vẫn là dữ liệu thật. Nếu thiếu Maptiles key hoặc Goong map lỗi lúc load, frontend tự chuyển sang
-Leaflet + OpenStreetMap. Fixed demo scenarios vẫn dùng route cache khi REST key/routing live lỗi.
+| Biến | Ý nghĩa |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL của backend (mặc định cổng `5433`, database `smart_ev_data`) |
+| `CATALOG_STORAGE` | `database` (mặc định) hoặc `memory` (đọc `DATA_DIR`, dùng cho test/chẩn đoán) |
+| `DATA_DIR` | Thư mục fixture JSON, mặc định `database/fixtures` |
+| `GOONG_API_KEY` | REST key của backend (Directions, Places); không đặt vào biến `VITE_*` |
+| `ROUTING_TIMEOUT_S` | Timeout routing Goong/OSRM |
+| `WAIT_SCORING_CAP_MIN` | Trần thời gian chờ khi chấm điểm |
+| `RECOMMEND_MAX_*`, `RECOMMEND_SOC_RISK_BUFFER` | Ngưỡng chuẩn hóa cố định |
+| `RECOMMEND_CANDIDATE_CORRIDOR_M` | Bán kính hành lang PostGIS quanh đường thẳng đi–đến (mặc định 5000 m) |
+| `STATION_STATUS_STALE_AFTER_S` | Quá hạn thì cổng quan sát được chuyển `unknown` (mặc định 120 s) |
+| `AVAILABILITY_GREEN_MIN` | Số cổng trống tối thiểu để trạm là `green` (mặc định 2) |
+| `SEARCH_RATE_LIMIT_PER_MIN` | Giới hạn tìm kiếm mỗi IP mỗi process (mặc định 30) |
+| `INTERNAL_API_KEY` | Bắt buộc cho `/api/v1/internal/*`; để trống thì endpoint trả 503 |
+| `MODEL_ARTIFACT_PATH`, `MODEL_PREPROCESSOR_PATH`, `MODEL_META_PATH` | Artifact occupancy (chưa có) |
+| `VITE_API_BASE_URL`, `VITE_GOONG_MAPTILES_KEY` | Frontend (`frontend/.env.local`) |
 
 ## Kiểm tra
 
-Từ repository root:
-
 ```powershell
-pytest
-ruff check backend
-python scripts\validate_static_data.py
-python scripts\validate_phase1_data.py
+pytest                                   # backend, database layout, tests/
+ruff check backend database
+pnpm --dir frontend lint
+pnpm --dir frontend test
+pnpm --dir frontend build
+python database\scripts\verify.py        # SQL layer trên database tạm (cần Docker)
 ```
 
-Chạy integration tests với **database test riêng** đã migrate và seed. Không trỏ biến này
-vào database demo/vận hành vì test trạng thái cổng có ghi dữ liệu:
+Test tích hợp PostgreSQL chỉ chạy khi đặt `BACKEND_TEST_DATABASE_URL` trỏ tới một database
+**riêng** đã bootstrap (test ghi trạng thái cổng; không dùng database vận hành):
 
 ```powershell
-$env:BACKEND_TEST_DATABASE_URL="postgresql+psycopg://smart_ev:smart_ev@127.0.0.1:5434/smart_ev_test"
+python database\scripts\bootstrap_database.py --database-name smart_ev_test
+$env:BACKEND_TEST_DATABASE_URL="postgresql+psycopg://smart_ev:smart_ev@127.0.0.1:5433/smart_ev_test"
 pytest backend\tests
 ```
 
-Backend hiện có unit tests cho schema/repository và các phép tính Phase 05. Dữ liệu domain
-được validate khi FastAPI application khởi tạo; sai capacity hoặc thiếu runtime status sẽ làm
-backend fail sớm.
+Backend test dùng một routing provider giả (đường thẳng × 1,35) nên không cần mạng hay key.
 
-Từ `frontend/`:
+## Thêm trạm
 
-```powershell
-pnpm lint
-pnpm test
-pnpm build
-```
-
-Phase 08 dùng backend thật khi chạy ứng dụng; API chỉ được mock trong unit/component tests.
-Origin/destination có thể chọn từ Goong Places. Tọa độ của demo scenario vẫn dùng route cache;
-tuyến tùy chọn dùng Goong Directions và tự fallback sang OSRM.
-
-## Cấu hình
-
-Sao chép `.env.example` thành `.env`. Không commit `.env` hoặc API key thật.
-
-- `GOONG_API_KEY`: REST key đặt trong `.env` ở repository root; Phase 7 dùng cho
-  Directions/Distance Matrix và collector dùng cho Places. Không đưa key này vào biến `VITE_*`.
-- `DATA_DIR`: thư mục data, mặc định `data_platform/data`. Bộ xe vận hành nằm ở
-  `data_platform/data/static/vehicles.json`; ba xe trong `data_platform/data/demo/vehicles.json`
-  chỉ phục vụ fixture và bổ sung các mã xe của scenario khi bootstrap.
-- `DATABASE_URL`: kết nối PostgreSQL của backend, mặc định trỏ tới database được tạo bởi
-  `data_platform/scripts/bootstrap_database.py` trên cổng `5433`.
-- `PLANNED_ARRIVALS_STORAGE`: mặc định `database`; giá trị `memory` chỉ dùng cho unit test
-  hoặc chẩn đoán cô lập.
-- `MODEL_ARTIFACT_PATH`: model occupancy, chưa tồn tại trước Phase 04.
-- `MODEL_PREPROCESSOR_PATH`, `MODEL_META_PATH`: artifact phụ của Phase 04.
-- `WAIT_SCORING_CAP_MIN`: wait hữu hạn dùng để score station overload/offline.
-- `ROUTING_TIMEOUT_S`: timeout cho Goong/OSRM live routing.
-- `RECOMMEND_MAX_*`, `RECOMMEND_SOC_RISK_BUFFER`: fixed normalization thresholds;
-  recommendation không dùng min-max theo candidate set.
-- `RECOMMEND_CANDIDATE_CORRIDOR_M`: bán kính hành lang PostGIS quanh đường thẳng nối origin và
-  destination, mặc định `5000` mét. Với snapshot 16 trạm hiện tại, hành trình normal giữ lại
-  cả 16 trạm (đều có route cache) nên hành lang không còn thu hẹp tập ứng viên.
-- `INTERNAL_API_KEY`: khóa bắt buộc cho các endpoint `/api/v1/internal`; không commit giá trị thật.
-- `STATION_STATUS_STALE_AFTER_S`: thời gian tối đa trước khi trạng thái cổng được đánh dấu
-  `unknown`, mặc định 120 giây.
-- `AVAILABILITY_GREEN_MIN`: số cổng trống tối thiểu để trạng thái trạm là green, mặc định 2.
-- `SEARCH_RATE_LIMIT_PER_MIN`: số lần tìm kiếm tối đa mỗi IP trong 60 giây ở mỗi backend
-  process, mặc định 30.
-- `DEMO_MODE`: bật dữ liệu/scenario demo.
-
-Frontend dùng file riêng vì Vite không đọc `.env` ở repository root:
-
-```powershell
-Copy-Item frontend\.env.example frontend\.env.local
-```
-
-- `VITE_API_BASE_URL`: backend URL dùng cho frontend.
-- `VITE_GOONG_MAPTILES_KEY`: Maptiles Key hiển thị Goong map; key này được gửi tới browser
-  và phải giới hạn theo domain. Nó không thay thế `GOONG_API_KEY` của backend.
-
-## Khi bổ sung trạm
-
-Sau khi promote candidate vào `stations.geojson`, cập nhật/tái sinh runtime và queue assumptions,
-thêm route của mọi trạm public vào `config/demo_routes.json`, rồi chạy lại
-`scripts/cache_demo_routes.py`. Static validator và Phase 01 validator sẽ fail nếu fixed
-scenario không còn đủ route coverage.
+1. Thêm trạm vào `database/fixtures/static/stations.geojson` (chế độ memory) và
+   `database/data/catalog/{stations,ports}.sql` cùng `port_status.sql` (database); cập nhật `rows`
+   trong `database/tables.toml`.
+2. Cập nhật `fixtures/demo/queue_assumptions.json` và `fixtures/runtime/station_status.json` nếu
+   dùng chế độ memory.
+3. Chạy `python database\scripts\verify.py`, rồi tạo lại database local.

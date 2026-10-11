@@ -1,4 +1,4 @@
-"""PostgreSQL trip lifecycle and its linked planned arrival."""
+"""PostgreSQL trip lifecycle: creation, GPS positions, re-planning and cancellation."""
 
 from __future__ import annotations
 
@@ -142,7 +142,6 @@ class DatabaseTripRepository:
             "routeStartDistanceKm": 0.0,
             "predictionSource": option.prediction_source if option else None,
             "updatedAt": created_at.isoformat(),
-            "arrivalId": f"TRIP_{trip_id.hex}" if option is not None else None,
         }
         geojson = json.dumps({"type": "LineString", "coordinates": route.geometry})
         with self._engine.begin() as connection:
@@ -150,13 +149,6 @@ class DatabaseTripRepository:
                 text("SELECT id FROM vehicle_models WHERE code=:code"),
                 {"code": vehicle_id},
             )
-            if vehicle_uuid is None:
-                for row in connection.execute(
-                    text("SELECT id, provenance FROM vehicle_models")
-                ).mappings():
-                    if row["provenance"].get("_legacy_demo", {}).get("vehicle_id") == vehicle_id:
-                        vehicle_uuid = row["id"]
-                        break
             if vehicle_uuid is None:
                 raise KeyError(vehicle_id)
             station_uuid = None
@@ -202,16 +194,6 @@ class DatabaseTripRepository:
                 },
             )
             if option is not None:
-                self._planned_arrival(
-                    connection, trip_id=trip_id, station_uuid=station_uuid,
-                    vehicle_uuid=vehicle_uuid, option=option, created_at=created_at,
-                    arrival_id=planned["arrivalId"],
-                    expected_energy_kwh=max(
-                        0.0,
-                        (target_battery_pct - option.arrive_battery_pct)
-                        / 100 * battery_kwh,
-                    ),
-                )
                 self._event(
                     connection, trip_id, "station_accepted",
                     {"stationId": option.station.id},
@@ -230,45 +212,6 @@ class DatabaseTripRepository:
         if stored is None:
             return False
         return hmac.compare_digest(stored, auth_token_hash)
-
-    @staticmethod
-    def _planned_arrival(
-        connection, *, trip_id: UUID, station_uuid, vehicle_uuid,
-        option: SearchStationOption, created_at: datetime,
-        arrival_id: str,
-        expected_energy_kwh: float,
-    ) -> None:
-        eta_at = created_at + timedelta(minutes=option.travel_min)
-        connection.execute(
-            text(
-                """
-                INSERT INTO planned_arrivals
-                (arrival_id, station_id, vehicle_model_id, route_id, created_at,
-                 eta_at, eta_window_start, eta_window_end,
-                 expected_energy_kwh, expected_charge_duration_min,
-                 arrival_probability, expires_at, status, data_source, provenance)
-                VALUES
-                (:arrival_id, :station_uuid, :vehicle_uuid, :route_id, :created_at,
-                 :eta_at, :window_start, :window_end,
-                 :energy_kwh, :charge_min, 1, :expires_at, 'planned', 'runtime',
-                 CAST(:provenance AS jsonb))
-                """
-            ),
-            {
-                "arrival_id": arrival_id,
-                "station_uuid": station_uuid,
-                "vehicle_uuid": vehicle_uuid,
-                "route_id": option.route.route_id,
-                "created_at": created_at,
-                "eta_at": eta_at,
-                "window_start": eta_at - timedelta(minutes=10),
-                "window_end": eta_at + timedelta(minutes=10),
-                "charge_min": max(0.1, option.charge_min),
-                "energy_kwh": expected_energy_kwh,
-                "expires_at": eta_at + timedelta(minutes=30),
-                "provenance": json.dumps({"tripId": str(trip_id)}),
-            },
-        )
 
     @staticmethod
     def _event(connection, trip_id: UUID | str, kind: str, payload: dict) -> None:
@@ -325,7 +268,6 @@ class DatabaseTripRepository:
                 if allow_station_arrival and station_distance <= near_station_m:
                     phase = "at_station"
                     self._event(connection, trip_id, "arrived_station", {})
-                    self._set_arrival_status(connection, trip_id, "arrived")
             elif phase == "to_destination":
                 destination = connection.execute(
                     text(
@@ -351,22 +293,6 @@ class DatabaseTripRepository:
                 )),
             )
             eta_at = recorded_at + timedelta(minutes=route_remaining_min)
-            if phase == "to_station" and planned.get("arrivalId") is not None:
-                connection.execute(
-                    text(
-                        "UPDATE planned_arrivals SET eta_at=:eta_at, "
-                        "eta_window_start=:start_at, eta_window_end=:end_at, "
-                        "expires_at=:expires_at WHERE arrival_id=:arrival_id "
-                        "AND status='planned'"
-                    ),
-                    {
-                        "arrival_id": planned["arrivalId"],
-                        "eta_at": eta_at,
-                        "start_at": eta_at - timedelta(minutes=10),
-                        "end_at": eta_at + timedelta(minutes=10),
-                        "expires_at": eta_at + timedelta(minutes=30),
-                    },
-                )
             patch = {
                 "batteryPct": battery_pct,
                 "distanceKm": total_distance,
@@ -404,17 +330,6 @@ class DatabaseTripRepository:
             )
             return self._response(self._row(connection, trip_id), accepted=True)
 
-    @staticmethod
-    def _set_arrival_status(connection, trip_id: str, status: str) -> None:
-        connection.execute(
-            text(
-                "UPDATE planned_arrivals SET status=:status "
-                "WHERE arrival_id=(SELECT planned->>'arrivalId' FROM trips "
-                "WHERE id=CAST(:trip_id AS uuid)) AND status='planned'"
-            ),
-            {"trip_id": trip_id, "status": status},
-        )
-
     def transition(
         self, trip_id: str, *, action: str, now: datetime,
         battery_pct: float | None = None,
@@ -427,7 +342,6 @@ class DatabaseTripRepository:
             patch: dict[str, object] = {"updatedAt": now.isoformat()}
             if action == "cancel":
                 phase = "cancelled"
-                self._set_arrival_status(connection, trip_id, "cancelled")
                 self._event(connection, trip_id, "cancelled", {})
             elif action == "depart":
                 if phase != "at_station" or row["mode"] != "route":
@@ -506,42 +420,6 @@ class DatabaseTripRepository:
             eta_at = evaluated_at + timedelta(
                 minutes=option.travel_min if option is not None else route.travel_min
             )
-            arrival_id = planned.get("arrivalId")
-            if selected_station != row["station_code"]:
-                self._set_arrival_status(connection, trip_id, "cancelled")
-                arrival_id = f"TRIP_{UUID(trip_id).hex}_V{version}" if option else None
-                if option is not None:
-                    vehicle_uuid = connection.scalar(
-                        text("SELECT vehicle_model_id FROM trips WHERE id=CAST(:id AS uuid)"),
-                        {"id": trip_id},
-                    )
-                    self._planned_arrival(
-                        connection, trip_id=UUID(trip_id), station_uuid=station_uuid,
-                        vehicle_uuid=vehicle_uuid, option=option,
-                        created_at=evaluated_at, arrival_id=arrival_id,
-                        expected_energy_kwh=max(
-                            0.0,
-                            (planned["targetBatteryPct"] - option.arrive_battery_pct)
-                            / 100 * planned["batteryKwh"],
-                        ),
-                    )
-            elif option is not None and arrival_id is not None:
-                connection.execute(
-                    text(
-                        "UPDATE planned_arrivals SET route_id=:route_id, eta_at=:eta_at, "
-                        "eta_window_start=:start_at, eta_window_end=:end_at, "
-                        "expires_at=:expires_at WHERE arrival_id=:arrival_id "
-                        "AND status='planned'"
-                    ),
-                    {
-                        "route_id": option.route.route_id,
-                        "eta_at": eta_at,
-                        "start_at": eta_at - timedelta(minutes=10),
-                        "end_at": eta_at + timedelta(minutes=10),
-                        "expires_at": eta_at + timedelta(minutes=30),
-                        "arrival_id": arrival_id,
-                    },
-                )
             patch = {
                 "routeId": route.route_id,
                 "routeProvider": route.provider,
@@ -550,7 +428,6 @@ class DatabaseTripRepository:
                 "routeStartDistanceKm": planned["distanceKm"],
                 "etaAt": eta_at.isoformat(),
                 "predictionSource": option.prediction_source if option else None,
-                "arrivalId": arrival_id,
                 "updatedAt": evaluated_at.isoformat(),
             }
             geojson = json.dumps({"type": "LineString", "coordinates": route.geometry})

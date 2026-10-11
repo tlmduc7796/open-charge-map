@@ -176,55 +176,13 @@ class ChargingEstimateResult(DomainModel):
     data_source: Literal["derived"] = "derived"
 
 
-class PlannedArrival(DomainModel):
-    arrival_id: str = Field(min_length=1)
-    station_id: str = Field(min_length=1)
-    vehicle_id: str | None = None
-    created_at: datetime
-    eta_at: datetime
-    eta_window_start: datetime
-    eta_window_end: datetime
-    expected_energy_kwh: float = Field(ge=0)
-    expected_charge_duration_min: float = Field(gt=0)
-    arrival_probability: float = Field(ge=0, le=1)
-    expires_at: datetime
-    route_id: str | None = None
-    status: Literal["planned", "arrived", "cancelled", "expired"]
-    data_source: str = Field(min_length=1)
-
-    @model_validator(mode="after")
-    def validate_timeline(self) -> PlannedArrival:
-        timestamps = (
-            self.created_at,
-            self.eta_at,
-            self.eta_window_start,
-            self.eta_window_end,
-            self.expires_at,
-        )
-        if any(timestamp.tzinfo is None for timestamp in timestamps):
-            raise ValueError("planned arrival timestamps must include a timezone")
-        if not self.eta_window_start <= self.eta_at <= self.eta_window_end:
-            raise ValueError("eta_at must be inside its ETA window")
-        if self.expires_at <= self.created_at:
-            raise ValueError("expires_at must be after created_at")
-        return self
-
-
 class StationArrivalRate(DomainModel):
     station_id: str = Field(min_length=1)
     baseline_arrival_rate_per_hour: float = Field(ge=0)
 
 
-class ScenarioArrivalRate(DomainModel):
-    scenario_id: str = Field(min_length=1)
-    station_id: str = Field(min_length=1)
-    baseline_arrival_rate_per_hour: float = Field(ge=0)
-
-
 class QueueAssumptions(DomainModel):
-    planned_arrival_window_min: int = Field(gt=0)
     station_rates: tuple[StationArrivalRate, ...] = Field(min_length=1)
-    scenario_overrides: tuple[ScenarioArrivalRate, ...]
     data_source: Literal["synthetic"]
 
     @model_validator(mode="after")
@@ -232,12 +190,6 @@ class QueueAssumptions(DomainModel):
         station_ids = [rate.station_id for rate in self.station_rates]
         if len(station_ids) != len(set(station_ids)):
             raise ValueError("queue station rates must have unique station_id")
-        override_keys = [
-            (override.scenario_id, override.station_id)
-            for override in self.scenario_overrides
-        ]
-        if len(override_keys) != len(set(override_keys)):
-            raise ValueError("queue scenario overrides must be unique per scenario/station")
         return self
 
 
@@ -278,7 +230,6 @@ class WaitEstimateResult(DomainModel):
     current_queue_length: int = Field(ge=0)
     avg_session_duration_min: float = Field(gt=0)
     baseline_arrival_rate_per_hour: float = Field(ge=0)
-    planned_arrival_rate_per_hour: float = Field(ge=0)
     total_arrival_rate_per_hour: float = Field(ge=0)
     service_rate_per_server_per_hour: float = Field(gt=0)
     traffic_intensity: float | None = Field(default=None, ge=0)

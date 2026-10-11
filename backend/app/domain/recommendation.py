@@ -1,4 +1,4 @@
-"""Phase 07 candidate filtering and fixed-threshold recommendation scoring."""
+"""Candidate filtering and fixed-threshold recommendation scoring for one journey query."""
 
 from __future__ import annotations
 
@@ -7,15 +7,14 @@ from datetime import timedelta
 from typing import Protocol
 
 from backend.app.domain.forecasting import OccupancyForecastService
-from backend.app.domain.models import PlannedArrival, Station, Vehicle
+from backend.app.domain.models import Station, Vehicle
 from backend.app.domain.phase7_models import (
     CandidateExclusion,
-    DemoScenario,
+    JourneyQuery,
     JourneyRecommendationResult,
     RecommendationItem,
     RouteWaypoint,
 )
-from backend.app.domain.repositories import DomainData
 from backend.app.domain.routing import (
     RoutingService,
     _haversine_m,
@@ -48,14 +47,6 @@ class RecommendationThresholds:
             raise ValueError("recommendation thresholds must be positive")
 
 
-class PlannedArrivalReader(Protocol):
-    def all(self) -> tuple[PlannedArrival, ...]: ...
-
-    def active_for_stations(
-        self, station_ids: tuple[str, ...]
-    ) -> tuple[PlannedArrival, ...]: ...
-
-
 class VehicleReader(Protocol):
     def get(self, vehicle_id: str) -> Vehicle: ...
 
@@ -74,25 +65,21 @@ class StationCandidateReader(Protocol):
 class RecommendationService:
     def __init__(
         self,
-        data: DomainData,
         runtime: RuntimeStateStore,
-        planned_arrivals: PlannedArrivalReader,
         routing: RoutingService,
         forecasting: OccupancyForecastService,
         wait_estimator: WaitEstimator,
         thresholds: RecommendationThresholds,
         *,
-        vehicle_repository: VehicleReader | None = None,
-        station_repository: StationCandidateReader | None = None,
+        vehicle_repository: VehicleReader,
+        station_repository: StationCandidateReader,
         candidate_corridor_m: float = 5_000,
     ) -> None:
         if candidate_corridor_m <= 0:
             raise ValueError("candidate corridor must be positive")
-        self._data = data
-        self._vehicles = vehicle_repository or data.vehicles
-        self._stations = station_repository or data.stations
+        self._vehicles = vehicle_repository
+        self._stations = station_repository
         self._runtime = runtime
-        self._planned_arrivals = planned_arrivals
         self._routing = routing
         self._forecasting = forecasting
         self._wait_estimator = wait_estimator
@@ -101,63 +88,23 @@ class RecommendationService:
 
     def recommend(
         self,
-        scenario_id: str,
+        query: JourneyQuery,
         *,
-        apply_scenario_events: bool = False,
-    ) -> JourneyRecommendationResult:
-        scenario = self._data.demo_scenarios.get(scenario_id)
-        return self.recommend_scenario(
-            scenario, apply_scenario_events=apply_scenario_events
-        )
-
-    def recommend_scenario(
-        self,
-        scenario: DemoScenario,
-        *,
-        apply_scenario_events: bool = False,
         require_confirmed_open: bool = False,
     ) -> JourneyRecommendationResult:
         self._runtime.refresh()
-        if apply_scenario_events:
-            for event_id in scenario.event_ids:
-                self._runtime.apply(event_id)
 
-        vehicle = self._vehicles.get(scenario.vehicle_id)
-        cached_routes = tuple(
-            self._routing.cached_route(route_id) for route_id in scenario.route_ids
-        )
-        cached_direct = next(
-            (route for route in cached_routes if not route.waypoints), None
-        )
-        use_scenario_cache = (
-            cached_direct is not None
-            and self._same_point(cached_direct.origin, scenario.origin)
-            and self._same_point(cached_direct.destination, scenario.destination)
-        )
-        if use_scenario_cache:
-            assert cached_direct is not None
-            direct_route = cached_direct
-            routes_by_station = {
-                waypoint.station_id: route
-                for route in cached_routes
-                for waypoint in route.waypoints
-                if waypoint.station_id is not None
-            }
-        else:
-            direct_route = self._routing.route(scenario.origin, scenario.destination)
-            routes_by_station = {}
+        vehicle = self._vehicles.get(query.vehicle_id)
+        direct_route = self._routing.route(query.origin, query.destination)
 
         items: list[RecommendationItem] = []
         exclusions: list[CandidateExclusion] = []
         stations = self._stations.candidates(
-            scenario.origin.lon,
-            scenario.origin.lat,
-            scenario.destination.lon,
-            scenario.destination.lat,
+            query.origin.lon,
+            query.origin.lat,
+            query.destination.lon,
+            query.destination.lat,
             self._candidate_corridor_m,
-        )
-        planned_arrivals = self._planned_arrivals.active_for_stations(
-            tuple(station.station_id for station in stations)
         )
         for station in stations:
             if require_confirmed_open and not is_confirmed_open(station):
@@ -208,13 +155,13 @@ class RecommendationService:
 
             max_reachable_m = max(
                 0.0,
-                (scenario.initial_soc - vehicle.reserve_soc)
+                (query.initial_soc - vehicle.reserve_soc)
                 * vehicle.calculation_battery_kwh
                 / vehicle.consumption_wh_km
                 * 1_000_000,
             )
             lon, lat = station.geometry.coordinates
-            if _haversine_m(scenario.origin.lat, scenario.origin.lon, lat, lon) > max_reachable_m:
+            if _haversine_m(query.origin.lat, query.origin.lon, lat, lon) > max_reachable_m:
                 exclusions.append(
                     CandidateExclusion(
                         station_id=station.station_id,
@@ -223,24 +170,20 @@ class RecommendationService:
                 )
                 continue
 
-            route = routes_by_station.get(station.station_id)
-            if route is None and not use_scenario_cache:
-                try:
-                    route = self._routing.route(
-                        scenario.origin,
-                        scenario.destination,
-                        (
-                            RouteWaypoint(
-                                lat=lat,
-                                lon=lon,
-                                label=station.properties.name,
-                                station_id=station.station_id,
-                            ),
+            try:
+                route = self._routing.route(
+                    query.origin,
+                    query.destination,
+                    (
+                        RouteWaypoint(
+                            lat=lat,
+                            lon=lon,
+                            label=station.properties.name,
+                            station_id=station.station_id,
                         ),
-                    )
-                except RuntimeError:
-                    route = None
-            if route is None:
+                    ),
+                )
+            except RuntimeError:
                 exclusions.append(
                     CandidateExclusion(
                         station_id=station.station_id,
@@ -255,7 +198,7 @@ class RecommendationService:
                 vehicle,
                 station,
                 route_distance_m=distance_to_station_m,
-                initial_soc=scenario.initial_soc,
+                initial_soc=query.initial_soc,
                 route_id=route.route_id,
                 route_duration_s=duration_to_station_s,
             )
@@ -268,7 +211,7 @@ class RecommendationService:
                 )
                 continue
 
-            eta_at = scenario.departure_at + timedelta(seconds=duration_to_station_s)
+            eta_at = query.departure_at + timedelta(seconds=duration_to_station_s)
             horizon_min = max(1, round(duration_to_station_s / 60))
             forecast = self._forecasting.forecast_occupancy(
                 status, horizon_min=horizon_min
@@ -278,8 +221,6 @@ class RecommendationService:
                     status,
                     forecast,
                     evaluation_at=eta_at,
-                    planned_arrivals=planned_arrivals,
-                    scenario_id=scenario.scenario_id,
                 )
             except (KeyError, ValueError):
                 exclusions.append(
@@ -293,7 +234,7 @@ class RecommendationService:
                 vehicle,
                 station,
                 arrival_soc=reachability.estimated_arrival_soc,
-                target_soc=scenario.target_soc,
+                target_soc=query.target_soc,
                 effective_power_kw=compatibility.effective_power_kw,
             )
             detour_min = max(0.0, (route.duration_s - direct_route.duration_s) / 60)
@@ -314,7 +255,7 @@ class RecommendationService:
                     / self._thresholds.soc_risk_buffer,
                 ),
             )
-            preference = scenario.preference
+            preference = query.preference
             final_score = (
                 wait_score * preference.wait_weight
                 + detour_score * preference.detour_weight
@@ -365,19 +306,13 @@ class RecommendationService:
             for index, item in enumerate(ordered, start=1)
         )
         return JourneyRecommendationResult(
-            scenario_id=scenario.scenario_id,
-            generated_at=scenario.departure_at,
+            generated_at=query.departure_at,
             vehicle_id=vehicle.vehicle_id,
             direct_route=direct_route,
             recommendations=ranked,
             excluded_candidates=tuple(exclusions),
-            active_event_ids=self._runtime.active_event_ids(),
         )
 
     @staticmethod
     def _lower_is_better(value: float, maximum: float) -> float:
         return 1 - min(1.0, max(0.0, value) / maximum)
-
-    @staticmethod
-    def _same_point(left, right) -> bool:
-        return abs(left.lat - right.lat) < 1e-6 and abs(left.lon - right.lon) < 1e-6

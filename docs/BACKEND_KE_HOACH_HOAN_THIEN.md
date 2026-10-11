@@ -1,5 +1,10 @@
 # Kế hoạch hoàn thiện Backend theo kế hoạch gốc
 
+> **Cập nhật 2026-10-11:** kịch bản demo (`/journey/recommend`, `/demo/*`, `/planned-arrivals`,
+> route cache, event giả lập) đã được gỡ và sẽ thiết kế lại sau; database là SQL-first, không có
+> Alembic; các bảng arrival/planned/amenity/external-ref/live-metrics và các cột provenance đã bỏ.
+> Các mục bên dưới phản ánh trạng thái trước thay đổi này.
+
 **Cập nhật:** 2026-10-09  
 **Trạng thái:** M0–M3 đã triển khai và kiểm thử backend; chưa phải kết quả nghiệm thu/release.
 **Mục tiêu:** Hoàn thiện các phần C (Database), D (Backend) và phần kiểm thử liên quan ở [kế hoạch Rule-Based-AI](Rule-Based-AI-Ke-hoach-trien-khai.md). [Bộ Phase 00–11](PHASE_INDEX.md) tiếp tục được dùng để theo dõi kết quả đã đạt, nhưng `RELEASE PASS` chỉ được xét sau khi các chức năng và kiểm định của kế hoạch gốc hoàn tất.
@@ -16,7 +21,7 @@
 - PostgreSQL/PostGIS đã phục vụ danh mục trạm, cổng, xe, trạng thái hiện tại, planned arrivals và arrival rate; recommendation đã lọc ứng viên bằng PostGIS. Các phần chính: `backend/app/catalog_repository.py`, `backend/app/arrival_rate_repository.py`, `backend/app/planned_arrival_repository.py`, `backend/app/domain/recommendation.py`.
 - Backend vẫn giữ `/journey/recommend` dựa trên scenario; `/api/v1/search/stations` và `/api/v1/search/route` đã được bổ sung với thứ hạng `totalMin`.
 - Forecast hiện là persistence fallback; `OccupancyForecastService` chưa load model artifact thật. Wait estimator hiện dùng Erlang C, chưa trả phân phối Markov.
-- Schema `predictions`, `trips`, `trip_positions`, `trip_events`, `app_config` đã có. API trạng thái cổng, job stale và trip/GPS/re-plan đã triển khai; `data_platform/compose.yaml` hiện chỉ khai báo PostgreSQL/PostGIS.
+- Schema `predictions`, `trips`, `trip_positions`, `trip_events`, `app_config` đã có. API trạng thái cổng, job stale và trip/GPS/re-plan đã triển khai; `database/compose.yaml` hiện chỉ khai báo PostgreSQL/PostGIS.
 - Event demo vẫn là overlay trong bộ nhớ. Dữ liệu trạng thái/queue mới bổ sung cho nhiều trạm là synthetic; phải giữ nguồn dữ liệu hiển thị rõ.
 
 ## 3. Những hợp đồng phải chốt trước khi mở rộng
@@ -49,7 +54,7 @@
 - [x] Hoàn thiện arrival rate/queue/session duration cho các trạm được phép đề xuất. Với phương án demo 3B, trường còn thiếu của 16 trạm master được bổ sung deterministic và gắn nhãn synthetic; dữ liệu observed không bị ghi đè. Trạm vẫn bị loại theo reachability, compatibility, access, opening-hours đã xác minh hoặc lỗi routing.
 - [x] Thêm `GET /config`, danh sách trạm theo bbox, availability hiện tại, chi tiết theo connector và danh sách ports; xác định màu từ `app_config`.
 
-**File hiện có:** `backend/app/api.py`, `backend/app/catalog_repository.py`, `backend/app/arrival_rate_repository.py`, `backend/app/domain/recommendation.py`, `data_platform/migrations/versions/0001_initial_schema.py`, `data_platform/migrations/versions/0004_trips_config.py`. Migration mới chỉ tạo nếu schema hiện tại không biểu diễn được hợp đồng đã chốt.  
+**File hiện có:** `backend/app/api.py`, `backend/app/catalog_repository.py`, `backend/app/arrival_rate_repository.py`, `backend/app/domain/recommendation.py`, `database/migrations/versions/0001_initial_schema.py`, `database/migrations/versions/0004_trips_config.py`. Migration mới chỉ tạo nếu schema hiện tại không biểu diễn được hợp đồng đã chốt.  
 **Kiểm chứng:** cập nhật một cổng qua API làm thay đổi status/availability; history có đúng một event; tin cũ không ghi đè tin mới; trạng thái stale chuyển unknown.
 
 ### M2 — Tìm kiếm trạm và tuyến tổng quát
@@ -69,7 +74,7 @@
 - [x] Thêm accept/decline/cancel và sửa pin; ghi `trip_events`; đồng bộ planned arrival khi đổi trạm, tới trạm hoặc hủy.
 - [x] Re-plan khi lệch tuyến, ETA tăng, trạm không còn dùng được hoặc pin không đủ; áp dụng cooldown/hysteresis và loại trạm đã từ chối. GPS dùng đoạn thẳng giữa các ping, ETA theo tiến độ tuyến; độ chính xác thực địa chưa được nghiệm thu.
 
-**Schema hiện có:** `data_platform/migrations/versions/0004_trips_config.py`, `data_platform/migrations/versions/0005_planned_arrivals.py`, `data_platform/migrations/versions/0006_trip_tokens.py`. **File hiện có:** `backend/app/trip_repository.py`, `backend/app/domain/trips.py`, test vòng đời trip; mở rộng `backend/app/api_v1.py`.
+**Schema hiện có:** `database/migrations/versions/0004_trips_config.py`, `database/migrations/versions/0005_planned_arrivals.py`, `database/migrations/versions/0006_trip_tokens.py`. **File hiện có:** `backend/app/trip_repository.py`, `backend/app/domain/trips.py`, test vòng đời trip; mở rộng `backend/app/api_v1.py`.
 **Kiểm chứng:** restart Backend vẫn đọc được trip; GPS gửi lặp/cũ không làm lùi trạng thái; re-plan chỉ tăng version khi đổi tuyến; trip kết thúc giải phóng planned arrival.
 
 ### M4 — Model prediction và phân phối wait
@@ -79,7 +84,7 @@
 - [ ] Giữ persistence làm baseline và fallback; test output trong `[0,1]`, đánh giá theo từng horizon và ghi lý do chọn model.
 - [ ] Xây Markov và hiệu chỉnh theo mô phỏng khi có ground truth wait; trả `P(W>0)`, `E[W]`, `W90`; so sánh với Erlang C trước khi dùng để xếp hạng.
 
-**File hiện có:** `backend/app/domain/forecasting.py`, `backend/app/domain/wait_estimation.py`, `backend/app/api.py`, `backend/app/main.py`, `data_platform/migrations/versions/0002_predictions.py`. **Đầu vào từ cộng sự:** dữ liệu/metadata Phase 03; artifact và evaluation Phase 04 từ người phụ trách model.  
+**File hiện có:** `backend/app/domain/forecasting.py`, `backend/app/domain/wait_estimation.py`, `backend/app/api.py`, `backend/app/main.py`, `database/migrations/versions/0002_predictions.py`. **Đầu vào từ cộng sự:** dữ liệu/metadata Phase 03; artifact và evaluation Phase 04 từ người phụ trách model.  
 **Kiểm chứng:** artifact load trong process mới; cùng input/model version cho kết quả lặp lại; lỗi model tự rơi về persistence có nhãn; phân phối wait qua các ca biên và được đối chiếu với ground truth mô phỏng.
 
 ### M5 — Chống dồn tải và cập nhật thời gian thực
@@ -89,7 +94,7 @@
 - [ ] Thêm WebSocket subscribe/unsubscribe theo bbox, station, trip; phát `station.updated`, `prediction.refreshed`, `trip.reroute`.
 - [ ] Bổ sung Redis cho search cache, trạng thái nóng và pub/sub; PostgreSQL vẫn là nguồn lưu bền. Thêm job đóng trip bỏ dở và phục hồi sau restart.
 
-**File hiện có:** `backend/app/planned_arrival_repository.py`, `backend/app/domain/recommendation.py`, `data_platform/compose.yaml`; **file mới dự kiến:** realtime/cache/job modules và test đồng thời.  
+**File hiện có:** `backend/app/planned_arrival_repository.py`, `backend/app/domain/recommendation.py`, `database/compose.yaml`; **file mới dự kiến:** realtime/cache/job modules và test đồng thời.  
 **Kiểm chứng:** hai yêu cầu đồng thời không tạo cam kết trùng; tăng planned load không làm dự báo wait giảm vô lý; client reconnect nhận snapshot mới; backend restart không mất trip/cam kết đã persist.
 
 ### M6 — Kiểm thử hệ thống và tài liệu vận hành
@@ -99,7 +104,7 @@
 - [ ] Load test theo mục F của kế hoạch gốc, ghi p95 và cấu hình máy/test data; kiểm định model theo horizon, reliability và stress scenarios.
 - [ ] Docker Compose cho stack cần thiết, CI lint/test, clean setup từ checkout mới; cập nhật README, Phase gates và báo cáo kết quả.
 
-**File liên quan:** `backend/tests/`, `tests/`, `README.md`, `data_platform/compose.yaml`, [Phase 11](PHASE_11_FINAL_DEMO_RELEASE.md) và báo cáo trong `data_platform/data/validation/`.  
+**File liên quan:** `backend/tests/`, `tests/`, `README.md`, `database/compose.yaml`, [Phase 11](PHASE_11_FINAL_DEMO_RELEASE.md) và báo cáo trong `database/fixtures/validation/`.  
 **Kiểm chứng:** các gate có lệnh chạy và kết quả lưu lại; không còn blocker trong luồng chính; chỉ ghi `RELEASE PASS` khi toàn bộ điều kiện đã được xác nhận.
 
 ## 5. Thứ tự và điều kiện bắt đầu

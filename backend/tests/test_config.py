@@ -22,12 +22,11 @@ def test_default_paths_are_rooted_at_project(monkeypatch) -> None:
         "GOONG_API_KEY",
         "DATABASE_URL",
         "CATALOG_STORAGE",
-        "PLANNED_ARRIVALS_STORAGE",
     ]:
         monkeypatch.delenv(name, raising=False)
     settings = load_settings()
 
-    assert settings.data_dir == PROJECT_ROOT / "data_platform" / "data"
+    assert settings.data_dir == PROJECT_ROOT / "database" / "fixtures"
     assert settings.model_artifact_path == (
         PROJECT_ROOT / "ml" / "artifacts" / "occupancy_model.joblib"
     )
@@ -52,7 +51,6 @@ def test_default_paths_are_rooted_at_project(monkeypatch) -> None:
     assert settings.goong_api_key is None
     assert settings.database_url.endswith("@127.0.0.1:5433/smart_ev_data")
     assert settings.catalog_storage == "database"
-    assert settings.planned_arrivals_storage == "database"
 
 
 def test_required_phase_data_exists() -> None:

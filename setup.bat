@@ -12,7 +12,7 @@ echo.
 echo ==== Smart EV Journey - setup ====
 
 echo.
-echo [1/6] Checking prerequisites...
+echo [1/5] Checking prerequisites...
 where python >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Python not found in PATH. Install Python 3.12.
@@ -50,7 +50,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [2/6] Environment files...
+echo [2/5] Environment files...
 if not exist ".env" (
     copy ".env.example" ".env" >nul
     echo Created .env from .env.example - set GOONG_API_KEY there for live routing and places.
@@ -65,7 +65,7 @@ if not exist "frontend\.env.local" (
 )
 
 echo.
-echo [3/6] Backend dependencies (.venv)...
+echo [3/5] Backend dependencies (.venv)...
 if not exist ".venv\Scripts\python.exe" (
     python -m venv .venv
     if errorlevel 1 goto fail
@@ -76,22 +76,14 @@ if errorlevel 1 goto fail
 if errorlevel 1 goto fail
 
 echo.
-echo [4/6] Frontend dependencies (pnpm)...
+echo [4/5] Frontend dependencies (pnpm)...
 call pnpm --dir frontend install --frozen-lockfile
 if errorlevel 1 goto fail
 
 echo.
-echo [5/6] Data platform tooling (data_platform\.venv)...
-pushd data_platform
-if not exist ".venv\Scripts\python.exe" (
-    python -m venv .venv
-    if errorlevel 1 goto fail_popd
-)
-".venv\Scripts\python.exe" -m pip install -e .
-if errorlevel 1 goto fail_popd
-
+echo [5/5] PostgreSQL/PostGIS database...
+pushd database
 echo.
-echo [6/6] PostgreSQL/PostGIS database...
 docker compose up -d postgres
 if errorlevel 1 goto fail_popd
 
@@ -114,7 +106,7 @@ for /f "usebackq delims=" %%i in (`docker compose exec -T postgres psql -U smart
 if not "%STATIONS%"=="0" (
     echo Database already populated with %STATIONS% stations, skipping bootstrap.
 ) else (
-    ".venv\Scripts\python.exe" scripts\bootstrap_database.py
+    "..\.venv\Scripts\python.exe" scripts\bootstrap_database.py
     if errorlevel 1 goto fail_popd
 )
 popd

@@ -1,10 +1,14 @@
 # Database ERD và thống kê dữ liệu
 
-**Schema revision:** `0006_trip_tokens`
-**Đo lúc:** `2026-10-09T14:09:44Z` (`2026-10-09 21:09:44` Asia/Ho_Chi_Minh)
 **Database:** `smart_ev_data` — PostgreSQL 16 + PostGIS 3.4
-**Phạm vi:** 18 bảng nghiệp vụ của Smart EV; không tính các bảng hệ thống PostGIS/Tiger
+**Phạm vi:** 13 bảng nghiệp vụ của Smart EV; không tính các bảng hệ thống PostGIS/Tiger
 và các bảng partition vật lý.
+**Nguồn sự thật:** `database/schema/*.sql` (viết tay, không dùng migration), kiểm tra bằng
+`database/scripts/verify.py`. Xem [database/README.md](../database/README.md).
+
+Bản demo đơn giản hóa: không còn `station_amenities`, `station_external_refs`,
+`station_live_metrics`, `station_arrival_rates`, `planned_arrivals` (arrival rate và planned
+arrival đọc từ fixture JSON trong bộ nhớ backend).
 
 ## ERD
 
@@ -18,15 +22,6 @@ erDiagram
         jsonb opening_hours
         access_level access_level
         boolean is_active
-        jsonb provenance
-    }
-
-    STATION_EXTERNAL_REFS {
-        uuid id PK
-        uuid station_id FK
-        text provider
-        text external_id
-        boolean is_primary
     }
 
     CONNECTOR_TYPES {
@@ -41,24 +36,14 @@ erDiagram
         text connector_code FK
         text label
         numeric max_power_kw
-        data_origin data_origin
         boolean is_active
     }
 
     PORT_STATUS {
         uuid port_id PK, FK
         port_status_value status
-        timestamptz reported_at
+        timestamptz reported_at "NULL = chưa báo"
         timestamptz estimated_finish_at
-        data_origin data_origin
-    }
-
-    STATION_LIVE_METRICS {
-        uuid station_id PK, FK
-        integer queue_length
-        numeric avg_session_duration_min
-        timestamptz reported_at
-        data_origin data_origin
     }
 
     PORT_STATUS_HISTORY {
@@ -66,8 +51,6 @@ erDiagram
         timestamptz changed_at PK
         uuid port_id FK
         port_status_value status
-        data_origin data_origin
-        uuid simulation_run_id
     }
 
     STATION_OCCUPANCY_5M {
@@ -78,25 +61,16 @@ erDiagram
         smallint operational_ports
         smallint occupied_ports
         integer queue_length
-        data_origin data_origin
     }
 
     PREDICTIONS {
         uuid station_id PK, FK
-        timestamptz run_at PK
         smallint horizon_min PK
+        timestamptz run_at "NULL = chưa dự báo"
         numeric predicted_occupancy_ratio
+        numeric mean_wait_minutes
         prediction_source prediction_source
         text model_version
-    }
-
-    STATION_AMENITIES {
-        uuid id PK
-        uuid station_id FK
-        text amenity_code
-        boolean is_available
-        timestamptz verified_at
-        jsonb provenance
     }
 
     VEHICLE_MODELS {
@@ -109,30 +83,11 @@ erDiagram
         numeric max_ac_kw
         numeric max_dc_kw
         boolean is_active
-        jsonb provenance
     }
 
     VEHICLE_CONNECTORS {
         uuid vehicle_model_id PK, FK
         text connector_code PK, FK
-    }
-
-    STATION_ARRIVAL_RATES {
-        uuid station_id PK, FK
-        numeric baseline_arrival_rate_per_hour
-        text data_source
-        jsonb provenance
-    }
-
-    PLANNED_ARRIVALS {
-        text arrival_id PK
-        uuid station_id FK
-        uuid vehicle_model_id FK
-        timestamptz eta_at
-        numeric arrival_probability
-        text status
-        text data_source
-        jsonb provenance
     }
 
     TRIPS {
@@ -174,18 +129,12 @@ erDiagram
         timestamptz updated_at
     }
 
-    STATIONS ||--o{ STATION_EXTERNAL_REFS : "has external refs"
     STATIONS ||--|{ PORTS : "owns"
     CONNECTOR_TYPES ||--o{ PORTS : "classifies"
     PORTS ||--o| PORT_STATUS : "has current status"
     PORTS ||--o{ PORT_STATUS_HISTORY : "records history"
-    STATIONS ||--o| STATION_LIVE_METRICS : "has live metrics"
     STATIONS ||--o{ STATION_OCCUPANCY_5M : "has 5-minute history"
-    STATIONS ||--o{ PREDICTIONS : "receives forecasts"
-    STATIONS ||--o{ STATION_AMENITIES : "offers"
-    STATIONS ||--o| STATION_ARRIVAL_RATES : "has baseline rate"
-    STATIONS ||--o{ PLANNED_ARRIVALS : "receives arrivals"
-    VEHICLE_MODELS o|--o{ PLANNED_ARRIVALS : "may identify vehicle"
+    STATIONS ||--o{ PREDICTIONS : "has forecast slots"
     VEHICLE_MODELS ||--o{ VEHICLE_CONNECTORS : "supports"
     CONNECTOR_TYPES ||--o{ VEHICLE_CONNECTORS : "maps compatibility"
     VEHICLE_MODELS ||--o{ TRIPS : "is used by"
@@ -194,105 +143,42 @@ erDiagram
     TRIPS ||--o{ TRIP_EVENTS : "records lifecycle"
 ```
 
-`port_status_history` và `station_occupancy_5m` được partition theo tháng. Schema hiện
-có partition cho tháng 09, 10 và 11/2026. `app_config` là bảng cấu hình độc lập nên không
-có khóa ngoại.
+`port_status_history` và `station_occupancy_5m` được partition theo tháng (09, 10 và 11/2026).
+`app_config` là bảng cấu hình độc lập nên không có khóa ngoại. Hai view:
+`station_capacity` và `station_status_current` (backend đọc khi khởi động).
 
-## Số lượng bản ghi
+## Số lượng bản ghi sau bootstrap
 
-| Nhóm | Bảng | Số dòng |
-|---|---|---:|
-| Catalog trạm | `stations` | 16 |
-| Catalog trạm | `station_external_refs` | 14 |
-| Catalog trạm | `connector_types` | 4 |
-| Catalog trạm | `ports` | 211 |
-| Runtime | `port_status` | 211 |
-| Runtime | `station_live_metrics` | 16 |
-| Lịch sử | `port_status_history` | 211 |
-| Lịch sử | `station_occupancy_5m` | 4.624 |
-| Dự báo | `predictions` | 96 |
-| Ngữ cảnh | `station_amenities` | 112 |
-| Xe | `vehicle_models` | 21 |
-| Xe | `vehicle_connectors` | 41 |
-| Queue | `station_arrival_rates` | 16 |
-| Queue | `planned_arrivals` | 4 |
-| Trip | `trips` | 0 |
-| Trip | `trip_positions` | 0 |
-| Trip | `trip_events` | 0 |
-| Cấu hình | `app_config` | 1 |
-
-Dung lượng toàn database là khoảng **24 MB**. Con số này gồm extension và bảng hệ thống
-PostGIS/Tiger, không chỉ 18 bảng nghiệp vụ phía trên.
-
-## Coverage và provenance
-
-| Hạng mục | Coverage hiện tại | Nguồn synthetic |
-|---|---:|---:|
-| Trạm active | 16/16 (100%) | Tùy từng field trong `provenance` |
-| Trạm có trạng thái cho toàn bộ port | 16/16 (100%) | 211/211 port status |
-| Trạm có queue/session live metrics | 16/16 (100%) | 16/16 |
-| Trạm có baseline arrival rate | 16/16 (100%) | 16/16 |
-| Trạm có opening hours | 16/16 (100%) | 9/16 được bổ sung |
-| Trạm có access xác định | 16/16 (100%) | 0/16 được bổ sung |
-| Trạm có occupancy history | 16/16 (100%) | 4.624/4.624 dòng |
-| Trạm có prediction | 16/16 (100%) | persistence fallback |
-
-Catalog chỉ gồm 16 trạm master; 86 trạm demo bổ sung (mã `CAND_*`, cổng/trạng thái
-synthetic) đã bị loại khỏi snapshot. Cả 16 giá trị arrival rate đều lấy từ
-`queue_assumptions_fixture`. Seed không ghi đè dữ liệu observed.
+| Nhóm | Bảng | Số dòng | Ghi chú |
+|---|---|---:|---|
+| `catalog` | `stations` | 11 | 11 trạm VinFast |
+| `catalog` | `connector_types` | 2 | CCS2, TYPE2 |
+| `catalog` | `ports` | 200 | 178 CCS2 (20–250 kW), 22 TYPE2 (3,5–11 kW) |
+| `vehicles` | `vehicle_models` | 18 | 18 mẫu xe VinFast |
+| `vehicles` | `vehicle_connectors` | 35 | |
+| `runtime` | `port_status` | 200 | mỗi cổng một dòng, `status='unknown'`, `reported_at` NULL |
+| `history` | `port_status_history` | 0 | backend ghi dần |
+| `history` | `station_occupancy_5m` | 0 | không seed |
+| `forecast` | `predictions` | 66 | 11 trạm × 6 mốc; chỉ có khóa, mọi giá trị NULL |
+| `trips` | `trips`, `trip_positions`, `trip_events` | 0 | do backend tạo |
+| `config` | `app_config` | 1 | `planned_arrival_window_min = 15` |
 
 ## Phân bố chính
 
-### Trạm và quyền truy cập
+| Access | Số trạm |
+|---|---:|
+| Public | 11 |
 
-| Access | Số trạm | Tỷ lệ |
-|---|---:|---:|
-| Public | 15 | 93,8% |
-| Private | 1 | 6,3% |
-
-Phạm vi địa lý của 16 trạm: longitude `106.65922–106.72233`, latitude
-`10.70113–10.81201`.
-
-### Cổng sạc
-
-| Connector | Số port | Tỷ lệ | Công suất min–max | Trung bình |
-|---|---:|---:|---:|---:|
-| CCS2 | 183 | 86,7% | 20–250 kW | 71,1 kW |
-| TYPE2 | 28 | 13,3% | 3,5–22 kW | 9,3 kW |
-
-| Trạng thái hiện tại | Số port | Tỷ lệ |
-|---|---:|---:|
-| Available | 206 | 97,6% |
-| Charging | 4 | 1,9% |
-| Out of service | 1 | 0,5% |
-
-Timestamp trạng thái nằm trong khoảng `2026-09-25T11:00:00Z` đến
-`2026-09-26T17:00:00Z`. Toàn bộ 211 trạng thái hiện tại mang nhãn synthetic.
-
-### Dự báo và lịch sử
-
-- `station_occupancy_5m`: 4.624 dòng của 16 trạm, từ `2026-09-25T11:00:00Z`
-  đến `2026-10-01T16:55:00Z`, toàn bộ synthetic.
-- `predictions`: 96 dòng = 16 trạm × 6 horizon (`5,10,15,20,25,30` phút).
-- Toàn bộ prediction hiện dùng `prediction_source=persistence`, version
-  `persistence-v1`; chưa có inference từ model artifact thật.
-
-### Xe, tiện ích và planned arrival
-
-- 21 vehicle models, trong đó 20 active; 41 quan hệ vehicle–connector.
-- Tiện ích: parking 16 trạm, wifi 6, beverage 5, rest area 5, food 3,
-  restroom 3 và retail 3.
-- External refs: 8 EVCS và 6 Goong Places.
-- Planned arrivals: 2 planned, 1 cancelled và 1 expired.
-- Chưa có trip, GPS position hoặc trip event được lưu trong database hiện tại.
+Phạm vi địa lý của 11 trạm: longitude `106.65922–106.72233`, latitude `10.70113–10.81201`.
 
 ## Điểm cần lưu ý
 
-1. Catalog/runtime/ranking có input đầy đủ cho 16 trạm master, nhưng trạng thái cổng,
-   queue và amenity vẫn là synthetic và phải tiếp tục hiển thị `syntheticFields`.
-2. Occupancy history và prediction phủ cả 16 trạm nhưng toàn bộ là synthetic/persistence;
-   M4 vẫn cần artifact model thật.
-3. Timestamp port status là dữ liệu fixture cũ. Job stale cố ý không chuyển dữ liệu
-   synthetic sang unknown; không nên diễn giải đây là telemetry thời gian thực.
-4. Các bảng trip đang trống là đúng với snapshot demo; migration 0006 đã sẵn sàng lưu
-   `auth_token_hash` khi tạo trip mới.
+1. **Trạng thái chưa có.** Mọi cổng ở `unknown`, nên `station_status_current` báo
+   `operational_ports = 0` và backend coi mọi trạm là offline cho tới khi nhận trạng thái qua
+   `POST /api/v1/internal/port-status`.
+2. **Không có nguồn hàng đợi.** `queue_length` của view luôn NULL và không còn bảng metrics, nên
+   ước lượng chờ trả `WAIT_INPUT_UNAVAILABLE` cho tới khi backend có nguồn queue/session.
+3. **`predictions` là bảng slot.** Backend UPDATE tại chỗ; không lưu lịch sử các lượt chạy.
+   Enum `prediction_source` chỉ gồm `persistence` và `model` (API trả thêm `default`).
+4. **Arrival/planned arrival nằm trong bộ nhớ.** Trip không còn ghi cam kết mềm vào database;
+   việc lưu bền được hoãn lại.

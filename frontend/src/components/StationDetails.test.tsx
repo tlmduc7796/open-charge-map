@@ -17,16 +17,12 @@ test("shows access, connector, live state and prediction without cost", () => {
       station={stationWithNotes}
       status={status}
       recommendation={recommendationItem}
-      activeArrival={null}
-      committing={false}
-      onCommit={() => undefined}
-      onCancel={() => undefined}
     />,
   );
 
   expect(screen.getByText("public")).toBeInTheDocument();
-  expect(screen.getByText(/CCS2 160 kW/)).toBeInTheDocument();
-  expect(screen.getByText("Occupancy dự báo")).toBeInTheDocument();
+  expect(screen.getByText(/CCS2 150 kW/)).toBeInTheDocument();
+  expect(screen.getByText("Nguồn dự báo")).toBeInTheDocument();
   expect(screen.getByText("Thời gian chờ")).toBeInTheDocument();
   expect(screen.queryByText(/EVCS inventory assumption/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/cost|giá điện/i)).not.toBeInTheDocument();

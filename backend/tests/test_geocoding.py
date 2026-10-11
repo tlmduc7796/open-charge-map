@@ -1,17 +1,31 @@
-from backend.app.config import load_settings
 from backend.app.domain.geocoding import GeocodingService
-from backend.app.domain.repositories import load_domain_data
 
 
-def test_demo_geocoding_fallback_resolves_scenario_location() -> None:
-    data = load_domain_data(load_settings().data_dir)
-    service = GeocodingService(data.demo_scenarios.all(), goong=None)
+class StubGoong:
+    def autocomplete(self, query):
+        return ("suggestion",)
 
-    suggestions = service.autocomplete("Phu Nhuan")
-    assert suggestions
-    assert suggestions[0].provider == "demo"
+    def details(self, place_id):
+        return {"place_id": place_id}
 
-    place = service.details(suggestions[0].place_id)
-    assert place.provider == "demo"
-    assert place.location.label == "Phu Nhuan"
-    assert 10 < place.location.lat < 11
+
+def test_geocoding_without_provider_returns_no_suggestions() -> None:
+    service = GeocodingService(goong=None)
+
+    assert service.autocomplete("Phu Nhuan") == ()
+
+
+def test_short_query_is_ignored_and_provider_errors_degrade_to_empty() -> None:
+    class Failing(StubGoong):
+        def autocomplete(self, query):
+            raise RuntimeError("provider down")
+
+    assert GeocodingService(goong=StubGoong()).autocomplete("a") == ()
+    assert GeocodingService(goong=Failing()).autocomplete("Ben Thanh") == ()
+
+
+def test_autocomplete_and_details_delegate_to_provider() -> None:
+    service = GeocodingService(goong=StubGoong())
+
+    assert service.autocomplete("Ben Thanh") == ("suggestion",)
+    assert service.details("abc") == {"place_id": "abc"}

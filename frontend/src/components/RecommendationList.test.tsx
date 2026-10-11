@@ -20,6 +20,7 @@ test("renders recommendation metrics and selection", () => {
 
   expect(screen.getByText(station.properties.name)).toBeInTheDocument();
   expect(screen.getByText("14 phút")).toBeInTheDocument();
+  expect(screen.getByText("34′")).toBeInTheDocument();
   expect(screen.getByText("156 km")).toBeInTheDocument();
   expect(screen.queryByText(/cost|giá điện/i)).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: new RegExp(station.properties.name) }));

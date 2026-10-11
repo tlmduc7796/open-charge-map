@@ -1,31 +1,23 @@
-"""Deterministic Erlang C wait estimation with runtime state kept separate."""
+"""Deterministic Erlang C wait estimation."""
 
 from __future__ import annotations
 
 import math
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Protocol
 
 from backend.app.domain.ml_gateway import MlGateway
 from backend.app.domain.models import (
     OccupancyForecastResult,
-    PlannedArrival,
     StationStatus,
     WaitEstimateResult,
 )
 
 
 class ArrivalRateProvider(Protocol):
-    @property
-    def planned_arrival_window_min(self) -> int: ...
+    def baseline_rate(self, station_id: str) -> float: ...
 
-    def baseline_rate(self, station_id: str, scenario_id: str | None = None) -> float: ...
-
-    def has_override(self, scenario_id: str, station_id: str) -> bool: ...
-
-    def baseline_source(
-        self, station_id: str, scenario_id: str | None = None
-    ) -> str: ...
+    def baseline_source(self, station_id: str) -> str: ...
 
 
 class WaitEstimator:
@@ -42,10 +34,8 @@ class WaitEstimator:
         self._assumptions = assumptions
         self._scoring_wait_cap_min = scoring_wait_cap_min
 
-    def baseline_source(
-        self, station_id: str, scenario_id: str | None = None
-    ) -> str:
-        return self._assumptions.baseline_source(station_id, scenario_id)
+    def baseline_source(self, station_id: str) -> str:
+        return self._assumptions.baseline_source(station_id)
 
     def estimate_wait(
         self,
@@ -53,10 +43,6 @@ class WaitEstimator:
         forecast: OccupancyForecastResult,
         *,
         evaluation_at: datetime,
-        planned_arrivals: tuple[PlannedArrival, ...] = (),
-        include_planned_arrivals: bool = True,
-        scenario_id: str | None = None,
-        excluded_arrival_id: str | None = None,
     ) -> WaitEstimateResult:
         if evaluation_at.tzinfo is None:
             raise ValueError("evaluation_at must include a timezone")
@@ -68,23 +54,7 @@ class WaitEstimator:
             raise ValueError("predicted occupied ports exceed current operational capacity")
 
         flags: list[str] = []
-        baseline_rate = self._assumptions.baseline_rate(status.station_id, scenario_id)
-        if scenario_id is not None and self._assumptions.has_override(
-            scenario_id, status.station_id
-        ):
-            flags.append("SCENARIO_OVERRIDE_APPLIED")
-
-        planned_rate = 0.0
-        if include_planned_arrivals:
-            planned_rate = self._planned_arrival_rate(
-                status.station_id,
-                evaluation_at,
-                planned_arrivals,
-                excluded_arrival_id,
-            )
-            if planned_rate > 0:
-                flags.append("PLANNED_ARRIVALS_INCLUDED")
-        total_arrival_rate = baseline_rate + planned_rate
+        arrival_rate = self._assumptions.baseline_rate(status.station_id)
         service_rate = 60 / status.avg_session_duration_min
 
         if status.operational_ports == 0:
@@ -92,9 +62,7 @@ class WaitEstimator:
                 status,
                 forecast,
                 evaluation_at,
-                baseline_rate,
-                planned_rate,
-                total_arrival_rate,
+                arrival_rate,
                 service_rate,
                 traffic_intensity=None,
                 probability_wait=None,
@@ -106,7 +74,7 @@ class WaitEstimator:
 
         servers = status.operational_ports
         capacity_rate = servers * service_rate
-        traffic_intensity = total_arrival_rate / capacity_rate
+        traffic_intensity = arrival_rate / capacity_rate
         current_state_wait = self._current_state_wait(
             forecast.predicted_occupied_ports,
             status.queue_length,
@@ -114,14 +82,12 @@ class WaitEstimator:
             status.avg_session_duration_min,
         )
 
-        if total_arrival_rate >= capacity_rate:
+        if arrival_rate >= capacity_rate:
             return self._result(
                 status,
                 forecast,
                 evaluation_at,
-                baseline_rate,
-                planned_rate,
-                total_arrival_rate,
+                arrival_rate,
                 service_rate,
                 traffic_intensity=traffic_intensity,
                 probability_wait=1,
@@ -131,9 +97,7 @@ class WaitEstimator:
                 flags=tuple([*flags, "OVERLOADED", "CAPPED_WAIT"]),
             )
 
-        probability_wait, erlang_wait = self._erlang_c(
-            total_arrival_rate, service_rate, servers
-        )
+        probability_wait, erlang_wait = self._erlang_c(arrival_rate, service_rate, servers)
         projected_available_ports = servers - forecast.predicted_occupied_ports
         if projected_available_ports >= 1 and status.queue_length == 0:
             uncapped_wait = 0.0
@@ -147,9 +111,7 @@ class WaitEstimator:
             status,
             forecast,
             evaluation_at,
-            baseline_rate,
-            planned_rate,
-            total_arrival_rate,
+            arrival_rate,
             service_rate,
             traffic_intensity=traffic_intensity,
             probability_wait=probability_wait,
@@ -158,26 +120,6 @@ class WaitEstimator:
             estimated_wait=estimated_wait,
             flags=tuple(flags),
         )
-
-    def _planned_arrival_rate(
-        self,
-        station_id: str,
-        evaluation_at: datetime,
-        arrivals: tuple[PlannedArrival, ...],
-        excluded_arrival_id: str | None,
-    ) -> float:
-        window_min = self._assumptions.planned_arrival_window_min
-        window_end = evaluation_at + timedelta(minutes=window_min)
-        probability_sum = sum(
-            arrival.arrival_probability
-            for arrival in arrivals
-            if arrival.station_id == station_id
-            and arrival.arrival_id != excluded_arrival_id
-            and arrival.status == "planned"
-            and arrival.expires_at > evaluation_at
-            and evaluation_at <= arrival.eta_at < window_end
-        )
-        return probability_sum * 60 / window_min
 
     @staticmethod
     def _current_state_wait(
@@ -218,9 +160,7 @@ class WaitEstimator:
         status: StationStatus,
         forecast: OccupancyForecastResult,
         evaluation_at: datetime,
-        baseline_rate: float,
-        planned_rate: float,
-        total_arrival_rate: float,
+        arrival_rate: float,
         service_rate: float,
         *,
         traffic_intensity: float | None,
@@ -237,9 +177,8 @@ class WaitEstimator:
             predicted_occupied_ports=forecast.predicted_occupied_ports,
             current_queue_length=status.queue_length,
             avg_session_duration_min=status.avg_session_duration_min,
-            baseline_arrival_rate_per_hour=baseline_rate,
-            planned_arrival_rate_per_hour=planned_rate,
-            total_arrival_rate_per_hour=total_arrival_rate,
+            baseline_arrival_rate_per_hour=arrival_rate,
+            total_arrival_rate_per_hour=arrival_rate,
             service_rate_per_server_per_hour=service_rate,
             traffic_intensity=traffic_intensity,
             erlang_c_probability_wait=probability_wait,

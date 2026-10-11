@@ -7,11 +7,9 @@ import RecommendationList from "./components/RecommendationList";
 import StationDetails from "./components/StationDetails";
 import StatusBar from "./components/StatusBar";
 import type {
-  DemoScenario,
   GeoPoint,
   JourneyRecommendation,
   ModelStatus,
-  PlannedArrival,
   RecommendationItem,
   RouteResult,
   Station,
@@ -19,19 +17,18 @@ import type {
   Vehicle,
 } from "./types";
 
+const DEFAULT_ORIGIN: GeoPoint = { lat: 10.7075, lon: 106.705, label: "Nguyễn Hữu Thọ, Quận 7" };
+const DEFAULT_DESTINATION: GeoPoint = { lat: 10.806, lon: 106.687, label: "Phú Nhuận" };
+
 export default function App() {
   const [stations, setStations] = useState<Station[]>([]);
   const [statuses, setStatuses] = useState<Record<string, StationStatus>>({});
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [scenarios, setScenarios] = useState<DemoScenario[]>([]);
   const [modelStatus, setModelStatus] = useState<ModelStatus | null>(null);
-  const [scenarioId, setScenarioId] = useState("");
   const [vehicleId, setVehicleId] = useState("");
   const [initialSoc, setInitialSoc] = useState(0.5);
-  const [targetSoc, setTargetSoc] = useState(0.8);
-  const [applyEvents, setApplyEvents] = useState(false);
-  const [origin, setOrigin] = useState<GeoPoint | null>(null);
-  const [destination, setDestination] = useState<GeoPoint | null>(null);
+  const [origin, setOrigin] = useState<GeoPoint>(DEFAULT_ORIGIN);
+  const [destination, setDestination] = useState<GeoPoint>(DEFAULT_DESTINATION);
   const [originValid, setOriginValid] = useState(true);
   const [destinationValid, setDestinationValid] = useState(true);
   const [recommendation, setRecommendation] = useState<JourneyRecommendation | null>(null);
@@ -40,11 +37,8 @@ export default function App() {
   const [mapProvider, setMapProvider] = useState<"goong" | "osm">("goong");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [committing, setCommitting] = useState(false);
-  const [activeArrival, setActiveArrival] = useState<PlannedArrival | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const scenario = scenarios.find((item) => item.scenario_id === scenarioId) ?? scenarios[0];
   const selectedVehicle = vehicles.find((item) => item.vehicle_id === vehicleId) ?? vehicles[0] ?? null;
 
   const refreshStatuses = useCallback(async (stationList: Station[]) => {
@@ -58,24 +52,16 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const [stationList, vehicleList, scenarioList, model] = await Promise.all([
+      const [stationList, vehicleList, model] = await Promise.all([
         api.stations(),
         api.vehicles(),
-        api.scenarios(),
         api.modelStatus(),
       ]);
-      if (!scenarioList.length) throw new Error("Backend không có demo scenario.");
+      if (!vehicleList.length) throw new Error("Backend không có hồ sơ xe.");
       setStations(stationList);
       setVehicles(vehicleList);
-      setScenarios(scenarioList);
       setModelStatus(model);
-      const defaultScenario = scenarioList[0];
-      setScenarioId(defaultScenario.scenario_id);
-      setVehicleId(defaultScenario.vehicle_id);
-      setInitialSoc(defaultScenario.initial_soc);
-      setTargetSoc(defaultScenario.target_soc);
-      setOrigin(defaultScenario.origin);
-      setDestination(defaultScenario.destination);
+      setVehicleId((current) => current || vehicleList[0].vehicle_id);
       await refreshStatuses(stationList);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Không thể tải dữ liệu backend.");
@@ -89,118 +75,34 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [loadInitialData]);
 
-  const changeScenario = (nextScenarioId: string) => {
-    const next = scenarios.find((item) => item.scenario_id === nextScenarioId);
-    if (!next) return;
-    if (activeArrival?.status === "planned") {
-      void api.cancelArrival(activeArrival.arrival_id).catch(() => undefined);
-    }
-    setScenarioId(next.scenario_id);
-    setVehicleId(next.vehicle_id);
-    setInitialSoc(next.initial_soc);
-    setTargetSoc(next.target_soc);
-    setOrigin(next.origin);
-    setDestination(next.destination);
-    setOriginValid(true);
-    setDestinationValid(true);
-    setApplyEvents(false);
-    setRecommendation(null);
-    setRoute(null);
-    setSelectedStationId(null);
-    setActiveArrival(null);
-  };
-
-  const selectRecommendation = useCallback(
-    async (item: RecommendationItem) => {
-      setSelectedStationId(item.station_id);
-      setRoute(item.route);
-    },
-    [],
-  );
+  const selectRecommendation = useCallback((item: RecommendationItem) => {
+    setSelectedStationId(item.station_id);
+    setRoute(item.route);
+  }, []);
 
   const submitJourney = async () => {
-    if (!scenario || !origin || !destination || !originValid || !destinationValid) return;
+    if (!vehicleId || !originValid || !destinationValid) return;
     setSubmitting(true);
     setError(null);
     try {
-      if (activeArrival?.status === "planned") {
-        await api.cancelArrival(activeArrival.arrival_id);
-        setActiveArrival(null);
-      }
-      const result = await api.recommend({
-        scenario_id: scenario.scenario_id,
-        apply_scenario_events: applyEvents,
-        vehicle_id: vehicleId,
-        initial_soc: initialSoc,
-        target_soc: targetSoc,
+      const result = await api.searchRoute({
         origin,
         destination,
-        departure_at: new Date().toISOString(),
+        vehicle_id: vehicleId,
+        battery_pct: Math.round(initialSoc * 100),
       });
       setRecommendation(result);
       await refreshStatuses(stations);
       if (result.recommendations.length) {
-        await selectRecommendation(result.recommendations[0]);
+        selectRecommendation(result.recommendations[0]);
       } else {
         setSelectedStationId(null);
         setRoute(result.direct_route);
       }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Không thể tạo recommendation.");
+      setError(caught instanceof Error ? caught.message : "Không thể tìm trạm sạc.");
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const resetDemo = async () => {
-    setError(null);
-    try {
-      await api.resetDemo();
-      await refreshStatuses(stations);
-      setRecommendation(null);
-      setRoute(null);
-      setSelectedStationId(null);
-      setApplyEvents(false);
-      setActiveArrival(null);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Không thể reset demo.");
-    }
-  };
-
-  const commitRecommendation = async () => {
-    if (!selectedRecommendation) return;
-    setCommitting(true);
-    setError(null);
-    try {
-      if (activeArrival?.status === "planned") {
-        await api.cancelArrival(activeArrival.arrival_id);
-      }
-      const arrival = await api.commitArrival({
-        station_id: selectedRecommendation.station_id,
-        vehicle_id: vehicleId,
-        departure_at: new Date().toISOString(),
-        route_id: selectedRecommendation.route_id,
-        route_duration_to_station_s: selectedRecommendation.route_duration_to_station_s,
-        expected_energy_kwh: selectedRecommendation.energy_to_add_kwh,
-        expected_charge_duration_min: selectedRecommendation.estimated_charge_min,
-      });
-      setActiveArrival(arrival);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Không thể xác nhận tuyến.");
-    } finally {
-      setCommitting(false);
-    }
-  };
-
-  const cancelArrival = async () => {
-    if (!activeArrival || activeArrival.status !== "planned") return;
-    setCommitting(true);
-    try {
-      setActiveArrival(await api.cancelArrival(activeArrival.arrival_id));
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Không thể hủy tuyến.");
-    } finally {
-      setCommitting(false);
     }
   };
 
@@ -210,15 +112,29 @@ export default function App() {
   );
   const selectedRecommendation =
     recommendation?.recommendations.find((item) => item.station_id === selectedStationId) ?? null;
+  const notice = useMemo(() => {
+    if (!recommendation) return null;
+    if (recommendation.case === "enough") {
+      return `Pin đủ để tới điểm đến (${Math.round(recommendation.direct_min)} phút), không cần sạc.`;
+    }
+    if (recommendation.case === "fallback") {
+      const nearest = recommendation.nearest_station_name
+        ? `Trạm gần nhất: ${recommendation.nearest_station_name}.`
+        : "";
+      const missing =
+        recommendation.missing_km != null
+          ? ` Còn thiếu khoảng ${Math.round(recommendation.missing_km)} km để tới trạm.`
+          : "";
+      return `Pin không đủ tới trạm nào. ${nearest}${missing}`.trim();
+    }
+    return null;
+  }, [recommendation]);
   const handleStationSelect = useCallback((stationId: string) => setSelectedStationId(stationId), []);
   const handleProviderChange = useCallback(
     (provider: "goong" | "osm") => setMapProvider(provider),
     [],
   );
-  const handleOriginValidityChange = useCallback(
-    (valid: boolean) => setOriginValid(valid),
-    [],
-  );
+  const handleOriginValidityChange = useCallback((valid: boolean) => setOriginValid(valid), []);
   const handleDestinationValidityChange = useCallback(
     (valid: boolean) => setDestinationValid(valid),
     [],
@@ -228,11 +144,11 @@ export default function App() {
     return <main className="app-loading"><div className="loader" /><p>Đang kết nối Smart EV backend…</p></main>;
   }
 
-  if (!scenario) {
+  if (!vehicles.length) {
     return (
       <main className="app-loading error-screen">
-        <h1>Không thể khởi tạo demo</h1>
-        <p>{error ?? "Không có scenario khả dụng."}</p>
+        <h1>Không thể khởi tạo ứng dụng</h1>
+        <p>{error ?? "Không có hồ sơ xe khả dụng."}</p>
         <button className="primary-button" onClick={() => void loadInitialData()}>Thử lại</button>
       </main>
     );
@@ -245,43 +161,33 @@ export default function App() {
           <span className="brand-mark">EV</span>
           <span><strong>Smart EV Journey</strong><small>HCMC charging navigator</small></span>
         </a>
-        <StatusBar
-          model={modelStatus}
-          mapProvider={mapProvider}
-          activeEvents={recommendation?.active_event_ids ?? []}
-        />
+        <StatusBar model={modelStatus} mapProvider={mapProvider} />
       </header>
 
       {error && <div className="error-banner" role="alert"><span>{error}</span><button onClick={() => setError(null)}>Đóng</button></div>}
       {modelStatus && !modelStatus.release_ready && (
         <div className="fallback-banner" role="status">
-          Occupancy model chưa sẵn sàng — backend đang dùng {modelStatus.prediction_source === "default" ? "giá trị mặc định cố định" : "persistence fallback"} cho demo.
+          Occupancy model chưa sẵn sàng — backend đang dùng {modelStatus.prediction_source === "default" ? "giá trị mặc định cố định" : "persistence fallback"}.
         </div>
       )}
 
       <div className="workspace" id="top">
         <section className="control-column">
           <JourneyForm
-            scenarios={scenarios}
             vehicles={vehicles}
-            scenario={scenario}
             vehicleId={vehicleId}
             initialSoc={initialSoc}
-            applyEvents={applyEvents}
-            origin={origin ?? scenario.origin}
-            destination={destination ?? scenario.destination}
+            origin={origin}
+            destination={destination}
             locationsValid={originValid && destinationValid}
             submitting={submitting}
-            onScenarioChange={changeScenario}
             onVehicleChange={setVehicleId}
             onInitialSocChange={setInitialSoc}
-            onApplyEventsChange={setApplyEvents}
             onOriginChange={setOrigin}
             onDestinationChange={setDestination}
             onOriginValidityChange={handleOriginValidityChange}
             onDestinationValidityChange={handleDestinationValidityChange}
             onSubmit={() => void submitJourney()}
-            onReset={() => void resetDemo()}
           />
           <RecommendationList
             items={recommendation?.recommendations ?? []}
@@ -290,7 +196,8 @@ export default function App() {
             vehicle={selectedVehicle}
             selectedStationId={selectedStationId}
             hasRun={recommendation !== null}
-            onSelect={(item) => void selectRecommendation(item)}
+            notice={notice}
+            onSelect={selectRecommendation}
           />
         </section>
 
@@ -300,8 +207,7 @@ export default function App() {
             <div className="map-legend">
               <span><i className="legend-dot available" />Còn trống</span>
               <span><i className="legend-dot busy" />Bận / có queue</span>
-              <span><i className="legend-dot affected" />Event</span>
-              <span><i className="legend-dot offline" />Offline</span>
+              <span><i className="legend-dot offline" />Offline / chưa rõ</span>
             </div>
           </div>
           <div className="map-frame">
@@ -319,10 +225,6 @@ export default function App() {
             station={selectedStation}
             status={selectedStationId ? statuses[selectedStationId] ?? null : null}
             recommendation={selectedRecommendation}
-            activeArrival={activeArrival}
-            committing={committing}
-            onCommit={() => void commitRecommendation()}
-            onCancel={() => void cancelArrival()}
           />
         </section>
       </div>

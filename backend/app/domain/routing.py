@@ -1,4 +1,4 @@
-"""Cache-first routing with Goong primary and public OSRM fallback providers."""
+"""Live routing with Goong primary and public OSRM fallback providers."""
 
 from __future__ import annotations
 
@@ -14,7 +14,6 @@ from backend.app.domain.phase7_models import (
     RouteResult,
     RouteWaypoint,
 )
-from backend.app.domain.repositories import RouteRepository
 
 
 class RoutingProvider(Protocol):
@@ -102,7 +101,6 @@ class GoongRoutingProvider:
         return RouteResult(
             route_id=_route_id("LIVE_GOONG", points),
             provider="goong",
-            resolution_source="live",
             origin=origin,
             destination=destination,
             waypoints=waypoints,
@@ -144,7 +142,6 @@ class OsrmRoutingProvider:
         return RouteResult(
             route_id=_route_id("LIVE_OSRM", points),
             provider="osrm",
-            resolution_source="live",
             origin=origin,
             destination=destination,
             waypoints=waypoints,
@@ -158,12 +155,10 @@ class OsrmRoutingProvider:
 class RoutingService:
     def __init__(
         self,
-        routes: RouteRepository,
         *,
         goong: RoutingProvider | None,
         osrm: RoutingProvider | None,
     ) -> None:
-        self._routes = routes
         self._goong = goong
         self._osrm = osrm
 
@@ -172,16 +167,7 @@ class RoutingService:
         origin: GeoPoint,
         destination: GeoPoint,
         waypoints: tuple[RouteWaypoint, ...] = (),
-        *,
-        preferred_route_id: str | None = None,
     ) -> RouteResult:
-        if preferred_route_id is not None:
-            return self.cached_route(preferred_route_id)
-
-        cached = self._find_exact_cache(origin, destination, waypoints)
-        if cached is not None:
-            return self._from_cache(cached.route_id)
-
         flags: list[str] = []
         if self._goong is not None:
             try:
@@ -198,81 +184,6 @@ class RoutingService:
             except Exception:
                 flags.append("OSRM_FAILED")
         raise RuntimeError(f"routing unavailable ({', '.join(flags)})")
-
-    def cached_route(self, route_id: str) -> RouteResult:
-        return self._from_cache(route_id)
-
-    def route_to_station(
-        self, origin: GeoPoint, station: GeoPoint, station_id: str
-    ) -> RouteResult:
-        cached = self._routes.find_by_station(station_id)
-        if cached is None or not self._same_point(cached.origin, origin):
-            return self.route(origin, station)
-        full = self._from_cache(cached.route_id)
-        distance_m, duration_s = route_metrics_to_station(full, station_id)
-        nearest_index = min(
-            range(len(full.geometry.coordinates)),
-            key=lambda index: _haversine_m(
-                full.geometry.coordinates[index][1],
-                full.geometry.coordinates[index][0],
-                station.lat,
-                station.lon,
-            ),
-        )
-        coordinates = full.geometry.coordinates[: nearest_index + 1]
-        if not coordinates or coordinates[-1] != (station.lon, station.lat):
-            coordinates = (*coordinates, (station.lon, station.lat))
-        if len(coordinates) < 2:
-            coordinates = ((origin.lon, origin.lat), (station.lon, station.lat))
-        return RouteResult(
-            route_id=f"{full.route_id}_TO_{station_id}",
-            provider=full.provider,
-            resolution_source="cache",
-            origin=origin,
-            destination=station,
-            waypoints=(),
-            geometry=LineStringGeometry(type="LineString", coordinates=coordinates),
-            distance_m=distance_m,
-            duration_s=duration_s,
-            flags=full.flags,
-        )
-
-    def _from_cache(self, route_id: str) -> RouteResult:
-        route = self._routes.get(route_id)
-        return RouteResult(
-            route_id=route.route_id,
-            provider=route.provider,
-            resolution_source="cache",
-            origin=route.origin,
-            destination=route.destination,
-            waypoints=route.waypoints,
-            geometry=route.geometry,
-            distance_m=route.distance_m,
-            duration_s=route.duration_s,
-            flags=("ROUTE_CACHE",),
-        )
-
-    def _find_exact_cache(
-        self,
-        origin: GeoPoint,
-        destination: GeoPoint,
-        waypoints: tuple[RouteWaypoint, ...],
-    ):
-        requested = (origin, *waypoints, destination)
-        for route in self._routes.all():
-            cached = (route.origin, *route.waypoints, route.destination)
-            if len(requested) != len(cached):
-                continue
-            if all(
-                abs(left.lat - right.lat) < 1e-6 and abs(left.lon - right.lon) < 1e-6
-                for left, right in zip(requested, cached, strict=True)
-            ):
-                return route
-        return None
-
-    @staticmethod
-    def _same_point(left: GeoPoint, right: GeoPoint) -> bool:
-        return abs(left.lat - right.lat) < 1e-6 and abs(left.lon - right.lon) < 1e-6
 
 
 def route_metrics_to_station(route: RouteResult, station_id: str) -> tuple[float, float]:

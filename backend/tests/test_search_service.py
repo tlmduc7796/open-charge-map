@@ -32,7 +32,7 @@ def test_route_search_returns_enough_without_station_when_battery_is_sufficient(
     assert result.case == "enough"
     assert result.stations == ()
     assert result.search_id.startswith("SRCH_")
-    assert result.direct_route.route_id == "ROUTE_BASE_DIRECT"
+    assert result.direct_route.route_id
     assert (
         app.state.search_result_store.get(
             result.search_id, now=NOW + timedelta(seconds=1)
@@ -118,32 +118,38 @@ def test_station_search_reports_exclusion_reasons() -> None:
     )
 
 
-def test_search_reports_offline_station_after_outage_event() -> None:
+def test_search_reports_offline_station_when_ports_are_unavailable(monkeypatch) -> None:
     runtime = app.state.runtime_state
-    try:
-        runtime.reset()
-        runtime.apply("EVT_OUTAGE_LA_VELA")
-        result = app.state.search_service.search_stations(
-            SearchStationsRequest(
-                origin=ORIGIN,
-                vehicle_id="EV_VF7_ECO",
-                battery_pct=55,
-            ),
-            now=NOW,
-        )
-        assert any(
-            item.station_id == "ST_VF_LA_VELA"
-            and "STATION_OFFLINE" in item.reason_codes
-            for item in result.excluded_candidates
-        )
-    finally:
-        runtime.reset()
+    status = runtime.get("ST_VF_LA_VELA")
+    offline = status.model_copy(
+        update={
+            "operational_ports": 0,
+            "occupied_ports": 0,
+            "available_ports": 0,
+            "offline_ports": status.total_ports,
+            "occupancy_ratio": None,
+        }
+    )
+    monkeypatch.setattr(runtime, "refresh", lambda: None)
+    monkeypatch.setitem(runtime._statuses, "ST_VF_LA_VELA", offline)
+
+    result = app.state.search_service.search_stations(
+        SearchStationsRequest(
+            origin=ORIGIN,
+            vehicle_id="EV_VF7_ECO",
+            battery_pct=55,
+        ),
+        now=NOW,
+    )
+
+    assert any(
+        item.station_id == "ST_VF_LA_VELA" and "STATION_OFFLINE" in item.reason_codes
+        for item in result.excluded_candidates
+    )
 
 
 def test_outside_demo_region_without_live_provider_has_no_route(monkeypatch) -> None:
-    routing = RoutingService(
-        app.state.domain_data.routes, goong=None, osrm=None
-    )
+    routing = RoutingService(goong=None, osrm=None)
     monkeypatch.setattr(app.state.search_service, "_routing", routing)
 
     with pytest.raises(RuntimeError, match="routing unavailable"):

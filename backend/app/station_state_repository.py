@@ -50,18 +50,17 @@ class DatabaseStationStateRepository:
                         """
                         INSERT INTO port_status (
                             port_id, status, session_started_at, estimated_finish_at,
-                            reported_at, ingested_at, data_origin
+                            reported_at, ingested_at
                         ) VALUES (
                             :port_id, CAST(:status AS port_status_value), :session_started_at,
-                            :estimated_finish_at, :reported_at, :ingested_at, 'observed'
+                            :estimated_finish_at, :reported_at, :ingested_at
                         )
                         ON CONFLICT (port_id) DO UPDATE SET
                             status=EXCLUDED.status,
                             session_started_at=EXCLUDED.session_started_at,
                             estimated_finish_at=EXCLUDED.estimated_finish_at,
                             reported_at=EXCLUDED.reported_at,
-                            ingested_at=EXCLUDED.ingested_at,
-                            data_origin=EXCLUDED.data_origin
+                            ingested_at=EXCLUDED.ingested_at
                         """
                     ),
                     parameters,
@@ -70,10 +69,10 @@ class DatabaseStationStateRepository:
                     text(
                         """
                         INSERT INTO port_status_history (
-                            port_id, status, changed_at, ingested_at, data_origin
+                            port_id, status, changed_at, ingested_at
                         ) VALUES (
                             :port_id, CAST(:status AS port_status_value),
-                            :reported_at, :ingested_at, 'observed'
+                            :reported_at, :ingested_at
                         )
                         """
                     ),
@@ -90,17 +89,15 @@ class DatabaseStationStateRepository:
                     WITH stale AS (
                         UPDATE port_status
                         SET status='unknown', session_started_at=NULL,
-                            estimated_finish_at=NULL, ingested_at=:changed_at,
-                            data_origin='inferred'
+                            estimated_finish_at=NULL, ingested_at=:changed_at
                         WHERE reported_at < :stale_before
                           AND status <> 'unknown'
-                          AND data_origin <> 'synthetic'
                         RETURNING port_id
                     )
                     INSERT INTO port_status_history (
-                        port_id, status, changed_at, ingested_at, data_origin
+                        port_id, status, changed_at, ingested_at
                     )
-                    SELECT port_id, 'unknown', :changed_at, :changed_at, 'inferred'
+                    SELECT port_id, 'unknown', :changed_at, :changed_at
                     FROM stale
                     RETURNING port_id
                     """
@@ -118,7 +115,11 @@ class DatabaseStationStateRepository:
                            COALESCE(ps.status::text, 'unknown') AS status,
                            ps.estimated_finish_at,
                            COALESCE(ps.reported_at, p.updated_at) AS updated_at,
-                           COALESCE(ps.data_origin::text, 'unknown') AS data_source
+                           CASE
+                               WHEN ps.reported_at IS NULL THEN 'unknown'
+                               WHEN ps.status = 'unknown' THEN 'inferred'
+                               ELSE 'observed'
+                           END AS data_source
                     FROM stations s
                     JOIN ports p ON p.station_id=s.id AND p.is_active
                     LEFT JOIN port_status ps ON ps.port_id=p.id

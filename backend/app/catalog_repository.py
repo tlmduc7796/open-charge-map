@@ -27,14 +27,7 @@ _STATION_SELECT = """
         s.access_level::text AS access_level,
         s.access_note,
         s.updated_at,
-        s.provenance,
-        (
-            SELECT ser.external_id
-            FROM station_external_refs ser
-            WHERE ser.station_id = s.id
-            ORDER BY ser.is_primary DESC, ser.provider, ser.external_id
-            LIMIT 1
-        ) AS provider_station_id,
+        NULL::text AS provider_station_id,
         COALESCE(
             (
                 SELECT jsonb_agg(
@@ -53,11 +46,7 @@ _STATION_SELECT = """
                         ct.current_type::text AS current_type,
                         max(p.max_power_kw) AS max_power_kw,
                         count(*)::integer AS port_count,
-                        CASE
-                            WHEN bool_or(p.data_origin::text = 'synthetic')
-                                THEN 'database:synthetic'
-                            ELSE 'database'
-                        END AS source
+                        'database' AS source
                     FROM ports p
                     JOIN connector_types ct ON ct.code = p.connector_code
                     WHERE p.station_id = s.id AND p.is_active
@@ -66,14 +55,7 @@ _STATION_SELECT = """
             ),
             '[]'::jsonb
         ) AS connectors,
-        COALESCE(
-            (
-                SELECT jsonb_agg(sa.amenity_code ORDER BY sa.amenity_code)
-                FROM station_amenities sa
-                WHERE sa.station_id = s.id AND sa.is_available IS TRUE
-            ),
-            '[]'::jsonb
-        ) AS amenities
+        '[]'::jsonb AS amenities
     FROM stations s
     WHERE s.is_active
 """
@@ -90,7 +72,6 @@ _VEHICLE_SELECT = """
         vm.max_ac_kw,
         vm.max_dc_kw,
         vm.market,
-        vm.provenance,
         jsonb_agg(
             jsonb_build_object(
                 'code', vc.connector_code,
@@ -105,12 +86,6 @@ _VEHICLE_SELECT = """
       AND vm.battery_kwh IS NOT NULL
       AND vm.consumption_kwh_per_100km IS NOT NULL
       AND (COALESCE(vm.max_ac_kw, 0) > 0 OR COALESCE(vm.max_dc_kw, 0) > 0)
-      AND COALESCE(vm.provenance->'_legacy_demo'->>'reserve_soc',
-                   vm.provenance->'_calculation_defaults'->>'reserve_soc') IS NOT NULL
-      AND COALESCE(vm.provenance->'_legacy_demo'->>'default_target_soc',
-                   vm.provenance->'_calculation_defaults'->>'default_target_soc') IS NOT NULL
-      AND COALESCE(vm.provenance->'_legacy_demo'->>'charging_efficiency',
-                   vm.provenance->'_calculation_defaults'->>'charging_efficiency') IS NOT NULL
     GROUP BY vm.id
     ORDER BY vm.brand, vm.model, vm.variant NULLS FIRST, vm.code
 """
@@ -128,42 +103,19 @@ _STATUS_SELECT = """
         ssc.unknown_ports,
         ssc.occupancy_ratio,
         ssc.queue_length,
-        slm.avg_session_duration_min,
-        slm.data_origin::text AS metrics_origin,
-        EXISTS (
-            SELECT 1 FROM ports p
-            JOIN port_status ps ON ps.port_id = p.id
-            WHERE p.station_id = s.id AND p.is_active
-              AND ps.data_origin::text = 'synthetic'
-        ) AS synthetic_status
+        NULL::numeric AS avg_session_duration_min,
+        NULL::text AS metrics_origin
     FROM stations s
     JOIN station_status_current ssc ON ssc.station_id = s.id
-    LEFT JOIN station_live_metrics slm ON slm.station_id = s.id
     WHERE s.is_active
 """
-
-
-def _synthetic_fields(provenance: dict[str, Any]) -> tuple[str, ...]:
-    return tuple(
-        sorted(
-            field
-            for field, details in provenance.items()
-            if isinstance(details, dict) and details.get("origin") == "synthetic"
-        )
-    )
 
 
 def _station_from_row(row: Any) -> Station:
     connectors = tuple(Connector.model_validate(item) for item in row["connectors"])
     if not connectors:
         raise ValueError(f"active station has no active ports: {row['code']}")
-    provenance = row["provenance"] or {}
     notes = (row["access_note"],) if row["access_note"] else ()
-    source_provider = (
-        provenance.get("name", {}).get("provider")
-        if isinstance(provenance.get("name"), dict)
-        else None
-    ) or "database"
     return Station(
         type="Feature",
         geometry=PointGeometry(
@@ -182,34 +134,32 @@ def _station_from_row(row: Any) -> Station:
             opening_hours=row["opening_hours"],
             access=row["access_level"],
             notes=notes,
-            source_provider=source_provider,
+            source_provider="database",
             source_updated_at=row["updated_at"],
-            synthetic_fields=_synthetic_fields(provenance),
+            synthetic_fields=(),
         ),
     )
 
 
+# Planning assumptions applied to every catalog vehicle (the catalog no longer stores them).
+ASSUMED_RESERVE_SOC = 0.1
+ASSUMED_TARGET_SOC = 0.8
+ASSUMED_CHARGING_EFFICIENCY = 0.9
+ASSUMED_AC_POWER_KW = 3.3  # used only when the catalog has no AC maximum
+ASSUMED_DC_POWER_KW = 50.0  # used only when the catalog has no DC maximum
+
+
 def _vehicle_from_row(row: Any) -> Vehicle:
-    provenance = row["provenance"] or {}
-    legacy = provenance.get("_legacy_demo") or {}
-    calculation = {**(provenance.get("_calculation_defaults") or {}), **legacy}
-    planning_power = provenance.get("_planning_power_fallback") or {}
-    battery_provenance = provenance.get("battery_kwh") or {}
-    battery_note = (battery_provenance.get("note") or "").lower()
     connectors = row["connectors"]
     return Vehicle(
-        vehicle_id=legacy.get("vehicle_id") or row["code"],
+        vehicle_id=row["code"],
         make=row["brand"],
         model=row["model"],
         variant=row["variant"],
         battery_capacity_kwh=float(row["battery_kwh"]),
-        usable_battery_kwh=(
-            float(row["battery_kwh"])
-            if battery_note.startswith(("published usable capacity", "catl usable capacity"))
-            else None
-        ),
-        max_ac_power_kw=float(row["max_ac_kw"] or planning_power.get("max_ac_kw") or 0),
-        max_dc_power_kw=float(row["max_dc_kw"] or planning_power.get("max_dc_kw") or 0),
+        usable_battery_kwh=None,
+        max_ac_power_kw=float(row["max_ac_kw"] or ASSUMED_AC_POWER_KW),
+        max_dc_power_kw=float(row["max_dc_kw"] or ASSUMED_DC_POWER_KW),
         ac_connectors=tuple(
             item["code"] for item in connectors if item["current"] == "AC"
         ),
@@ -217,23 +167,18 @@ def _vehicle_from_row(row: Any) -> Vehicle:
             item["code"] for item in connectors if item["current"] == "DC"
         ),
         consumption_wh_km=float(row["consumption_kwh_per_100km"]) * 10,
-        reserve_soc=float(calculation["reserve_soc"]),
-        default_target_soc=float(calculation["default_target_soc"]),
-        charging_efficiency=float(calculation["charging_efficiency"]),
-        source=legacy.get("source_ref") or battery_provenance.get("source_ref") or "database",
+        reserve_soc=ASSUMED_RESERVE_SOC,
+        default_target_soc=ASSUMED_TARGET_SOC,
+        charging_efficiency=ASSUMED_CHARGING_EFFICIENCY,
+        source="database",
         is_synthetic=row["market"] == "DEMO",
-        synthetic_fields=_synthetic_fields(provenance),
+        synthetic_fields=(),
     )
 
 
 def _status_from_row(row: Any) -> StationStatus:
     unknown_ports = int(row["unknown_ports"])
     total_ports = int(row["total_ports"])
-    synthetic_fields: list[str] = []
-    if row["synthetic_status"]:
-        synthetic_fields.extend(("port_status", "occupancy_ratio"))
-    if row["metrics_origin"] == "synthetic":
-        synthetic_fields.extend(("queue_length", "avg_session_duration_min"))
     return StationStatus(
         station_id=row["code"],
         timestamp=row["reported_at"],
@@ -256,12 +201,7 @@ def _status_from_row(row: Any) -> StationStatus:
             if row["avg_session_duration_min"] is not None
             else None
         ),
-        data_source=(
-            "unknown"
-            if unknown_ports == total_ports
-            else "synthetic" if row["synthetic_status"] else "database"
-        ),
-        synthetic_fields=tuple(synthetic_fields),
+        data_source="unknown" if unknown_ports == total_ports else "database",
     )
 
 

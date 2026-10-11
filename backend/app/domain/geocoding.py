@@ -1,18 +1,12 @@
-"""Goong geocoding with deterministic demo-location fallback."""
+"""Goong geocoding."""
 
 from __future__ import annotations
 
-import hashlib
 from typing import Any, Protocol
 
 import httpx
 
-from backend.app.domain.phase7_models import (
-    DemoScenario,
-    GeocodedPlace,
-    GeoPoint,
-    PlaceSuggestion,
-)
+from backend.app.domain.phase7_models import GeocodedPlace, GeoPoint, PlaceSuggestion
 
 
 class GeocodingProvider(Protocol):
@@ -81,61 +75,19 @@ class GoongGeocodingProvider:
 
 
 class GeocodingService:
-    def __init__(
-        self,
-        scenarios: tuple[DemoScenario, ...],
-        *,
-        goong: GeocodingProvider | None,
-    ) -> None:
+    def __init__(self, *, goong: GeocodingProvider | None) -> None:
         self._goong = goong
-        self._demo_places: dict[str, GeocodedPlace] = {}
-        for scenario in scenarios:
-            self._add_demo_point(scenario.origin)
-            self._add_demo_point(scenario.destination)
 
     def autocomplete(self, query: str) -> tuple[PlaceSuggestion, ...]:
         normalized = query.strip()
-        if len(normalized) < 2:
+        if len(normalized) < 2 or self._goong is None:
             return ()
-        if self._goong is not None:
-            try:
-                results = self._goong.autocomplete(normalized)
-                if results:
-                    return results
-            except Exception:
-                pass
-        needle = normalized.casefold()
-        return tuple(
-            PlaceSuggestion(
-                place_id=place.place_id,
-                description=place.label,
-                main_text=place.label,
-                secondary_text="Demo scenario fallback",
-                provider="demo",
-            )
-            for place in self._demo_places.values()
-            if needle in place.label.casefold()
-        )[:5]
+        try:
+            return self._goong.autocomplete(normalized)
+        except Exception:
+            return ()
 
     def details(self, place_id: str) -> GeocodedPlace:
-        if place_id.startswith("demo:"):
-            return self._demo_places[place_id]
         if self._goong is None:
             raise RuntimeError("Goong geocoding is not configured")
         return self._goong.details(place_id)
-
-    def _add_demo_point(self, point: GeoPoint) -> None:
-        label = point.label or f"{point.lat:.6f}, {point.lon:.6f}"
-        digest = hashlib.sha256(
-            f"{point.lat:.7f},{point.lon:.7f}".encode()
-        ).hexdigest()[:12]
-        place_id = f"demo:{digest}"
-        self._demo_places.setdefault(
-            place_id,
-            GeocodedPlace(
-                place_id=place_id,
-                label=label,
-                location=point.model_copy(update={"label": label}),
-                provider="demo",
-            ),
-        )

@@ -52,12 +52,10 @@ class Settings:
     app_name: str
     app_env: str
     log_level: str
-    demo_mode: bool
     internal_api_key: str | None
     goong_api_key: str | None
     database_url: str
     catalog_storage: str
-    planned_arrivals_storage: str
     data_dir: Path
     model_artifact_path: Path
     model_preprocessor_path: Path
@@ -79,13 +77,7 @@ class Settings:
             self.data_dir / "static" / "stations.geojson",
             self.data_dir / "demo" / "vehicles.json",
             self.data_dir / "runtime" / "station_status.json",
-            self.data_dir / "runtime" / "planned_arrivals.json",
-            self.data_dir / "demo" / "demo_events.json",
-            self.data_dir / "demo" / "demo_scenarios.json",
             self.data_dir / "demo" / "queue_assumptions.json",
-            self.data_dir / "routes" / "route_base_direct.json",
-            self.data_dir / "routes" / "route_via_lavida.json",
-            self.data_dir / "routes" / "route_via_deutsches_haus.json",
             self.data_dir / "ml" / "urbanev" / "source_manifest.json",
             self.data_dir / "ml" / "urbanev" / "raw" / "UrbanEVDataset.zip",
         )
@@ -104,7 +96,6 @@ def load_settings() -> Settings:
         app_name="Smart EV Journey API",
         app_env=os.getenv("APP_ENV", "development"),
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
-        demo_mode=_read_bool("DEMO_MODE", True),
         internal_api_key=internal_api_key,
         goong_api_key=key,
         database_url=os.getenv(
@@ -114,10 +105,7 @@ def load_settings() -> Settings:
         catalog_storage=_read_choice(
             "CATALOG_STORAGE", "database", {"database", "memory"}
         ),
-        planned_arrivals_storage=_read_choice(
-            "PLANNED_ARRIVALS_STORAGE", "database", {"database", "memory"}
-        ),
-        data_dir=_resolve_from_root(os.getenv("DATA_DIR", "data_platform/data")),
+        data_dir=_resolve_from_root(os.getenv("DATA_DIR", "database/fixtures")),
         model_artifact_path=_resolve_from_root(
             os.getenv("MODEL_ARTIFACT_PATH", "ml/artifacts/occupancy_model.joblib")
         ),

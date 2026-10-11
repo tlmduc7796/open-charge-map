@@ -17,7 +17,6 @@ from backend.app.api import router
 from backend.app.api_errors import install_api_error_handlers
 from backend.app.api_v1 import router as v1_router
 from backend.app.app_config_repository import AppConfigRepository
-from backend.app.arrival_rate_repository import DatabaseArrivalRateRepository
 from backend.app.catalog_repository import (
     DatabaseStationRepository,
     DatabaseStationStatusRepository,
@@ -38,13 +37,13 @@ from backend.app.domain.routing import (
     OsrmRoutingProvider,
     RoutingService,
 )
-from backend.app.domain.runtime import PlannedArrivalStore, RuntimeStateStore
+from backend.app.domain.runtime import RuntimeStateStore
 from backend.app.domain.search import SearchService
 from backend.app.domain.trip_service import TripService
 from backend.app.domain.wait_estimation import WaitEstimator
 from backend.app.logging_config import configure_logging
-from backend.app.planned_arrival_repository import DatabasePlannedArrivalRepository
 from backend.app.search_store import SearchRateLimiter, SearchResultStore
+from backend.app.simulation_repository import DatabaseSimulationRepository
 from backend.app.station_state_repository import DatabaseStationStateRepository
 from backend.app.trip_repository import DatabaseTripRepository
 
@@ -53,22 +52,41 @@ configure_logging(settings.log_level)
 logger = logging.getLogger("smart_ev.integration")
 
 
-async def _stale_status_loop(app: FastAPI, stop: asyncio.Event) -> None:
+SIMULATION_STEP_MINUTES = 5
+
+
+def _simulation_tick_at(now: datetime) -> datetime:
+    """Return the current five-minute bucket boundary (UTC)."""
+    return now.replace(
+        minute=(now.minute // SIMULATION_STEP_MINUTES) * SIMULATION_STEP_MINUTES,
+        second=0,
+        microsecond=0,
+    )
+
+
+async def _simulation_loop(app: FastAPI, stop: asyncio.Event) -> None:
+    """Refresh simulated state on wall-clock five-minute boundaries."""
     while not stop.is_set():
+        tick_at = _simulation_tick_at(datetime.now(UTC))
         try:
-            now = datetime.now(UTC)
-            config = await asyncio.to_thread(app.state.app_config_repository.read)
-            changed = await asyncio.to_thread(
-                app.state.station_state_repository.mark_stale,
-                stale_before=now - timedelta(seconds=config.station_status_stale_after_sec),
-                changed_at=now,
+            ports_updated, predictions_updated = await asyncio.to_thread(
+                app.state.simulation_repository.update_tick,
+                changed_at=tick_at,
             )
-            if changed:
-                await asyncio.to_thread(app.state.runtime_state.refresh)
+            await asyncio.to_thread(app.state.runtime_state.refresh)
+            logger.info(
+                "database_simulation_tick_complete ports=%d predictions=%d",
+                ports_updated,
+                predictions_updated,
+            )
         except Exception:
-            logger.exception("stale_station_status_job_failed")
+            logger.exception("database_simulation_tick_failed")
+        next_tick_at = tick_at + timedelta(minutes=SIMULATION_STEP_MINUTES)
+        wait_seconds = max(
+            0.0, (next_tick_at - datetime.now(UTC)).total_seconds()
+        )
         try:
-            await asyncio.wait_for(stop.wait(), timeout=60)
+            await asyncio.wait_for(stop.wait(), timeout=wait_seconds)
         except TimeoutError:
             continue
 
@@ -77,8 +95,8 @@ async def _stale_status_loop(app: FastAPI, stop: asyncio.Event) -> None:
 async def lifespan(app: FastAPI):
     worker = None
     stop = asyncio.Event()
-    if app.state.station_state_repository is not None:
-        worker = asyncio.create_task(_stale_status_loop(app, stop))
+    if app.state.simulation_repository is not None:
+        worker = asyncio.create_task(_simulation_loop(app, stop))
     try:
         yield
     finally:
@@ -104,14 +122,11 @@ app.state.ml_gateway = DefaultMlGateway()
 app.state.occupancy_forecast_service = OccupancyForecastService(
     ml_gateway=app.state.ml_gateway
 )
-uses_database = (
-    settings.catalog_storage == "database"
-    or settings.planned_arrivals_storage == "database"
-)
+uses_database = settings.catalog_storage == "database"
 app.state.database_engine = (
     create_engine(settings.database_url, pool_pre_ping=True) if uses_database else None
 )
-app.state.database_revision = (
+app.state.database_status = (
     validate_database(app.state.database_engine) if uses_database else None
 )
 app.state.app_config_repository = AppConfigRepository(
@@ -126,29 +141,18 @@ if settings.catalog_storage == "database":
     app.state.station_state_repository = DatabaseStationStateRepository(
         app.state.database_engine
     )
+    app.state.simulation_repository = DatabaseSimulationRepository(
+        app.state.database_engine
+    )
 else:
     app.state.station_repository = app.state.domain_data.stations
     app.state.vehicle_repository = app.state.domain_data.vehicles
     app.state.station_status_repository = app.state.domain_data.station_statuses
     app.state.station_state_repository = None
-app.state.runtime_state = RuntimeStateStore(
-    app.state.station_status_repository,
-    app.state.domain_data.demo_events,
-)
-if settings.planned_arrivals_storage == "database":
-    app.state.arrival_rate_repository = DatabaseArrivalRateRepository(
-        app.state.database_engine,
-        app.state.domain_data.queue_assumptions,
-    )
-    app.state.planned_arrival_store = DatabasePlannedArrivalRepository(
-        app.state.database_engine,
-        app.state.domain_data.planned_arrivals.all(),
-    )
-else:
-    app.state.arrival_rate_repository = app.state.domain_data.queue_assumptions
-    app.state.planned_arrival_store = PlannedArrivalStore(
-        app.state.domain_data.planned_arrivals
-    )
+    app.state.simulation_repository = None
+app.state.runtime_state = RuntimeStateStore(app.state.station_status_repository)
+# Baseline arrival rates come from the JSON fixture; persisting them is deferred.
+app.state.arrival_rate_repository = app.state.domain_data.queue_assumptions
 app.state.wait_estimator = WaitEstimator(
     app.state.arrival_rate_repository,
     scoring_wait_cap_min=settings.wait_scoring_cap_min,
@@ -161,23 +165,18 @@ goong_geocoding_provider = (
     if settings.goong_api_key
     else None
 )
-app.state.geocoding_service = GeocodingService(
-    app.state.domain_data.demo_scenarios.all(), goong=goong_geocoding_provider
-)
+app.state.geocoding_service = GeocodingService(goong=goong_geocoding_provider)
 goong_provider = (
     GoongRoutingProvider(settings.goong_api_key, timeout_s=settings.routing_timeout_s)
     if settings.goong_api_key
     else None
 )
 app.state.routing_service = RoutingService(
-    app.state.domain_data.routes,
     goong=goong_provider,
     osrm=OsrmRoutingProvider(timeout_s=settings.routing_timeout_s),
 )
 app.state.recommendation_service = RecommendationService(
-    app.state.domain_data,
     app.state.runtime_state,
-    app.state.planned_arrival_store,
     app.state.routing_service,
     app.state.occupancy_forecast_service,
     app.state.wait_estimator,
@@ -200,7 +199,6 @@ app.state.search_service = SearchService(
     app.state.station_repository,
     app.state.station_status_repository,
     app.state.runtime_state,
-    app.state.planned_arrival_store,
     app.state.occupancy_forecast_service,
     app.state.wait_estimator,
     app.state.search_result_store,
@@ -250,11 +248,10 @@ def health() -> dict[str, str | bool]:
         "status": "ok",
         "service": settings.app_name,
         "environment": settings.app_env,
-        "demo_mode": settings.demo_mode,
     }
     if app.state.database_engine is not None:
         try:
-            result["database_revision"] = validate_database(
+            result["database"] = validate_database(
                 app.state.database_engine
             )
         except RuntimeError as exc:

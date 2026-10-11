@@ -26,7 +26,7 @@ if errorlevel 1 (
 
 echo.
 echo Starting PostgreSQL...
-pushd data_platform
+pushd database
 docker compose up -d postgres
 if errorlevel 1 (
     popd

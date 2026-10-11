@@ -34,14 +34,14 @@ def test_port_update_history_stale_and_availability() -> None:
     label = f"integration-{port_id[:8]}"
     with engine.begin() as connection:
         station_id = connection.scalar(
-            text("SELECT id FROM stations WHERE code='ST_EVO_LAVIDA_Q7'")
+            text("SELECT id FROM stations WHERE code='ST_VF_NGO_QUYEN'")
         )
         connection.execute(
             text(
                 """
                 INSERT INTO ports (id, station_id, connector_code, label,
-                                   max_power_kw, data_origin)
-                VALUES (:port_id, :station_id, 'CCS2', :label, 50, 'synthetic')
+                                   max_power_kw)
+                VALUES (:port_id, :station_id, 'CCS2', :label, 50)
                 """
             ),
             {"port_id": port_id, "station_id": station_id, "label": label},
@@ -63,7 +63,7 @@ def test_port_update_history_stale_and_availability() -> None:
     app.state.station_repository = DatabaseStationRepository(engine)
     app.state.station_status_repository = statuses
     app.state.station_state_repository = DatabaseStationStateRepository(engine)
-    app.state.runtime_state = RuntimeStateStore(statuses, app.state.domain_data.demo_events)
+    app.state.runtime_state = RuntimeStateStore(statuses)
     reported_at = datetime.now(UTC) - timedelta(minutes=3)
     payload = {
         "updates": [
@@ -109,7 +109,7 @@ def test_port_update_history_stale_and_availability() -> None:
             _request("POST", "/api/v1/internal/port-status/mark-stale", headers=headers)
         )
         ports = asyncio.run(
-            _request("GET", "/api/v1/stations/ST_EVO_LAVIDA_Q7/ports")
+            _request("GET", "/api/v1/stations/ST_VF_NGO_QUYEN/ports")
         )
         with engine.connect() as connection:
             history = connection.execute(
@@ -121,11 +121,11 @@ def test_port_update_history_stale_and_availability() -> None:
             ).scalars().all()
         station_before = next(
             item for item in before.json()["items"]
-            if item["stationId"] == "ST_EVO_LAVIDA_Q7"
+            if item["stationId"] == "ST_VF_NGO_QUYEN"
         )
         station_after = next(
             item for item in after.json()["items"]
-            if item["stationId"] == "ST_EVO_LAVIDA_Q7"
+            if item["stationId"] == "ST_VF_NGO_QUYEN"
         )
         assert created.status_code == 200 and created.json()["updated"] == 1
         assert station_after["availablePorts"] == station_before["availablePorts"] + 1

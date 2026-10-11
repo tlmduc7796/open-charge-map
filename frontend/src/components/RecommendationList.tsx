@@ -8,15 +8,18 @@ interface RecommendationListProps {
   vehicle: Vehicle | null;
   selectedStationId: string | null;
   hasRun: boolean;
+  notice?: string | null;
   onSelect: (item: RecommendationItem) => void;
 }
 
 const reasonLabels: Record<string, string> = {
   NON_PUBLIC_ACCESS: "Trạm hạn chế truy cập",
-  STATION_OFFLINE: "Trạm đang offline",
+  STATION_OFFLINE: "Trạm đang offline hoặc chưa có trạng thái",
   NO_COMPATIBLE_CONNECTOR: "Không tương thích đầu sạc",
   INSUFFICIENT_SOC_RESERVE: "Phương tiện không đủ pin để tới",
   ROUTE_NOT_AVAILABLE: "Chưa có tuyến đường phù hợp",
+  WAIT_INPUT_UNAVAILABLE: "Chưa có dữ liệu hàng chờ để ước lượng",
+  OPENING_HOURS_UNVERIFIED: "Chưa xác minh giờ mở cửa",
 };
 
 const minutes = (value: number) => `${Math.round(value)} phút`;
@@ -36,7 +39,8 @@ export default function RecommendationList(props: RecommendationListProps) {
       </div>
 
       {!props.hasRun && <div className="empty-state">Nhập hành trình để xem xếp hạng trạm sạc.</div>}
-      {props.hasRun && props.items.length === 0 && (
+      {props.hasRun && props.notice && <div className="empty-state">{props.notice}</div>}
+      {props.hasRun && !props.notice && props.items.length === 0 && (
         <div className="empty-state warning">Không có trạm tương thích và reachable cho hành trình này.</div>
       )}
 
@@ -51,17 +55,17 @@ export default function RecommendationList(props: RecommendationListProps) {
             <span className="rank">#{item.rank}</span>
             <span className="card-main">
               <strong>{item.station_name}</strong>
-              <small>{item.matched_connectors.join(" · ")} · {item.effective_power_kw} kW</small>
+              <small>{item.connectors.join(" · ")}</small>
               <span className="metric-row">
-                <span><b>{minutes(item.estimated_wait_min)}</b> chờ</span>
-                <span><b>{minutes(item.estimated_charge_min)}</b> sạc</span>
-                <span><b>+{item.detour_min.toFixed(1)} phút</b> detour</span>
+                <span><b>{minutes(item.travel_min)}</b> di chuyển</span>
+                <span><b>{minutes(item.wait_min)}</b> chờ</span>
+                <span><b>{minutes(item.charge_min)}</b> sạc</span>
                 <span>
-                  <b>{props.vehicle ? `${Math.round(socToRangeKm(item.arrival_soc, props.vehicle))} km` : "—"}</b> còn lại khi tới
+                  <b>{props.vehicle ? `${Math.round(socToRangeKm(item.arrive_battery_pct / 100, props.vehicle))} km` : "—"}</b> còn lại khi tới
                 </span>
               </span>
             </span>
-            <span className="score">{Math.round(item.final_score * 100)}</span>
+            <span className="score" title="Tổng thời gian">{Math.round(item.total_min)}′</span>
           </button>
         ))}
       </div>

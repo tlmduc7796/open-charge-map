@@ -127,51 +127,27 @@ def test_invalid_capacity_is_rejected(domain_data: DomainData) -> None:
         _status(base, operational_ports=0, offline_ports=0)
 
 
-def test_planned_arrivals_can_be_toggled_and_trigger_overload(
-    domain_data: DomainData, estimator: WaitEstimator
+def test_overloaded_station_is_capped_at_scoring_limit(
+    domain_data: DomainData,
 ) -> None:
     status = domain_data.station_statuses.get("ST_EVO_DEUTSCHES_HAUS")
     forecast = OccupancyForecastService().forecast_occupancy(status, horizon_min=15)
-    evaluation_at = datetime.fromisoformat("2026-09-25T18:12:00+07:00")
 
-    without_planned = estimator.estimate_wait(
+    class HeavyDemand:
+        def baseline_rate(self, station_id: str) -> float:
+            return 1_000.0
+
+        def baseline_source(self, station_id: str) -> str:
+            return "synthetic"
+
+    result = WaitEstimator(HeavyDemand(), scoring_wait_cap_min=120).estimate_wait(
         status,
         forecast,
-        evaluation_at=evaluation_at,
-        planned_arrivals=domain_data.planned_arrivals.all(),
-        include_planned_arrivals=False,
-    )
-    with_planned = estimator.estimate_wait(
-        status,
-        forecast,
-        evaluation_at=evaluation_at,
-        planned_arrivals=domain_data.planned_arrivals.all(),
-        include_planned_arrivals=True,
+        evaluation_at=datetime.fromisoformat("2026-09-25T18:12:00+07:00"),
     )
 
-    assert without_planned.planned_arrival_rate_per_hour == 0
-    assert with_planned.planned_arrival_rate_per_hour == pytest.approx(6.6)
-    assert with_planned.estimated_wait_min >= without_planned.estimated_wait_min
-    assert "OVERLOADED" in with_planned.flags
-    assert with_planned.estimated_wait_min == 120
-
-
-def test_scenario_override_applies_only_to_requested_station(
-    domain_data: DomainData, estimator: WaitEstimator
-) -> None:
-    status = domain_data.station_statuses.get("ST_VF_LA_VELA")
-    forecast = OccupancyForecastService().forecast_occupancy(status, horizon_min=5)
-
-    result = estimator.estimate_wait(
-        status,
-        forecast,
-        evaluation_at=datetime.fromisoformat("2026-09-25T18:00:00+07:00"),
-        scenario_id="SCN_CONGESTION_REROUTE",
-        include_planned_arrivals=False,
-    )
-
-    assert result.baseline_arrival_rate_per_hour == 2.8
-    assert "SCENARIO_OVERRIDE_APPLIED" in result.flags
+    assert "OVERLOADED" in result.flags
+    assert result.estimated_wait_min == 120
 
 
 def test_offline_station_returns_finite_scoring_cap(

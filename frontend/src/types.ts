@@ -58,54 +58,28 @@ export interface GeoPoint {
   label?: string | null;
 }
 
-export interface DemoScenario {
-  scenario_id: string;
-  name: string;
-  vehicle_id: string;
-  initial_soc: number;
-  target_soc: number;
-  origin: GeoPoint;
-  destination: GeoPoint;
-  departure_at: string;
-  event_ids: string[];
-}
-
 export interface RouteResult {
   route_id: string;
-  provider: "goong" | "osrm";
-  resolution_source: "cache" | "live";
-  origin: GeoPoint;
-  destination: GeoPoint;
+  provider: string;
   geometry: { type: "LineString"; coordinates: Coordinates[] };
   distance_m: number;
   duration_s: number;
-  flags: string[];
 }
 
 export interface RecommendationItem {
+  rank: number;
   station_id: string;
   station_name: string;
-  route_id: string;
-  route_provider: string;
+  connectors: string[];
   route: RouteResult;
-  matched_connectors: string[];
-  effective_power_kw: number;
-  route_distance_to_station_m: number;
-  route_duration_to_station_s: number;
-  detour_min: number;
-  arrival_soc: number;
-  predicted_occupied_ports: number;
-  predicted_occupancy_ratio: number | null;
+  distance_km: number;
+  travel_min: number;
+  wait_min: number;
+  charge_min: number;
+  to_dest_min: number | null;
+  total_min: number;
+  arrive_battery_pct: number;
   prediction_source: string;
-  estimated_wait_min: number;
-  estimated_charge_min: number;
-  energy_to_add_kwh: number;
-  wait_score: number;
-  detour_score: number;
-  charging_time_score: number;
-  soc_risk_score: number;
-  final_score: number;
-  rank: number;
   flags: string[];
 }
 
@@ -115,13 +89,15 @@ export interface CandidateExclusion {
 }
 
 export interface JourneyRecommendation {
-  scenario_id: string;
+  search_id: string;
+  case: "enough" | "needCharge" | "fallback";
   generated_at: string;
-  vehicle_id: string;
   direct_route: RouteResult;
+  direct_min: number;
   recommendations: RecommendationItem[];
   excluded_candidates: CandidateExclusion[];
-  active_event_ids: string[];
+  missing_km: number | null;
+  nearest_station_name: string | null;
 }
 
 export interface ModelStatus {
@@ -134,15 +110,11 @@ export interface ModelStatus {
   flags: string[];
 }
 
-export interface JourneyRequest {
-  scenario_id: string;
-  apply_scenario_events: boolean;
-  vehicle_id: string;
-  initial_soc: number;
-  target_soc: number;
+export interface SearchRequest {
   origin: GeoPoint;
   destination: GeoPoint;
-  departure_at: string;
+  vehicle_id: string;
+  battery_pct: number;
 }
 
 export interface PlaceSuggestion {
@@ -150,21 +122,12 @@ export interface PlaceSuggestion {
   description: string;
   main_text: string;
   secondary_text: string;
-  provider: "goong" | "demo";
+  provider: "goong";
 }
 
 export interface GeocodedPlace {
   place_id: string;
   label: string;
   location: GeoPoint;
-  provider: "goong" | "demo";
-}
-
-export interface PlannedArrival {
-  arrival_id: string;
-  station_id: string;
-  vehicle_id: string | null;
-  eta_at: string;
-  route_id: string | null;
-  status: "planned" | "arrived" | "cancelled" | "expired";
+  provider: "goong";
 }
