@@ -19,3 +19,4 @@ references/
 simulator/data/
 simulator/**/*.csv
 ml/data/
+ml/model/
