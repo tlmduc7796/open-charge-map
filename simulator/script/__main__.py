@@ -3,6 +3,7 @@
     python -m script pull   # DB (chỉ đọc) -> data/catalog_snapshot.json (+ config nếu chưa có)
     python -m script run    # snapshot + config -> sinh lượt đến, phiên sạc, kiểm tra -> data/
     python -m script occupancy   # sessions.csv + ports.csv -> data/station_occupancy_5m.csv
+    python -m script feed   # phát lại station_occupancy_5m.csv vào backend mỗi 5 phút
 """
 
 from __future__ import annotations
@@ -11,7 +12,7 @@ import argparse
 import hashlib
 import json
 import sys
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from script.config import CONFIG_PATH, DATA_DIR, ROOT, ConfigError, new_user_config
@@ -122,6 +123,34 @@ def cmd_occupancy(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_feed(args: argparse.Namespace) -> int:
+    from script import feed
+
+    replay = feed.load_replay(
+        args.csv or args.data_dir / "station_occupancy_5m.csv", args.stations_sql
+    )
+    url = feed.resolve_api_url(args.api_url)
+    api_key = feed.resolve_api_key(args.api_key, ROOT.parent / ".env")
+    if args.at is not None and args.at.tzinfo is None:
+        raise ValueError("--at phải có múi giờ, ví dụ 2026-10-12T16:05:00+07:00")
+    span = f"{replay.start.isoformat()} -> {replay.end.isoformat()}"
+    if args.once or args.dry_run or args.at is not None:
+        feed.feed_once(
+            replay,
+            at=args.at or datetime.now(UTC),
+            url=url,
+            api_key=api_key,
+            dry_run=args.dry_run,
+        )
+        return 0
+    print(f"Phát lại {len(replay.readings)} trạm ({span}) -> {url}; mỗi 5 phút, Ctrl+C để dừng.")
+    try:
+        feed.run_loop(replay, url=url, api_key=api_key, delay_s=args.delay_s)
+    except KeyboardInterrupt:
+        print("Đã dừng.")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m script", description=__doc__)
     parser.add_argument("--config", type=Path, default=CONFIG_PATH, help="file config của bạn")
@@ -153,6 +182,38 @@ def main(argv: list[str] | None = None) -> int:
         "--end-date", type=date.fromisoformat, help="ngày cuối (trọn ngày); mặc định theo phiên"
     )
     occupancy.set_defaults(handler=cmd_occupancy)
+    feed = commands.add_parser(
+        "feed", help="phát lại station_occupancy_5m.csv vào backend, mỗi 5 phút một batch"
+    )
+    feed.add_argument("--csv", type=Path, help="mặc định: <data-dir>/station_occupancy_5m.csv")
+    feed.add_argument(
+        "--stations-sql",
+        type=Path,
+        default=ROOT.parent / "database" / "data" / "catalog" / "stations.sql",
+        help="nguồn ánh xạ UUID -> mã trạm",
+    )
+    feed.add_argument(
+        "--api-url", help="mặc định: FEED_API_URL hoặc http://127.0.0.1:8000"
+    )
+    feed.add_argument(
+        "--api-key", help="mặc định: INTERNAL_API_KEY (môi trường hoặc .env gốc repo)"
+    )
+    feed.add_argument("--once", action="store_true", help="gửi đúng một batch rồi thoát")
+    feed.add_argument(
+        "--at",
+        type=datetime.fromisoformat,
+        help="giả lập thời điểm gửi (có múi giờ); ngụ ý --once",
+    )
+    feed.add_argument(
+        "--dry-run", action="store_true", help="chỉ in batch sẽ gửi, không gọi backend"
+    )
+    feed.add_argument(
+        "--delay-s",
+        type=float,
+        default=15.0,
+        help="chờ bao nhiêu giây sau mỗi mốc 5 phút rồi mới gửi (mặc định 15)",
+    )
+    feed.set_defaults(handler=cmd_feed)
     args = parser.parse_args(argv)
     for stream in (sys.stdout, sys.stderr):  # console Windows mặc định không phải UTF-8
         if hasattr(stream, "reconfigure"):
