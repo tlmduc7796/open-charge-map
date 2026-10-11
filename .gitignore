@@ -18,3 +18,4 @@ references/
 # simulator: snapshot DB, CSV sinh ra và báo cáo mỗi lần chạy
 simulator/data/
 simulator/**/*.csv
+ml/data/
