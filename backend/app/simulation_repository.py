@@ -90,6 +90,9 @@ class DatabaseSimulationRepository:
                         ) VALUES (
                             :port_id, CAST(:status AS port_status_value), :tick_at, :tick_at
                         )
+                        ON CONFLICT (port_id, changed_at) DO UPDATE SET
+                            status=EXCLUDED.status,
+                            ingested_at=EXCLUDED.ingested_at
                         """
                     ),
                     parameters,

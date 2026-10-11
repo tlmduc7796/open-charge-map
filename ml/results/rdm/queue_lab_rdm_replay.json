@@ -1,8 +1,0 @@
-{
-  "fresh_seed": 20261007,
-  "scenarios": 46,
-  "queue_policy": "one confirmed 30-minute vehicle; no unobserved future arrivals",
-  "p50_wait_mae_min": 64.908,
-  "p10_p90_wait_coverage": 0.8478,
-  "actual_wait_median_min": 0.0
-}
