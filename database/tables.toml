@@ -37,7 +37,7 @@ config   = "Cấu hình chỉnh được lúc chạy"
 [[table]]
 name = "connector_types"
 group = "catalog"
-rows = 2
+rows = 1
 load = "sql"
 order_by = "t.code"
 
@@ -51,28 +51,28 @@ order_by = "t.code"
 [[table]]
 name = "ports"
 group = "catalog"
-rows = 200
+rows = 178
 load = "sql"
 order_by = "(SELECT s.code FROM public.stations s WHERE s.id = t.station_id), t.label"
 
 [[table]]
 name = "vehicle_models"
 group = "vehicles"
-rows = 18
+rows = 1
 load = "sql"
 order_by = "t.code"
 
 [[table]]
 name = "vehicle_connectors"
 group = "vehicles"
-rows = 35
+rows = 1
 load = "sql"
 order_by = "(SELECT v.code FROM public.vehicle_models v WHERE v.id = t.vehicle_model_id), t.connector_code"
 
 [[table]]
 name = "port_status"
 group = "runtime"
-rows = 200
+rows = 178
 load = "sql"
 order_by = "(SELECT s.code || '/' || p.label FROM public.ports p JOIN public.stations s ON s.id = p.station_id WHERE p.id = t.port_id)"
 

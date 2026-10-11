@@ -22,7 +22,8 @@ from backend.app.domain.routing import (
 )
 from backend.app.domain.runtime import RuntimeStateStore
 from backend.app.domain.services import (
-    check_compatibility,
+    ASSUMED_CHARGER_CONNECTOR,
+    ASSUMED_CHARGER_POWER_KW,
     estimate_charging,
     estimate_reachability,
 )
@@ -143,16 +144,6 @@ class RecommendationService:
                 )
                 continue
 
-            compatibility = check_compatibility(vehicle, station)
-            if not compatibility.compatible:
-                exclusions.append(
-                    CandidateExclusion(
-                        station_id=station.station_id,
-                        reason_codes=compatibility.reason_codes,
-                    )
-                )
-                continue
-
             max_reachable_m = max(
                 0.0,
                 (query.initial_soc - vehicle.reserve_soc)
@@ -235,7 +226,7 @@ class RecommendationService:
                 station,
                 arrival_soc=reachability.estimated_arrival_soc,
                 target_soc=query.target_soc,
-                effective_power_kw=compatibility.effective_power_kw,
+                effective_power_kw=ASSUMED_CHARGER_POWER_KW,
             )
             detour_min = max(0.0, (route.duration_s - direct_route.duration_s) / 60)
             wait_score = self._lower_is_better(
@@ -269,8 +260,8 @@ class RecommendationService:
                     route_id=route.route_id,
                     route_provider=route.provider,
                     route=route,
-                    matched_connectors=compatibility.matched_connectors,
-                    effective_power_kw=compatibility.effective_power_kw,
+                    matched_connectors=(ASSUMED_CHARGER_CONNECTOR,),
+                    effective_power_kw=ASSUMED_CHARGER_POWER_KW,
                     route_distance_to_station_m=distance_to_station_m,
                     route_duration_to_station_s=duration_to_station_s,
                     detour_min=detour_min,
@@ -291,7 +282,6 @@ class RecommendationService:
                     flags=tuple(
                         dict.fromkeys(
                             (
-                                *compatibility.reason_codes,
                                 *forecast.flags,
                                 *wait.flags,
                             )

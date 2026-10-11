@@ -1,4 +1,4 @@
--- runtime.port_status: 200 dòng, sắp theo order_by trong tables.toml.
+-- runtime.port_status: 178 rows, one status record for each retained CCS2 port.
 -- Cột kiểm toán (created_at/updated_at/ingested_at) không xuất; DB tự điền lúc nạp.
 
 INSERT INTO public.port_status (port_id, status, session_started_at, estimated_finish_at, reported_at) VALUES
@@ -23,18 +23,6 @@ INSERT INTO public.port_status (port_id, status, session_started_at, estimated_f
     ('79e14365-c717-566b-987c-b324b9c262da', 'unknown', NULL, NULL, NULL),
     ('28df19d3-db91-5b30-a3b4-8873a7f1c110', 'unknown', NULL, NULL, NULL),
     ('25b02072-9b7c-5e30-b00e-ba051fe927ce', 'unknown', NULL, NULL, NULL),
-    ('3f1613eb-39fc-5a81-977f-33c6a54e4018', 'unknown', NULL, NULL, NULL),
-    ('83398c12-412c-5ff8-92a5-02b15f9e2b4d', 'unknown', NULL, NULL, NULL),
-    ('145c1d81-8c83-5a22-9289-9f7afc9be244', 'unknown', NULL, NULL, NULL),
-    ('4e5582e3-5a29-5261-b3f2-65fcd3505473', 'unknown', NULL, NULL, NULL),
-    ('f47b0acd-76bd-5e37-8007-a4ea6d3464dd', 'unknown', NULL, NULL, NULL),
-    ('dc47a4e9-e37d-5bda-8073-6dcf6fcce4bd', 'unknown', NULL, NULL, NULL),
-    ('11483a1c-effe-5d03-bf8b-2349479aee7b', 'unknown', NULL, NULL, NULL),
-    ('a55a4d32-9150-5a5a-bbdd-12911bed7ab1', 'unknown', NULL, NULL, NULL),
-    ('e54a2f1f-cf43-508c-81bd-8e75546ef6d3', 'unknown', NULL, NULL, NULL),
-    ('60cc5326-634a-5478-9ee1-ac6c80b6c2af', 'unknown', NULL, NULL, NULL),
-    ('36046bfe-3a9f-5216-98b0-ee4fa26707fa', 'unknown', NULL, NULL, NULL),
-    ('efa2bf7a-102d-5198-a5de-9f5dee954717', 'unknown', NULL, NULL, NULL),
     ('55cf852c-ed2a-5228-b036-b120bf4a8013', 'unknown', NULL, NULL, NULL),
     ('c1d5f556-b3cd-5d3a-8636-be43fe28638c', 'unknown', NULL, NULL, NULL),
     ('c4a6412e-64ac-54a0-8b5e-3cb00df28447', 'unknown', NULL, NULL, NULL),
@@ -43,10 +31,6 @@ INSERT INTO public.port_status (port_id, status, session_started_at, estimated_f
     ('4643e928-fb6c-5cd9-956e-984a4962fee4', 'unknown', NULL, NULL, NULL),
     ('9310c034-8f27-5748-a325-97fcc955a0e6', 'unknown', NULL, NULL, NULL),
     ('65371c4f-036a-5ac3-b7ec-2594a5a8f34f', 'unknown', NULL, NULL, NULL),
-    ('868ed73e-88cb-584c-9bad-a981e9579d68', 'unknown', NULL, NULL, NULL),
-    ('a6aed478-f461-5b9e-b3b5-199451f3502a', 'unknown', NULL, NULL, NULL),
-    ('7d6d40df-9001-5cf1-9797-c86afc9b63c2', 'unknown', NULL, NULL, NULL),
-    ('7b4662d9-fb9b-597d-b3d9-59d52dcb04bf', 'unknown', NULL, NULL, NULL),
     ('0578c2be-1014-5865-bcca-2217ef78a6b8', 'unknown', NULL, NULL, NULL),
     ('2299301e-9b1a-5b3a-bc81-315699df2ccf', 'unknown', NULL, NULL, NULL),
     ('cf9aab76-1c81-5efd-9036-7e474cc81756', 'unknown', NULL, NULL, NULL),
@@ -195,10 +179,4 @@ INSERT INTO public.port_status (port_id, status, session_started_at, estimated_f
     ('8faa3548-ae19-53ac-9797-34f60f9e5345', 'unknown', NULL, NULL, NULL),
     ('471fa91a-83fa-580c-899e-ef89d5b057e8', 'unknown', NULL, NULL, NULL),
     ('80f95598-688a-5c8b-8929-97b5359e9941', 'unknown', NULL, NULL, NULL),
-    ('d91abf38-2803-5e2a-9ca2-98d80231b80b', 'unknown', NULL, NULL, NULL),
-    ('4321c02d-15f8-5086-9b62-917194bb260d', 'unknown', NULL, NULL, NULL),
-    ('fdd909ce-9e65-526b-8d93-5b2dd71449c8', 'unknown', NULL, NULL, NULL),
-    ('88ea4423-5999-5713-bff9-3c172ebbcb33', 'unknown', NULL, NULL, NULL),
-    ('96ea9083-ad3a-5702-820d-63ebf77ae582', 'unknown', NULL, NULL, NULL),
-    ('a31ca39f-d5db-5260-a1a0-fdaf9e1ef4ce', 'unknown', NULL, NULL, NULL),
-    ('a960cf8a-7169-5c0b-bb2b-181b8531224b', 'unknown', NULL, NULL, NULL);
+    ('d91abf38-2803-5e2a-9ca2-98d80231b80b', 'unknown', NULL, NULL, NULL);

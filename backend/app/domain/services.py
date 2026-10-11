@@ -14,6 +14,12 @@ from backend.app.domain.models import (
 )
 
 
+# Current product configuration. Keep connector and vehicle catalog data intact
+# so the search policy can be expanded without changing the database schema.
+ASSUMED_CHARGER_CONNECTOR = "CCS2"
+ASSUMED_CHARGER_POWER_KW = 80.0
+
+
 def _reason_suffix(connector_type: str) -> str:
     return re.sub(r"[^A-Z0-9]+", "_", connector_type.upper()).strip("_")
 

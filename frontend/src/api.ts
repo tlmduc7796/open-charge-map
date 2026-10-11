@@ -6,6 +6,8 @@ import type {
   RecommendationItem,
   RouteResult,
   SearchRequest,
+  SearchStationsRequest,
+  StationSearchResult,
   Station,
   StationStatus,
   Vehicle,
@@ -68,6 +70,16 @@ interface ApiSearchRoute {
   excludedCandidates: { stationId: string; reasonCodes: string[] }[];
   missingKm: number | null;
   nearestStation: ApiStationSummary | null;
+  generatedAt: string;
+}
+
+interface ApiSearchStations {
+  searchId: string;
+  reachableKm: number;
+  stations: ApiSearchOption[];
+  excludedCandidates: { stationId: string; reasonCodes: string[] }[];
+  nearestStation: ApiStationSummary | null;
+  missingKm: number | null;
   generatedAt: string;
 }
 
@@ -134,5 +146,25 @@ export const api = {
       }),
     });
     return toJourneyRecommendation(response);
+  },
+  searchStations: async (payload: SearchStationsRequest): Promise<StationSearchResult> => {
+    const response = await requestJson<ApiSearchStations>("/api/v1/search/stations", {
+      method: "POST",
+      body: JSON.stringify({
+        origin: { lat: payload.location.lat, lng: payload.location.lon },
+        vehicleId: payload.vehicle_id,
+        batteryPct: payload.battery_pct,
+      }),
+    });
+    return {
+      stations: response.stations.map(toItem),
+      excluded_candidates: response.excludedCandidates.map((item) => ({
+        station_id: item.stationId,
+        reason_codes: item.reasonCodes,
+      })),
+      nearest_station_name: response.nearestStation?.name ?? null,
+      missing_km: response.missingKm,
+      reachable_km: response.reachableKm,
+    };
   },
 };

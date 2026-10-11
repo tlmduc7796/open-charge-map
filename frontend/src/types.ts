@@ -117,6 +117,20 @@ export interface SearchRequest {
   battery_pct: number;
 }
 
+export interface SearchStationsRequest {
+  location: GeoPoint;
+  vehicle_id: string;
+  battery_pct: number;
+}
+
+export interface StationSearchResult {
+  stations: RecommendationItem[];
+  excluded_candidates: CandidateExclusion[];
+  nearest_station_name: string | null;
+  missing_km: number | null;
+  reachable_km: number;
+}
+
 export interface PlaceSuggestion {
   place_id: string;
   description: string;

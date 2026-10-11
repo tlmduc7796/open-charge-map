@@ -68,6 +68,10 @@ button { cursor: pointer; }
 .demo-pill, .result-count, .map-provider-chip { border-radius: 999px; padding: 7px 10px; background: #e9f7d8; color: #36581d; font-size: 10px; font-weight: 700; white-space: nowrap; }
 
 .journey-form { padding-bottom: 26px; border-bottom: 1px solid #e3ebe6; }
+.search-mode-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 0 0 18px; padding: 4px; border-radius: 11px; background: #eef4f0; }
+.search-mode-tabs button { min-height: 36px; border: 0; border-radius: 8px; color: #62756f; background: transparent; font-size: 11px; font-weight: 800; }
+.search-mode-tabs button.active { color: #123d35; background: #fff; box-shadow: 0 2px 8px rgba(24, 60, 52, 0.1); }
+.station-search-location { margin-bottom: 15px; }
 .journey-form label { display: grid; gap: 7px; margin: 0 0 15px; color: #49615a; font-size: 11px; font-weight: 700; }
 .journey-form input:not([type="range"]):not([type="checkbox"]), .journey-form select {
   width: 100%;

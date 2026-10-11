@@ -27,7 +27,10 @@ from backend.app.domain.phase7_models import (
 from backend.app.domain.recommendation import RecommendationService
 from backend.app.domain.routing import RoutingService, _haversine_m
 from backend.app.domain.runtime import RuntimeStateStore
-from backend.app.domain.services import check_compatibility, estimate_charging
+from backend.app.domain.services import (
+    ASSUMED_CHARGER_POWER_KW,
+    estimate_charging,
+)
 from backend.app.domain.station_hours import is_confirmed_open
 from backend.app.domain.wait_estimation import WaitEstimator
 from backend.app.search_store import SearchResultStore, SearchSnapshot
@@ -128,13 +131,12 @@ class SearchService:
             fields.add("baseline_arrival_rate_per_hour")
         return tuple(sorted(fields))
 
-    def _nearest_station(self, origin: ApiPoint, vehicle):
+    def _nearest_station(self, origin: ApiPoint):
         eligible = (
             station
             for station in self._stations.all()
             if station.properties.access == "public"
             and is_confirmed_open(station)
-            and check_compatibility(vehicle, station).compatible
         )
         nearest = min(
             eligible,
@@ -289,7 +291,7 @@ class SearchService:
                 item.model_copy(update={"rank": index})
                 for index, item in enumerate(ordered[: payload.limit], start=1)
             )
-            nearest, nearest_km = self._nearest_station(payload.origin, vehicle)
+            nearest, nearest_km = self._nearest_station(payload.origin)
             provisional = SearchRouteResponse(
                 search_id="pending",
                 case="needCharge" if ranked else "fallback",
@@ -344,15 +346,6 @@ class SearchService:
                     SearchExclusion(
                         station_id=station.station_id,
                         reason_codes=("OPENING_HOURS_UNVERIFIED",),
-                    )
-                )
-                continue
-            compatibility = check_compatibility(vehicle, station)
-            if not compatibility.compatible:
-                exclusions.append(
-                    SearchExclusion(
-                        station_id=station.station_id,
-                        reason_codes=compatibility.reason_codes,
                     )
                 )
                 continue
@@ -423,7 +416,7 @@ class SearchService:
                 vehicle,
                 station,
                 arrival_soc=arrival_pct / 100,
-                effective_power_kw=compatibility.effective_power_kw,
+                effective_power_kw=ASSUMED_CHARGER_POWER_KW,
             )
             total_min = travel_min + wait.estimated_wait_min + charging.estimated_charge_min
             options.append(
@@ -450,7 +443,7 @@ class SearchService:
             item.model_copy(update={"rank": index})
             for index, item in enumerate(ordered[: payload.limit], start=1)
         )
-        nearest, nearest_km = self._nearest_station(payload.origin, vehicle)
+        nearest, nearest_km = self._nearest_station(payload.origin)
         provisional = SearchStationsResponse(
             search_id="pending",
             reachable_km=reachable_km,

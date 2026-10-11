@@ -13,6 +13,8 @@ from backend.app.domain.models import (
     WaitEstimateResult,
 )
 
+DEFAULT_WAIT_MIN = 5
+
 
 class ArrivalRateProvider(Protocol):
     def baseline_rate(self, station_id: str) -> float: ...
@@ -26,13 +28,17 @@ class WaitEstimator:
         assumptions: ArrivalRateProvider,
         *,
         scoring_wait_cap_min: float = 120,
+        default_wait_min: float = DEFAULT_WAIT_MIN,
         ml_gateway: MlGateway | None = None,
     ) -> None:
         if scoring_wait_cap_min <= 0:
             raise ValueError("scoring_wait_cap_min must be positive")
+        if default_wait_min < 0:
+            raise ValueError("default_wait_min must be non-negative")
         self._gateway = ml_gateway
         self._assumptions = assumptions
         self._scoring_wait_cap_min = scoring_wait_cap_min
+        self._default_wait_min = default_wait_min
 
     def baseline_source(self, station_id: str) -> str:
         return self._assumptions.baseline_source(station_id)
@@ -48,13 +54,27 @@ class WaitEstimator:
             raise ValueError("evaluation_at must include a timezone")
         if status.station_id != forecast.station_id:
             raise ValueError("status and forecast must reference the same station")
-        if status.queue_length is None or status.avg_session_duration_min is None:
-            raise ValueError("wait estimation requires queue and session-duration telemetry")
         if forecast.predicted_occupied_ports > status.operational_ports:
             raise ValueError("predicted occupied ports exceed current operational capacity")
 
         flags: list[str] = []
         arrival_rate = self._assumptions.baseline_rate(status.station_id)
+        if status.queue_length is None or status.avg_session_duration_min is None:
+            return self._result(
+                status,
+                forecast,
+                evaluation_at,
+                arrival_rate,
+                total_arrival_rate=arrival_rate,
+                service_rate=None,
+                traffic_intensity=None,
+                probability_wait=None,
+                erlang_wait=None,
+                current_state_wait=None,
+                estimated_wait=self._default_wait_min,
+                flags=("WAIT_DEFAULTED_MISSING_INPUTS",),
+            )
+
         service_rate = 60 / status.avg_session_duration_min
 
         if status.operational_ports == 0:
@@ -161,12 +181,13 @@ class WaitEstimator:
         forecast: OccupancyForecastResult,
         evaluation_at: datetime,
         arrival_rate: float,
-        service_rate: float,
+        service_rate: float | None = None,
         *,
+        total_arrival_rate: float | None = None,
         traffic_intensity: float | None,
         probability_wait: float | None,
-        erlang_wait: float,
-        current_state_wait: float,
+        erlang_wait: float | None,
+        current_state_wait: float | None,
         estimated_wait: float,
         flags: tuple[str, ...],
     ) -> WaitEstimateResult:
@@ -178,7 +199,9 @@ class WaitEstimator:
             current_queue_length=status.queue_length,
             avg_session_duration_min=status.avg_session_duration_min,
             baseline_arrival_rate_per_hour=arrival_rate,
-            total_arrival_rate_per_hour=arrival_rate,
+            total_arrival_rate_per_hour=(
+                arrival_rate if total_arrival_rate is None else total_arrival_rate
+            ),
             service_rate_per_server_per_hour=service_rate,
             traffic_intensity=traffic_intensity,
             erlang_c_probability_wait=probability_wait,

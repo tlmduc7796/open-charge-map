@@ -12,6 +12,7 @@ import type {
   ModelStatus,
   RecommendationItem,
   RouteResult,
+  StationSearchResult,
   Station,
   StationStatus,
   Vehicle,
@@ -20,6 +21,8 @@ import type {
 const DEFAULT_ORIGIN: GeoPoint = { lat: 10.7075, lon: 106.705, label: "Nguyễn Hữu Thọ, Quận 7" };
 const DEFAULT_DESTINATION: GeoPoint = { lat: 10.806, lon: 106.687, label: "Phú Nhuận" };
 
+const CURRENT_VEHICLE_ID = "EV_VF5_PLUS";
+
 export default function App() {
   const [stations, setStations] = useState<Station[]>([]);
   const [statuses, setStatuses] = useState<Record<string, StationStatus>>({});
@@ -27,11 +30,13 @@ export default function App() {
   const [modelStatus, setModelStatus] = useState<ModelStatus | null>(null);
   const [vehicleId, setVehicleId] = useState("");
   const [initialSoc, setInitialSoc] = useState(0.5);
+  const [searchMode, setSearchMode] = useState<"stations" | "route">("route");
   const [origin, setOrigin] = useState<GeoPoint>(DEFAULT_ORIGIN);
   const [destination, setDestination] = useState<GeoPoint>(DEFAULT_DESTINATION);
   const [originValid, setOriginValid] = useState(true);
   const [destinationValid, setDestinationValid] = useState(true);
   const [recommendation, setRecommendation] = useState<JourneyRecommendation | null>(null);
+  const [stationSearch, setStationSearch] = useState<StationSearchResult | null>(null);
   const [route, setRoute] = useState<RouteResult | null>(null);
   const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
   const [mapProvider, setMapProvider] = useState<"goong" | "osm">("goong");
@@ -58,10 +63,12 @@ export default function App() {
         api.modelStatus(),
       ]);
       if (!vehicleList.length) throw new Error("Backend không có hồ sơ xe.");
+      const currentVehicle = vehicleList.find((item) => item.vehicle_id === CURRENT_VEHICLE_ID);
+      if (!currentVehicle) throw new Error("Backend does not have the VinFast VF 5 Plus profile.");
       setStations(stationList);
-      setVehicles(vehicleList);
+      setVehicles([currentVehicle]);
       setModelStatus(model);
-      setVehicleId((current) => current || vehicleList[0].vehicle_id);
+      setVehicleId(CURRENT_VEHICLE_ID);
       await refreshStatuses(stationList);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Không thể tải dữ liệu backend.");
@@ -81,10 +88,21 @@ export default function App() {
   }, []);
 
   const submitJourney = async () => {
-    if (!vehicleId || !originValid || !destinationValid) return;
+    if (!vehicleId || !destinationValid || (searchMode === "route" && !originValid)) return;
     setSubmitting(true);
     setError(null);
     try {
+      if (searchMode === "stations") {
+        const result = await api.searchStations({
+          location: destination,
+          vehicle_id: vehicleId,
+          battery_pct: Math.round(initialSoc * 100),
+        });
+        setStationSearch(result);
+        setSelectedStationId(result.stations[0]?.station_id ?? null);
+        setRoute(result.stations[0]?.route ?? null);
+        return;
+      }
       const result = await api.searchRoute({
         origin,
         destination,
@@ -111,7 +129,15 @@ export default function App() {
     [selectedStationId, stations],
   );
   const selectedRecommendation =
-    recommendation?.recommendations.find((item) => item.station_id === selectedStationId) ?? null;
+    recommendation?.recommendations.find((item) => item.station_id === selectedStationId)
+    ?? stationSearch?.stations.find((item) => item.station_id === selectedStationId)
+    ?? null;
+  const activeItems = searchMode === "stations"
+    ? stationSearch?.stations ?? []
+    : recommendation?.recommendations ?? [];
+  const activeExclusions = searchMode === "stations"
+    ? stationSearch?.excluded_candidates ?? []
+    : recommendation?.excluded_candidates ?? [];
   const notice = useMemo(() => {
     if (!recommendation) return null;
     if (recommendation.case === "enough") {
@@ -174,14 +200,15 @@ export default function App() {
       <div className="workspace" id="top">
         <section className="control-column">
           <JourneyForm
+            searchMode={searchMode}
             vehicles={vehicles}
             vehicleId={vehicleId}
             initialSoc={initialSoc}
             origin={origin}
             destination={destination}
-            locationsValid={originValid && destinationValid}
+            locationsValid={searchMode === "stations" ? destinationValid : originValid && destinationValid}
             submitting={submitting}
-            onVehicleChange={setVehicleId}
+            onSearchModeChange={setSearchMode}
             onInitialSocChange={setInitialSoc}
             onOriginChange={setOrigin}
             onDestinationChange={setDestination}
@@ -190,13 +217,17 @@ export default function App() {
             onSubmit={() => void submitJourney()}
           />
           <RecommendationList
-            items={recommendation?.recommendations ?? []}
-            exclusions={recommendation?.excluded_candidates ?? []}
+            items={activeItems}
+            exclusions={activeExclusions}
             stations={stations}
             vehicle={selectedVehicle}
             selectedStationId={selectedStationId}
-            hasRun={recommendation !== null}
-            notice={notice}
+            hasRun={searchMode === "stations" ? stationSearch !== null : recommendation !== null}
+            notice={searchMode === "route" ? notice : null}
+            title={searchMode === "stations" ? "Trạm gần điểm đến" : "Trạm trên hành trình"}
+            emptyMessage={searchMode === "stations"
+              ? `Không có trạm phù hợp trong phạm vi pin còn lại${stationSearch?.nearest_station_name ? `. Trạm gần nhất trong dữ liệu: ${stationSearch.nearest_station_name}` : ""}.`
+              : "Không có trạm tương thích và tới được cho hành trình này."}
             onSelect={selectRecommendation}
           />
         </section>
