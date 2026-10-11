@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import hmac
+import logging
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
-from math import ceil
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
@@ -38,6 +38,9 @@ from backend.app.api_v1_models import (
     TripPositionRequest,
     TripResponse,
 )
+from backend.app.domain.forecasting import available_ports
+
+logger = logging.getLogger("smart_ev.api_v1")
 
 router = APIRouter(
     prefix="/api/v1",
@@ -119,7 +122,7 @@ def _available_at(request: Request, status, offset: int) -> tuple[int, str, tupl
     forecast = request.app.state.occupancy_forecast_service.forecast_occupancy(
         status, horizon_min=offset
     )
-    available = max(0, status.operational_ports - ceil(forecast.predicted_occupied_ports))
+    available = available_ports(status.operational_ports, forecast.predicted_occupied_ports)
     return available, forecast.prediction_source, forecast.flags
 
 
@@ -420,6 +423,13 @@ def update_station_occupancy(
             status_code=422, detail={"code": "VALIDATION_ERROR", "message": str(exc)}
         ) from exc
     request.app.state.runtime_state.refresh()
+    writer = request.app.state.prediction_writer
+    if writer is not None:
+        # The ingest already succeeded; a forecast failure must not turn it into an error.
+        try:
+            writer.refresh(item.station_id for item in payload.updates)
+        except Exception:
+            logger.exception("prediction_refresh_failed")
     return StationOccupancyBatchResponse(updated=updated, updated_at=datetime.now(UTC))
 
 

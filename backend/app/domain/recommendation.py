@@ -203,14 +203,14 @@ class RecommendationService:
                 continue
 
             eta_at = query.departure_at + timedelta(seconds=duration_to_station_s)
-            horizon_min = max(1, round(duration_to_station_s / 60))
-            forecast = self._forecasting.forecast_occupancy(
-                status, horizon_min=horizon_min
+            arrival = self._forecasting.forecast_arrival(
+                status, arrival_min=duration_to_station_s / 60
             )
+            forecast = arrival.at_arrival
             try:
                 wait = self._wait_estimator.estimate_wait(
                     status,
-                    forecast,
+                    arrival,
                     evaluation_at=eta_at,
                 )
             except (KeyError, ValueError):

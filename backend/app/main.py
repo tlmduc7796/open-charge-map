@@ -25,7 +25,7 @@ from backend.app.catalog_repository import (
 from backend.app.config import load_settings
 from backend.app.database import validate_database
 from backend.app.domain import load_domain_data
-from backend.app.domain.forecasting import OccupancyForecastService
+from backend.app.domain.forecasting import MODEL_HORIZONS_MIN, OccupancyForecastService
 from backend.app.domain.geocoding import GeocodingService, GoongGeocodingProvider
 from backend.app.domain.ml_gateway import DefaultMlGateway
 from backend.app.domain.recommendation import (
@@ -41,7 +41,17 @@ from backend.app.domain.runtime import RuntimeStateStore
 from backend.app.domain.search import SearchService
 from backend.app.domain.trip_service import TripService
 from backend.app.domain.wait_estimation import WaitEstimator
+from backend.app.domain.xgboost_predictor import (
+    XgboostOccupancyPredictor,
+    model_files_available,
+)
 from backend.app.logging_config import configure_logging
+from backend.app.occupancy_history_repository import DatabaseOccupancyHistoryRepository
+from backend.app.prediction_repository import PredictionWriter
+from backend.app.profile_repository import (
+    DatabaseOccupancyProfileRepository,
+    load_or_refresh,
+)
 from backend.app.search_store import SearchRateLimiter, SearchResultStore
 from backend.app.simulation_repository import DatabaseSimulationRepository
 from backend.app.station_state_repository import DatabaseStationStateRepository
@@ -69,11 +79,14 @@ async def _simulation_loop(app: FastAPI, stop: asyncio.Event) -> None:
     while not stop.is_set():
         tick_at = _simulation_tick_at(datetime.now(UTC))
         try:
-            stations_updated, predictions_updated = await asyncio.to_thread(
+            stations_updated = await asyncio.to_thread(
                 app.state.simulation_repository.update_tick,
                 changed_at=tick_at,
             )
             await asyncio.to_thread(app.state.runtime_state.refresh)
+            predictions_updated = await asyncio.to_thread(
+                app.state.prediction_writer.refresh
+            )
             logger.info(
                 "database_simulation_tick_complete stations=%d predictions=%d",
                 stations_updated,
@@ -95,6 +108,13 @@ async def _simulation_loop(app: FastAPI, stop: asyncio.Event) -> None:
 async def lifespan(app: FastAPI):
     worker = None
     stop = asyncio.Event()
+    if app.state.prediction_writer is not None:
+        # Fill the predictions table from the current history before the first feed arrives.
+        try:
+            written = await asyncio.to_thread(app.state.prediction_writer.refresh)
+            logger.info("predictions_initialised rows=%d", written)
+        except Exception:
+            logger.exception("predictions_initialisation_failed")
     if app.state.simulation_repository is not None:
         worker = asyncio.create_task(_simulation_loop(app, stop))
     try:
@@ -116,12 +136,9 @@ app.add_middleware(
 )
 app.state.settings = settings
 app.state.domain_data = load_domain_data(settings.data_dir)
-# Every backend -> ML call goes through this gateway; it returns fixed defaults until the
-# real models are integrated (see backend/app/domain/ml_gateway.py).
+# Wait distribution (B2) and anti-herding (B3) still answer with fixed defaults from this
+# gateway (see backend/app/domain/ml_gateway.py); occupancy comes from the XGBoost predictor.
 app.state.ml_gateway = DefaultMlGateway()
-app.state.occupancy_forecast_service = OccupancyForecastService(
-    ml_gateway=app.state.ml_gateway
-)
 uses_database = settings.catalog_storage == "database"
 app.state.database_engine = (
     create_engine(settings.database_url, pool_pre_ping=True) if uses_database else None
@@ -157,12 +174,61 @@ else:
     app.state.station_state_repository = None
     app.state.simulation_repository = None
 app.state.runtime_state = RuntimeStateStore(app.state.station_status_repository)
-# Baseline arrival rates come from the JSON fixture; persisting them is deferred.
+# Baseline arrival rates come from the JSON fixture; the wait estimate no longer uses them.
 app.state.arrival_rate_repository = app.state.domain_data.queue_assumptions
+
+
+def _load_predictor(model_dir):
+    """The XGBoost occupancy adapter, or None (default values) when it cannot be loaded."""
+    if not model_files_available(model_dir):
+        logger.warning("occupancy_model_files_missing dir=%s", model_dir)
+        return None
+    try:
+        predictor = XgboostOccupancyPredictor(model_dir)
+    except Exception:
+        logger.exception("occupancy_model_load_failed dir=%s", model_dir)
+        return None
+    logger.info("occupancy_model_loaded version=%s", predictor.model_version)
+    return predictor
+
+
+# The model needs the last 12 five-minute buckets, which only exist in database mode.
+occupancy_predictor = _load_predictor(settings.model_dir) if uses_database else None
+app.state.occupancy_predictor = occupancy_predictor
+app.state.occupancy_profile_repository = (
+    DatabaseOccupancyProfileRepository(app.state.database_engine)
+    if occupancy_predictor is not None
+    else None
+)
+if app.state.occupancy_profile_repository is not None:
+    load_or_refresh(app.state.occupancy_profile_repository)
+app.state.occupancy_forecast_service = OccupancyForecastService(
+    occupancy_predictor,
+    supported_model_horizons=(
+        MODEL_HORIZONS_MIN if occupancy_predictor is not None else (5, 10, 15)
+    ),
+    ml_gateway=app.state.ml_gateway,
+    window_provider=(
+        DatabaseOccupancyHistoryRepository(app.state.database_engine)
+        if occupancy_predictor is not None
+        else None
+    ),
+    profile_provider=app.state.occupancy_profile_repository,
+    profile_tau_min=settings.profile_blend_tau_min,
+)
 app.state.wait_estimator = WaitEstimator(
-    app.state.arrival_rate_repository,
     scoring_wait_cap_min=settings.wait_scoring_cap_min,
     ml_gateway=app.state.ml_gateway,
+)
+app.state.prediction_writer = (
+    PredictionWriter(
+        app.state.database_engine,
+        app.state.station_status_repository,
+        app.state.occupancy_forecast_service,
+        app.state.wait_estimator,
+    )
+    if uses_database
+    else None
 )
 goong_geocoding_provider = (
     GoongGeocodingProvider(

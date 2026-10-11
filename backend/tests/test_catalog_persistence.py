@@ -87,17 +87,14 @@ def test_database_catalog_serves_stations_with_unknown_port_status() -> None:
                     "AS placeholders FROM port_status"
                 )
             ).mappings().one()
+            # The slots are seeded empty, but the backend (or a prediction writer test) may
+            # have filled some, so only their layout is asserted here.
             prediction_slots = connection.execute(
-                text(
-                    "SELECT count(*) AS slots, "
-                    "count(*) FILTER (WHERE run_at IS NULL AND predicted_occupancy_ratio IS NULL "
-                    "AND mean_wait_minutes IS NULL AND prediction_source IS NULL) AS empty "
-                    "FROM predictions"
-                )
+                text("SELECT count(*) AS slots FROM predictions")
             ).mappings().one()
         assert readiness == {"missing_opening": 0, "unknown_access": 0}
         assert placeholders["ports"] == placeholders["placeholders"] > 0
-        assert prediction_slots["slots"] == prediction_slots["empty"] == 66
+        assert prediction_slots["slots"] == 66
 
         assert len(vehicle_items) == 18
         assert all(vehicle.battery_capacity_kwh > 0 for vehicle in vehicle_items)
@@ -136,8 +133,6 @@ def _remove_bucket(engine, station_code: str, bucket_at: datetime) -> None:
 @REQUIRES_DATABASE
 def test_recommendation_excludes_stations_until_occupancy_is_reported() -> None:
     engine = create_engine(TEST_DATABASE_URL, pool_pre_ping=True)
-    settings = load_settings()
-    data = load_domain_data(settings.data_dir)
     stations = DatabaseStationRepository(engine)
     statuses = DatabaseStationStatusRepository(engine)
     vehicles = DatabaseVehicleRepository(engine)
@@ -149,7 +144,7 @@ def test_recommendation_excludes_stations_until_occupancy_is_reported() -> None:
             runtime,
             RoutingService(goong=StraightLineRoutingProvider(), osrm=None),
             OccupancyForecastService(),
-            WaitEstimator(data.queue_assumptions, scoring_wait_cap_min=120),
+            WaitEstimator(scoring_wait_cap_min=120),
             RecommendationThresholds(
                 max_detour_min=30,
                 max_wait_min=120,

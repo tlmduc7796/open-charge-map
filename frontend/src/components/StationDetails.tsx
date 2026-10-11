@@ -174,9 +174,6 @@ function ForecastChart({
   ].join("; ");
 
   const labelAnchor = arrivalX < pad.left + 50 ? "start" : arrivalX > width - 60 || offAxis ? "end" : "middle";
-  const horizonX = x(lastPoint.offset_min) + barW / 2 + 4;
-  const showHorizonLabel = xMax > lastPoint.offset_min && width - pad.right - horizonX >= 70;
-
   return (
     <section className="detail-section" aria-label="Dự báo cổng trống">
       <div className="detail-section-head">
@@ -228,10 +225,6 @@ function ForecastChart({
               </g>
             );
           })}
-
-          {showHorizonLabel && (
-            <text className="chart-tick" x={width - pad.right} y={baseline - 8} textAnchor="end">Chưa có dự báo</text>
-          )}
 
           {hasArrival && arrivalValue !== null && (
             <g className="chart-arrival" data-minute={arrivalMin}>

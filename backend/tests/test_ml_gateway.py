@@ -105,20 +105,16 @@ def test_service_without_gateway_keeps_persistence_fallback(status: StationStatu
     assert service.prediction_source == "persistence"
 
 
-def test_wait_estimate_carries_gateway_distribution(
-    domain_data: DomainData, status: StationStatus
-) -> None:
+def test_wait_estimate_carries_gateway_distribution(status: StationStatus) -> None:
     gateway = DefaultMlGateway()
-    forecast = OccupancyForecastService(ml_gateway=gateway).forecast_occupancy(
-        status, horizon_min=5
+    arrival = OccupancyForecastService(ml_gateway=gateway).forecast_arrival(
+        status, arrival_min=5
     )
-    estimator = WaitEstimator(
-        domain_data.queue_assumptions, scoring_wait_cap_min=120, ml_gateway=gateway
-    )
+    estimator = WaitEstimator(scoring_wait_cap_min=120, ml_gateway=gateway)
 
     result = estimator.estimate_wait(
         status,
-        forecast,
+        arrival,
         evaluation_at=datetime.fromisoformat("2026-09-25T18:00:00+07:00"),
     )
 
@@ -128,16 +124,12 @@ def test_wait_estimate_carries_gateway_distribution(
     assert result.wait_distribution.p90_wait_min == result.estimated_wait_min
 
 
-def test_wait_estimate_without_gateway_has_no_distribution(
-    domain_data: DomainData, status: StationStatus
-) -> None:
-    forecast = OccupancyForecastService().forecast_occupancy(status, horizon_min=5)
+def test_wait_estimate_without_gateway_has_no_distribution(status: StationStatus) -> None:
+    arrival = OccupancyForecastService().forecast_arrival(status, arrival_min=5)
 
-    result = WaitEstimator(
-        domain_data.queue_assumptions, scoring_wait_cap_min=120
-    ).estimate_wait(
+    result = WaitEstimator(scoring_wait_cap_min=120).estimate_wait(
         status,
-        forecast,
+        arrival,
         evaluation_at=datetime.fromisoformat("2026-09-25T18:00:00+07:00"),
     )
 

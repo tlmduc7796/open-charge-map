@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from backend.app.domain.phase7_models import ModelStatus, RouteRequest, RouteResult
+from backend.app.domain.xgboost_predictor import model_files_available
 
 router = APIRouter()
 
@@ -73,26 +74,34 @@ def route(payload: RouteRequest, request: Request) -> RouteResult:
 @router.get("/model/status", response_model=ModelStatus, tags=["model"])
 def model_status(request: Request) -> ModelStatus:
     settings = request.app.state.settings
-    model_available = settings.model_artifact_path.is_file()
-    preprocessor_available = settings.model_preprocessor_path.is_file()
+    model_available = model_files_available(settings.model_dir)
     metadata_available = settings.model_meta_path.is_file()
     forecasting = request.app.state.occupancy_forecast_service
     model_loaded = forecasting.model_loaded
-    artifacts_available = model_available and preprocessor_available and metadata_available
-    release_ready = artifacts_available and model_loaded
-    flags: tuple[str, ...] = ()
-    if not artifacts_available:
-        flags = ("PHASE_04_ARTIFACTS_UNAVAILABLE",)
+    flags: list[str] = []
+    if not model_available:
+        flags.append("MODEL_ARTIFACT_UNAVAILABLE")
     elif not model_loaded:
-        flags = ("MODEL_ADAPTER_NOT_LOADED",)
+        flags.append("MODEL_ADAPTER_NOT_LOADED")
     if not model_loaded and forecasting.prediction_source == "default":
-        flags = (*flags, "ML_DEFAULT_VALUES_ACTIVE")
+        flags.append("ML_DEFAULT_VALUES_ACTIVE")
+    if model_loaded:
+        # The booster was trained on the simulator's data and loses to persistence at +5..+15
+        # minutes (see ml/data/occupancy_xgb/metrics.json), so it is never release ready.
+        flags.extend(
+            (
+                "SYNTHETIC_TRAINING_DATA",
+                "MODEL_BELOW_PERSISTENCE_AT_5_15_MIN",
+                "MODEL_METADATA_CONTRACT_NOT_MET",
+            )
+        )
     return ModelStatus(
         prediction_source=forecasting.prediction_source,
         model_artifact_available=model_available,
-        preprocessor_artifact_available=preprocessor_available,
+        # Feature engineering lives in code (ml/features.py); there is no separate artifact.
+        preprocessor_artifact_available=model_available,
         metadata_available=metadata_available,
         model_adapter_loaded=model_loaded,
-        release_ready=release_ready,
-        flags=flags,
+        release_ready=False,
+        flags=tuple(flags),
     )

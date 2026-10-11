@@ -60,6 +60,8 @@ class Settings:
     model_artifact_path: Path
     model_preprocessor_path: Path
     model_meta_path: Path
+    model_dir: Path
+    profile_blend_tau_min: float
     wait_scoring_cap_min: float
     routing_timeout_s: float
     recommend_max_detour_min: float
@@ -119,6 +121,9 @@ def load_settings() -> Settings:
         model_meta_path=_resolve_from_root(
             os.getenv("MODEL_META_PATH", "ml/artifacts/occupancy_model_meta.json")
         ),
+        # Six XGBoost boosters `model_h{5..30}.json` written by `python -m ml.train_eval`.
+        model_dir=_resolve_from_root(os.getenv("MODEL_DIR", "ml/model")),
+        profile_blend_tau_min=_read_positive_float("PROFILE_BLEND_TAU_MIN", 30),
         wait_scoring_cap_min=_read_positive_float("WAIT_SCORING_CAP_MIN", 120),
         routing_timeout_s=_read_positive_float("ROUTING_TIMEOUT_S", 8),
         recommend_max_detour_min=_read_positive_float(

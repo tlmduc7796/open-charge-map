@@ -126,10 +126,7 @@ class SearchService:
         station_id: str,
         status: StationStatus,
     ) -> tuple[str, ...]:
-        fields = set(status.synthetic_fields)
-        if self._wait_estimator.baseline_source(station_id) == "synthetic":
-            fields.add("baseline_arrival_rate_per_hour")
-        return tuple(sorted(fields))
+        return tuple(sorted(status.synthetic_fields))
 
     def _nearest_station(self, origin: ApiPoint):
         eligible = (
@@ -423,13 +420,12 @@ class SearchService:
                 )
                 continue
             travel_min = route.duration_s / 60
-            forecast = self._forecasting.forecast_occupancy(
-                status, horizon_min=max(1, round(travel_min))
-            )
+            arrival = self._forecasting.forecast_arrival(status, arrival_min=travel_min)
+            forecast = arrival.at_arrival
             try:
                 wait = self._wait_estimator.estimate_wait(
                     status,
-                    forecast,
+                    arrival,
                     evaluation_at=generated_at + timedelta(minutes=travel_min),
                 )
             except (KeyError, ValueError):
