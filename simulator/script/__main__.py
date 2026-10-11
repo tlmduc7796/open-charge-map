@@ -2,6 +2,7 @@
 
     python -m script pull   # DB (chỉ đọc) -> data/catalog_snapshot.json (+ config nếu chưa có)
     python -m script run    # snapshot + config -> sinh lượt đến, phiên sạc, kiểm tra -> data/
+    python -m script occupancy   # sessions.csv + ports.csv -> data/station_occupancy_5m.csv
 """
 
 from __future__ import annotations
@@ -10,9 +11,10 @@ import argparse
 import hashlib
 import json
 import sys
+from datetime import date
 from pathlib import Path
 
-from script.config import CONFIG_PATH, DATA_DIR, ConfigError, new_user_config
+from script.config import CONFIG_PATH, DATA_DIR, ROOT, ConfigError, new_user_config
 
 SNAPSHOT_NAME = "catalog_snapshot.json"
 
@@ -99,6 +101,27 @@ def cmd_run(args: argparse.Namespace) -> int:
     return 1 if errors else 0
 
 
+def cmd_occupancy(args: argparse.Namespace) -> int:
+    from script import occupancy
+
+    data_dir = args.data_dir
+    output = args.output or data_dir / "station_occupancy_5m.csv"
+    result = occupancy.convert_files(
+        sessions_path=args.sessions or data_dir / "sessions.csv",
+        ports_path=args.ports or data_dir / "ports.csv",
+        stations_sql=args.stations_sql,
+        output_path=output,
+        start_date=args.start_date,
+        end_date=args.end_date,
+    )
+    print(
+        f"{result['rows']} dòng ({result['stations']} trạm, "
+        f"{result['start'].isoformat()} -> {result['end'].isoformat()}), "
+        f"occupied tối đa {result['occupied_max']} cổng -> {output}"
+    )
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m script", description=__doc__)
     parser.add_argument("--config", type=Path, default=CONFIG_PATH, help="file config của bạn")
@@ -109,6 +132,27 @@ def main(argv: list[str] | None = None) -> int:
     pull.set_defaults(handler=cmd_pull)
     run = commands.add_parser("run", help="sinh lượt đến và phiên sạc từ snapshot + config")
     run.set_defaults(handler=cmd_run)
+    occupancy = commands.add_parser(
+        "occupancy", help="đổi sessions.csv thành occupancy 5 phút (bảng station_occupancy_5m)"
+    )
+    occupancy.add_argument("--sessions", type=Path, help="mặc định: <data-dir>/sessions.csv")
+    occupancy.add_argument("--ports", type=Path, help="mặc định: <data-dir>/ports.csv")
+    occupancy.add_argument(
+        "--stations-sql",
+        type=Path,
+        default=ROOT.parent / "database" / "data" / "catalog" / "stations.sql",
+        help="nguồn ánh xạ mã trạm -> UUID",
+    )
+    occupancy.add_argument(
+        "--output", type=Path, help="mặc định: <data-dir>/station_occupancy_5m.csv"
+    )
+    occupancy.add_argument(
+        "--start-date", type=date.fromisoformat, help="ngày đầu (trọn ngày); mặc định theo phiên"
+    )
+    occupancy.add_argument(
+        "--end-date", type=date.fromisoformat, help="ngày cuối (trọn ngày); mặc định theo phiên"
+    )
+    occupancy.set_defaults(handler=cmd_occupancy)
     args = parser.parse_args(argv)
     for stream in (sys.stdout, sys.stderr):  # console Windows mặc định không phải UTF-8
         if hasattr(stream, "reconfigure"):

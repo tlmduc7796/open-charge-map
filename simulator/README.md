@@ -15,6 +15,7 @@ Python 3.12, chạy mọi lệnh từ thư mục `simulator/`:
 python -m pip install -r requirements.txt   # numpy, simpy, psycopg
 python -m script pull                    # DB (chỉ đọc) -> data/catalog_snapshot.json
 python -m script run                     # sinh lượt đến + phiên sạc + kiểm tra -> data/
+python -m script occupancy               # sessions.csv + ports.csv -> data/station_occupancy_5m.csv
 ```
 
 - `pull` đọc `DATABASE_URL` (tham số `--database-url`, biến môi trường, `.env` gốc repo; mặc định là
@@ -49,6 +50,14 @@ Khối `advanced` (hệ số theo giờ/thứ, trễ cắm, idle, rút sớm, gi
 | `debug/arrivals.csv`, `debug/queue_log.csv` | lượt đến, hàng đợi, xe bỏ đi (chỉ để kiểm thử) |
 | `validation_report.md` | kết quả các bất biến và thống kê hàng đợi |
 | `run_manifest.json` | seed, sha256 snapshot/config/`sessions.csv`, số dòng |
+| `station_occupancy_5m.csv` | do `occupancy` sinh; cột bảng `station_occupancy_5m` trừ `id`, `queue_length` |
+
+`occupancy` đọc `sessions.csv`, `ports.csv` và ánh xạ mã trạm → UUID từ
+`database/data/catalog/stations.sql` (không cần DB). Mỗi trạm × mỗi mốc 5 phút của các ngày trọn
+vẹn có phiên (hoặc `--start-date/--end-date`): `occupied_ports` là số cổng có xe đang cắm tại đúng
+mốc đó (`t_connect <= bucket_at < t_disconnect`, gồm cả xe đã sạc xong chưa rút);
+`total_ports = operational_ports` vì simulator không có cổng hỏng. Không xuất `queue_length`
+(nạp vào bảng sẽ là NULL). Ngày đầu bắt đầu từ trạng thái rỗng nên vài giờ đầu thấp hơn thực tế.
 
 Cùng snapshot + config + seed cho `sessions.csv` giống hệt (so `sessions_sha256`).
 
