@@ -155,6 +155,20 @@ export interface SearchRequest {
   include_optional_stops?: boolean;
 }
 
+/** The user pressed "Chỉ đường": logged to compare the system's rank-1 pick with their choice. */
+export interface DirectionClick {
+  mode: "stations" | "route";
+  origin: GeoPoint;
+  /** Only for the route search; the station search has no end point. */
+  destination: GeoPoint | null;
+  vehicle_id: string;
+  battery_pct: number;
+  /** Rank-1 station of the search. */
+  recommended_station_id: string;
+  /** Station the user actually pressed "Chỉ đường" on. */
+  actual_station_id: string;
+}
+
 export interface SearchStationsRequest {
   location: GeoPoint;
   vehicle_id: string;

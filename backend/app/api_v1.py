@@ -6,10 +6,8 @@ import hmac
 import logging
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
-from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import APIRouter, Header, HTTPException, Query, Request
 
 from backend.app.api_v1_models import (
     ApiErrorResponse,
@@ -21,6 +19,8 @@ from backend.app.api_v1_models import (
     ConnectorNow,
     DemoClockResponse,
     DemoClockUpdateRequest,
+    DirectionClickRequest,
+    DirectionClickResponse,
     PortResponse,
     PortStatusBatchRequest,
     PortStatusBatchResponse,
@@ -34,11 +34,6 @@ from backend.app.api_v1_models import (
     StationOccupancyBatchRequest,
     StationOccupancyBatchResponse,
     StationSummary,
-    TripActionRequest,
-    TripCreatedResponse,
-    TripCreateRequest,
-    TripPositionRequest,
-    TripResponse,
 )
 from backend.app.domain.forecasting import available_ports
 from backend.app.profile_repository import refresh_as_of as refresh_profile_as_of
@@ -52,7 +47,6 @@ router = APIRouter(
         for status in (400, 401, 403, 404, 409, 422, 429, 503)
     },
 )
-trip_bearer = HTTPBearer(auto_error=False, scheme_name="TripBearer")
 
 
 def _bbox(value: str | None) -> tuple[float, float, float, float] | None:
@@ -550,96 +544,35 @@ def search_route(payload: SearchRouteRequest, request: Request) -> SearchRouteRe
         ) from exc
 
 
-def _trip_service(request: Request):
-    service = request.app.state.trip_service
-    if service is None:
-        raise HTTPException(status_code=503, detail="trip database is unavailable")
-    return service
-
-
-def _trip_token(
-    credentials: HTTPAuthorizationCredentials | None = Depends(trip_bearer),
-) -> str:
-    if credentials is None or credentials.scheme.lower() != "bearer":
-        raise HTTPException(
-            status_code=401,
-            detail={"code": "TRIP_TOKEN_REQUIRED", "message": "trip bearer token required"},
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return credentials.credentials
-
-
 @router.post(
-    "/trips", response_model=TripCreatedResponse, status_code=201, tags=["v1-trips"]
+    "/direction-clicks",
+    response_model=DirectionClickResponse,
+    status_code=201,
+    tags=["v1-logs"],
 )
-def create_trip(payload: TripCreateRequest, request: Request) -> TripCreatedResponse:
+def log_direction_click(
+    payload: DirectionClickRequest, request: Request
+) -> DirectionClickResponse:
+    """Record that the user pressed "Chỉ đường" (the frontend then opens Google Maps)."""
+    _limit_search(request)
+    repository = request.app.state.trip_repository
+    if repository is None:
+        raise HTTPException(status_code=503, detail="trip database is unavailable")
+    created_at = _now(request)
     try:
-        return _trip_service(request).create(payload)
+        trip_id = repository.log_direction_click(
+            mode=payload.mode,
+            vehicle_id=payload.vehicle_id,
+            origin=payload.origin,
+            destination=payload.destination,
+            battery_pct=payload.battery_pct,
+            recommended_station_id=payload.recommended_station_id,
+            actual_station_id=payload.actual_station_id,
+            created_at=created_at,
+        )
     except KeyError as exc:
         raise HTTPException(
             status_code=404,
-            detail={"code": "SEARCH_EXPIRED", "message": str(exc.args[0])},
+            detail={"code": "NOT_FOUND", "message": f"unknown vehicle or station: {exc.args[0]}"},
         ) from exc
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=422, detail={"code": "INVALID_TRIP", "message": str(exc)}
-        ) from exc
-
-
-@router.get("/trips/{trip_id}", response_model=TripResponse, tags=["v1-trips"])
-def get_trip(
-    trip_id: UUID, request: Request, token: str = Depends(_trip_token)
-) -> TripResponse:
-    try:
-        return _trip_service(request).get(str(trip_id), token)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail="trip not found") from exc
-    except PermissionError as exc:
-        raise HTTPException(
-            status_code=403,
-            detail={"code": "TRIP_TOKEN_INVALID", "message": str(exc)},
-        ) from exc
-
-
-@router.post("/trips/{trip_id}/position", response_model=TripResponse, tags=["v1-trips"])
-def trip_position(
-    trip_id: UUID,
-    payload: TripPositionRequest,
-    request: Request,
-    token: str = Depends(_trip_token),
-) -> TripResponse:
-    try:
-        return _trip_service(request).position(str(trip_id), payload, token)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail="trip not found") from exc
-    except (ValueError, RuntimeError) as exc:
-        raise HTTPException(
-            status_code=409, detail={"code": "TRIP_CONFLICT", "message": str(exc)}
-        ) from exc
-    except PermissionError as exc:
-        raise HTTPException(
-            status_code=403,
-            detail={"code": "TRIP_TOKEN_INVALID", "message": str(exc)},
-        ) from exc
-
-
-@router.patch("/trips/{trip_id}", response_model=TripResponse, tags=["v1-trips"])
-def update_trip(
-    trip_id: UUID,
-    payload: TripActionRequest,
-    request: Request,
-    token: str = Depends(_trip_token),
-) -> TripResponse:
-    try:
-        return _trip_service(request).action(str(trip_id), payload, token)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail="trip not found") from exc
-    except (ValueError, RuntimeError) as exc:
-        raise HTTPException(
-            status_code=409, detail={"code": "TRIP_CONFLICT", "message": str(exc)}
-        ) from exc
-    except PermissionError as exc:
-        raise HTTPException(
-            status_code=403,
-            detail={"code": "TRIP_TOKEN_INVALID", "message": str(exc)},
-        ) from exc
+    return DirectionClickResponse(id=trip_id, created_at=created_at)

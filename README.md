@@ -129,10 +129,7 @@ GET  /api/v1/stations/availability?offset=0|5|10|15|20|25|30
 GET  /api/v1/stations/{id}   /api/v1/stations/{id}/ports
 POST /api/v1/search/stations
 POST /api/v1/search/route
-POST /api/v1/trips                      # tạo từ searchId (giữ 10 phút trong bộ nhớ)
-GET  /api/v1/trips/{id}
-POST /api/v1/trips/{id}/position        # GPS, recordedAt có timezone
-PATCH /api/v1/trips/{id}                # accept/decline/depart/correctBattery/cancel
+POST /api/v1/direction-clicks           # ghi lần bấm "Chỉ đường": trạm hạng 1 vs trạm thực sự chọn
 POST /api/v1/internal/station-occupancy # ghi số cổng đang dùng mỗi trạm (nguồn ngoài, tuỳ chọn), yêu cầu X-API-Key
 GET  /api/v1/demo-clock                 # giờ demo + khoảng dữ liệu đã nạp
 PUT  /api/v1/demo-clock                 # đổi giờ demo: {"demoNow": ISO có offset} hoặc {"reset": true}
@@ -146,9 +143,9 @@ Quy ước:
   và `X-Request-ID`. Domain và dữ liệu nội bộ dùng `{lat,lon}` và SOC `[0,1]`.
 - Search chỉ đề xuất trạm có giờ mở cửa xác nhận (`24/7` hoặc `always_open=true`); trạm khác nằm
   trong `excludedCandidates` kèm mã lý do.
-- Trip được lưu bền trong PostgreSQL. `POST /trips` trả `tripToken` đúng một lần; các request sau
-  phải gửi `Authorization: Bearer <tripToken>` (database chỉ lưu SHA-256). GPS lặp/cũ không ghi
-  đè trạng thái; re-plan dùng ngưỡng trong `app_config`, có cooldown và bỏ qua trạm đã từ chối.
+- Mỗi lần bấm "Chỉ đường" (mở Google Maps) frontend gọi `POST /direction-clicks`; backend ghi một dòng
+  vào bảng `trips`: điểm bắt đầu, điểm kết thúc (NULL khi tìm trạm), pin còn, id trạm hệ thống đề xuất
+  hạng 1 (`recommended_station_id`) và id trạm thực sự chọn (`actual_station_id`).
 - `searchId` và giới hạn tần suất nằm trong bộ nhớ từng process.
 - Trạng thái trạm lấy từ bucket occupancy 5 phút mới nhất không muộn hơn giờ demo (`station_occupancy_5m`): số cổng trống
   = `operational − occupied`; không cần biết cổng nào đang dùng, nên `/stations/{id}/ports` và

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 
 import { recommendationItem, station, status } from "../test/fixtures";
 import type { RecommendationItem, StationForecast, StationStatus } from "../types";
@@ -384,4 +384,22 @@ test("every non-recommended station gets the same message, whatever the exclusio
     />,
   );
   expect(screen.getByText("Trạm này không được đề xuất cho lần tìm kiếm hiện tại.")).toBeInTheDocument();
+});
+
+test("pressing Chỉ đường reports the station and keeps the Google Maps link", () => {
+  const onDirections = vi.fn();
+  render(
+    <StationDetails
+      station={station}
+      status={liveStatus}
+      recommendation={recommendationItem}
+      onDirections={onDirections}
+    />,
+  );
+
+  const link = screen.getByRole("link", { name: "Chỉ đường" });
+  expect(link).toHaveAttribute("href", expect.stringContaining("google.com/maps/dir"));
+  fireEvent.click(link);
+
+  expect(onDirections).toHaveBeenCalledWith(station.properties.station_id);
 });

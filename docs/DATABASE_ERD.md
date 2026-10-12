@@ -93,34 +93,13 @@ erDiagram
     TRIPS {
         uuid id PK
         uuid vehicle_model_id FK
-        uuid station_id FK
+        uuid recommended_station_id FK
+        uuid actual_station_id FK
         text mode
-        text phase
         geography origin
         geography destination
-        geography route
-        integer route_version
-        text auth_token_hash
-        jsonb planned
+        numeric start_battery_pct
         timestamptz created_at
-        timestamptz ended_at
-    }
-
-    TRIP_POSITIONS {
-        uuid trip_id PK, FK
-        timestamptz recorded_at PK
-        geography location
-        numeric battery_pct
-        numeric speed_kmh
-        numeric distance_km
-    }
-
-    TRIP_EVENTS {
-        uuid id PK
-        uuid trip_id FK
-        timestamptz created_at
-        text type
-        jsonb payload
     }
 
     APP_CONFIG {
@@ -138,9 +117,8 @@ erDiagram
     VEHICLE_MODELS ||--o{ VEHICLE_CONNECTORS : "supports"
     CONNECTOR_TYPES ||--o{ VEHICLE_CONNECTORS : "maps compatibility"
     VEHICLE_MODELS ||--o{ TRIPS : "is used by"
-    STATIONS o|--o{ TRIPS : "may be selected by"
-    TRIPS ||--o{ TRIP_POSITIONS : "records GPS"
-    TRIPS ||--o{ TRIP_EVENTS : "records lifecycle"
+    STATIONS o|--o{ TRIPS : "recommended (rank 1)"
+    STATIONS o|--o{ TRIPS : "actually chosen"
 ```
 
 `port_status_history` và `station_occupancy_5m` được partition theo tháng. Partition tháng được tạo
@@ -166,7 +144,7 @@ cổng cụ thể); `port_status` không tham gia.
 | `history` | `station_occupancy_5m` | 0 | không seed; nạp nguyên CSV tháng 9–10/2026 lúc khởi tạo Docker (có thể ghi thêm qua `POST /api/v1/internal/station-occupancy`) |
 | `history` | `station_occupancy_profile` | 0 | dẫn xuất từ `station_occupancy_5m` bằng `refresh_station_occupancy_profile()` |
 | `forecast` | `predictions` | 66 | 11 trạm × 6 mốc; chỉ có khóa, mọi giá trị NULL |
-| `trips` | `trips`, `trip_positions`, `trip_events` | 0 | do backend tạo |
+| `trips` | `trips` | 0 | do backend ghi (nhật ký bấm Chỉ đường) |
 | `config` | `app_config` | 1 | `planned_arrival_window_min = 15` |
 
 ## Phân bố chính
@@ -188,5 +166,6 @@ Phạm vi địa lý của 11 trạm: longitude `106.65922–106.72233`, latitud
    queue/session.
 3. **`predictions` là bảng slot.** Backend UPDATE tại chỗ; không lưu lịch sử các lượt chạy.
    Enum `prediction_source` chỉ gồm `persistence` và `model` (API trả thêm `default`).
-4. **Arrival/planned arrival nằm trong bộ nhớ.** Trip không còn ghi cam kết mềm vào database;
-   việc lưu bền được hoãn lại.
+4. **`trips` là nhật ký bấm Chỉ đường, không phải hành trình.** Mỗi lần người dùng bấm "Chỉ đường"
+   (chuyển sang Google Maps) backend ghi một dòng: điểm bắt đầu, điểm kết thúc (NULL khi tìm trạm),
+   pin còn, trạm hệ thống đề xuất hạng 1 và trạm thực sự chọn. Arrival/planned arrival nằm trong bộ nhớ.

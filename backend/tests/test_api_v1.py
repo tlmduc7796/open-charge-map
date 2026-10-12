@@ -115,8 +115,8 @@ def test_openapi_exposes_versioned_contracts() -> None:
     assert "/api/v1/internal/station-occupancy" in schema["paths"]
     assert "/api/v1/search/stations" in schema["paths"]
     assert "/api/v1/search/route" in schema["paths"]
-    trip_get = schema["paths"]["/api/v1/trips/{trip_id}"]["get"]
-    assert trip_get["security"] == [{"TripBearer": []}]
+    assert "post" in schema["paths"]["/api/v1/direction-clicks"]
+    assert not any(path.startswith("/api/v1/trips") for path in schema["paths"])
     assert "ApiErrorResponse" in schema["components"]["schemas"]
 
 

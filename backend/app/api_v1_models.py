@@ -316,49 +316,29 @@ class SearchRouteResponse(ApiModel):
     generated_at: datetime
 
 
-class TripCreateRequest(ApiModel):
-    search_id: str = Field(min_length=1)
-    station_id: str | None = None
+class DirectionClickRequest(ApiModel):
+    """The user pressed "Chỉ đường" (opens Google Maps); logged as one `trips` row."""
 
-
-class TripPositionRequest(ApiModel):
-    location: ApiPoint
-    recorded_at: datetime
-    battery_pct: float | None = Field(default=None, ge=0, le=100)
-    speed_kmh: float | None = Field(default=None, ge=0)
-    heading: float | None = Field(default=None, ge=0, lt=360)
-
-    @field_validator("recorded_at")
-    @classmethod
-    def recorded_at_requires_timezone(cls, value: datetime) -> datetime:
-        if value.tzinfo is None:
-            raise ValueError("recordedAt requires timezone")
-        return value
-
-
-class TripActionRequest(ApiModel):
-    action: Literal["accept", "decline", "depart", "correctBattery", "cancel"]
-    station_id: str | None = None
-    battery_pct: float | None = Field(default=None, ge=0, le=100)
-
-
-class TripResponse(ApiModel):
-    id: str
-    search_id: str
     mode: Literal["find_station", "route"]
-    vehicle_id: str
-    station_id: str | None
-    phase: Literal["to_station", "at_station", "to_destination", "arrived", "cancelled"]
-    route_version: int = Field(ge=0)
-    route: SearchRouteSummary
-    eta_at: datetime | None
+    vehicle_id: str = Field(min_length=1)
+    origin: ApiPoint
+    # Null for find_station, required for route.
+    destination: ApiPoint | None = None
     battery_pct: float = Field(ge=0, le=100)
-    distance_km: float = Field(ge=0)
-    prediction_source: str | None
-    updated_at: datetime
-    position_accepted: bool | None = None
-    reroute_reasons: tuple[str, ...] = ()
+    # Rank-1 station the system recommended for this search.
+    recommended_station_id: str = Field(min_length=1)
+    # Station the user actually pressed "Chỉ đường" on.
+    actual_station_id: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def destination_matches_mode(self) -> DirectionClickRequest:
+        if self.mode == "route" and self.destination is None:
+            raise ValueError("destination is required when mode is route")
+        if self.mode == "find_station" and self.destination is not None:
+            raise ValueError("destination must be null when mode is find_station")
+        return self
 
 
-class TripCreatedResponse(TripResponse):
-    trip_token: str = Field(min_length=32)
+class DirectionClickResponse(ApiModel):
+    id: str
+    created_at: datetime

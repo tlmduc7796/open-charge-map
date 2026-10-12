@@ -15,8 +15,6 @@ REQUIRED_RELATIONS = (
     "station_occupancy_5m",
     "station_status_current",
     "stations",
-    "trip_events",
-    "trip_positions",
     "trips",
     "vehicle_connectors",
     "vehicle_models",

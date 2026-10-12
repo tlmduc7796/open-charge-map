@@ -40,7 +40,6 @@ from backend.app.domain.routing import (
 )
 from backend.app.domain.runtime import RuntimeStateStore
 from backend.app.domain.search import SearchService
-from backend.app.domain.trip_service import TripService
 from backend.app.domain.wait_estimation import WaitEstimator
 from backend.app.domain.xgboost_predictor import (
     XgboostOccupancyPredictor,
@@ -233,17 +232,8 @@ app.state.search_service = SearchService(
     app.state.app_config_repository,
     clock=clock.now,
 )
-app.state.trip_service = (
-    TripService(
-        DatabaseTripRepository(app.state.database_engine),
-        app.state.search_result_store,
-        app.state.app_config_repository,
-        app.state.search_service,
-        app.state.station_repository,
-        app.state.station_status_repository,
-        app.state.vehicle_repository,
-        clock=clock.now,
-    )
+app.state.trip_repository = (
+    DatabaseTripRepository(app.state.database_engine)
     if app.state.database_engine is not None
     else None
 )

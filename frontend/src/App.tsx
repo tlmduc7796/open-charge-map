@@ -495,6 +495,28 @@ export default function App() {
     [],
   );
 
+  // "Chỉ đường" opens Google Maps (a new tab); here we only note which station the user picked
+  // against the system's rank-1 one. `activeItems` is empty unless the results are fresh, so a
+  // stale search is never logged. A failed log must never get in the user's way.
+  const handleDirections = useCallback(
+    (actualStationId: string) => {
+      if (!vehicleId || activeItems.length === 0) return;
+      const recommended = activeItems.reduce((best, item) => (item.rank < best.rank ? item : best));
+      void settle(() =>
+        api.logDirectionClick({
+          mode: searchMode,
+          origin,
+          destination: searchMode === "route" ? destination : null,
+          vehicle_id: vehicleId,
+          battery_pct: Math.round(initialSoc * 100),
+          recommended_station_id: recommended.station_id,
+          actual_station_id: actualStationId,
+        }),
+      );
+    },
+    [activeItems, destination, initialSoc, origin, searchMode, vehicleId],
+  );
+
   if (loading) {
     return <main className="app-loading"><div className="loader" /><p>Đang kết nối Smart EV backend…</p></main>;
   }
@@ -646,6 +668,7 @@ export default function App() {
               }
               forecast={currentForecast?.data ?? null}
               forecastState={forecastState}
+              onDirections={handleDirections}
               onClose={() => {
                 if (isEnough) selectDirectRoute();
                 else setSelectedStationId(null);

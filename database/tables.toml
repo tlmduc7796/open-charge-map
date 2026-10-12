@@ -25,7 +25,7 @@ vehicles = "Hồ sơ xe và chuẩn cổng tương thích"
 runtime  = "Trạng thái hiện tại của cổng; seed chỉ tạo sẵn dòng, backend ghi giá trị"
 history  = "Lịch sử chuỗi thời gian, partition theo tháng; không seed, backend ghi dần"
 forecast = "Dự báo: seed chỉ tạo sẵn trạm × mốc, backend ghi giá trị"
-trips    = "Hành trình, GPS và sự kiện do backend tạo ra"
+trips    = "Nhật ký bấm Chỉ đường (trạm đề xuất hạng 1 vs trạm thực sự chọn) do backend ghi"
 config   = "Cấu hình chỉnh được lúc chạy"
 
 # Mỗi [[table]]: name, group, rows (số dòng sau khi nạp), load = sql | csv | none.
@@ -103,18 +103,6 @@ order_by = "(SELECT s.code FROM public.stations s WHERE s.id = t.station_id), t.
 
 [[table]]
 name = "trips"
-group = "trips"
-rows = 0
-load = "none"
-
-[[table]]
-name = "trip_positions"
-group = "trips"
-rows = 0
-load = "none"
-
-[[table]]
-name = "trip_events"
 group = "trips"
 rows = 0
 load = "none"

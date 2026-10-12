@@ -25,6 +25,8 @@ interface StationDetailsProps {
   exclusionReasons?: string[];
   forecast?: StationForecast | null;
   forecastState?: ForecastState;
+  /** The user pressed "Chỉ đường"; the link itself still opens Google Maps. */
+  onDirections?: (stationId: string) => void;
   onClose?: () => void;
 }
 
@@ -264,6 +266,7 @@ export default function StationDetails({
   exclusionReasons,
   forecast = null,
   forecastState = "idle",
+  onDirections,
   onClose,
 }: StationDetailsProps) {
   const [expanded, setExpanded] = useState(false);
@@ -334,7 +337,15 @@ export default function StationDetails({
       {forecastState === "loading" && <p className="detail-hint" role="status">Đang tải dự báo cổng trống…</p>}
       {forecastState === "error" && <p className="detail-hint" role="status">Không tải được dự báo cổng trống.</p>}
 
-      <a className="primary-button directions-button" href={directionsUrl} target="_blank" rel="noreferrer">Chỉ đường</a>
+      <a
+        className="primary-button directions-button"
+        href={directionsUrl}
+        target="_blank"
+        rel="noreferrer"
+        onClick={() => onDirections?.(properties.station_id)}
+      >
+        Chỉ đường
+      </a>
 
       <button className="detail-expand" type="button" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>
         {expanded ? "Thu gọn" : "Thông tin trạm"} <span aria-hidden="true">{expanded ? "⌃" : "⌄"}</span>

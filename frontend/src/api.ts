@@ -1,5 +1,6 @@
 import type {
   DemoClock,
+  DirectionClick,
   GeocodedPlace,
   JourneyRecommendation,
   ModelStatus,
@@ -266,6 +267,24 @@ export const api = {
       }),
     });
     return toJourneyRecommendation(response);
+  },
+  /** Log a "Chỉ đường" click; `keepalive` lets it finish while Google Maps opens. */
+  logDirectionClick: async (payload: DirectionClick): Promise<void> => {
+    await requestJson<unknown>("/api/v1/direction-clicks", {
+      method: "POST",
+      keepalive: true,
+      body: JSON.stringify({
+        mode: payload.mode === "route" ? "route" : "find_station",
+        origin: { lat: payload.origin.lat, lng: payload.origin.lon },
+        destination: payload.destination
+          ? { lat: payload.destination.lat, lng: payload.destination.lon }
+          : null,
+        vehicleId: payload.vehicle_id,
+        batteryPct: payload.battery_pct,
+        recommendedStationId: payload.recommended_station_id,
+        actualStationId: payload.actual_station_id,
+      }),
+    });
   },
   searchStations: async (payload: SearchStationsRequest): Promise<StationSearchResult> => {
     let response: ApiSearchStations;

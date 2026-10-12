@@ -37,7 +37,7 @@ database/
 | `runtime` | `port_status` | Trạng thái từng cổng (tuỳ chọn, không quyết định số cổng trống); seed chỉ tạo sẵn dòng `unknown` |
 | `history` | `port_status_history`, `station_occupancy_5m`, `station_occupancy_profile` | Chuỗi thời gian partition theo tháng; `station_occupancy_5m` là **nguồn sự thật của trạng thái trạm** (số cổng đang dùng mỗi 5 phút), nạp nguyên CSV tháng 9–10/2026 lúc khởi tạo Docker (có thể ghi thêm qua `POST /api/v1/internal/station-occupancy`); `station_occupancy_profile` là bảng trung bình dẫn xuất |
 | `forecast` | `predictions` | Một dòng cho mỗi trạm × mốc 5–30 phút; seed chỉ có khóa, giá trị NULL cho backend ghi |
-| `trips` | `trips`, `trip_positions`, `trip_events` | Hành trình, GPS, sự kiện do backend tạo |
+| `trips` | `trips` | Nhật ký bấm Chỉ đường (trạm đề xuất vs trạm thực sự chọn) do backend ghi |
 | `config` | `app_config` | Cấu hình chỉnh được lúc chạy |
 
 Ngoài ra `schema/views/` có `station_capacity` và `station_status_current` (backend đọc khi
@@ -157,7 +157,7 @@ mặc định `now()`, JSON được dàn dòng cho bảng nhỏ) nên diff ch�
 | `port_status_history` | 0 | Không seed; backend ghi dần |
 | `station_occupancy_5m` | 0 (bản seed) | Không có trong `data/`; nạp nguyên CSV tháng 9–10/2026 lúc khởi tạo Docker (có thể ghi thêm qua `/internal/station-occupancy`) |
 | `station_occupancy_profile` | 0 (bản seed) | Dẫn xuất; tính bởi `refresh_station_occupancy_profile()` |
-| `trips`, `trip_positions`, `trip_events` | 0 | Do backend tạo |
+| `trips` | 0 | Do backend tạo |
 
 Sau bootstrap bằng Python (không nạp lịch sử) mọi trạm chưa có bucket nào nên `operational_ports = 0`
 và `unknown_ports = total_ports`: backend coi chúng là chưa có dữ liệu và chưa gợi ý được cho tới khi
