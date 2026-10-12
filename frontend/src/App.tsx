@@ -60,6 +60,7 @@ async function settle<T>(call: () => Promise<T>): Promise<T | null> {
 }
 
 export default function App() {
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const [stations, setStations] = useState<Station[]>([]);
   const [statuses, setStatuses] = useState<Record<string, StationStatus>>({});
   // Marker colour is computed by the backend (availability thresholds live in its app_config).
@@ -94,6 +95,11 @@ export default function App() {
   const [pickTarget, setPickTarget] = useState<PickTarget | null>(null);
   const [sortBy, setSortBy] = useState<"fastest" | "nearest" | "available">("fastest");
   const [debugMode] = useState(() => new URLSearchParams(window.location.search).get("debug") === "1");
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(new Date()), 1_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const selectedVehicle = vehicles.find((item) => item.vehicle_id === vehicleId) ?? vehicles[0] ?? null;
   // "Tìm trạm" has a single start point; "Tìm đường" needs both ends.
@@ -517,10 +523,32 @@ export default function App() {
               onStationHover={setHoveredStationId}
               onProviderChange={handleProviderChange}
             />
-            <div className="map-legend map-legend-overlay">
-              {(["green", "yellow", "red", "grey"] as const).map((color) => (
-                <span key={color}><i className={`legend-dot ${color}`} />{COLOR_LABEL[color]}</span>
-              ))}
+            <div className="map-status-overlay">
+              <div className="current-datetime" aria-label="Ngày giờ hiện tại">
+                <span className="current-datetime-date">
+                  {currentTime.toLocaleDateString("vi-VN", {
+                    timeZone: "Asia/Ho_Chi_Minh",
+                    weekday: "long",
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })}
+                </span>
+                <time className="current-datetime-time" dateTime={currentTime.toISOString()}>
+                  {currentTime.toLocaleTimeString("vi-VN", {
+                    timeZone: "Asia/Ho_Chi_Minh",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: false,
+                  })}
+                </time>
+              </div>
+              <div className="map-legend map-legend-overlay">
+                {(["green", "yellow", "red", "grey"] as const).map((color) => (
+                  <span key={color}><i className={`legend-dot ${color}`} />{COLOR_LABEL[color]}</span>
+                ))}
+              </div>
             </div>
             {pickTarget && (
               <div className="map-pick-hint" role="status">
