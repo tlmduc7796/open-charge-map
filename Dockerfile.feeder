@@ -1,0 +1,21 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/app/simulator
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+# `python -m script feed` chỉ dùng thư viện chuẩn; psql lấy từ postgresql-client.
+COPY simulator/ /app/simulator/
+COPY database/data/catalog/stations.sql /app/database/data/catalog/stations.sql
+COPY database/docker/sql/load_history.sql /app/database/docker/sql/load_history.sql
+COPY docker/feeder-entrypoint.sh /app/feeder-entrypoint.sh
+RUN chmod 0555 /app/feeder-entrypoint.sh
+
+WORKDIR /app/simulator
+ENTRYPOINT ["/app/feeder-entrypoint.sh"]

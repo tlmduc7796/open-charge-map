@@ -30,6 +30,41 @@ start.bat      # Postgres + backend (:8000) + frontend (:5173)
 Điền `GOONG_API_KEY` vào `.env` (routing, Places) và `VITE_GOONG_MAPTILES_KEY` vào
 `frontend/.env.local` (bản đồ). Hai key khác nhau; không dùng key này cho biến kia.
 
+## Chạy bằng Docker
+
+Cần Docker Desktop hoặc Docker Engine có Compose plugin. Từ thư mục gốc repo, chạy:
+
+```sh
+docker compose up --build
+```
+
+Compose tự dựng PostgreSQL/PostGIS, backend FastAPI, frontend nginx và feeder. PostgreSQL nạp lịch
+sử 30 ngày từ `database/fixtures/simulator/station_occupancy_5m.csv` (có trong git, mount vào cả
+postgres và feeder ở `/sim`); feeder phát lại chính file đó tới backend mỗi 5 phút nên dữ liệu và
+luồng cập nhật luôn khớp nhau.
+
+- Ứng dụng: http://127.0.0.1:5173
+- Backend Swagger: http://127.0.0.1:8000/docs
+- Backend health: http://127.0.0.1:8000/health
+- Trạng thái container: `docker compose ps`
+
+Không cần tạo `.env`. Có thể tạo `.env` từ `.env.example` để đặt `GOONG_API_KEY` (REST, backend),
+`VITE_GOONG_MAPTILES_KEY` (Maptiles, frontend), hoặc đổi cổng và `POSTGRES_PASSWORD`. Không có key
+Goong, backend dùng OSRM và frontend dùng Leaflet + OpenStreetMap. `VITE_API_BASE_URL` mặc định
+`http://127.0.0.1:8000` và phải là URL mà trình duyệt trên máy người dùng truy cập được. Nếu thay
+cổng, cập nhật các biến `BACKEND_HOST_PORT`, `FRONTEND_HOST_PORT`, `VITE_API_BASE_URL` và
+`CORS_ORIGINS` tương ứng rồi build lại frontend.
+
+Compose mặc định `RESET_ON_START=0`; dữ liệu PostgreSQL được giữ trong named volume. Để dựng lại
+toàn bộ dữ liệu, chạy `docker compose down -v` rồi `docker compose up --build`. Để dừng nhưng giữ
+dữ liệu, chạy `docker compose down`.
+
+CSV occupancy trong git chỉ gồm tháng 9–10/2026 (~13,6 MB), cắt từ file đầy đủ của simulator bằng
+`python scripts/trim_occupancy_csv.py` (đọc `simulator/data/`, ghi `database/fixtures/simulator/`).
+Các booster `ml/model/model_h{5..30}.json` bị loại khỏi Git. Không có sáu booster, backend vẫn chạy
+nhưng dùng giá trị dự báo mặc định; `/model/status` tiếp tục báo mô hình chưa sẵn sàng.
+Các kết quả simulator là dữ liệu synthetic, không phải dữ liệu trạm đo thực tế.
+
 ## Cài đặt thủ công
 
 ```powershell
