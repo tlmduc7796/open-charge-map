@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "scenario_id": "hcmc-technical-opportunity-demo",
+  "scenario_version": 1,
+  "created_at": "2026-10-12T00:00:00+07:00",
+  "owner": "student-team",
+  "purpose": "technical_opportunity",
+  "study_area": {
+    "administrative_name": "Ho Chi Minh City",
+    "boundary_version": "NQ-202-2025-QH15-effective-2025-07-01",
+    "spatial_reference": "EPSG:4326",
+    "boundary_geometry_ref": null,
+    "pilot_extent": "whole_city_synthetic",
+    "pilot_extent_label": "Proposed citywide synthetic extent; fixture has not been generated",
+    "included_legacy_areas": [
+      "former_ho_chi_minh_city",
+      "former_binh_duong_province",
+      "former_ba_ria_vung_tau_province"
+    ]
+  },
+  "planning_horizon_years": 3,
+  "planning_horizon_status": "team_illustrative",
+  "data_profile": {
+    "mode": "synthetic",
+    "source_label": "illustrative synthetic fixture; assumptions not calibrated to HCMC operations",
+    "data_snapshot_id": null,
+    "notes": "Configuration template only; the synthetic citywide dataset has not been generated. Replace with a versioned snapshot before running or making local-demand claims."
+  },
+  "demand": {
+    "scenario_profile": "hcmc_synthetic_low_base_high",
+    "ev_share": null,
+    "home_charging_share": null,
+    "fleet_share": null,
+    "tourism_multiplier": null,
+    "value_status": "unknown",
+    "source_ref": null
+  },
+  "technical_gates": {
+    "require_inside_boundary": true,
+    "unknown_site_handling": "conditional_candidate",
+    "target_access_minutes": 15,
+    "target_access_minutes_status": "team_illustrative",
+    "reject_confirmed_grid_infeasible": true,
+    "reject_confirmed_access_or_safety_infeasible": true
+  },
+  "policy": {
+    "enabled": false,
+    "owner": null,
+    "effective_date": null,
+    "rules": []
+  },
+  "finance": {
+    "enabled": false,
+    "mode": "none",
+    "owner": null,
+    "effective_date": null,
+    "currency": "VND",
+    "formula_version": null,
+    "inputs": {
+      "budget_vnd": null,
+      "capex_per_port_vnd": null,
+      "annual_opex_per_site_vnd": null,
+      "tariff_vnd_per_kwh": null,
+      "revenue_vnd_per_kwh": null,
+      "discount_rate": null,
+      "payback_limit_years": null,
+      "tariff_regime_ref": null,
+      "assumption_range_ref": null
+    },
+    "metrics": [],
+    "external_engine_ref": null
+  },
+  "scoring": {
+    "profile": "technical_opportunity",
+    "method": "weighted_sum",
+    "weight_status": "team_demo_proposal",
+    "weights": {
+      "demand_potential": 30,
+      "marginal_coverage": 25,
+      "grid_site_readiness": 20,
+      "network_segment_fit": 15,
+      "network_gap_fit": 10
+    },
+    "minimum_evidence_coverage": null
+  },
+  "reproducibility": {
+    "random_seed": 20261012,
+    "algorithm_version": "site-ranking-baseline-v0"
+  }
+}

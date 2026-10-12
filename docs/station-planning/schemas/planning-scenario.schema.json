@@ -1,0 +1,339 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EV Charging Site Planning Scenario",
+  "description": "Versioned technical, policy, demand and optional finance inputs for one reproducible HCMC site-planning run. Scores and weights are team-configurable demo defaults, not industry standards.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "scenario_id",
+    "scenario_version",
+    "created_at",
+    "owner",
+    "purpose",
+    "study_area",
+    "planning_horizon_years",
+    "planning_horizon_status",
+    "data_profile",
+    "demand",
+    "technical_gates",
+    "policy",
+    "finance",
+    "scoring",
+    "reproducibility"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "scenario_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenario_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "owner": {
+      "type": ["string", "null"],
+      "description": "Team or organization accountable for the scenario package; avoid personal or confidential identifiers."
+    },
+    "purpose": {
+      "enum": [
+        "technical_opportunity",
+        "public_policy",
+        "investor_scenario"
+      ]
+    },
+    "study_area": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "administrative_name",
+        "boundary_version",
+        "spatial_reference",
+        "pilot_extent",
+        "included_legacy_areas"
+      ],
+      "properties": {
+        "administrative_name": {
+          "const": "Ho Chi Minh City"
+        },
+        "boundary_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "spatial_reference": {
+          "const": "EPSG:4326"
+        },
+        "boundary_geometry_ref": {
+          "type": ["string", "null"],
+          "description": "Reference to the official boundary geometry and source/version. Null means not yet attached."
+        },
+        "pilot_extent": {
+          "enum": [
+            "whole_city_observed",
+            "whole_city_synthetic",
+            "named_subarea"
+          ]
+        },
+        "pilot_extent_label": {
+          "type": "string"
+        },
+        "included_legacy_areas": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "former_ho_chi_minh_city",
+              "former_binh_duong_province",
+              "former_ba_ria_vung_tau_province"
+            ]
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "planning_horizon_years": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 30,
+      "description": "Horizon for demand/capacity scenarios. This is not a legal or investment standard."
+    },
+    "planning_horizon_status": {
+      "enum": ["partner_configured", "team_illustrative", "unknown"]
+    },
+    "data_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "source_label", "data_snapshot_id"],
+      "properties": {
+        "mode": {
+          "enum": ["observed", "mixed", "synthetic"]
+        },
+        "source_label": {
+          "type": "string"
+        },
+        "data_snapshot_id": {
+          "type": ["string", "null"]
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "demand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenario_profile", "ev_share", "home_charging_share", "fleet_share", "tourism_multiplier"],
+      "properties": {
+        "scenario_profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ev_share": {
+          "$ref": "#/$defs/nullableShare"
+        },
+        "home_charging_share": {
+          "$ref": "#/$defs/nullableShare"
+        },
+        "fleet_share": {
+          "$ref": "#/$defs/nullableShare"
+        },
+        "tourism_multiplier": {
+          "$ref": "#/$defs/nullableNonNegativeNumber"
+        },
+        "value_status": {
+          "enum": ["provided", "estimated", "illustrative", "unknown"]
+        },
+        "source_ref": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "technical_gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["require_inside_boundary", "unknown_site_handling", "target_access_minutes", "target_access_minutes_status"],
+      "properties": {
+        "require_inside_boundary": {
+          "const": true
+        },
+        "unknown_site_handling": {
+          "enum": ["conditional_candidate", "exclude_from_ranked_list", "include_with_warning"]
+        },
+        "target_access_minutes": {
+          "$ref": "#/$defs/nullablePositiveNumber"
+        },
+        "target_access_minutes_status": {
+          "enum": ["partner_configured", "team_illustrative", "unknown", "not_applicable"],
+          "description": "The access-time target is configurable, not a universal siting standard."
+        },
+        "reject_confirmed_grid_infeasible": {
+          "type": "boolean",
+          "default": true
+        },
+        "reject_confirmed_access_or_safety_infeasible": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "owner", "effective_date", "rules"],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "owner": {
+          "type": ["string", "null"]
+        },
+        "effective_date": {
+          "type": ["string", "null"],
+          "format": "date"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/rule"
+          }
+        }
+      }
+    },
+    "finance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "mode", "owner", "effective_date", "currency", "formula_version", "inputs", "metrics"],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "mode": {
+          "enum": ["none", "illustrative_assumptions", "partner_inputs", "external_finance_engine"]
+        },
+        "owner": {
+          "type": ["string", "null"]
+        },
+        "effective_date": {
+          "type": ["string", "null"],
+          "format": "date"
+        },
+        "currency": {
+          "const": "VND"
+        },
+        "formula_version": {
+          "type": ["string", "null"]
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["budget_vnd", "capex_per_port_vnd", "annual_opex_per_site_vnd", "tariff_vnd_per_kwh", "revenue_vnd_per_kwh", "discount_rate", "payback_limit_years"],
+          "properties": {
+            "budget_vnd": {"$ref": "#/$defs/nullableNonNegativeNumber"},
+            "capex_per_port_vnd": {"$ref": "#/$defs/nullableNonNegativeNumber"},
+            "annual_opex_per_site_vnd": {"$ref": "#/$defs/nullableNonNegativeNumber"},
+            "tariff_vnd_per_kwh": {"$ref": "#/$defs/nullableNonNegativeNumber"},
+            "revenue_vnd_per_kwh": {"$ref": "#/$defs/nullableNonNegativeNumber"},
+            "discount_rate": {"$ref": "#/$defs/nullableShare"},
+            "payback_limit_years": {"$ref": "#/$defs/nullablePositiveNumber"},
+            "tariff_regime_ref": {"type": ["string", "null"]},
+            "assumption_range_ref": {"type": ["string", "null"]}
+          }
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "enum": ["cashflow", "npv", "payback_period", "break_even_cost", "contribution_margin"]
+          },
+          "uniqueItems": true
+        },
+        "external_engine_ref": {
+          "type": ["string", "null"],
+          "description": "Adapter or documented external metric source; do not store confidential engine secrets here."
+        }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "method", "weight_status", "weights", "minimum_evidence_coverage"],
+      "properties": {
+        "profile": {
+          "enum": ["technical_opportunity", "public_policy", "investor_scenario"]
+        },
+        "method": {
+          "enum": ["weighted_sum", "pareto", "lexicographic"]
+        },
+        "weight_status": {
+          "enum": ["team_demo_proposal", "partner_configured", "not_applicable"]
+        },
+        "weights": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["demand_potential", "marginal_coverage", "grid_site_readiness", "network_segment_fit", "network_gap_fit"],
+          "properties": {
+            "demand_potential": {"type": "number", "minimum": 0, "maximum": 100},
+            "marginal_coverage": {"type": "number", "minimum": 0, "maximum": 100},
+            "grid_site_readiness": {"type": "number", "minimum": 0, "maximum": 100},
+            "network_segment_fit": {"type": "number", "minimum": 0, "maximum": 100},
+            "network_gap_fit": {"type": "number", "minimum": 0, "maximum": 100}
+          },
+          "description": "For weighted_sum, configured weights should total 100. Enforce the sum in application validation."
+        },
+        "minimum_evidence_coverage": {
+          "$ref": "#/$defs/nullableShare"
+        }
+      }
+    },
+    "reproducibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["random_seed", "algorithm_version"],
+      "properties": {
+        "random_seed": {
+          "type": "integer"
+        },
+        "algorithm_version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "$defs": {
+    "nullableShare": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Null means unknown/unprovided. Use explicit value_status for not_applicable."
+    },
+    "nullableNonNegativeNumber": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "nullablePositiveNumber": {
+      "type": ["number", "null"],
+      "exclusiveMinimum": 0
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule_id", "category", "effect", "value_status", "source_ref"],
+      "properties": {
+        "rule_id": {"type": "string", "minLength": 1},
+        "category": {"type": "string", "minLength": 1},
+        "effect": {"enum": ["hard_gate", "soft_objective", "bonus", "report_only"]},
+        "value_status": {"enum": ["provided", "estimated", "illustrative", "unknown", "not_applicable"]},
+        "value": {},
+        "source_ref": {"type": ["string", "null"]},
+        "effective_date": {"type": ["string", "null"], "format": "date"},
+        "notes": {"type": "string"}
+      }
+    }
+  }
+}
