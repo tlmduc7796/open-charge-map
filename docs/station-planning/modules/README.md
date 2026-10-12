@@ -16,12 +16,12 @@ Các file trong thư mục này được thiết kế để giao cho từng thà
 | Module | Owner area | Phụ thuộc chính | File brief |
 |---|---|---|---|
 | M1 Data & GIS | Nguồn dữ liệu, HCMC boundary, candidate/demand seed, validation | Shared contract | [M1](M1_DATA_GIS_VI.md) |
-| M2 Recommendation engine | Domain metrics, hard constraints, ranking, coverage, sizing interface | Shared contract + sample từ M1 | [M2](M2_RECOMMENDATION_ENGINE_VI.md) |
+| M2 Recommendation engine | Hai nhánh phối hợp: M2A demand ML và M2B site optimization/ranking | Shared contract + sample từ M1 | [M2B engine](M2_RECOMMENDATION_ENGINE_VI.md), [pipeline M2A](../ML_DEMAND_PIPELINE_VI.md) |
 | M3 Backend & DB integration | FastAPI contract, service/repository, PostGIS, persistence nếu cần | Shared contract + interface M2 | [M3](M3_BACKEND_DB_VI.md) |
 | M4 Frontend Planner | Tab/mode, map, ranked list, explanations, scenario controls | Shared contract + API mock/OpenAPI | [M4](M4_FRONTEND_PLANNER_VI.md) |
 | M5 Demo & integration | Seed scenario, integration acceptance, provenance/limitations | M1–M4 | [M5](M5_DEMO_INTEGRATION_VI.md) |
 
-M1, M3 scaffolding và M4 layout có thể bắt đầu song song. M2 cần chốt đầu vào/đầu ra từ contract; M3 không tự viết lại công thức; M4 có thể dùng mock theo contract nhưng không tự tạo API riêng. M5 tích hợp khi các module có artifact bàn giao.
+M1, M3 scaffolding và M4 layout có thể bắt đầu song song. Trong M2, M2A xây pipeline ước lượng nhu cầu; M2B xây bộ lọc/ranking/tối ưu vị trí. Hai nhánh có thể phát triển song song sau khi khóa payload demand dùng chung; M2B phải chạy được bằng baseline scenario khi M2A chưa có model phù hợp. M3 không tự viết lại công thức; M4 có thể dùng mock theo contract nhưng không tự tạo API riêng. M5 tích hợp khi các module có artifact bàn giao.
 
 ## Quy trình giao việc song song
 

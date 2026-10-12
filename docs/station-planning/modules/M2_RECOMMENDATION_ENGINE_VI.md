@@ -1,8 +1,8 @@
-# M2 — Domain engine đề xuất địa điểm
+# M2B — Domain engine đề xuất địa điểm
 
 ## Prompt giao việc
 
-Bạn phụ trách domain engine của station recommendation. Đọc `../IMPLEMENTATION_PLAN_VI.md`, `SHARED_CONTRACT_VI.md`, `../CONSTRAINT_MATRIX_HCMC_VI.md` và data contract M1. Implement logic thuần, giải thích được, tái lập; không đặt API, không truy cập DB và không tự đặt policy/finance.
+Bạn phụ trách nhánh M2B (site recommendation/optimization) trong M2. Đọc `../IMPLEMENTATION_PLAN_VI.md`, `../ML_DEMAND_PIPELINE_VI.md`, `SHARED_CONTRACT_VI.md`, `../CONSTRAINT_MATRIX_HCMC_VI.md` và data contract M1. Implement logic thuần, giải thích được, tái lập; không đặt API, không truy cập DB và không tự đặt policy/finance. M2A demand ML là pipeline riêng; M2B tiêu thụ demand output qua interface đã thống nhất, đồng thời phải hỗ trợ baseline/scenario khi model chưa khả dụng.
 
 ## Mục tiêu
 
@@ -28,7 +28,7 @@ Với candidate set và cùng một scenario, xác định eligibility, tính c�
 
 ## Không thuộc module
 
-- Train ML model hoặc copy wait-time estimator từ `fix/ui`.
+- Huấn luyện/đánh giá model demand (thuộc M2A) hoặc copy wait-time estimator từ `fix/ui`.
 - Tính ROI tự đặt CAPEX/OPEX/tariff.
 - Query PostGIS hoặc thêm endpoint.
 - Tuyên bố vị trí tối ưu toàn TP.HCM khi candidate set/pilot chỉ là một phần.

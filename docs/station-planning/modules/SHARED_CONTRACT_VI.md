@@ -124,6 +124,32 @@ Package có `package_id`, `version`, `owner`, `source`, `effective_from/to`, `un
 
 ## 7. Tách layer và quyền sở hữu
 
+### Payload nội bộ M2A → M2B (demand estimate)
+
+M2A (demand ML/baseline) và M2B (site engine) trao đổi một record cho mỗi candidate hoặc demand cell, target và time window. Đây là interface nội bộ; không bắt frontend gửi thẳng prediction của model. Ví dụ:
+
+```json
+{
+  "candidate_id": "cand-001",
+  "target": "charging_sessions",
+  "value": 18.4,
+  "unit": "sessions_per_day",
+  "time_window": {"start": "2027-01-01", "end": "2027-01-31"},
+  "status": "synthetic",
+  "source_id": "synthetic-demand-v1",
+  "model_version": "gbdt-demo-0.1",
+  "data_snapshot_id": "demo-hcmc-v1",
+  "scenario": "base",
+  "uncertainty": {"low": 12.0, "high": 25.0, "method": "synthetic_scenario_range"}
+}
+```
+
+- `status` dùng enum ở mục 4; `unknown` phải được biểu diễn tường minh, không giả làm 0. Khi chưa chạy model, `model_version` có thể null và `source_id` trỏ baseline/scenario.
+- `target` và `unit` phải đi cùng nhau; không cộng hoặc so sánh target khác nhau như thể tương đương.
+- `scenario` và `uncertainty` chỉ nêu khoảng low/base/high nếu có căn cứ; không mặc định đó là xác suất hay confidence interval.
+- M2B giữ provenance này trong component `demand_potential` của output; API adapter ánh xạ sang response contract ở mục 3.
+- M1 cung cấp geometry/features/label và data provenance cho M2A; M1 không chịu trách nhiệm train/evaluate model.
+
 ```text
 HTTP/Pydantic router -> planning application service -> pure domain engine
                                           -> repository/PostGIS adapter

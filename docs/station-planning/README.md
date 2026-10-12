@@ -60,6 +60,7 @@ Không dùng lượt sạc hiện tại làm đại diện duy nhất cho nhu c�
 - [Kịch bản synthetic, mô phỏng và demo](SIMULATION_AND_DEMO_PLAN_VI.md)
 - [Lộ trình theo gate](ROADMAP_VI.md)
 - [Đọc bài báo 442](PAPER_442_REVIEW_VI.md)
+- [Định hướng ML cho bài toán đề xuất trạm](ML_DEMAND_PIPELINE_VI.md)
 - [Bằng chứng thị trường và kiểm chứng pain point](MARKET_AND_PAINPOINTS_VI.md)
 - [Ma trận ràng buộc tham khảo cho TP.HCM](CONSTRAINT_MATRIX_HCMC_VI.md)
 - [JSON Schema của scenario](schemas/planning-scenario.schema.json)

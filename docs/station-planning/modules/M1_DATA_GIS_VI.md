@@ -12,7 +12,7 @@ Tạo tập dữ liệu không gian có thể giải thích và kiểm tra: đ�
 
 1. **Khảo sát baseline:** kiểm tra bảng/trường station, connector/port, status, occupancy, spatial index, repository, schema loader và quy tắc seed trên `fix/ui` hiện tại. Ghi file/field thật; không dựa duy nhất vào `ideas.md` snapshot.
 2. **HCMC boundary:** pin source, version, CRS, effective date và cách lưu pilot extent. Geometry demo phải được ghi rõ là chính thức, tổng hợp hay vẽ minh họa; không gọi hình vẽ tự tạo là ranh giới pháp lý.
-3. **Data dictionary:** thống nhất ID, units, timezone, status, source/provenance, quality và synthetic flags cho `existing_sites`, `candidate_sites`, `demand_cells`/OD.
+3. **Data dictionary:** thống nhất ID, units, timezone, status, source/provenance, quality và synthetic flags cho `existing_sites`, `candidate_sites`, `demand_cells`/OD. Phân biệt feature (POI/traffic/land use) với label demand (sessions/kWh/requests); không tự tạo label ML từ proxy.
 4. **Candidate input:** MVP nhận candidate IDs từ dataset (mode `provided`). Nếu có chức năng sinh candidate, mô tả thuật toán, resolution, exclusions và lý do; không tạo hàng loạt điểm không có nghĩa địa lý.
 5. **Spatial lookup:** cung cấp truy vấn trạm/cổng tương thích trong vùng/coverage threshold qua repository/PostGIS hiện có. Không tải catalog toàn bộ sang browser.
 6. **Validation:** kiểm tra CRS/range, duplicates, temporal validity, null-vs-zero, units, source completeness và HCMC/pilot scope.
@@ -29,6 +29,7 @@ Tạo tập dữ liệu không gian có thể giải thích và kiểm tra: đ�
 
 - Data dictionary và nguồn/version của geometry.
 - Candidate/demand sample có provenance và nhãn synthetic.
+- Nếu có label demand, cung cấp training table theo thời gian/không gian và ghi rõ độ phủ/missingness; nếu chưa có thì bàn giao feature table + baseline scenario cho M2A.
 - Repository/query interface hoặc format file seed được M2/M3 dùng.
 - Báo cáo completeness/unknowns và quyết định GIS (CRS, distance/network metric).
 - Hướng dẫn nạp/reset sample theo workflow DB hiện có.

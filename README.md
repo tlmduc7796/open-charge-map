@@ -7,6 +7,7 @@ The station recommendation feature is developed on top of this shared applicatio
 - [Station recommendation implementation plan](docs/station-planning/IMPLEMENTATION_PLAN_VI.md)
 - [Shared API/domain contract and module briefs](docs/station-planning/modules/README.md)
 - [Station planning overview](docs/station-planning/README.md)
+- [Station recommendation ML demand pipeline](docs/station-planning/ML_DEMAND_PIPELINE_VI.md)
 
 MVP đề xuất trạm sạc cho hành trình xe điện: xếp hạng trạm theo tổng thời gian (di chuyển + chờ +
 sạc) dựa trên khả năng tương thích đầu sạc, tầm với của pin và dự báo occupancy tại thời điểm tới.

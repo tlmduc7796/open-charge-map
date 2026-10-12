@@ -164,12 +164,13 @@ Các brief chi tiết sẵn sàng làm prompt nằm trong `modules/`:
 | Module | Phạm vi sở hữu | File brief |
 |---|---|---|
 | M1 — Data & GIS | Data source, HCMC boundary, candidate/demand dataset, provenance/validation | [M1_DATA_GIS_VI.md](modules/M1_DATA_GIS_VI.md) |
-| M2 — Recommendation engine | Hard constraints, metrics, ranking, coverage, sizing interface | [M2_RECOMMENDATION_ENGINE_VI.md](modules/M2_RECOMMENDATION_ENGINE_VI.md) |
+| M2A — Demand ML | Ước lượng nhu cầu tại demand cell/candidate, baseline và đánh giá; synthetic demo nếu được chọn | [ML_DEMAND_PIPELINE_VI.md](ML_DEMAND_PIPELINE_VI.md) |
+| M2B — Site recommendation engine | Hard constraints, marginal coverage, ranking/portfolio và sizing interface; nhận demand từ M2A hoặc baseline | [M2_RECOMMENDATION_ENGINE_VI.md](modules/M2_RECOMMENDATION_ENGINE_VI.md) |
 | M3 — Backend & DB integration | API/router, service/repository, PostGIS integration, optional persistence | [M3_BACKEND_DB_VI.md](modules/M3_BACKEND_DB_VI.md) |
 | M4 — Frontend Planner | Tab/mode, map selection, ranking/explanation, scenarios | [M4_FRONTEND_PLANNER_VI.md](modules/M4_FRONTEND_PLANNER_VI.md) |
 | M5 — Demo & integration | Seed scenarios, end-to-end behavior, labels, acceptance and handoff | [M5_DEMO_INTEGRATION_VI.md](modules/M5_DEMO_INTEGRATION_VI.md) |
 
-Phụ thuộc chính: M1 cung cấp data contract/sample → M2 implement engine trên contract → M3 expose API → M4 gọi API và trình bày → M5 nối data/demo và chạy acceptance. Có thể làm song song M1/M4 skeleton/M3 scaffolding, nhưng không tạo logic giả cạnh tranh với contract. Mỗi module brief chứa đầu vào, đầu ra, giới hạn, task nhỏ và acceptance riêng.
+Phụ thuộc chính: M1 cung cấp spatial/time features, labels hoặc baseline scenario → M2A và M2B phát triển song song trên demand interface đã khóa → M3 expose service/API → M4 gọi API và trình bày → M5 nối end-to-end và chạy acceptance. M2B không bị chặn khi chưa có model: dùng demand baseline/scenario có provenance. Có thể làm song song M1/M4 skeleton/M3 scaffolding, nhưng không tạo logic giả cạnh tranh với contract. Mỗi module brief chứa đầu vào, đầu ra, giới hạn, task nhỏ và acceptance riêng.
 
 ## 11. Quy ước Git/merge đề xuất
 
