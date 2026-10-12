@@ -14,6 +14,7 @@ WORKDIR /app
 COPY simulator/ /app/simulator/
 COPY database/data/catalog/stations.sql /app/database/data/catalog/stations.sql
 COPY database/docker/sql/load_history.sql /app/database/docker/sql/load_history.sql
+COPY database/docker/sql/backfill_gap.sql /app/database/docker/sql/backfill_gap.sql
 COPY docker/feeder-entrypoint.sh /app/feeder-entrypoint.sh
 RUN chmod 0555 /app/feeder-entrypoint.sh
 

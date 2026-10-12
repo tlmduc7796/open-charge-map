@@ -24,6 +24,13 @@ else
     echo "== Đã có $history_rows dòng lịch sử occupancy; giữ nguyên =="
 fi
 
+# Điền lấp khoảng trống (máy ngủ, Docker bị tắt) để model có đủ 12 bucket liên tiếp ngay khi lên.
+# Backend chỉ khởi động sau khi feeder healthy nên nó thấy lịch sử đã liền mạch.
+if [ "${BACKFILL_GAPS:-1}" = "1" ]; then
+    echo "== Điền lấp bucket còn thiếu trong ${HISTORY_DAYS:-30} ngày gần nhất =="
+    psql -v ON_ERROR_STOP=1         -v csv_path="$CSV"         -v history_days="${HISTORY_DAYS:-30}"         -f /app/database/docker/sql/backfill_gap.sql
+fi
+
 touch /tmp/history-ready
 
 echo "== Chờ backend rồi phát occupancy mỗi 5 phút =="

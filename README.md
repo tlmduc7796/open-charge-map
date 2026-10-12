@@ -55,6 +55,12 @@ Goong, backend dùng OSRM và frontend dùng Leaflet + OpenStreetMap. `VITE_API_
 cổng, cập nhật các biến `BACKEND_HOST_PORT`, `FRONTEND_HOST_PORT`, `VITE_API_BASE_URL` và
 `CORS_ORIGINS` tương ứng rồi build lại frontend.
 
+Mỗi lần feeder khởi động, nó **điền lấp các bucket 5 phút còn thiếu** trong `HISTORY_DAYS` ngày gần
+nhất từ cùng CSV (cùng thứ, cùng giờ; `database/docker/sql/backfill_gap.sql`). Nhờ đó, dù máy ngủ
+hoặc Docker bị tắt nhiều giờ, model dự báo vẫn có đủ 12 bucket liên tiếp ngay khi `docker compose up`
+thay vì rơi về `persistence` khoảng 1 giờ. Phần điền lấp là dữ liệu synthetic; dòng đã có không bị
+ghi đè. Đặt `BACKFILL_GAPS=0` để tắt.
+
 Compose mặc định `RESET_ON_START=0`; dữ liệu PostgreSQL được giữ trong named volume. Để dựng lại
 toàn bộ dữ liệu, chạy `docker compose down -v` rồi `docker compose up --build`. Để dừng nhưng giữ
 dữ liệu, chạy `docker compose down`.

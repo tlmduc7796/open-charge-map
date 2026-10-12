@@ -45,6 +45,8 @@ services:
       PGUSER: smart_ev
       PGPASSWORD: ${POSTGRES_PASSWORD:-smart_ev}
       HISTORY_DAYS: ${HISTORY_DAYS:-30}
+      # 1: điền lấp bucket thiếu từ CSV lúc khởi động; 0: để nguyên khoảng trống.
+      BACKFILL_GAPS: ${BACKFILL_GAPS:-1}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-smart-ev-dev-internal-key}
       FEED_API_URL: http://backend:8000
       FEED_DELAY_S: "15"
