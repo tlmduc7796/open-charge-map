@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from backend.app.config import PROJECT_ROOT, load_settings
 
 
@@ -22,7 +24,8 @@ def test_default_paths_are_rooted_at_project(monkeypatch) -> None:
         "GOONG_API_KEY",
         "DATABASE_URL",
         "CATALOG_STORAGE",
-        "DEMO_RANDOM_SIMULATION",
+        "DEMO_NOW",
+        "DEMO_CLOCK_WRITABLE",
     ]:
         monkeypatch.delenv(name, raising=False)
     settings = load_settings()
@@ -52,7 +55,8 @@ def test_default_paths_are_rooted_at_project(monkeypatch) -> None:
     assert settings.goong_api_key is None
     assert settings.database_url.endswith("@127.0.0.1:5433/smart_ev_data")
     assert settings.catalog_storage == "database"
-    assert settings.demo_random_simulation is False
+    assert settings.demo_now is None
+    assert settings.demo_clock_writable is True
 
 
 def test_required_phase_data_exists() -> None:
@@ -61,9 +65,14 @@ def test_required_phase_data_exists() -> None:
     assert missing == []
 
 
-def test_demo_random_simulation_is_opt_in(monkeypatch) -> None:
-    monkeypatch.setenv("DEMO_RANDOM_SIMULATION", "true")
-    assert load_settings().demo_random_simulation is True
+def test_demo_now_is_read_as_vietnam_time(monkeypatch) -> None:
+    monkeypatch.setenv("DEMO_NOW", "2026-10-11 08:00")
+    assert load_settings().demo_now == datetime(2026, 10, 11, 1, 0, tzinfo=UTC)
 
-    monkeypatch.setenv("DEMO_RANDOM_SIMULATION", "0")
-    assert load_settings().demo_random_simulation is False
+    monkeypatch.setenv("DEMO_NOW", "2026-10-11T08:00:30+00:00")
+    assert load_settings().demo_now == datetime(2026, 10, 11, 8, 0, 30, tzinfo=UTC)
+
+
+def test_demo_clock_can_be_locked(monkeypatch) -> None:
+    monkeypatch.setenv("DEMO_CLOCK_WRITABLE", "false")
+    assert load_settings().demo_clock_writable is False

@@ -19,6 +19,8 @@ from backend.app.api_v1_models import (
     ConfigResponse,
     ConnectorDetail,
     ConnectorNow,
+    DemoClockResponse,
+    DemoClockUpdateRequest,
     PortResponse,
     PortStatusBatchRequest,
     PortStatusBatchResponse,
@@ -39,6 +41,7 @@ from backend.app.api_v1_models import (
     TripResponse,
 )
 from backend.app.domain.forecasting import available_ports
+from backend.app.profile_repository import refresh_as_of as refresh_profile_as_of
 
 logger = logging.getLogger("smart_ev.api_v1")
 
@@ -78,6 +81,11 @@ def _color(available: int, total: int, unknown: int, green_min: int) -> str:
     if available < green_min:
         return "yellow"
     return "green"
+
+
+def _now(request: Request) -> datetime:
+    """The demo clock's "now" (real time unless the demo time was set)."""
+    return request.app.state.clock.now()
 
 
 def _stations(request: Request, bbox: str | None):
@@ -197,6 +205,55 @@ def config(request: Request) -> ConfigResponse:
     )
 
 
+def _demo_clock_response(request: Request) -> DemoClockResponse:
+    state = request.app.state
+    clock = state.clock
+    data_start, data_end = state.occupancy_data_range()
+    return DemoClockResponse(
+        demo_now=clock.now(),
+        wall_now=clock.wall_now(),
+        offset_s=clock.offset.total_seconds(),
+        is_shifted=clock.is_shifted,
+        data_start=data_start,
+        data_end=data_end,
+        writable=state.settings.demo_clock_writable,
+    )
+
+
+@router.get("/demo-clock", response_model=DemoClockResponse, tags=["v1-demo"])
+def get_demo_clock(request: Request) -> DemoClockResponse:
+    """The demo "now" every endpoint answers for, plus the span of loaded occupancy data."""
+    return _demo_clock_response(request)
+
+
+@router.put("/demo-clock", response_model=DemoClockResponse, tags=["v1-demo"])
+def set_demo_clock(
+    payload: DemoClockUpdateRequest, request: Request
+) -> DemoClockResponse:
+    """Move the demo clock to `demoNow` (it keeps running from there) or back to real time."""
+    state = request.app.state
+    if not state.settings.demo_clock_writable:
+        raise HTTPException(
+            status_code=403,
+            detail={"code": "DEMO_CLOCK_LOCKED", "message": "the demo clock is read-only"},
+        )
+    now = state.clock.reset() if payload.reset else state.clock.set(payload.demo_now)
+    # Everything derived from "now" is rebuilt for the new moment before the response returns,
+    # so the very next request already sees consistent status, profile and predictions.
+    state.runtime_state.refresh()
+    profile = state.occupancy_profile_repository
+    if profile is not None:
+        refresh_profile_as_of(profile, now)
+    writer = state.prediction_writer
+    if writer is not None:
+        try:
+            writer.refresh(run_at=now)
+        except Exception:
+            logger.exception("prediction_refresh_failed")
+    logger.info("demo_clock_set demo_now=%s reset=%s", now.isoformat(), payload.reset)
+    return _demo_clock_response(request)
+
+
 @router.get("/stations", response_model=tuple[StationSummary, ...], tags=["v1-stations"])
 def list_stations(request: Request, bbox: str | None = None) -> tuple[StationSummary, ...]:
     green_min = request.app.state.app_config_repository.read().availability_green_min
@@ -246,13 +303,14 @@ def availability(
                 synthetic_fields=status.synthetic_fields,
             )
         )
-    updated_at = max((item.updated_at for item in items), default=datetime.now(UTC))
+    now = _now(request)
+    updated_at = max((item.updated_at for item in items), default=now)
     return AvailabilityResponse(
         offset=offset,
         is_prediction=offset > 0,
         items=tuple(items),
         updated_at=updated_at,
-        generated_at=datetime.now(UTC),
+        generated_at=now,
     )
 
 
@@ -285,7 +343,7 @@ def station_availability(station_id: str, request: Request) -> StationAvailabili
         operational_ports=status.operational_ports,
         points=tuple(points),
         updated_at=status.timestamp,
-        generated_at=datetime.now(UTC),
+        generated_at=_now(request),
     )
 
 
@@ -430,7 +488,7 @@ def update_station_occupancy(
             writer.refresh(item.station_id for item in payload.updates)
         except Exception:
             logger.exception("prediction_refresh_failed")
-    return StationOccupancyBatchResponse(updated=updated, updated_at=datetime.now(UTC))
+    return StationOccupancyBatchResponse(updated=updated, updated_at=_now(request))
 
 
 @router.post("/internal/port-status/mark-stale", tags=["v1-internal"])

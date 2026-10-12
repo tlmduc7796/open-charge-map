@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import Engine, text
 
@@ -59,13 +59,26 @@ class DatabaseOccupancyProfileRepository:
         }
         return len(self._cells)
 
-    def refresh(self, *, days: int = 30) -> int:
-        """Recompute the table from `station_occupancy_5m` and reload the cache."""
+    def refresh(self, *, days: int = 30, as_of: datetime | None = None) -> int:
+        """Recompute the table from `station_occupancy_5m` and reload the cache.
+
+        The averages cover the `days` calendar days up to `as_of` (the database clock when
+        None) and only buckets at or before it, so a past demo moment sees no later data.
+        """
         with self._engine.begin() as connection:
-            connection.execute(
-                text("SELECT public.refresh_station_occupancy_profile(:days)"),
-                {"days": days},
-            )
+            if as_of is None:
+                connection.execute(
+                    text("SELECT public.refresh_station_occupancy_profile(:days)"),
+                    {"days": days},
+                )
+            else:
+                connection.execute(
+                    text(
+                        "SELECT public.refresh_station_occupancy_profile("
+                        "CAST(:days AS integer), 'Asia/Ho_Chi_Minh', CAST(:as_of AS timestamptz))"
+                    ),
+                    {"days": days, "as_of": as_of},
+                )
         return self.load()
 
     def ratio_at(self, station_id: str, at: datetime) -> float | None:
@@ -73,14 +86,15 @@ class DatabaseOccupancyProfileRepository:
         return self._cells.get((station_id, day, step))
 
 
-def load_or_refresh(repository: DatabaseOccupancyProfileRepository) -> int:
-    """Load the profile at startup; build it from history when the table is still empty."""
+def refresh_as_of(repository: DatabaseOccupancyProfileRepository, as_of: datetime) -> int:
+    """Rebuild the profile from the history up to `as_of` (startup and demo-clock changes).
+
+    A failure keeps the previous cells and returns -1: forecasts then just use that profile.
+    """
     try:
-        count = repository.load()
-        if count == 0:
-            count = repository.refresh()
+        count = repository.refresh(as_of=as_of)
     except Exception:
-        logger.exception("occupancy_profile_unavailable")
-        return 0
-    logger.info("occupancy_profile_loaded cells=%d at=%s", count, datetime.now(UTC).isoformat())
+        logger.exception("occupancy_profile_refresh_failed as_of=%s", as_of.isoformat())
+        return -1
+    logger.info("occupancy_profile_loaded cells=%d as_of=%s", count, as_of.isoformat())
     return count

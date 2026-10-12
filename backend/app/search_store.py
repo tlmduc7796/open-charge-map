@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from threading import RLock
@@ -25,13 +26,24 @@ class SearchSnapshot:
 
 
 class SearchResultStore:
-    def __init__(self, ttl: timedelta = timedelta(minutes=10)) -> None:
+    """Results expire `ttl` after `created_at`, measured on `clock` (the demo clock in the app).
+
+    Creation and expiry must read the same clock: with a demo time in the past, a wall-clock
+    expiry check would drop every result immediately.
+    """
+
+    def __init__(
+        self,
+        ttl: timedelta = timedelta(minutes=10),
+        clock: Callable[[], datetime] | None = None,
+    ) -> None:
         self._ttl = ttl
+        self._clock = clock or (lambda: datetime.now(UTC))
         self._items: dict[str, tuple[datetime, Any]] = {}
         self._lock = RLock()
 
     def put(self, result: Any, *, created_at: datetime | None = None) -> str:
-        now = created_at or datetime.now(UTC)
+        now = created_at or self._clock()
         search_id = f"SRCH_{uuid4().hex[:16].upper()}"
         self.set(search_id, result, created_at=now)
         return search_id
@@ -39,12 +51,12 @@ class SearchResultStore:
     def set(
         self, search_id: str, result: Any, *, created_at: datetime | None = None
     ) -> None:
-        now = created_at or datetime.now(UTC)
+        now = created_at or self._clock()
         with self._lock:
             self._items[search_id] = (now + self._ttl, result)
 
     def get(self, search_id: str, *, now: datetime | None = None) -> Any:
-        evaluation_at = now or datetime.now(UTC)
+        evaluation_at = now or self._clock()
         with self._lock:
             expires_at, result = self._items[search_id]
             if expires_at <= evaluation_at:

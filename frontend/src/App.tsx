@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "./api";
+import { demoMsAt, type ClockAnchor } from "./demoClock";
 import { resolvePlaceLabel } from "./location";
 import { COLOR_LABEL } from "./stationColor";
+import DemoClockControl from "./components/DemoClockControl";
 import JourneyForm from "./components/JourneyForm";
 import MapView from "./components/MapView";
 import RecommendationList from "./components/RecommendationList";
@@ -10,6 +12,7 @@ import StationDetails, { type ForecastState } from "./components/StationDetails"
 import StatusBar from "./components/StatusBar";
 import type {
   CandidateExclusion,
+  DemoClock,
   GeoPoint,
   JourneyRecommendation,
   ModelStatus,
@@ -29,7 +32,10 @@ const DEFAULT_DESTINATION: GeoPoint = { lat: 10.806, lon: 106.687, label: "Phú 
 
 const CURRENT_VEHICLE_ID = "EV_VF5_PLUS";
 
-/** How often station status and colours are re-read; the backend itself updates every 5 min. */
+/**
+ * How often station status, colours and the demo clock are re-read. The backend answers for its
+ * demo "now", which keeps moving, so a page left open follows it instead of freezing.
+ */
 const STATUS_POLL_INTERVAL_MS = 30_000;
 
 // Stable empty lists: a fresh `[]` per render would defeat memoization downstream (hover re-renders App).
@@ -38,7 +44,8 @@ const EMPTY_EXCLUSIONS: CandidateExclusion[] = [];
 
 /**
  * Identity of a search: results are only valid for the inputs that produced them. Changing the
- * mode, an endpoint, the vehicle or the battery level makes earlier results stale.
+ * mode, an endpoint, the vehicle, the battery level or the demo time (`clockEpoch`, bumped each
+ * time the demo clock is moved) makes earlier results stale.
  */
 function searchKey(
   mode: "stations" | "route",
@@ -46,10 +53,21 @@ function searchKey(
   destination: GeoPoint,
   vehicleId: string,
   soc: number,
+  clockEpoch: number,
 ): string {
   const end = mode === "route" ? `${destination.lat},${destination.lon}` : "";
-  return [mode, `${origin.lat},${origin.lon}`, end, vehicleId, Math.round(soc * 100)].join("|");
+  return [
+    mode,
+    `${origin.lat},${origin.lon}`,
+    end,
+    vehicleId,
+    Math.round(soc * 100),
+    clockEpoch,
+  ].join("|");
 }
+
+/** A server-side clock change smaller than this is drift correction, not a new demo moment. */
+const CLOCK_JUMP_TOLERANCE_S = 5;
 
 async function settle<T>(call: () => Promise<T>): Promise<T | null> {
   try {
@@ -61,6 +79,13 @@ async function settle<T>(call: () => Promise<T>): Promise<T | null> {
 
 export default function App() {
   const [currentTime, setCurrentTime] = useState(() => new Date());
+  // The server's demo clock, and the local time at which it was read (see demoMsAt).
+  const [demoClock, setDemoClock] = useState<DemoClock | null>(null);
+  const [clockAnchor, setClockAnchor] = useState<ClockAnchor | null>(null);
+  // Bumped whenever the demo moment jumps: results and forecasts of the old moment are stale.
+  const [clockEpoch, setClockEpoch] = useState(0);
+  const [clockBusy, setClockBusy] = useState(false);
+  const [clockError, setClockError] = useState<string | null>(null);
   const [stations, setStations] = useState<Station[]>([]);
   const [statuses, setStatuses] = useState<Record<string, StationStatus>>({});
   // Marker colour is computed by the backend (availability thresholds live in its app_config).
@@ -101,10 +126,9 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const selectedVehicle = vehicles.find((item) => item.vehicle_id === vehicleId) ?? vehicles[0] ?? null;
   // "Tìm trạm" has a single start point; "Tìm đường" needs both ends.
   const locationsValid = originValid && (searchMode === "stations" || destinationValid);
-  const currentKey = searchKey(searchMode, origin, destination, vehicleId, initialSoc);
+  const currentKey = searchKey(searchMode, origin, destination, vehicleId, initialSoc, clockEpoch);
   const currentKeyRef = useRef(currentKey);
   useEffect(() => {
     currentKeyRef.current = currentKey;
@@ -121,16 +145,35 @@ export default function App() {
   // Calls overlap (poll, search, page load): only the most recently started one may write state,
   // so a slow older response can never overwrite newer data.
   const refreshSeq = useRef(0);
+  const serverOffsetRef = useRef<number | null>(null);
+  const adoptClock = useCallback((value: DemoClock, jumped: boolean) => {
+    serverOffsetRef.current = value.offset_s;
+    setDemoClock(value);
+    // Anchor and ticker move together, so the shown time never reads before the server's moment.
+    const localMs = Date.now();
+    setClockAnchor({ demoMs: Date.parse(value.demo_now), localMs });
+    setCurrentTime(new Date(localMs));
+    if (jumped) setClockEpoch((epoch) => epoch + 1);
+  }, []);
   const refreshStatuses = useCallback(async (stationList: Station[]) => {
     const seq = ++refreshSeq.current;
-    const [records, stationColors] = await Promise.all([
+    const [records, stationColors, serverClock] = await Promise.all([
       Promise.all(stationList.map((station) => api.stationStatus(station.properties.station_id))),
       api.stationColors(),
+      // The clock is a convenience here: failing to read it must not fail the status refresh.
+      settle(() => api.demoClock()),
     ]);
     if (seq !== refreshSeq.current) return;
     setStatuses(Object.fromEntries(records.map((status) => [status.station_id, status])));
     setColors(stationColors);
-  }, []);
+    if (serverClock) {
+      // Another client may have moved the demo time: then results here describe another moment.
+      const previous = serverOffsetRef.current;
+      const jumped =
+        previous !== null && Math.abs(serverClock.offset_s - previous) > CLOCK_JUMP_TOLERANCE_S;
+      adoptClock(serverClock, jumped);
+    }
+  }, [adoptClock]);
 
   const loadInitialData = useCallback(async () => {
     setLoading(true);
@@ -161,16 +204,27 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [loadInitialData]);
 
-  // The backend moves port state every 5 min, so a page left open would otherwise show the
-  // snapshot taken at load. Polling is quiet: a failed poll keeps the last data, it never raises
-  // the error screen, and it pauses while the tab is hidden (catching up when it is shown again).
+  // The backend answers for the demo "now", which keeps moving, so a page left open would
+  // otherwise show the snapshot taken at load. Polling is quiet: a failed poll keeps the last data,
+  // it never raises the error screen, and it pauses while the tab is hidden (catching up when it
+  // is shown again). The forecast of the selected station follows the same beat.
+  const selectedStationIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (stations.length === 0) return;
     let inFlight = false;
     const poll = () => {
       if (document.hidden || inFlight) return;
       inFlight = true;
-      void settle(() => refreshStatuses(stations)).finally(() => {
+      const stationId = selectedStationIdRef.current;
+      const forecast = stationId
+        ? settle(async () => {
+            const data = await api.stationForecast(stationId);
+            if (selectedStationIdRef.current === stationId) {
+              setForecastResult({ stationId, data });
+            }
+          })
+        : Promise.resolve(null);
+      void Promise.all([settle(() => refreshStatuses(stations)), forecast]).finally(() => {
         inFlight = false;
       });
     };
@@ -183,10 +237,11 @@ export default function App() {
   }, [stations, refreshStatuses]);
 
   useEffect(() => {
+    selectedStationIdRef.current = selectedStationId;
     if (!selectedStationId) return;
     let cancelled = false;
-    // Status is re-read together with the forecast: the backend simulation moves port state
-    // every 5 min, so the snapshot taken at page load would disagree with the chart's "now" bar.
+    // Status is re-read together with the forecast, so the chart's "now" bar and the status
+    // shown next to it describe the same moment. A new demo moment (clockEpoch) reloads both.
     void Promise.all([
       settle(() => api.stationStatus(selectedStationId)),
       settle(() => api.stationForecast(selectedStationId)),
@@ -202,7 +257,38 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [selectedStationId]);
+  }, [selectedStationId, clockEpoch]);
+
+  const changeDemoClock = useCallback(
+    async (action: () => Promise<DemoClock>) => {
+      setClockBusy(true);
+      setClockError(null);
+      try {
+        adoptClock(await action(), true);
+        // Whatever was drawn for the old moment is no longer valid.
+        setRoute(null);
+        await settle(() => refreshStatuses(stations));
+      } catch (caught) {
+        setClockError(caught instanceof Error ? caught.message : "Không đổi được giờ demo.");
+      } finally {
+        setClockBusy(false);
+      }
+    },
+    [adoptClock, refreshStatuses, stations],
+  );
+  const handleClockApply = useCallback(
+    (isoWithOffset: string) => void changeDemoClock(() => api.setDemoClock(isoWithOffset)),
+    [changeDemoClock],
+  );
+  const handleClockReset = useCallback(
+    () => void changeDemoClock(() => api.resetDemoClock()),
+    [changeDemoClock],
+  );
+  // The demo moment ticks with the local second timer; polls correct the drift.
+  const demoNow = useMemo(
+    () => (clockAnchor ? new Date(demoMsAt(clockAnchor, currentTime.getTime())) : currentTime),
+    [clockAnchor, currentTime],
+  );
 
   const clearJourneyOverlay = useCallback(() => {
     setJourneyMarkersVisible(false);
@@ -524,26 +610,14 @@ export default function App() {
               onProviderChange={handleProviderChange}
             />
             <div className="map-status-overlay">
-              <div className="current-datetime" aria-label="Ngày giờ hiện tại">
-                <span className="current-datetime-date">
-                  {currentTime.toLocaleDateString("vi-VN", {
-                    timeZone: "Asia/Ho_Chi_Minh",
-                    weekday: "long",
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  })}
-                </span>
-                <time className="current-datetime-time" dateTime={currentTime.toISOString()}>
-                  {currentTime.toLocaleTimeString("vi-VN", {
-                    timeZone: "Asia/Ho_Chi_Minh",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: false,
-                  })}
-                </time>
-              </div>
+              <DemoClockControl
+                demoNow={demoNow}
+                clock={demoClock}
+                busy={clockBusy}
+                error={clockError}
+                onApply={handleClockApply}
+                onReset={handleClockReset}
+              />
               <div className="map-legend map-legend-overlay">
                 {(["green", "yellow", "red", "grey"] as const).map((color) => (
                   <span key={color}><i className={`legend-dot ${color}`} />{COLOR_LABEL[color]}</span>

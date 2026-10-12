@@ -1,4 +1,5 @@
 import type {
+  DemoClock,
   GeocodedPlace,
   JourneyRecommendation,
   ModelStatus,
@@ -132,9 +133,29 @@ interface ApiStationAvailabilityForecast {
   generatedAt: string;
 }
 
+interface ApiDemoClock {
+  demoNow: string;
+  wallNow: string;
+  offsetS: number;
+  isShifted: boolean;
+  dataStart: string | null;
+  dataEnd: string | null;
+  writable: boolean;
+}
+
 interface ApiAvailability {
   items: { stationId: string; color: StationColor }[];
 }
+
+const toDemoClock = (response: ApiDemoClock): DemoClock => ({
+  demo_now: response.demoNow,
+  wall_now: response.wallNow,
+  offset_s: response.offsetS,
+  is_shifted: response.isShifted,
+  data_start: response.dataStart,
+  data_end: response.dataEnd,
+  writable: response.writable,
+});
 
 const toForecast = (response: ApiStationAvailabilityForecast): StationForecast => ({
   station_id: response.stationId,
@@ -205,6 +226,25 @@ export const api = {
       await requestJson<ApiStationAvailabilityForecast>(
         `/api/v1/stations/${encodeURIComponent(stationId)}/availability`,
       ),
+    ),
+  /** The server's demo clock: what "now" means for every status, forecast and search. */
+  demoClock: async (): Promise<DemoClock> =>
+    toDemoClock(await requestJson<ApiDemoClock>("/api/v1/demo-clock")),
+  /** Move the demo clock to `demoNow` (ISO-8601 with an offset); it keeps running from there. */
+  setDemoClock: async (demoNow: string): Promise<DemoClock> =>
+    toDemoClock(
+      await requestJson<ApiDemoClock>("/api/v1/demo-clock", {
+        method: "PUT",
+        body: JSON.stringify({ demoNow }),
+      }),
+    ),
+  /** Follow real time again. */
+  resetDemoClock: async (): Promise<DemoClock> =>
+    toDemoClock(
+      await requestJson<ApiDemoClock>("/api/v1/demo-clock", {
+        method: "PUT",
+        body: JSON.stringify({ reset: true }),
+      }),
     ),
   vehicles: () => requestJson<Vehicle[]>("/vehicles"),
   modelStatus: () => requestJson<ModelStatus>("/model/status"),

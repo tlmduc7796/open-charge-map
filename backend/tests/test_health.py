@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 
 import httpx
 
@@ -14,11 +15,16 @@ def test_health_endpoint() -> None:
     response = asyncio.run(request_health())
 
     assert response.status_code == 200
-    assert response.json() == {
+    body = response.json()
+    server_time = body.pop("serverTime")
+    assert body == {
         "status": "ok",
         "service": "Smart EV Journey API",
         "environment": "development",
     }
+    # The demo clock's "now" as a UTC instant.
+    assert server_time.endswith("Z")
+    assert datetime.fromisoformat(server_time.replace("Z", "+00:00")).tzinfo is not None
 
 
 def test_application_startup_loaded_domain_data() -> None:

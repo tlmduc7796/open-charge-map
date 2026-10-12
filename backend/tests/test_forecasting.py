@@ -33,9 +33,11 @@ class WindowProvider:
     def __init__(self, window: OccupancyWindow | None) -> None:
         self.window_value = window
         self.calls = 0
+        self.as_of_values: list = []
 
-    def window(self, station_id: str) -> OccupancyWindow | None:
+    def window(self, station_id: str, as_of=None) -> OccupancyWindow | None:
         self.calls += 1
+        self.as_of_values.append(as_of)
         return self.window_value
 
 
@@ -170,11 +172,19 @@ def test_model_error_falls_back_to_persistence(deutsches_status: StationStatus) 
     assert "PERSISTENCE_FALLBACK" in result.flags
 
 
+def test_window_is_read_as_of_the_status_bucket(deutsches_status: StationStatus) -> None:
+    service, provider = _service(deutsches_status, FixedPredictor(0.4))
+
+    service.forecast_occupancy(deutsches_status, horizon_min=5)
+
+    assert provider.as_of_values == [deutsches_status.timestamp]
+
+
 def test_window_provider_failure_degrades_to_persistence(
     deutsches_status: StationStatus,
 ) -> None:
     class Broken:
-        def window(self, station_id: str):
+        def window(self, station_id: str, as_of=None):
             raise RuntimeError("database down")
 
     service = OccupancyForecastService(

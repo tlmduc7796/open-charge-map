@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime, timedelta
+from datetime import UTC
 from time import perf_counter
 from uuid import uuid4
 
@@ -22,6 +22,7 @@ from backend.app.catalog_repository import (
     DatabaseStationStatusRepository,
     DatabaseVehicleRepository,
 )
+from backend.app.clock import DemoClock
 from backend.app.config import load_settings
 from backend.app.database import validate_database
 from backend.app.domain import load_domain_data
@@ -46,14 +47,16 @@ from backend.app.domain.xgboost_predictor import (
     model_files_available,
 )
 from backend.app.logging_config import configure_logging
-from backend.app.occupancy_history_repository import DatabaseOccupancyHistoryRepository
+from backend.app.occupancy_history_repository import (
+    DatabaseOccupancyHistoryRepository,
+    DatabaseOccupancyRange,
+)
 from backend.app.prediction_repository import PredictionWriter
 from backend.app.profile_repository import (
     DatabaseOccupancyProfileRepository,
-    load_or_refresh,
 )
+from backend.app.profile_repository import refresh_as_of as refresh_profile_as_of
 from backend.app.search_store import SearchRateLimiter, SearchResultStore
-from backend.app.simulation_repository import DatabaseSimulationRepository
 from backend.app.station_state_repository import DatabaseStationStateRepository
 from backend.app.trip_repository import DatabaseTripRepository
 
@@ -62,67 +65,18 @@ configure_logging(settings.log_level)
 logger = logging.getLogger("smart_ev.integration")
 
 
-SIMULATION_STEP_MINUTES = 5
-
-
-def _simulation_tick_at(now: datetime) -> datetime:
-    """Return the current five-minute bucket boundary (UTC)."""
-    return now.replace(
-        minute=(now.minute // SIMULATION_STEP_MINUTES) * SIMULATION_STEP_MINUTES,
-        second=0,
-        microsecond=0,
-    )
-
-
-async def _simulation_loop(app: FastAPI, stop: asyncio.Event) -> None:
-    """Refresh simulated state on wall-clock five-minute boundaries."""
-    while not stop.is_set():
-        tick_at = _simulation_tick_at(datetime.now(UTC))
-        try:
-            stations_updated = await asyncio.to_thread(
-                app.state.simulation_repository.update_tick,
-                changed_at=tick_at,
-            )
-            await asyncio.to_thread(app.state.runtime_state.refresh)
-            predictions_updated = await asyncio.to_thread(
-                app.state.prediction_writer.refresh
-            )
-            logger.info(
-                "database_simulation_tick_complete stations=%d predictions=%d",
-                stations_updated,
-                predictions_updated,
-            )
-        except Exception:
-            logger.exception("database_simulation_tick_failed")
-        next_tick_at = tick_at + timedelta(minutes=SIMULATION_STEP_MINUTES)
-        wait_seconds = max(
-            0.0, (next_tick_at - datetime.now(UTC)).total_seconds()
-        )
-        try:
-            await asyncio.wait_for(stop.wait(), timeout=wait_seconds)
-        except TimeoutError:
-            continue
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    worker = None
-    stop = asyncio.Event()
     if app.state.prediction_writer is not None:
-        # Fill the predictions table from the current history before the first feed arrives.
+        # Fill the predictions table from the history as of the demo clock's current moment.
         try:
-            written = await asyncio.to_thread(app.state.prediction_writer.refresh)
+            written = await asyncio.to_thread(
+                app.state.prediction_writer.refresh, run_at=app.state.clock.now()
+            )
             logger.info("predictions_initialised rows=%d", written)
         except Exception:
             logger.exception("predictions_initialisation_failed")
-    if app.state.simulation_repository is not None:
-        worker = asyncio.create_task(_simulation_loop(app, stop))
-    try:
-        yield
-    finally:
-        stop.set()
-        if worker is not None:
-            await worker
+    yield
 
 
 app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
@@ -135,6 +89,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.state.settings = settings
+# One process-wide demo "now": the frontend moves it (PUT /api/v1/demo-clock) and it keeps running
+# from that moment. Every component below reads time through `clock.now`, never datetime.now.
+clock = DemoClock(settings.demo_now)
+app.state.clock = clock
 app.state.domain_data = load_domain_data(settings.data_dir)
 # Wait distribution (B2) and anti-herding (B3) still answer with fixed defaults from this
 # gateway (see backend/app/domain/ml_gateway.py); occupancy comes from the XGBoost predictor.
@@ -155,24 +113,18 @@ if settings.catalog_storage == "database":
     app.state.station_status_repository = DatabaseStationStatusRepository(
         app.state.database_engine,
         stale_after_s=settings.station_status_stale_after_s,
+        clock=clock.now,
     )
     app.state.station_state_repository = DatabaseStationStateRepository(
         app.state.database_engine
     )
-    # The 5-minute random occupancy is a demo-only data source. It stays off by default so it
-    # cannot pollute station_occupancy_5m with noise; real status arrives through
-    # POST /api/v1/internal/station-occupancy.
-    app.state.simulation_repository = (
-        DatabaseSimulationRepository(app.state.database_engine)
-        if settings.demo_random_simulation
-        else None
-    )
+    app.state.occupancy_data_range = DatabaseOccupancyRange(app.state.database_engine)
 else:
     app.state.station_repository = app.state.domain_data.stations
     app.state.vehicle_repository = app.state.domain_data.vehicles
     app.state.station_status_repository = app.state.domain_data.station_statuses
     app.state.station_state_repository = None
-    app.state.simulation_repository = None
+    app.state.occupancy_data_range = lambda: (None, None)
 app.state.runtime_state = RuntimeStateStore(app.state.station_status_repository)
 # Baseline arrival rates come from the JSON fixture; the wait estimate no longer uses them.
 app.state.arrival_rate_repository = app.state.domain_data.queue_assumptions
@@ -201,7 +153,8 @@ app.state.occupancy_profile_repository = (
     else None
 )
 if app.state.occupancy_profile_repository is not None:
-    load_or_refresh(app.state.occupancy_profile_repository)
+    # The profile only averages buckets up to the demo "now", so a past moment has no hindsight.
+    refresh_profile_as_of(app.state.occupancy_profile_repository, clock.now())
 app.state.occupancy_forecast_service = OccupancyForecastService(
     occupancy_predictor,
     supported_model_horizons=(
@@ -215,6 +168,7 @@ app.state.occupancy_forecast_service = OccupancyForecastService(
     ),
     profile_provider=app.state.occupancy_profile_repository,
     profile_tau_min=settings.profile_blend_tau_min,
+    clock=clock.now,
 )
 app.state.wait_estimator = WaitEstimator(
     scoring_wait_cap_min=settings.wait_scoring_cap_min,
@@ -226,6 +180,7 @@ app.state.prediction_writer = (
         app.state.station_status_repository,
         app.state.occupancy_forecast_service,
         app.state.wait_estimator,
+        clock=clock.now,
     )
     if uses_database
     else None
@@ -262,7 +217,7 @@ app.state.recommendation_service = RecommendationService(
     station_repository=app.state.station_repository,
     candidate_corridor_m=settings.recommend_candidate_corridor_m,
 )
-app.state.search_result_store = SearchResultStore()
+app.state.search_result_store = SearchResultStore(clock=clock.now)
 app.state.search_rate_limiter = SearchRateLimiter(settings.search_rate_limit_per_min)
 app.state.search_service = SearchService(
     app.state.recommendation_service,
@@ -276,6 +231,7 @@ app.state.search_service = SearchService(
     app.state.search_result_store,
     settings.availability_green_min,
     app.state.app_config_repository,
+    clock=clock.now,
 )
 app.state.trip_service = (
     TripService(
@@ -286,6 +242,7 @@ app.state.trip_service = (
         app.state.station_repository,
         app.state.station_status_repository,
         app.state.vehicle_repository,
+        clock=clock.now,
     )
     if app.state.database_engine is not None
     else None
@@ -320,6 +277,8 @@ def health() -> dict[str, str | bool]:
         "status": "ok",
         "service": settings.app_name,
         "environment": settings.app_env,
+        # The demo clock's "now" (UTC): what every other endpoint answers for.
+        "serverTime": clock.now().astimezone(UTC).isoformat().replace("+00:00", "Z"),
     }
     if app.state.database_engine is not None:
         try:

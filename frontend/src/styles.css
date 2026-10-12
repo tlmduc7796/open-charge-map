@@ -30,6 +30,22 @@ button { cursor: pointer; }
 }
 .current-datetime-date { font-size: 9px; font-weight: 700; text-transform: capitalize; }
 .current-datetime-time { color: #123d35; font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.demo-clock-head, .demo-clock-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.demo-clock-badge { padding: 1px 6px; border-radius: 999px; color: #42675d; background: #e8f0eb; font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+.demo-clock-badge.shifted { color: #5a3d00; background: #ffe7a8; }
+.demo-clock-toggle { padding: 2px 8px; border: 1px solid #cadbd1; border-radius: 7px; color: #1b584b; background: #fff; font-size: 10px; font-weight: 800; }
+.demo-clock-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 6px; margin-top: 6px; padding-top: 8px; border-top: 1px solid #e3ebe6; }
+.demo-clock-field { display: grid; gap: 2px; min-width: 0; color: #42675d; font-size: 9px; font-weight: 700; }
+.demo-clock-field.wide { grid-column: 1 / -1; }
+.demo-clock-field input { width: 100%; min-width: 0; padding: 5px 6px; border: 1px solid #cadbd1; border-radius: 7px; color: #123d35; background: #fff; font-size: 12px; font-variant-numeric: tabular-nums; }
+.demo-clock-hint, .demo-clock-warning, .demo-clock-error { grid-column: 1 / -1; margin: 0; font-size: 9px; line-height: 1.35; }
+.demo-clock-hint { color: #5c746c; }
+.demo-clock-warning { color: #7a4b00; }
+.demo-clock-error { color: #b3261e; }
+.demo-clock-actions { grid-column: 1 / -1; display: flex; gap: 6px; }
+.demo-clock-actions button { flex: 1; padding: 6px 8px; border: 1px solid #cadbd1; border-radius: 8px; color: #1b584b; background: #fff; font-size: 11px; font-weight: 800; }
+.demo-clock-actions button.primary { border-color: #1b584b; color: #fff; background: #1b584b; }
+.demo-clock-actions button:disabled, .demo-clock-toggle:disabled { opacity: 0.55; cursor: default; }
 .topbar {
   height: 72px;
   padding: 0 28px;
@@ -369,6 +385,7 @@ button { cursor: pointer; }
   .current-datetime { padding: 5px 8px; }
   .current-datetime-date { font-size: 8px; }
   .current-datetime-time { font-size: 12px; }
+  .demo-clock-form { min-width: 190px; }
   .workspace { min-height: 100vh; }
   .map-column { padding: 14px; }
   .map-frame { position: relative; }

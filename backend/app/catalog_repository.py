@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -108,7 +109,7 @@ _STATUS_SELECT = """
         NULL::numeric AS avg_session_duration_min,
         NULL::text AS metrics_origin
     FROM stations s
-    JOIN station_status_current ssc ON ssc.station_id = s.id
+    JOIN station_status_at(:as_of) ssc ON ssc.station_id = s.id
     WHERE s.is_active
 """
 
@@ -356,31 +357,42 @@ class DatabaseVehicleRepository:
 
 
 class DatabaseStationStatusRepository:
-    """Station status read from the newest `station_occupancy_5m` bucket of each station.
+    """Station status as of "now": the newest `station_occupancy_5m` bucket at or before it.
 
-    `stale_after_s` (the 5-minute feed's tolerance, `STATION_STATUS_STALE_AFTER_S`) turns a
-    station whose newest bucket is older than that into `unknown`; None disables the check.
+    "Now" comes from `clock` (the demo clock; the wall clock when None), so a moment inside the
+    loaded data answers with that moment's bucket and later buckets are never visible.
+    `stale_after_s` (`STATION_STATUS_STALE_AFTER_S`) turns a station whose bucket is older than
+    that, measured from "now", into `unknown`; None disables the check.
     """
 
-    def __init__(self, engine: Engine, stale_after_s: float | None = None) -> None:
+    def __init__(
+        self,
+        engine: Engine,
+        stale_after_s: float | None = None,
+        clock: Callable[[], datetime] | None = None,
+    ) -> None:
         self._engine = engine
         self._stale_after_s = stale_after_s
+        self._clock = clock or (lambda: datetime.now(UTC))
 
     def all(self) -> tuple[StationStatus, ...]:
+        now = self._clock()
         with self._engine.connect() as connection:
-            rows = connection.execute(text(_STATUS_SELECT + " ORDER BY s.code")).mappings()
-            now = datetime.now(UTC)
+            rows = connection.execute(
+                text(_STATUS_SELECT + " ORDER BY s.code"), {"as_of": now}
+            ).mappings()
             return tuple(
                 _status_from_row(row, stale_after_s=self._stale_after_s, now=now)
                 for row in rows
             )
 
     def get(self, station_id: str) -> StationStatus:
+        now = self._clock()
         with self._engine.connect() as connection:
             row = connection.execute(
                 text(_STATUS_SELECT + " AND s.code=:station_id"),
-                {"station_id": station_id},
+                {"station_id": station_id, "as_of": now},
             ).mappings().one_or_none()
         if row is None:
             raise KeyError(station_id)
-        return _status_from_row(row, stale_after_s=self._stale_after_s)
+        return _status_from_row(row, stale_after_s=self._stale_after_s, now=now)

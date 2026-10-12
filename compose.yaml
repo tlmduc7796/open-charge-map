@@ -11,7 +11,6 @@ services:
       POSTGRES_USER: smart_ev
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smart_ev}
       RESET_ON_START: ${RESET_ON_START:-0}
-      HISTORY_DAYS: ${HISTORY_DAYS:-30}
       # CSV nằm trong git (database/fixtures/simulator) nên luôn có; thiếu thì dừng thay vì chạy
       # với lịch sử rỗng.
       HISTORY_REQUIRED: "1"
@@ -22,8 +21,8 @@ services:
       - ./database/docker/initdb:/docker-entrypoint-initdb.d:ro
       - ./database/docker:/docker:ro
       - ./database:/db:ro
-      # CSV occupancy dùng chung với feeder: cùng đường dẫn /sim vì COPY của load_history.sql chạy
-      # phía server.
+      # CSV occupancy tháng 9-10/2026, nạp nguyên một lần lúc initdb (COPY của load_history.sql
+      # chạy phía server nên cần đường dẫn /sim trong container postgres).
       - ./database/fixtures/simulator:/sim:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U smart_ev -d smart_ev_data"]
@@ -31,36 +30,6 @@ services:
       timeout: 5s
       retries: 36
       start_period: 180s
-
-  feeder:
-    build:
-      context: .
-      dockerfile: Dockerfile.feeder
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: postgresql+psycopg://smart_ev:${POSTGRES_PASSWORD:-smart_ev}@postgres:5432/smart_ev_data
-      PGHOST: postgres
-      PGPORT: "5432"
-      PGDATABASE: smart_ev_data
-      PGUSER: smart_ev
-      PGPASSWORD: ${POSTGRES_PASSWORD:-smart_ev}
-      HISTORY_DAYS: ${HISTORY_DAYS:-30}
-      # 1: điền lấp bucket thiếu từ CSV lúc khởi động; 0: để nguyên khoảng trống.
-      BACKFILL_GAPS: ${BACKFILL_GAPS:-1}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-smart-ev-dev-internal-key}
-      FEED_API_URL: http://backend:8000
-      FEED_DELAY_S: "15"
-    volumes:
-      - ./database/fixtures/simulator:/sim:ro
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python", "-c", "from pathlib import Path; raise SystemExit(0 if Path('/tmp/history-ready').is_file() else 1)"]
-      interval: 5s
-      timeout: 3s
-      retries: 120
-      start_period: 10m
 
   backend:
     build:
@@ -78,12 +47,13 @@ services:
       GOONG_API_KEY: ${GOONG_API_KEY:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://127.0.0.1:5173}
       STATION_STATUS_STALE_AFTER_S: "900"
+      # Giờ demo ban đầu (giờ VN, rỗng = giờ thật). Frontend đổi được lúc chạy.
+      DEMO_NOW: ${DEMO_NOW:-}
+      DEMO_CLOCK_WRITABLE: ${DEMO_CLOCK_WRITABLE:-true}
     ports:
       - "127.0.0.1:${BACKEND_HOST_PORT:-8000}:8000"
     depends_on:
       postgres:
-        condition: service_healthy
-      feeder:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]

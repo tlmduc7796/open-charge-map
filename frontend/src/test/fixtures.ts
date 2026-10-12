@@ -1,4 +1,5 @@
 import type {
+  DemoClock,
   JourneyRecommendation,
   ModelStatus,
   RecommendationItem,
@@ -90,6 +91,17 @@ export const recommendation: JourneyRecommendation = {
   excluded_candidates: [],
   missing_km: null,
   nearest_station_name: null,
+};
+
+/** Server demo clock fixed at 2026-09-25 18:00 Vietnam time, which is inside the loaded data. */
+export const demoClock: DemoClock = {
+  demo_now: "2026-09-25T11:00:00Z",
+  wall_now: "2026-10-12T05:50:00Z",
+  offset_s: -1_492_200,
+  is_shifted: true,
+  data_start: "2026-08-31T17:00:00Z",
+  data_end: "2026-10-31T16:55:00Z",
+  writable: true,
 };
 
 export const modelStatus: ModelStatus = {

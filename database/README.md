@@ -35,7 +35,7 @@ database/
 | `catalog` | `connector_types`, `stations`, `ports` | Danh mục tĩnh: trạm, cổng, chuẩn cổng |
 | `vehicles` | `vehicle_models`, `vehicle_connectors` | Hồ sơ xe và chuẩn cổng tương thích |
 | `runtime` | `port_status` | Trạng thái từng cổng (tuỳ chọn, không quyết định số cổng trống); seed chỉ tạo sẵn dòng `unknown` |
-| `history` | `port_status_history`, `station_occupancy_5m`, `station_occupancy_profile` | Chuỗi thời gian partition theo tháng; `station_occupancy_5m` là **nguồn sự thật của trạng thái trạm** (số cổng đang dùng mỗi 5 phút), nạp 30 ngày lịch sử từ simulator lúc khởi động rồi ghi dần bởi `POST /api/v1/internal/station-occupancy`; `station_occupancy_profile` là bảng trung bình dẫn xuất |
+| `history` | `port_status_history`, `station_occupancy_5m`, `station_occupancy_profile` | Chuỗi thời gian partition theo tháng; `station_occupancy_5m` là **nguồn sự thật của trạng thái trạm** (số cổng đang dùng mỗi 5 phút), nạp nguyên CSV tháng 9–10/2026 lúc khởi tạo Docker (có thể ghi thêm qua `POST /api/v1/internal/station-occupancy`); `station_occupancy_profile` là bảng trung bình dẫn xuất |
 | `forecast` | `predictions` | Một dòng cho mỗi trạm × mốc 5–30 phút; seed chỉ có khóa, giá trị NULL cho backend ghi |
 | `trips` | `trips`, `trip_positions`, `trip_events` | Hành trình, GPS, sự kiện do backend tạo |
 | `config` | `app_config` | Cấu hình chỉnh được lúc chạy |
@@ -57,30 +57,31 @@ Lệnh này (mất vài giây):
 
 1. xoá sạch dữ liệu cũ trong volume (`docker/reset-entrypoint.sh`);
 2. tạo schema và nạp seed theo `tables.toml` (`docker/initdb/20-schema-and-data.sh`);
-3. nạp **30 ngày lịch sử** `station_occupancy_5m` từ `simulator/data/station_occupancy_5m.csv`, tính
-   cả ngày hôm nay đến bucket 5 phút hiện tại (`docker/initdb/30-simulator-history.sh`,
-   `docker/sql/load_history.sql`);
-4. tính bảng trung bình `station_occupancy_profile` (trạm × thứ trong tuần × bước 5 phút) bằng
-   `refresh_station_occupancy_profile()`;
-5. trạng thái hiện tại của trạm chính là bucket cuối cùng đó (view `station_status_current`); không
-   cần ghi `port_status`.
+3. nạp **nguyên file** `fixtures/simulator/station_occupancy_5m.csv` (tháng 9 + tháng 10/2026,
+   193 248 dòng, có trong git) vào `station_occupancy_5m`: không neo theo giờ máy, không dịch ngày,
+   không cắt "tương lai" (`docker/initdb/30-simulator-history.sh`, `docker/sql/load_history.sql`);
+   partition tháng được tạo trước khi chèn (`_2026_08` chứa 01/09 00:00–07:00 giờ VN vì biên UTC);
+4. bảng trung bình `station_occupancy_profile` **không** tính ở đây: nó phụ thuộc thời điểm demo, nên
+   backend gọi `refresh_station_occupancy_profile(p_days, p_timezone, p_now)` lúc khởi động và mỗi
+   lần đổi giờ demo (chỉ tính bucket `<= p_now`);
+5. trạng thái trạm tại một thời điểm T là bucket mới nhất `<= T`: hàm `station_status_at(T)`; view
+   `station_status_current` chỉ là `station_status_at(now())`. Không cần ghi `port_status`.
 
-Điều kiện: đã có CSV của simulator (`cd simulator; python -m script run; python -m script occupancy`).
-Nếu "bây giờ" nằm sau dữ liệu simulator thì chuỗi được dịch tiến theo **bội số 7 ngày** để giữ đúng
-thứ trong tuần.
+Điều kiện: file CSV nằm trong git; tạo lại từ simulator bằng
+`python scripts/trim_occupancy_csv.py --months 9 10 --year 2026`.
 
 | Biến môi trường | Mặc định | Ý nghĩa |
 | --- | --- | --- |
 | `RESET_ON_START` | `1` | `0` = giữ dữ liệu giữa các lần khởi động |
-| `HISTORY_DAYS` | `30` | số ngày lịch (giờ VN) cần nạp, tính cả hôm nay |
 | `HISTORY_REQUIRED` | `1` | `0` = thiếu CSV chỉ cảnh báo và để lịch sử rỗng |
 
-Sau khi nạp, mỗi 5 phút nguồn gửi số cổng đang dùng của từng trạm qua
-`POST /api/v1/internal/station-occupancy`; backend upsert vào bucket 5 phút tương ứng của
-`station_occupancy_5m` (báo sau trong cùng bucket ghi đè). Trạng thái trạm = bucket mới nhất:
-`available = operational − occupied`, `offline = total − operational`. Backend coi trạm là `unknown`
-khi bucket mới nhất cũ hơn `STATION_STATUS_STALE_AFTER_S` (mặc định 900 giây). Để tính lại bảng
-trung bình sau này: `SELECT refresh_station_occupancy_profile(30);`.
+Không còn nguồn cập nhật định kỳ: dữ liệu chỉ đến từ CSV đã nạp và, tuỳ chọn, từ một nguồn ngoài gọi
+`POST /api/v1/internal/station-occupancy` (backend upsert vào bucket 5 phút tương ứng của
+`station_occupancy_5m`; báo sau trong cùng bucket ghi đè). Trạng thái trạm tại thời điểm demo T =
+bucket mới nhất `<= T`: `available = operational − occupied`, `offline = total − operational`.
+Backend coi trạm là `unknown` khi bucket đó cũ hơn `STATION_STATUS_STALE_AFTER_S` (mặc định 900
+giây) so với T. Tính lại bảng trung bình theo một thời điểm:
+`SELECT refresh_station_occupancy_profile(30, 'Asia/Ho_Chi_Minh', '2026-10-12 00:00+07');`.
 
 > **Cảnh báo:** mỗi lần container khởi động là xoá toàn bộ dữ liệu trong volume, kể cả `trips`.
 > Dùng `RESET_ON_START=0` nếu cần giữ dữ liệu.
@@ -154,14 +155,14 @@ mặc định `now()`, JSON được dàn dòng cho bảng nhỏ) nên diff ch�
 | `vehicle_connectors` | 35 | Quan hệ cổng sạc (CCS2/Type2) của 18 xe |
 | `app_config` | 0 | Không seed; backend dùng giá trị mặc định cho tới khi có key |
 | `port_status_history` | 0 | Không seed; backend ghi dần |
-| `station_occupancy_5m` | 0 (bản seed) | Không có trong `data/`; nạp 30 ngày từ simulator lúc khởi động Docker rồi ghi dần qua `/internal/station-occupancy` |
+| `station_occupancy_5m` | 0 (bản seed) | Không có trong `data/`; nạp nguyên CSV tháng 9–10/2026 lúc khởi tạo Docker (có thể ghi thêm qua `/internal/station-occupancy`) |
 | `station_occupancy_profile` | 0 (bản seed) | Dẫn xuất; tính bởi `refresh_station_occupancy_profile()` |
 | `trips`, `trip_positions`, `trip_events` | 0 | Do backend tạo |
 
 Sau bootstrap bằng Python (không nạp lịch sử) mọi trạm chưa có bucket nào nên `operational_ports = 0`
 và `unknown_ports = total_ports`: backend coi chúng là chưa có dữ liệu và chưa gợi ý được cho tới khi
 nhận số cổng đang dùng qua `POST /api/v1/internal/station-occupancy`. Khởi động bằng Docker đã nạp
-30 ngày lịch sử nên có trạng thái ngay. `queue_length` lấy từ bucket (nullable), mặc định NULL.
+CSV tháng 9–10/2026 nên có trạng thái cho mọi thời điểm trong khoảng đó. `queue_length` lấy từ bucket (nullable), mặc định NULL.
 
 Catalog chỉ gồm trạm và xe của VinFast, chỉ với cổng CCS2 và Type2: 5 trạm EV ONE, xe BYD, xe
 demo GB/T và hai chuẩn GB/T đã bị bỏ khỏi `data/`. Các file trong `fixtures/` (dùng cho chế độ

@@ -122,6 +122,20 @@ export interface JourneyRecommendation {
   nearest_station_name: string | null;
 }
 
+/**
+ * The backend's demo "now". Every status, forecast and search is answered for this moment, and it
+ * keeps running from the moment it was set; `data_start`/`data_end` bound the loaded occupancy.
+ */
+export interface DemoClock {
+  demo_now: string;
+  wall_now: string;
+  offset_s: number;
+  is_shifted: boolean;
+  data_start: string | null;
+  data_end: string | null;
+  writable: boolean;
+}
+
 export interface ModelStatus {
   prediction_source: "persistence" | "model" | "default";
   model_artifact_available: boolean;

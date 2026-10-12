@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+from backend.app.clock import parse_demo_time
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(PROJECT_ROOT / ".env", override=False)
@@ -73,7 +76,9 @@ class Settings:
     availability_green_min: int
     search_rate_limit_per_min: int
     cors_origins: tuple[str, ...]
-    demo_random_simulation: bool
+    # Initial demo time (`DEMO_NOW`, Vietnam time when it has no offset); None = real time.
+    demo_now: datetime | None
+    demo_clock_writable: bool
 
     def required_data_paths(self) -> tuple[Path, ...]:
         return (
@@ -89,6 +94,7 @@ class Settings:
 def load_settings() -> Settings:
     key = os.getenv("GOONG_API_KEY", "").strip() or None
     internal_api_key = os.getenv("INTERNAL_API_KEY", "").strip() or None
+    demo_now = os.getenv("DEMO_NOW", "").strip()
     availability_green_min = int(os.getenv("AVAILABILITY_GREEN_MIN", "2"))
     if availability_green_min <= 0:
         raise ValueError("AVAILABILITY_GREEN_MIN must be positive")
@@ -139,12 +145,13 @@ def load_settings() -> Settings:
         recommend_candidate_corridor_m=_read_positive_float(
             "RECOMMEND_CANDIDATE_CORRIDOR_M", 5_000
         ),
-        # Occupancy arrives every 5 minutes, so tolerate three buckets before a station is unknown.
+        # Occupancy buckets are five minutes apart, so tolerate three before a station is unknown.
         station_status_stale_after_s=_read_positive_float(
             "STATION_STATUS_STALE_AFTER_S", 900
         ),
         availability_green_min=availability_green_min,
         search_rate_limit_per_min=search_rate_limit_per_min,
         cors_origins=_read_csv("CORS_ORIGINS", "http://127.0.0.1:5173"),
-        demo_random_simulation=_read_bool("DEMO_RANDOM_SIMULATION", False),
+        demo_now=(parse_demo_time(demo_now) if demo_now else None),
+        demo_clock_writable=_read_bool("DEMO_CLOCK_WRITABLE", True),
     )

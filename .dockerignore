@@ -16,5 +16,5 @@ simulator/data
 **/.pytest_cache
 **/.ruff_cache
 
-# CSV occupancy được mount lúc chạy (compose), không đưa vào image backend/feeder.
+# CSV occupancy được mount vào postgres lúc chạy (compose), không đưa vào image backend.
 database/fixtures/simulator

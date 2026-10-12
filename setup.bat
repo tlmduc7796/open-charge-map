@@ -84,9 +84,9 @@ echo.
 echo [5/5] PostgreSQL/PostGIS database...
 pushd database
 echo.
-rem The container itself creates the schema, loads the seed data and the 30-day simulator history
-rem (database/docker/); --wait returns once the database reports healthy. Needs
-rem simulator\data\station_occupancy_5m.csv (python -m script run, then python -m script occupancy).
+rem The container itself creates the schema, loads the seed data and the whole September-October
+rem occupancy CSV (database/fixtures/simulator, in git; database/docker/); --wait returns once the
+rem database reports healthy.
 docker compose up -d --wait postgres
 if errorlevel 1 (
     echo [ERROR] PostgreSQL failed to start or load its data. See: docker compose logs postgres

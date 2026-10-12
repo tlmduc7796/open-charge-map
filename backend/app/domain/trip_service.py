@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
 from backend.app.api_v1_models import (
@@ -36,7 +37,9 @@ class TripService:
         stations,
         statuses,
         vehicles,
+        clock: Callable[[], datetime] | None = None,
     ) -> None:
+        self._clock = clock or (lambda: datetime.now(UTC))
         self._repository = repository
         self._searches = searches
         self._config = config
@@ -88,7 +91,7 @@ class TripService:
             route=route,
             option=option,
             auth_token_hash=self._token_hash(token),
-            created_at=datetime.now(UTC),
+            created_at=self._clock(),
         )
 
         return TripCreatedResponse(**trip.model_dump(), trip_token=token)
@@ -205,7 +208,7 @@ class TripService:
             return self._reroute(
                 trip_id, before=before, origin=origin,
                 battery_pct=before["planned"]["batteryPct"],
-                evaluated_at=datetime.now(UTC),
+                evaluated_at=self._clock(),
                 exclude_current=payload.action == "decline",
                 requested_station_id=payload.station_id,
                 declined_station_id=(
@@ -216,7 +219,7 @@ class TripService:
         return self._repository.transition(
             trip_id,
             action=payload.action,
-            now=datetime.now(UTC),
+            now=self._clock(),
             battery_pct=payload.battery_pct,
         )
 

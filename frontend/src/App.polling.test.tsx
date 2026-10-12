@@ -3,7 +3,14 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { api } from "./api";
 import App from "./App";
-import { modelStatus, recommendationItem, station, status, vehicle } from "./test/fixtures";
+import {
+  demoClock,
+  modelStatus,
+  recommendationItem,
+  station,
+  status,
+  vehicle,
+} from "./test/fixtures";
 import type { Station } from "./types";
 
 vi.mock("./api", () => ({
@@ -19,6 +26,9 @@ vi.mock("./api", () => ({
     searchRoute: vi.fn(),
     searchStations: vi.fn(),
     reverseGeocode: vi.fn(),
+    demoClock: vi.fn(),
+    setDemoClock: vi.fn(),
+    resetDemoClock: vi.fn(),
   },
 }));
 
@@ -37,7 +47,7 @@ const otherStation: Station = {
   properties: { ...station.properties, station_id: OTHER_ID, name: "Trạm khác" },
 };
 
-/** Status polls registered by App; captured so the tests fire them instead of waiting 30 s. */
+/** Status polls registered by App (30 s); captured so the tests fire them instead of waiting. */
 let polls: Array<() => void> = [];
 let hidden = false;
 
@@ -51,8 +61,8 @@ beforeEach(() => {
     delay?: number,
     ...args: unknown[]
   ) => {
-    // Testing Library's own 50 ms poller must keep running.
-    if (delay !== undefined && delay >= 1000) {
+    // Testing Library's own 50 ms poller and App's 1 s clock tick must keep running.
+    if (delay !== undefined && delay >= 10_000) {
       polls.push(callback);
       return 0;
     }
@@ -74,6 +84,7 @@ beforeEach(() => {
   });
   mockedApi.vehicles.mockResolvedValue([vehicle]);
   mockedApi.modelStatus.mockResolvedValue(modelStatus);
+  mockedApi.demoClock.mockResolvedValue(demoClock);
   mockedApi.geocodeSuggestions.mockResolvedValue([]);
 });
 

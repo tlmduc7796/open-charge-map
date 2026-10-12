@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Cắt station_occupancy_5m.csv của simulator xuống vài tháng (mặc định: tháng 9 và 10/2026).
 
-File simulator phủ cả năm (~960 nghìn dòng, ~67 MB) nhưng database chỉ nạp HISTORY_DAYS ngày cuối và
-feeder chỉ cần phủ >= 7 ngày, nên một cửa sổ ~60 ngày là đủ và đủ nhỏ để commit vào git.
+File simulator phủ cả năm (~960 nghìn dòng, ~67 MB). Database nạp NGUYÊN file đầu ra này
+(database/docker/sql/load_history.sql) làm dữ liệu demo, nên chỉ giữ tháng cần xem và đủ nhỏ để
+commit vào git.
 
 Tháng được tính theo múi giờ của chính cột `bucket_at` quy về giờ VN (UTC+7), cùng quy ước với
 database/docker/sql/load_history.sql. Dòng được chép nguyên văn theo thứ tự gốc.

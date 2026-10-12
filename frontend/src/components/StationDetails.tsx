@@ -160,7 +160,9 @@ function ForecastChart({
   // Arrivals beyond the capped axis are pinned to the right edge and labelled with an arrow.
   const offAxis = hasArrival && arrivalMin > xMax;
   const arrivalX = hasArrival ? x(Math.min(arrivalMin, xMax)) : 0;
-  const arrivalValue = hasArrival ? valueAt(forecast.points, arrivalMin) : null;
+  const arrivalValue = hasArrival && forecast.points.length > 0
+    ? valueAt(forecast.points, arrivalMin)
+    : null;
   const arrivalLabel = hasArrival ? `${Math.round(arrivalMin)}′` : "";
   const note = sourceNote(forecast);
 

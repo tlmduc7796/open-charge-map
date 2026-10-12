@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from datetime import timedelta
+import time
+from collections.abc import Callable, Sequence
+from datetime import datetime, timedelta
 from typing import Any
 
 from sqlalchemy import Engine, text
@@ -47,12 +48,50 @@ def build_window(
     )
 
 
+class DatabaseOccupancyRange:
+    """Oldest and newest loaded occupancy bucket, re-read at most every `ttl_s` seconds."""
+
+    def __init__(
+        self,
+        engine: Engine,
+        ttl_s: float = 60.0,
+        monotonic: Callable[[], float] = time.monotonic,
+    ) -> None:
+        self._engine = engine
+        self._ttl_s = ttl_s
+        self._monotonic = monotonic
+        self._cached: tuple[datetime | None, datetime | None] = (None, None)
+        self._read_at: float | None = None
+
+    def __call__(self) -> tuple[datetime | None, datetime | None]:
+        now = self._monotonic()
+        if self._read_at is not None and now - self._read_at < self._ttl_s:
+            return self._cached
+        try:
+            with self._engine.connect() as connection:
+                row = connection.execute(
+                    text("SELECT min(bucket_at) AS first, max(bucket_at) AS last "
+                         "FROM station_occupancy_5m")
+                ).mappings().one()
+        except Exception:  # The range is informational; a failed read keeps the last value.
+            return self._cached
+        self._cached = (row["first"], row["last"])
+        self._read_at = now
+        return self._cached
+
+
 class DatabaseOccupancyHistoryRepository:
     def __init__(self, engine: Engine) -> None:
         self._engine = engine
 
-    def window(self, station_id: str) -> OccupancyWindow | None:
-        """The last 12 five-minute buckets of the station with code `station_id`."""
+    def window(
+        self, station_id: str, as_of: datetime | None = None
+    ) -> OccupancyWindow | None:
+        """The last 12 five-minute buckets of station `station_id` at or before `as_of`.
+
+        `as_of` None means the newest buckets; passing a moment keeps later buckets out, which is
+        what makes a forecast made "at T" independent of data recorded after T.
+        """
         with self._engine.connect() as connection:
             rows = connection.execute(
                 text(
@@ -61,10 +100,11 @@ class DatabaseOccupancyHistoryRepository:
                     FROM station_occupancy_5m o
                     JOIN stations s ON s.id = o.station_id
                     WHERE s.code = :code
+                      AND (CAST(:as_of AS timestamptz) IS NULL OR o.bucket_at <= :as_of)
                     ORDER BY o.bucket_at DESC
                     LIMIT :limit
                     """
                 ),
-                {"code": station_id, "limit": LOOKBACK_STEPS},
+                {"code": station_id, "as_of": as_of, "limit": LOOKBACK_STEPS},
             ).mappings().all()
         return build_window(station_id, rows)

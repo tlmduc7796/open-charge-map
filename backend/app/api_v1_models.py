@@ -62,6 +62,39 @@ class ConfigResponse(ApiModel):
     updated_at: datetime
 
 
+class DemoClockResponse(ApiModel):
+    """The server's demo "now" and the span of occupancy data it can answer for."""
+
+    demo_now: datetime
+    wall_now: datetime
+    offset_s: float
+    is_shifted: bool
+    # Oldest / newest loaded occupancy bucket; None when the database holds none.
+    data_start: datetime | None
+    data_end: datetime | None
+    writable: bool
+
+
+class DemoClockUpdateRequest(ApiModel):
+    """Set the demo clock to `demoNow` (an offset-aware instant), or `reset` to real time."""
+
+    demo_now: datetime | None = None
+    reset: bool = False
+
+    @field_validator("demo_now")
+    @classmethod
+    def demo_now_requires_timezone(cls, value: datetime | None) -> datetime | None:
+        if value is not None and value.tzinfo is None:
+            raise ValueError("demoNow must include a timezone offset")
+        return value
+
+    @model_validator(mode="after")
+    def exactly_one_action(self) -> DemoClockUpdateRequest:
+        if self.reset == (self.demo_now is not None):
+            raise ValueError("send either demoNow or reset=true")
+        return self
+
+
 class PortStatusUpdate(ApiModel):
     port_id: str = Field(min_length=1)
     status: Literal["available", "charging", "out_of_service", "unknown"]

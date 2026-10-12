@@ -27,7 +27,7 @@ if errorlevel 1 (
 echo.
 echo Starting PostgreSQL...
 echo (a freshly started container wipes its volume and reloads the schema, seed data and the
-echo  30-day simulator history; this takes a few seconds)
+echo  September-October occupancy CSV; this takes a few seconds)
 pushd database
 docker compose up -d --wait postgres
 if errorlevel 1 (

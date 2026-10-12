@@ -1,7 +1,7 @@
 # Fixed project name keeps the existing container and named volume (data_platform_*) after the
 # directory was renamed from data_platform to database.
 #
-# MỘT LỆNH dựng lại toàn bộ database (xoá volume cũ, nạp schema + seed + 30 ngày lịch sử simulator):
+# MỘT LỆNH dựng lại toàn bộ database (xoá volume cũ, nạp schema + seed + CSV occupancy tháng 9-10):
 #     docker compose up -d --force-recreate --wait
 # (`docker compose restart postgres` cũng reset vì entrypoint chạy lại.) Đặt RESET_ON_START=0 để giữ
 # dữ liệu giữa các lần khởi động. Chi tiết: database/README.md, mục "Khởi động bằng Docker".
@@ -19,7 +19,6 @@ services:
       POSTGRES_USER: smart_ev
       POSTGRES_PASSWORD: smart_ev
       RESET_ON_START: "${RESET_ON_START:-1}"
-      HISTORY_DAYS: "${HISTORY_DAYS:-30}"
       HISTORY_REQUIRED: "${HISTORY_REQUIRED:-1}"
     ports:
       - "5433:5432"
@@ -38,8 +37,8 @@ services:
       - ./docker:/docker:ro
       # schema/, data/, bulk/ và tables.toml (nguồn sự thật của lớp SQL).
       - ./:/db:ro
-      # CSV simulator (python -m script occupancy trong simulator/).
-      - ../simulator/data:/sim:ro
+      # CSV occupancy tháng 9-10/2026 (có trong git), nạp nguyên một lần lúc initdb.
+      - ./fixtures/simulator:/sim:ro
 
 volumes:
   smart_ev_postgres_data:

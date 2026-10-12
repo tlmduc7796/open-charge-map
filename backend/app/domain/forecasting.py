@@ -39,7 +39,11 @@ class OccupancyPredictor(Protocol):
 
 
 class OccupancyWindowProvider(Protocol):
-    def window(self, station_id: str) -> OccupancyWindow | None: ...
+    def window(
+        self, station_id: str, as_of: datetime | None = None
+    ) -> OccupancyWindow | None:
+        """The newest window at or before `as_of` (the newest overall when None)."""
+        ...
 
 
 class OccupancyProfileProvider(Protocol):
@@ -160,7 +164,9 @@ class OccupancyForecastService:
         if cached is not None and cached[0] == key:
             return cached[1]
         try:
-            window = self._window_provider.window(status.station_id)
+            # The window ends at the bucket the status was read from, so the model never sees
+            # buckets recorded after the moment the status describes.
+            window = self._window_provider.window(status.station_id, as_of=status.timestamp)
         except Exception:  # A history outage must degrade to persistence, not fail the search.
             logger.exception("occupancy_window_unavailable station=%s", status.station_id)
             return None

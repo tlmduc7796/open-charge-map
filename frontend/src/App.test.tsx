@@ -3,7 +3,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 
 import { api } from "./api";
 import App from "./App";
-import { modelStatus, recommendation, station, status, vehicle } from "./test/fixtures";
+import { demoClock, modelStatus, recommendation, station, status, vehicle } from "./test/fixtures";
 
 vi.mock("./api", () => ({
   api: {
@@ -17,6 +17,9 @@ vi.mock("./api", () => ({
     searchRoute: vi.fn(),
     searchStations: vi.fn(),
     reverseGeocode: vi.fn(),
+    demoClock: vi.fn(),
+    setDemoClock: vi.fn(),
+    resetDemoClock: vi.fn(),
   },
 }));
 
@@ -53,6 +56,7 @@ beforeEach(() => {
   mockedApi.stationColors.mockResolvedValue({ [station.properties.station_id]: "green" });
   mockedApi.vehicles.mockResolvedValue([vehicle]);
   mockedApi.modelStatus.mockResolvedValue(modelStatus);
+  mockedApi.demoClock.mockResolvedValue(demoClock);
   mockedApi.searchRoute.mockResolvedValue(recommendation);
   mockedApi.geocodeSuggestions.mockResolvedValue([]);
   mockedApi.reverseGeocode.mockResolvedValue({

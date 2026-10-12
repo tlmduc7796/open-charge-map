@@ -163,7 +163,7 @@ cổng cụ thể); `port_status` không tham gia.
 | `vehicles` | `vehicle_connectors` | 35 | |
 | `runtime` | `port_status` | 200 | tuỳ chọn; mỗi cổng một dòng, `status='unknown'`, `reported_at` NULL |
 | `history` | `port_status_history` | 0 | backend ghi dần (chỉ khi có báo từng cổng) |
-| `history` | `station_occupancy_5m` | 0 | không seed; nạp 30 ngày từ simulator lúc khởi động Docker, sau đó ghi dần qua `POST /api/v1/internal/station-occupancy` |
+| `history` | `station_occupancy_5m` | 0 | không seed; nạp nguyên CSV tháng 9–10/2026 lúc khởi tạo Docker (có thể ghi thêm qua `POST /api/v1/internal/station-occupancy`) |
 | `history` | `station_occupancy_profile` | 0 | dẫn xuất từ `station_occupancy_5m` bằng `refresh_station_occupancy_profile()` |
 | `forecast` | `predictions` | 66 | 11 trạm × 6 mốc; chỉ có khóa, mọi giá trị NULL |
 | `trips` | `trips`, `trip_positions`, `trip_events` | 0 | do backend tạo |
@@ -182,7 +182,7 @@ Phạm vi địa lý của 11 trạm: longitude `106.65922–106.72233`, latitud
 1. **Trạng thái trạm = bucket occupancy mới nhất.** `station_status_current` tính
    `available = operational − occupied`, `offline = total − operational`. Trạm chưa có bucket nào
    báo `operational_ports = 0`, `unknown_ports = total_ports` cho tới khi nhận số cổng đang dùng qua
-   `POST /api/v1/internal/station-occupancy` (khởi động Docker đã nạp sẵn 30 ngày lịch sử).
+   `POST /api/v1/internal/station-occupancy` (khởi động Docker đã nạp sẵn CSV tháng 9–10/2026).
 2. **Hàng đợi chỉ có nếu bucket có.** `queue_length` lấy từ `station_occupancy_5m.queue_length`
    (nullable, hiện NULL), nên ước lượng chờ trả `WAIT_INPUT_UNAVAILABLE` cho tới khi có nguồn
    queue/session.

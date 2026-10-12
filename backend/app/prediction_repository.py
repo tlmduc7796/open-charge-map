@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import UTC, datetime, timedelta
 from typing import Protocol
 
@@ -47,7 +47,9 @@ class PredictionWriter:
         statuses: StatusReader,
         forecasting: OccupancyForecastService,
         wait_estimator: WaitEstimator,
+        clock: Callable[[], datetime] | None = None,
     ) -> None:
+        self._clock = clock or (lambda: datetime.now(UTC))
         self._engine = engine
         self._statuses = statuses
         self._forecasting = forecasting
@@ -57,7 +59,7 @@ class PredictionWriter:
         self, station_codes: Iterable[str] | None = None, *, run_at: datetime | None = None
     ) -> int:
         """Rewrite the slots of the given stations (all when None); returns rows written."""
-        now = run_at or datetime.now(UTC)
+        now = run_at or self._clock()
         if station_codes is None:
             statuses = list(self._statuses.all())
         else:

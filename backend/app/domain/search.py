@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
 from backend.app.api_v1_models import (
@@ -60,7 +61,9 @@ class SearchService:
         store: SearchResultStore,
         availability_green_min: int,
         config_repository: AppConfigRepository | None = None,
+        clock: Callable[[], datetime] | None = None,
     ) -> None:
+        self._clock = clock or (lambda: datetime.now(UTC))
         self._recommendation = recommendation
         self._routing = routing
         self._vehicles = vehicles
@@ -277,7 +280,7 @@ class SearchService:
     def search_route(
         self, payload: SearchRouteRequest, *, now: datetime | None = None
     ) -> SearchRouteResponse:
-        generated_at = now or datetime.now(UTC)
+        generated_at = now or self._clock()
         vehicle = self._vehicles.get(payload.vehicle_id)
         direct = self._routing.route(
             self._point(payload.origin), self._point(payload.destination)
@@ -342,7 +345,7 @@ class SearchService:
     def search_stations(
         self, payload: SearchStationsRequest, *, now: datetime | None = None
     ) -> SearchStationsResponse:
-        generated_at = now or datetime.now(UTC)
+        generated_at = now or self._clock()
         vehicle = self._vehicles.get(payload.vehicle_id)
         reachable_km = max(
             0.0,

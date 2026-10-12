@@ -1,9 +1,11 @@
 -- history.station_occupancy_5m — occupancy của trạm theo bucket 5 phút (chuỗi thời gian).
--- NGUỒN SỰ THẬT của trạng thái trạm: bucket mới nhất của mỗi trạm là số cổng đang dùng hiện tại
--- (view station_status_current). Cũng là nguồn huấn luyện/dự báo và của station_occupancy_profile.
--- Ghi bởi: (1) lúc khởi tạo container, nạp 30 ngày lịch sử từ simulator
--- (database/docker/sql/load_history.sql); (2) backend, POST /api/v1/internal/station-occupancy,
--- mỗi 5 phút một dòng cho mỗi trạm.
+-- NGUỒN SỰ THẬT của trạng thái trạm: bucket mới nhất không muộn hơn "bây giờ" (đồng hồ demo của
+-- backend) của mỗi trạm là số cổng đang dùng tại thời điểm đó (hàm station_status_at, view
+-- station_status_current = station_status_at(now())). Cũng là nguồn huấn luyện/dự báo và của
+-- station_occupancy_profile.
+-- Ghi bởi: (1) lúc khởi tạo container, nạp nguyên CSV tháng 9-10/2026 (không cắt theo giờ máy;
+-- database/docker/sql/load_history.sql); (2) tuỳ chọn, một nguồn ngoài gọi backend,
+-- POST /api/v1/internal/station-occupancy, một dòng cho mỗi trạm mỗi bucket.
 --
 -- Partition theo tháng trên bucket_at. Partition tháng được tạo bằng
 -- public.ensure_month_partition() trước khi ghi (lúc nạp lịch sử và trong

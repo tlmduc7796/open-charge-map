@@ -80,7 +80,28 @@ def test_compose_mounts_what_the_init_scripts_read() -> None:
 
 def test_history_sql_uses_only_documented_variables() -> None:
     text = (DOCKER_DIR / "sql" / "load_history.sql").read_text(encoding="utf-8")
-    assert ":'csv_path'" in text and ":history_days" in text
+    assert ":'csv_path'" in text
+    # The whole CSV is loaded as is: no anchoring on the machine clock, no day shift, no cut-off.
+    assert "history_days" not in text and "shift_days" not in text
+    assert "now()" not in text and "date_bin" not in text
     # Station status is read from the latest occupancy bucket; per-port state is not touched.
     assert "UPDATE public.port_status" not in text
     assert "session_replication_role" not in text
+
+
+def test_history_csv_is_the_september_october_fixture() -> None:
+    """The mounted CSV is loaded unmodified and must cover exactly 2026-09-01 .. 2026-10-31."""
+    path = ROOT / "fixtures" / "simulator" / "station_occupancy_5m.csv"
+    lines = path.read_text(encoding="utf-8").splitlines()
+    assert lines[0] == "station_id,bucket_at,total_ports,operational_ports,occupied_ports"
+    stamps = [line.split(",", 2)[1] for line in lines[1:]]
+    assert min(stamps) == "2026-09-01T00:00:00+07:00"
+    assert max(stamps) == "2026-10-31T23:55:00+07:00"
+    # 61 days x 288 five-minute buckets for each of the 11 stations, no gaps.
+    assert len(stamps) == 11 * 61 * 288
+
+
+def test_compose_mounts_the_september_october_csv() -> None:
+    compose = (ROOT / "compose.yaml").read_text(encoding="utf-8")
+    assert "./fixtures/simulator:/sim:ro" in compose
+    assert "HISTORY_DAYS" not in compose

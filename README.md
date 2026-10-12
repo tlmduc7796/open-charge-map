@@ -38,10 +38,10 @@ Cần Docker Desktop hoặc Docker Engine có Compose plugin. Từ thư mục g�
 docker compose up --build
 ```
 
-Compose tự dựng PostgreSQL/PostGIS, backend FastAPI, frontend nginx và feeder. PostgreSQL nạp lịch
-sử 30 ngày từ `database/fixtures/simulator/station_occupancy_5m.csv` (có trong git, mount vào cả
-postgres và feeder ở `/sim`); feeder phát lại chính file đó tới backend mỗi 5 phút nên dữ liệu và
-luồng cập nhật luôn khớp nhau.
+Compose tự dựng PostgreSQL/PostGIS, backend FastAPI và frontend nginx. PostgreSQL nạp **nguyên file**
+`database/fixtures/simulator/station_occupancy_5m.csv` (tháng 9–10/2026, có trong git, mount ở `/sim`)
+một lần lúc khởi tạo; không còn feeder hay nhịp cập nhật 5 phút. "Bây giờ" là **đồng hồ demo** của
+backend (xem mục dưới), nên mọi trạng thái, dự báo và tìm kiếm đều tính tại thời điểm đó.
 
 - Ứng dụng: http://127.0.0.1:5173
 - Backend Swagger: http://127.0.0.1:8000/docs
@@ -55,11 +55,23 @@ Goong, backend dùng OSRM và frontend dùng Leaflet + OpenStreetMap. `VITE_API_
 cổng, cập nhật các biến `BACKEND_HOST_PORT`, `FRONTEND_HOST_PORT`, `VITE_API_BASE_URL` và
 `CORS_ORIGINS` tương ứng rồi build lại frontend.
 
-Mỗi lần feeder khởi động, nó **điền lấp các bucket 5 phút còn thiếu** trong `HISTORY_DAYS` ngày gần
-nhất từ cùng CSV (cùng thứ, cùng giờ; `database/docker/sql/backfill_gap.sql`). Nhờ đó, dù máy ngủ
-hoặc Docker bị tắt nhiều giờ, model dự báo vẫn có đủ 12 bucket liên tiếp ngay khi `docker compose up`
-thay vì rơi về `persistence` khoảng 1 giờ. Phần điền lấp là dữ liệu synthetic; dòng đã có không bị
-ghi đè. Đặt `BACKFILL_GAPS=0` để tắt.
+### Đồng hồ demo
+
+Dữ liệu chỉ phủ 2026-09-01 → 2026-10-31 (giờ VN), nên "bây giờ" của hệ thống là một đồng hồ có thể
+chỉnh, không phải giờ máy:
+
+- Trên bản đồ, khung giờ góc dưới trái có nút **Đổi giờ**: chọn ngày, giờ, phút, giây (giờ VN) rồi
+  **Áp dụng**. Đồng hồ chạy tiếp từ thời điểm đó (không đóng băng); **Về giờ thật** trả lại giờ máy.
+- Backend đọc trạng thái trạm là bucket mới nhất **không muộn hơn** giờ demo, dự báo chỉ dùng 12
+  bucket đến thời điểm đó và bảng trung bình theo giờ chỉ gồm dữ liệu trước đó, nên không rò rỉ tương
+  lai. Tìm kiếm, chuyến đi và `generatedAt` dùng cùng đồng hồ. Khi giờ demo đi qua mốc 5 phút kế
+  tiếp, bucket mới tự xuất hiện mà không cần nguồn phát dữ liệu.
+- `DEMO_NOW` (trong `.env` hoặc môi trường) đặt giờ ban đầu, ví dụ `DEMO_NOW=2026-10-11 08:00` (giờ
+  VN; để trống = giờ thật). `DEMO_CLOCK_WRITABLE=false` khoá việc đổi giờ từ giao diện.
+- API: `GET/PUT /api/v1/demo-clock` (body `{"demoNow": "2026-09-15T08:00:00+07:00"}` hoặc
+  `{"reset": true}`) và `serverTime` trong `GET /health`. Đồng hồ nằm trong bộ nhớ một process:
+  khởi động lại backend quay về `DEMO_NOW`.
+- Ngoài khoảng dữ liệu (trước 01/09 hoặc sau 31/10/2026) mọi trạm là `unknown`; giao diện cảnh báo.
 
 Compose mặc định `RESET_ON_START=0`; dữ liệu PostgreSQL được giữ trong named volume. Để dựng lại
 toàn bộ dữ liệu, chạy `docker compose down -v` rồi `docker compose up --build`. Để dừng nhưng giữ
@@ -67,6 +79,8 @@ dữ liệu, chạy `docker compose down`.
 
 CSV occupancy trong git chỉ gồm tháng 9–10/2026 (~13,6 MB), cắt từ file đầy đủ của simulator bằng
 `python scripts/trim_occupancy_csv.py` (đọc `simulator/data/`, ghi `database/fixtures/simulator/`).
+Dữ liệu đã nạp từ trước (cửa sổ 30 ngày cũ) không tự đổi: chạy `docker compose down -v` rồi
+`docker compose up --build` để nạp lại nguyên CSV.
 Các booster `ml/model/model_h{5..30}.json` bị loại khỏi Git. Không có sáu booster, backend vẫn chạy
 nhưng dùng giá trị dự báo mặc định; `/model/status` tiếp tục báo mô hình chưa sẵn sàng.
 Các kết quả simulator là dữ liệu synthetic, không phải dữ liệu trạm đo thực tế.
@@ -119,7 +133,9 @@ POST /api/v1/trips                      # tạo từ searchId (giữ 10 phút tr
 GET  /api/v1/trips/{id}
 POST /api/v1/trips/{id}/position        # GPS, recordedAt có timezone
 PATCH /api/v1/trips/{id}                # accept/decline/depart/correctBattery/cancel
-POST /api/v1/internal/station-occupancy # số cổng đang dùng mỗi trạm (5 phút/lần), yêu cầu X-API-Key
+POST /api/v1/internal/station-occupancy # ghi số cổng đang dùng mỗi trạm (nguồn ngoài, tuỳ chọn), yêu cầu X-API-Key
+GET  /api/v1/demo-clock                 # giờ demo + khoảng dữ liệu đã nạp
+PUT  /api/v1/demo-clock                 # đổi giờ demo: {"demoNow": ISO có offset} hoặc {"reset": true}
 POST /api/v1/internal/port-status       # trạng thái từng cổng (tuỳ chọn), yêu cầu X-API-Key
 POST /api/v1/internal/port-status/mark-stale
 ```
@@ -134,7 +150,7 @@ Quy ước:
   phải gửi `Authorization: Bearer <tripToken>` (database chỉ lưu SHA-256). GPS lặp/cũ không ghi
   đè trạng thái; re-plan dùng ngưỡng trong `app_config`, có cooldown và bỏ qua trạm đã từ chối.
 - `searchId` và giới hạn tần suất nằm trong bộ nhớ từng process.
-- Trạng thái trạm lấy từ bucket occupancy 5 phút mới nhất (`station_occupancy_5m`): số cổng trống
+- Trạng thái trạm lấy từ bucket occupancy 5 phút mới nhất không muộn hơn giờ demo (`station_occupancy_5m`): số cổng trống
   = `operational − occupied`; không cần biết cổng nào đang dùng, nên `/stations/{id}/ports` và
   `byConnector` được suy ra từ số đếm (`dataSource = inferred`). Trạm chưa có bucket, hoặc bucket
   cũ hơn `STATION_STATUS_STALE_AFTER_S`, là `unknown` và chưa được gợi ý cho tới khi nhận số liệu
@@ -154,7 +170,9 @@ Quy ước:
 | `WAIT_SCORING_CAP_MIN` | Trần thời gian chờ khi chấm điểm |
 | `RECOMMEND_MAX_*`, `RECOMMEND_SOC_RISK_BUFFER` | Ngưỡng chuẩn hóa cố định |
 | `RECOMMEND_CANDIDATE_CORRIDOR_M` | Bán kính hành lang PostGIS quanh đường thẳng đi–đến (mặc định 5000 m) |
-| `STATION_STATUS_STALE_AFTER_S` | Bucket occupancy mới nhất của trạm cũ hơn ngưỡng này thì trạm là `unknown` (mặc định 900 s; dữ liệu về mỗi 5 phút) |
+| `STATION_STATUS_STALE_AFTER_S` | Bucket occupancy mới nhất của trạm cũ hơn ngưỡng này thì trạm là `unknown` (mặc định 900 s, tính theo giờ demo) |
+| `DEMO_NOW` | Giờ demo ban đầu (giờ VN nếu không có offset; trống = giờ thật). Đổi lúc chạy bằng `PUT /api/v1/demo-clock` |
+| `DEMO_CLOCK_WRITABLE` | `false` thì `PUT /api/v1/demo-clock` trả 403 (mặc định `true`) |
 | `AVAILABILITY_GREEN_MIN` | Số cổng trống tối thiểu để trạm là `green` (mặc định 2) |
 | `SEARCH_RATE_LIMIT_PER_MIN` | Giới hạn tìm kiếm mỗi IP mỗi process (mặc định 30) |
 | `INTERNAL_API_KEY` | Bắt buộc cho `/api/v1/internal/*`; để trống thì endpoint trả 503 |

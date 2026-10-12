@@ -16,7 +16,6 @@ python -m pip install -r requirements.txt   # numpy, simpy, psycopg
 python -m script pull                    # DB (chỉ đọc) -> data/catalog_snapshot.json
 python -m script run                     # sinh lượt đến + phiên sạc + kiểm tra -> data/
 python -m script occupancy               # sessions.csv + ports.csv -> data/station_occupancy_5m.csv
-python -m script feed                    # phát lại station_occupancy_5m.csv vào backend mỗi 5 phút
 ```
 
 - `pull` đọc `DATABASE_URL` (tham số `--database-url`, biến môi trường, `.env` gốc repo; mặc định là
@@ -53,9 +52,10 @@ Khối `advanced` (hệ số theo giờ/thứ, trễ cắm, idle, rút sớm, gi
 | `run_manifest.json` | seed, sha256 snapshot/config/`sessions.csv`, số dòng |
 | `station_occupancy_5m.csv` | do `occupancy` sinh; cột bảng `station_occupancy_5m` trừ `id`, `queue_length` |
 
-> **Nạp vào database:** `database/compose.yaml` bind-mount thư mục `simulator/data/` và nạp 30 ngày gần
-> nhất của `station_occupancy_5m.csv` mỗi khi container Postgres khởi động (xem `database/README.md`).
-> Cần chạy `python -m script run` và `python -m script occupancy` trước.
+> **Nạp vào database:** `database/compose.yaml` mount `database/fixtures/simulator/` và nạp **nguyên
+> file** `station_occupancy_5m.csv` (tháng 9–10/2026) một lần khi Postgres khởi tạo (xem
+> `database/README.md`). File đó được cắt từ `simulator/data/` bằng `scripts/trim_occupancy_csv.py`
+> sau khi chạy `python -m script run` và `python -m script occupancy`.
 
 `occupancy` đọc `sessions.csv`, `ports.csv` và ánh xạ mã trạm → UUID từ
 `database/data/catalog/stations.sql` (không cần DB). Mỗi trạm × mỗi mốc 5 phút của các ngày trọn
@@ -65,36 +65,6 @@ mốc đó (`t_connect <= bucket_at < t_disconnect`, gồm cả xe đã sạc xo
 (nạp vào bảng sẽ là NULL). Ngày đầu bắt đầu từ trạng thái rỗng nên vài giờ đầu thấp hơn thực tế.
 
 Cùng snapshot + config + seed cho `sessions.csv` giống hệt (so `sessions_sha256`).
-
-## Phát lại occupancy vào backend (`feed`)
-
-`feed` đóng vai nguồn đo thật: mỗi mốc 5 phút nó gửi **một batch** số cổng đang dùng của mọi trạm tới
-`POST /api/v1/internal/station-occupancy`, nên trạng thái trạm trong backend luôn "tươi" mà không cần
-bật `DEMO_RANDOM_SIMULATION`.
-
-```powershell
-python -m script feed                      # gửi ngay, rồi mỗi 5 phút (Ctrl+C để dừng)
-python -m script feed --once               # đúng một batch rồi thoát
-python -m script feed --dry-run            # chỉ in batch, không gọi backend
-python -m script feed --at 2026-10-12T16:05:00+07:00 --dry-run   # giả lập thời điểm gửi
-```
-
-| Tham số | Mặc định |
-|---|---|
-| `--api-url` | `FEED_API_URL`, rồi `http://127.0.0.1:8000` |
-| `--api-key` | `INTERNAL_API_KEY` (môi trường hoặc `.env` gốc repo); bắt buộc trừ khi `--dry-run` |
-| `--csv` | `<data-dir>/station_occupancy_5m.csv` |
-| `--delay-s` | 15: chờ sau mỗi mốc 5 phút rồi mới gửi |
-
-- **Chọn dòng nguồn:** bucket hiện tại nằm trong khoảng dữ liệu của CSV thì phát lại đúng bucket đó;
-  ngoài khoảng thì dịch theo **bội số 7 ngày** (cùng thứ, cùng giờ), như `load_history.sql`. CSV phải
-  phủ ít nhất 7 ngày.
-- **Ánh xạ:** UUID trong CSV được đổi sang mã trạm (`stations.code`) bằng
-  `database/data/catalog/stations.sql`.
-- **Chịu lỗi:** lỗi mạng/5xx thử lại 3 lần (chờ 2 s, 4 s); trạm backend báo "không tồn tại" bị bỏ rồi
-  gửi lại phần còn lại (backend ghi cả batch trong một transaction); lỗi một lượt không dừng vòng lặp.
-- **Độ cũ:** backend coi trạm là `unknown` khi bucket mới nhất cũ hơn `STATION_STATUS_STALE_AFTER_S`
-  (mặc định 900 s = 3 nhịp bỏ lỡ).
 
 ## Cấu trúc
 
