@@ -22,6 +22,19 @@ docker compose up --build
 
 Mở `http://127.0.0.1:5173`, chuyển sang Planner, xác nhận pilot/snapshot hiển thị đúng, giữ ba candidate mặc định, chọn coverage `5` phút và demand `base`, để budget trống rồi bấm **Chạy scenario**. Có thể đổi coverage sang `15`, hoặc demand sang `low`/`high`, rồi chạy lại để so sánh. Swagger backend ở `http://127.0.0.1:8000/docs`.
 
+Nếu chỉ nghiệm thu Planner trên máy chưa cài Docker, mở hai terminal tại thư mục gốc repo. Backend dùng catalog memory của luồng tài xế; dữ liệu planning vẫn đọc snapshot M1 đã pin:
+
+```powershell
+# Terminal 1
+$env:CATALOG_STORAGE = "memory"
+.venv\Scripts\python.exe -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+
+# Terminal 2
+pnpm.cmd --dir frontend dev --host 127.0.0.1
+```
+
+Sau đó mở `http://127.0.0.1:5173`. Khởi động lại backend sẽ nạp lại cùng file snapshot; không cần seed hoặc reset database.
+
 Để chạy acceptance backend mà không cần database:
 
 ```powershell
@@ -61,8 +74,11 @@ Nếu đặt budget từng candidate rất thấp (ví dụ `1` VND), run trả 
 
 ## Nghiệm thu và giới hạn môi trường
 
-- PASS: snapshot và contract validators; 19 kiểm tra helper dữ liệu/rule; 20 test API/engine/planning integration; frontend TypeScript/Vite production build, ESLint và 80 Vitest tests (gồm 2 PlannerView tests); full backend suite.
-- Browser click-through thủ công chưa được ghi nhận; hoàn tất các kịch bản ở trên bằng trình duyệt trước khi trình diễn.
+- PASS trong workspace ngày 2026-10-13: snapshot validator và contract validator; 19 kiểm tra helper dữ liệu/rule; 12 test recommendation engine + API integration; frontend ESLint, TypeScript/Vite production build và 81 Vitest tests (3 PlannerView tests); full backend suite.
+- Live HTTP smoke không dùng Docker: frontend trả HTTP 200; API snapshot trả đúng 37 existing sites, 18 candidates và 27 demand nodes; POST chạy được cả scenario 5 phút, 15 phút và budget 1 VND (`no_feasible_candidates`, 3 candidate bị loại).
+- Test API integration xác nhận cùng request `seed`/snapshot/config cho kết quả giống hệt nhau ngoại trừ `run_id`; kiểm tra ranking, units, data status, reason/constraint codes, provenance, warning giới hạn pilot, thay coverage/demand và trường hợp không có candidate khả thi.
+- Planner component tests xác nhận UI gửi đúng candidate IDs, demand, coverage và budget; hiển thị snapshot/map, ranking, giải thích, provenance, so sánh hai candidate, kết quả no-feasible cùng lý do loại và lỗi có thể khôi phục. Đây là kiểm tra component với API mock, không phải trình duyệt thật.
+- Browser click-through chưa chạy được trong môi trường hiện tại vì không có browser executable/browser automation. Docker cũng chưa được cài; đã dùng lệnh local không Docker ở trên để smoke-test HTTP. Hãy mở UI bằng trình duyệt trên máy phát triển và hoàn tất checklist tương tác trước buổi trình bày.
 - Full backend run skip module trip persistence khi các route `/api/v1/trips` không thuộc OpenAPI hiện hành; test cần PostgreSQL chỉ chạy khi cấu hình test database. Đây là phạm vi có chủ đích, không phải pass của các route trip.
 - Production build có cảnh báo bundle JavaScript lớn hơn 500 kB (bundle hiện khoảng 1,2 MB); đây là tối ưu hiệu năng tải trang, không làm build thất bại.
 - Chưa xác minh integration với dữ liệu vận hành PostGIS. Adapter M3 hiện pin file snapshot để bảo toàn tính tái lập; không trộn candidate/demand synthetic với station catalog live.

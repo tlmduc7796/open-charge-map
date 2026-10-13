@@ -213,3 +213,35 @@ test("shows a recoverable error when a planning run fails", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent("Planning API unavailable");
   expect(screen.queryByText("run-test-1")).not.toBeInTheDocument();
 });
+
+test("shows excluded candidates when the scenario has no feasible option", async () => {
+  mockedApi.planningRecommendations.mockResolvedValueOnce({
+    ...planningResponse(),
+    run_id: "run-no-feasible",
+    status: "no_feasible_candidates",
+    recommendations: [],
+    excluded_candidates: candidateIds.map((candidate_id) => ({
+      candidate_id,
+      constraints: [{
+        id: "individual_budget",
+        status: "fail",
+        reason: "CAPEX giả định vượt ngân sách kịch bản đã nhập.",
+      }],
+    })),
+  });
+  render(<PlannerView onModeChange={vi.fn()} />);
+
+  expect(await screen.findByText("hcmc-nine-wards-demo-v3")).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText(/Ngưỡng CAPEX tối đa từng candidate/), { target: { value: "1" } });
+  fireEvent.click(await screen.findByRole("button", { name: "Chạy scenario" }));
+
+  const result = await screen.findByText("run-no-feasible");
+  expect(result).toBeInTheDocument();
+  expect(screen.getAllByText("Không có candidate khả thi")).toHaveLength(2);
+  const exclusions = screen.getByText("Bị loại do hard constraint · 3").closest("details");
+  expect(exclusions).toHaveTextContent("CAPEX giả định vượt ngân sách kịch bản đã nhập.");
+  for (const candidateId of candidateIds) expect(exclusions).toHaveTextContent(candidateId);
+
+  const request = mockedApi.planningRecommendations.mock.calls.at(-1)?.[0] as PlanningRequest;
+  expect(request.technical.budget_vnd).toBe(1);
+});

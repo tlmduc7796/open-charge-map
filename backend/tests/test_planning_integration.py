@@ -69,6 +69,10 @@ def test_demo_recommendations_compare_sensitivity_and_keep_finance_unavailable()
             "/api/v1/planning/recommendations",
             json=_planning_request(catalog, coverage_minutes=5),
         )
+        repeated_five_minute_response = client.post(
+            "/api/v1/planning/recommendations",
+            json=_planning_request(catalog, coverage_minutes=5),
+        )
         fifteen_minute_response = client.post(
             "/api/v1/planning/recommendations",
             json=_planning_request(catalog, coverage_minutes=15),
@@ -79,18 +83,44 @@ def test_demo_recommendations_compare_sensitivity_and_keep_finance_unavailable()
         )
 
     assert five_minute_response.status_code == 200
+    assert repeated_five_minute_response.status_code == 200
     assert fifteen_minute_response.status_code == 200
     assert low_demand_response.status_code == 200
     five_minute = five_minute_response.json()
+    repeated_five_minute = repeated_five_minute_response.json()
     fifteen_minute = fifteen_minute_response.json()
     low_demand = low_demand_response.json()
 
     assert five_minute["status"] == "completed_with_unknowns"
+    assert five_minute["scenario"]["data_snapshot_id"] == "hcmc-nine-wards-demo-v3"
+    assert five_minute["scenario"]["seed"] == 20261013
+    assert five_minute["scenario"]["algorithm_version"] == "m2b-technical-screen-0.2.0"
+    assert five_minute["scenario"]["config_version"] == "technical-demo-v1"
+    assert five_minute["warnings"]
+    assert any("not HCMC operating evidence" in warning for warning in five_minute["warnings"])
+    assert any("pilot 9 phường" in warning for warning in five_minute["warnings"])
+    assert [item["rank"] for item in five_minute["recommendations"]] == [1, 2, 3]
     assert [item["candidate_id"] for item in five_minute["recommendations"]] == [
         "cand-hcm_2025_26911-02",
         "cand-hcm_2025_27073-01",
         "cand-hcm_2025_26929-01",
     ]
+    assert "run_id" in five_minute and "run_id" in repeated_five_minute
+    five_minute_without_run_id = {**five_minute, "run_id": None}
+    repeated_without_run_id = {**repeated_five_minute, "run_id": None}
+    assert five_minute_without_run_id == repeated_without_run_id
+    for item in five_minute["recommendations"]:
+        assert item["metrics"]["demand_potential"]["unit"] == "sessions_per_week"
+        assert item["metrics"]["demand_potential"]["status"] == "synthetic"
+        assert item["metrics"]["coverage_gain"]["unit"] == "percent_total_demand"
+        assert {part["component_id"] for part in item["score_breakdown"]} >= {
+            "demand_potential",
+            "marginal_coverage",
+        }
+        constraints = {constraint["id"]: constraint["status"] for constraint in item["constraints"]}
+        assert constraints["grid_capacity"] == "unknown"
+        assert constraints["candidate_type"] == "conditional"
+        assert any(source["is_synthetic"] for source in item["provenance"])
     assert [item["candidate_id"] for item in fifteen_minute["recommendations"]] == [
         "cand-hcm_2025_26929-01",
         "cand-hcm_2025_26911-02",
