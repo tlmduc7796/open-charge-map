@@ -11,9 +11,9 @@ Expose planning domain qua API có schema ổn định, lấy dữ liệu bằng
 ## Task nhỏ
 
 1. **Baseline audit:** xác nhận cách khai báo router, prefix `/api/v1`, Pydantic version/models, app state/dependency injection, exception format, DB sessions/repository và test fixtures trên branch hiện tại.
-2. **API:** expose `POST /api/v1/planning/recommendations` theo `SHARED_CONTRACT_VI.md`; sinh OpenAPI schema và validation cho units/enum/range/unknown.
+2. **API:** expose `POST /api/v1/planning/recommendations` theo `SHARED_CONTRACT_VI.md`; cung cấp thêm `GET /api/v1/planning/demo-snapshot` chỉ đọc để Planner nạp choices và geometry đúng version. Sinh OpenAPI schema và validation cho units/enum/range/unknown.
 3. **Application service:** điều phối parse request → validate package → lấy data qua repository → gọi engine M2 → map response. Không chứa formula trong route.
-4. **Repository/PostGIS:** tái dùng catalog hiện tại và thêm spatial queries tối thiểu. Tránh N+1 và không trả toàn bộ station catalog nếu chỉ cần vùng phân tích.
+4. **Repository/spatial:** tái sử dụng repository interface và station catalog hiện có cho vận hành. Snapshot M1 hiện là một bộ seed file immutable có 37 fixture sites, 18 synthetic candidates và access matrix; đọc qua adapter riêng, xác minh manifest hashes và không ghi/nhân bản dữ liệu vào DB. Geometry/coverage phải bám đúng snapshot và WGS84; không trộn fixture này với catalog live.
 5. **Data lineage:** trả data snapshot/source/algorithm/config/package versions, warning và `is_synthetic`/status xuyên suốt.
 6. **Persistence:** MVP không tạo bảng project/run nếu request-response cùng demo đủ. Nếu cần lưu, nộp thiết kế bảng/retention/owner trước; dùng đúng schema/table ordering/seeding workflow repo, không tự thêm Alembic.
 7. **Failure behavior:** malformed input → validation response; danh sách candidate rỗng → `invalid_input`; chỉ trả `no_feasible_candidates` khi đã đánh giá candidate hợp lệ và tất cả đều fail hard constraint đã xác nhận; partial unknown → `completed_with_unknowns`; DB failure không bị báo nhầm thành kết quả score thấp.
@@ -28,7 +28,7 @@ Expose planning domain qua API có schema ổn định, lấy dữ liệu bằng
 ## Acceptance
 
 - Endpoint khớp shared contract/OpenAPI và gọi domain service, không nhúng công thức.
-- Spatial query dùng boundary/pilot scope và unit rõ.
+- Geometry và coverage dùng boundary/pilot scope, unit rõ và nguồn/version cố định; file adapter chỉ dùng access matrix M1 đã pin.
 - Response chứa `run_id`, profile/algorithm/data versions, warnings, constraints, score breakdown, metric status và provenance.
 - Cùng input + data snapshot + engine version cho kết quả tái lập.
 - Existing driver/search/trip APIs không bị đổi semantics.

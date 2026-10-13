@@ -51,7 +51,7 @@ from backend.app.occupancy_history_repository import (
     DatabaseOccupancyRange,
 )
 from backend.app.planning.recommendation_engine import TechnicalOpportunityEngine
-from backend.app.planning.repository import UnconfiguredPlanningDataRepository
+from backend.app.planning.repository import FilePlanningDataRepository
 from backend.app.planning.router import router as planning_router
 from backend.app.planning.service import PlanningApplicationService
 from backend.app.prediction_repository import PredictionWriter
@@ -104,12 +104,8 @@ uses_database = settings.catalog_storage == "database"
 app.state.database_engine = (
     create_engine(settings.database_url, pool_pre_ping=True) if uses_database else None
 )
-app.state.database_status = (
-    validate_database(app.state.database_engine) if uses_database else None
-)
-app.state.app_config_repository = AppConfigRepository(
-    settings, app.state.database_engine
-)
+app.state.database_status = validate_database(app.state.database_engine) if uses_database else None
+app.state.app_config_repository = AppConfigRepository(settings, app.state.database_engine)
 if settings.catalog_storage == "database":
     app.state.station_repository = DatabaseStationRepository(app.state.database_engine)
     app.state.vehicle_repository = DatabaseVehicleRepository(app.state.database_engine)
@@ -118,9 +114,7 @@ if settings.catalog_storage == "database":
         stale_after_s=settings.station_status_stale_after_s,
         clock=clock.now,
     )
-    app.state.station_state_repository = DatabaseStationStateRepository(
-        app.state.database_engine
-    )
+    app.state.station_state_repository = DatabaseStationStateRepository(app.state.database_engine)
     app.state.occupancy_data_range = DatabaseOccupancyRange(app.state.database_engine)
 else:
     app.state.station_repository = app.state.domain_data.stations
@@ -189,9 +183,7 @@ app.state.prediction_writer = (
     else None
 )
 goong_geocoding_provider = (
-    GoongGeocodingProvider(
-        settings.goong_api_key, timeout_s=settings.routing_timeout_s
-    )
+    GoongGeocodingProvider(settings.goong_api_key, timeout_s=settings.routing_timeout_s)
     if settings.goong_api_key
     else None
 )
@@ -242,8 +234,7 @@ app.state.trip_repository = (
     else None
 )
 app.state.planning_service = PlanningApplicationService(
-    UnconfiguredPlanningDataRepository(),
-    engine=TechnicalOpportunityEngine(),
+    FilePlanningDataRepository(), engine=TechnicalOpportunityEngine()
 )
 app.include_router(router)
 app.include_router(v1_router)
@@ -281,9 +272,7 @@ def health() -> dict[str, str | bool]:
     }
     if app.state.database_engine is not None:
         try:
-            result["database"] = validate_database(
-                app.state.database_engine
-            )
+            result["database"] = validate_database(app.state.database_engine)
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
     return result

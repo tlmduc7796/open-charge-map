@@ -66,7 +66,7 @@ Các giá trị là **giả định kỹ thuật và tài chính cho demo**, có
 | `permit_safety` | Chỉ dùng approved/rejected đã có căn cứ | Unknown → conditional |
 | `physical_road_access` | Cần xác nhận ra/vào đường thực tế; hiện chưa có | Unknown → conditional |
 | `connector_compatibility` | Cần connector thực và profile xe phù hợp; hiện chưa có | Unknown → conditional |
-| `individual_budget` | CAPEX `base_cost` của một phương án không vượt budget | Pass một site không chứng minh toàn bộ portfolio nằm trong budget |
+| `individual_budget` | Khi người dùng nhập `technical.budget_vnd`, so sánh CAPEX `base_cost` của một phương án với ngưỡng đó | 10 tỷ trong package là portfolio reference, không phải default từng site; pass một site không chứng minh toàn bộ portfolio nằm trong budget |
 
 Một giá trị land/grid/permit tự điền không đủ để biến thành bằng chứng observed. Helper chỉ chấp nhận xác nhận khi metadata trường có `source_type=observed`, `value_status=provided` và `source_ref`. Trong bộ hiện tại, năm rule feasibility vật lý vẫn unknown; **18 ứng viên đều conditional**. Các unknown này không phải các phần dữ liệu chưa chốt: cách xử lý chúng đã được chốt và ghi trong package.
 

@@ -1,5 +1,7 @@
 # Thiết kế bài toán quy hoạch trạm sạc
 
+Trạng thái handoff và canonical IDs của các module M1–M4: [M1–M4 completion](M1_M4_COMPLETION_VI.md). Kịch bản và checklist nghiệm thu M5: [demo runbook](M5_DEMO_RUNBOOK_VI.md).
+
 ## Mục đích
 
 Nhánh này nghiên cứu câu hỏi đầu tư: **nên đặt trạm mới ở đâu, với quy mô nào, để phục vụ nhu cầu hiện tại và tương lai với ngân sách và năng lực lưới điện hữu hạn?** Người dùng chính của kết quả là nhà quy hoạch/đơn vị đầu tư; tài xế, đội xe và cộng đồng là nhóm được hưởng lợi từ độ phủ, tính sẵn sàng và thời gian tiếp cận.

@@ -63,6 +63,21 @@
 .planner-form input:focus, .planner-form textarea:focus, .planner-form select:focus { outline: 2px solid #b9dfcd; border-color: #2f7a67; }
 .planner-field-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .planner-label-note { color: #87968f; font-size: 9px; font-weight: 500; }
+.planner-demo-meta { display: flex; flex-wrap: wrap; gap: 5px 11px; margin: 0 0 10px; color: #6b7c75; font-size: 9px; }
+.planner-demo-meta b { color: #35584d; }
+.planner-candidate-select { min-width: 0; margin: 0; padding: 8px; border: 1px solid #e4ebe6; border-radius: 9px; }
+.planner-candidate-select legend { padding: 0 4px; color: #526a61; font-size: 9px; font-weight: 800; }
+.planner-candidate-select-actions { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; color: #82918b; font-size: 8px; }
+.planner-candidate-select-actions span { margin-right: auto; }
+.planner-candidate-select-actions button { padding: 3px 5px; border: 0; color: #28614f; background: transparent; font-size: 8px; font-weight: 800; cursor: pointer; }
+.planner-candidate-select-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px 5px; max-height: 190px; overflow: auto; }
+.planner-form .planner-candidate-select-list label { min-width: 0; display: flex; align-items: flex-start; gap: 5px; margin: 0; padding: 5px; border-radius: 6px; background: #f7faf8; cursor: pointer; }
+.planner-candidate-select-list input[type="checkbox"] { flex: 0 0 auto; width: 12px; min-height: 12px; margin: 1px 0 0; padding: 0; accent-color: #28614f; }
+.planner-candidate-select-list span { min-width: 0; }
+.planner-candidate-select-list b, .planner-candidate-select-list small { display: block; overflow: hidden; text-overflow: ellipsis; }
+.planner-candidate-select-list b { color: #35584d; font-size: 8px; }
+.planner-candidate-select-list small { margin-top: 2px; color: #82918b; font-size: 7px; }
+.planner-field-error { display: block; margin-top: 6px; color: #923b32; font-size: 8px; }
 .planner-profile-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 10px; padding: 8px 9px; border-radius: 8px; color: #536b62; background: #f4f8f5; font-size: 10px; }
 .planner-profile-row strong { color: #1b584b; }
 .planner-illustrative-note { margin: 2px 0 0; color: #7b6a43; font-size: 9px; line-height: 1.45; }
@@ -84,7 +99,7 @@
 .planner-run-status { max-width: 45%; padding: 6px 9px; border: 1px solid #cbd9d1; border-radius: 999px; color: #536b62; background: white; font-size: 9px; font-weight: 800; text-align: center; }
 .planner-run-status.completed { border-color: #a9d4c0; color: #166534; background: #eef9f2; }
 .planner-run-status.completed_with_unknowns { border-color: #ecd38c; color: #805a0e; background: #fffbeb; }
-.planner-run-status.invalid_input, .planner-run-status.failed { border-color: #f3c4bd; color: #9b3426; background: #fff4f1; }
+.planner-run-status.invalid_input, .planner-run-status.failed, .planner-run-status.no_feasible_candidates { border-color: #f3c4bd; color: #9b3426; background: #fff4f1; }
 .planner-run-meta { display: flex; flex-wrap: wrap; gap: 5px 14px; margin: 7px 0 10px; color: #6b7c75; font-size: 9px; }
 .planner-run-meta b { color: #35584d; font-weight: 800; }
 .planner-warnings, .planner-alert { margin: 8px 0 12px; padding: 10px 12px; border: 1px solid #ead9a7; border-radius: 10px; color: #795916; background: #fffbeb; font-size: 10px; line-height: 1.45; }
@@ -102,6 +117,8 @@
 .planner-map-dot.eligible { background: #2f9e74; }
 .planner-map-dot.conditional { background: #e3a526; }
 .planner-map-dot.station { background: #627a89; }
+.planner-map-dot.demand-covered { background: #69a58b; }
+.planner-map-dot.demand-gap { background: #9ba9a2; }
 .planner-boundary-note { margin-top: 6px; color: #74877f; font-size: 9px; line-height: 1.4; }
 .planner-candidate-results { margin-top: 14px; }
 .planner-results-subheading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
@@ -196,6 +213,7 @@
 
 @media (max-width: 560px) {
   .planner-field-pair { grid-template-columns: 1fr; gap: 0; }
+  .planner-candidate-select-list { grid-template-columns: 1fr; }
   .planner-explanation-grid { grid-template-columns: 1fr; gap: 12px; }
   .planner-map-shell { height: 34vh; min-height: 250px; }
   .planner-candidate-list { grid-template-columns: 1fr; }

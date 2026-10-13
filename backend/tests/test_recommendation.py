@@ -41,6 +41,8 @@ def test_recommendation_is_ranked_explainable_and_excludes_private_station() -> 
     assert scores == sorted(scores, reverse=True)
     assert all(0 <= item.final_score <= 1 for item in result.recommendations)
     assert all(item.prediction_source == "default" for item in result.recommendations)
+    assert all(item.matched_connectors for item in result.recommendations)
+    assert all(item.effective_power_kw <= 100 for item in result.recommendations)
     assert "cost" not in result.model_dump_json().lower()
     exclusions = {
         item.station_id: item.reason_codes for item in result.excluded_candidates

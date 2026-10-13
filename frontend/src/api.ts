@@ -17,6 +17,7 @@ import type {
   Vehicle,
 } from "./types";
 import type {
+  PlanningDemoSnapshotResponse,
   PlanningRecommendationResponse,
   PlanningRequest,
 } from "./planning/types";
@@ -339,10 +340,12 @@ export const api = {
         const issues = error.details?.["issues"] as { location: string[]; message: string }[] | undefined;
         if (issues?.length) {
           const description = issues.map((issue) => `${issue.location.join(".")}: ${issue.message}`).join("; ");
-          throw new Error(`${error.message} — ${description}`);
+          throw new Error(`${error.message} — ${description}`, { cause: error });
         }
       }
       throw error;
     }
   },
+  planningDemoSnapshot: async () =>
+    requestJson<PlanningDemoSnapshotResponse>("/api/v1/planning/demo-snapshot"),
 };

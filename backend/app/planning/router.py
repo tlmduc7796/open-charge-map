@@ -6,10 +6,11 @@ from fastapi import APIRouter, HTTPException, Request
 
 from backend.app.api_v1_models import ApiErrorResponse
 from backend.app.planning.api_models import (
+    PlanningDemoSnapshotResponse,
     PlanningRecommendationRequest,
     PlanningRecommendationResponse,
 )
-from backend.app.planning.domain import PlanningInfrastructureError
+from backend.app.planning.domain import PlanningDataError, PlanningInfrastructureError
 
 router = APIRouter(prefix="/api/v1/planning", tags=["station-planning"])
 
@@ -34,4 +35,26 @@ def planning_recommendations(
         raise HTTPException(
             status_code=503,
             detail={"code": "SERVICE_UNAVAILABLE", "message": str(exc)},
+        ) from exc
+
+
+@router.get(
+    "/demo-snapshot",
+    response_model=PlanningDemoSnapshotResponse,
+    responses={
+        503: {
+            "model": ApiErrorResponse,
+            "description": "Pinned planning demo snapshot unavailable",
+        }
+    },
+)
+def planning_demo_snapshot(request: Request) -> PlanningDemoSnapshotResponse:
+    """Expose the pinned M1 catalog and map layers used by the Planner scenario form."""
+    try:
+        payload = request.app.state.planning_service.demo_catalog()
+        return PlanningDemoSnapshotResponse.model_validate(payload)
+    except (PlanningDataError, PlanningInfrastructureError) as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "PLANNING_SNAPSHOT_UNAVAILABLE", "message": str(exc)},
         ) from exc

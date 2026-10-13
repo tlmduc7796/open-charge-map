@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import replace
+from typing import Any
 from uuid import uuid4
 
 from backend.app.planning.api_models import (
@@ -30,9 +32,7 @@ class PlanningApplicationService:
         self._repository = repository
         self._engine = engine
 
-    def recommend(
-        self, request: PlanningRecommendationRequest
-    ) -> PlanningRecommendationResponse:
+    def recommend(self, request: PlanningRecommendationRequest) -> PlanningRecommendationResponse:
         run_id = f"run_{uuid4().hex}"
         config = self._to_run_config(request)
 
@@ -60,7 +60,10 @@ class PlanningApplicationService:
             return self._invalid_input(
                 request,
                 run_id,
-                f"The {request.profile} profile is not enabled until its package adapter is available.",
+                (
+                    f"The {request.profile} profile is not enabled until its package adapter "
+                    "is available."
+                ),
             )
 
         if request.policy_package is not None or request.finance_package is not None:
@@ -99,7 +102,10 @@ class PlanningApplicationService:
             return self._failed(
                 request,
                 run_id,
-                "The recommendation engine is not installed yet; M2 must provide it before a run can be computed.",
+                (
+                    "The recommendation engine is not installed yet; M2 must provide it "
+                    "before a run can be computed."
+                ),
             )
 
         try:
@@ -107,6 +113,10 @@ class PlanningApplicationService:
         except PlanningEngineError as exc:
             return self._failed(request, run_id, str(exc))
 
+        warnings = list(engine_output["warnings"])
+        for warning in dataset.get("warnings", ()):
+            if isinstance(warning, str) and warning not in warnings:
+                warnings.append(warning)
         payload = {
             "contract_version": "0.1",
             "run_id": run_id,
@@ -114,7 +124,7 @@ class PlanningApplicationService:
             "recommendations": engine_output["recommendations"],
             "unranked_candidates": engine_output["unranked_candidates"],
             "excluded_candidates": engine_output["excluded_candidates"],
-            "warnings": engine_output["warnings"],
+            "warnings": warnings,
             "scenario": self._scenario_echo(
                 request,
                 algorithm_version=self._engine.algorithm_version,
@@ -122,6 +132,10 @@ class PlanningApplicationService:
             ),
         }
         return PlanningRecommendationResponse.model_validate(payload)
+
+    def demo_catalog(self) -> Mapping[str, Any]:
+        """Return the pinned demo choices needed to configure and render a Planner run."""
+        return self._repository.load_demo_catalog()
 
     @staticmethod
     def _to_run_config(request: PlanningRecommendationRequest) -> PlanningRunConfig:
@@ -132,14 +146,14 @@ class PlanningApplicationService:
             as_of=request.run.as_of,
             horizon_years=request.run.horizon_years,
             data_snapshot_id=request.run.data_snapshot_id,
+            demand_scenario=request.run.demand_scenario,
             seed=request.run.seed,
             config_version=request.run.config_version,
             candidate_ids=tuple(request.candidate_source.candidate_ids),
             profile=request.profile,
             coverage_minutes=request.technical.coverage_minutes,
             charger_options=tuple(
-                option.model_dump(mode="python")
-                for option in request.technical.charger_options
+                option.model_dump(mode="python") for option in request.technical.charger_options
             ),
             budget_vnd=request.technical.budget_vnd,
         )
@@ -157,6 +171,7 @@ class PlanningApplicationService:
             horizon_years=request.run.horizon_years,
             seed=request.run.seed,
             data_snapshot_id=request.run.data_snapshot_id,
+            demand_scenario=request.run.demand_scenario,
             algorithm_version=algorithm_version,
             config_version=config_version,
             policy_package_id=None,

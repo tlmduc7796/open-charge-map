@@ -4,6 +4,7 @@ import { api } from "../api";
 import AppModeSwitch, { type AppMode } from "./AppModeSwitch";
 import PlannerMap from "./PlannerMap";
 import type {
+  PlanningDemoSnapshotResponse,
   PlanningDataStatus,
   PlanningMetric,
   PlanningRecommendation,
@@ -11,12 +12,17 @@ import type {
   PlanningRequest,
   PlanningRunStatus,
 } from "./types";
-import type { Station } from "../types";
 import "./planner.css";
 
 interface PlannerViewProps {
   onModeChange: (mode: AppMode) => void;
 }
+
+const M5_DEMO_CANDIDATE_IDS = [
+  "cand-hcm_2025_26911-02",
+  "cand-hcm_2025_26929-01",
+  "cand-hcm_2025_27073-01",
+];
 
 function localDateTimeNow(): string {
   const now = new Date();
@@ -267,25 +273,23 @@ function CandidateExplanation({ item }: { item: PlanningRecommendation }) {
 }
 
 export default function PlannerView({ onModeChange }: PlannerViewProps) {
-  const [cityId, setCityId] = useState("VN-HCMC");
-  const [boundaryVersion, setBoundaryVersion] = useState("");
-  const [pilotExtentId, setPilotExtentId] = useState("");
+  const [demo, setDemo] = useState<PlanningDemoSnapshotResponse | null>(null);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
   const [asOf, setAsOf] = useState(localDateTimeNow);
   const [horizonYears, setHorizonYears] = useState(3);
-  const [snapshotId, setSnapshotId] = useState("");
-  const [seed, setSeed] = useState(42);
-  const [configVersion, setConfigVersion] = useState("");
-  const [candidateIdsText, setCandidateIdsText] = useState("");
+  const [seed, setSeed] = useState(20261013);
+  const [configVersion, setConfigVersion] = useState("technical-demo-v1");
+  const [demandScenario, setDemandScenario] = useState<"low" | "base" | "high">("base");
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
   const [coverageMinutes, setCoverageMinutes] = useState(15);
   const [chargerType, setChargerType] = useState<"AC" | "DC">("DC");
   const [portCount, setPortCount] = useState(4);
-  const [powerKw, setPowerKw] = useState(120);
+  const [powerKw, setPowerKw] = useState(80);
   const [budgetVnd, setBudgetVnd] = useState("");
   const [response, setResponse] = useState<PlanningRecommendationResponse | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [comparisonIds, setComparisonIds] = useState<string[]>([]);
-  const [stationCatalog, setStationCatalog] = useState<Station[]>([]);
-  const [stationCatalogError, setStationCatalogError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
 
@@ -300,12 +304,38 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
     return first && second ? [first, second] as [PlanningRecommendation, PlanningRecommendation] : null;
   }, [comparisonIds, response]);
 
+  const clearResultsForInputChange = () => {
+    setResponse(null);
+    setSelectedCandidateId(null);
+    setComparisonIds([]);
+    setRequestError(null);
+  };
+
   useEffect(() => {
     let active = true;
-    api.stations().then((stations) => {
-      if (active) setStationCatalog(stations);
+    api.planningDemoSnapshot().then((snapshot) => {
+      if (!active) return;
+      setDemo(snapshot);
+      setHorizonYears(snapshot.defaults.horizon_years);
+      setSeed(snapshot.defaults.seed);
+      setConfigVersion(snapshot.defaults.config_version);
+      setDemandScenario(snapshot.defaults.demand_scenario);
+      setCoverageMinutes(snapshot.defaults.coverage_minutes);
+      setChargerType(snapshot.defaults.charger_option.charger_type);
+      setPortCount(snapshot.defaults.charger_option.port_count);
+      setPowerKw(snapshot.defaults.charger_option.power_kw_per_port);
+      setBudgetVnd(snapshot.defaults.budget_vnd === null ? "" : String(snapshot.defaults.budget_vnd));
+      const availableCandidateIds = new Set(snapshot.candidates.map((candidate) => candidate.candidate_id));
+      const demoCandidateIds = M5_DEMO_CANDIDATE_IDS.filter((candidateId) => availableCandidateIds.has(candidateId));
+      setSelectedCandidateIds(
+        demoCandidateIds.length === M5_DEMO_CANDIDATE_IDS.length
+          ? demoCandidateIds
+          : snapshot.candidates.slice(0, 3).map((candidate) => candidate.candidate_id),
+      );
     }).catch((error: unknown) => {
-      if (active) setStationCatalogError(error instanceof Error ? error.message : "Không tải được danh mục trạm.");
+      if (active) setCatalogError(error instanceof Error ? error.message : "Không tải được snapshot planning.");
+    }).finally(() => {
+      if (active) setCatalogLoading(false);
     });
     return () => { active = false; };
   }, []);
@@ -317,25 +347,23 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
     setResponse(null);
     setSelectedCandidateId(null);
     setComparisonIds([]);
-    const candidateIds = candidateIdsText
-      .split(/[\s,;]+/)
-      .map((candidateId) => candidateId.trim())
-      .filter(Boolean);
+    if (!demo || selectedCandidateIds.length === 0) {
+      setBusy(false);
+      setRequestError("Chọn ít nhất một candidate trong snapshot M1.");
+      return;
+    }
     const request: PlanningRequest = {
       contract_version: "0.1",
-      study_area: {
-        city_id: cityId,
-        boundary_version: boundaryVersion,
-        pilot_extent_id: pilotExtentId,
-      },
+      study_area: demo.study_area,
       run: {
         as_of: new Date(asOf).toISOString(),
         horizon_years: horizonYears,
-        data_snapshot_id: snapshotId,
+        data_snapshot_id: demo.snapshot.data_snapshot_id,
         seed,
         config_version: configVersion.trim() || null,
+        demand_scenario: demandScenario,
       },
-      candidate_source: { mode: "provided", candidate_ids: candidateIds },
+      candidate_source: { mode: "provided", candidate_ids: selectedCandidateIds },
       profile: "technical_opportunity",
       technical: {
         coverage_minutes: coverageMinutes,
@@ -354,6 +382,13 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
     } finally {
       setBusy(false);
     }
+  };
+
+  const toggleCandidate = (candidateId: string) => {
+    clearResultsForInputChange();
+    setSelectedCandidateIds((current) => current.includes(candidateId)
+      ? current.filter((id) => id !== candidateId)
+      : [...current, candidateId]);
   };
 
   const toggleComparison = (candidateId: string) => {
@@ -378,28 +413,43 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
           <form className="planner-form" onSubmit={(event) => void runScenario(event)}>
             <div className="planner-form-section">
               <div className="planner-section-heading"><span>01</span><h2>Phạm vi và dữ liệu</h2></div>
-              <label>
-                Mã khu vực
-                <input value={cityId} onChange={(event) => setCityId(event.target.value)} required />
-              </label>
-              <div className="planner-field-pair">
-                <label>
-                  Phiên bản boundary
-                  <input value={boundaryVersion} onChange={(event) => setBoundaryVersion(event.target.value)} required placeholder="Mã do M1 cung cấp" />
-                </label>
-                <label>
-                  Pilot extent ID
-                  <input value={pilotExtentId} onChange={(event) => setPilotExtentId(event.target.value)} required placeholder="Mã pilot do M1 cung cấp" />
-                </label>
-              </div>
-              <label>
-                Data snapshot ID
-                <input value={snapshotId} onChange={(event) => setSnapshotId(event.target.value)} required placeholder="Snapshot đã version hóa" />
-              </label>
-              <label>
-                Candidate ID <span className="planner-label-note">(phân cách bằng dấu phẩy hoặc dòng mới)</span>
-                <textarea value={candidateIdsText} onChange={(event) => setCandidateIdsText(event.target.value)} rows={2} placeholder="ID từ tập candidate của M1" />
-              </label>
+              {catalogLoading && <p className="planner-muted">Đang tải snapshot M1…</p>}
+              {catalogError && <div className="planner-alert error" role="alert">{catalogError}</div>}
+              {demo && (
+                <>
+                  <div className="planner-demo-meta">
+                    <span>Khu vực <b>{demo.study_area.city_id}</b></span>
+                    <span>Boundary <b>{demo.study_area.boundary_version}</b></span>
+                    <span>Pilot <b>9 phường</b></span>
+                    <span>Snapshot <b>{demo.snapshot.data_snapshot_id}</b></span>
+                    <span>Candidate <b>{demo.candidates.length}</b></span>
+                    {demo.defaults.portfolio_budget_vnd !== null && (
+                      <span>Budget portfolio M1 <b>{demo.defaults.portfolio_budget_vnd.toLocaleString("vi-VN")} VND</b></span>
+                    )}
+                  </div>
+                  <fieldset className="planner-candidate-select" disabled={catalogLoading || busy}>
+                    <legend>Candidate đưa vào run</legend>
+                    <div className="planner-candidate-select-actions">
+                      <span>{selectedCandidateIds.length} đã chọn</span>
+                      <button type="button" onClick={() => { clearResultsForInputChange(); setSelectedCandidateIds(demo.candidates.map((item) => item.candidate_id)); }}>Chọn tất cả</button>
+                      <button type="button" onClick={() => { clearResultsForInputChange(); setSelectedCandidateIds([]); }}>Bỏ chọn</button>
+                    </div>
+                    <div className="planner-candidate-select-list">
+                      {demo.candidates.map((candidate) => (
+                        <label key={candidate.candidate_id}>
+                          <input
+                            type="checkbox"
+                            checked={selectedCandidateIds.includes(candidate.candidate_id)}
+                            onChange={() => toggleCandidate(candidate.candidate_id)}
+                          />
+                          <span><b>{candidate.label}</b><small>{candidate.candidate_id} · vị trí giả lập</small></span>
+                        </label>
+                      ))}
+                    </div>
+                    {selectedCandidateIds.length === 0 && <small className="planner-field-error">Chọn ít nhất một candidate để chạy.</small>}
+                  </fieldset>
+                </>
+              )}
             </div>
 
             <div className="planner-form-section">
@@ -408,33 +458,42 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
                 <span>Profile</span><strong>Technical opportunity</strong>
               </div>
               <label>
+                Kịch bản nhu cầu
+                <select value={demandScenario} onChange={(event) => { clearResultsForInputChange(); setDemandScenario(event.target.value as "low" | "base" | "high"); }}>
+                  <option value="low">Low · 0,6×</option>
+                  <option value="base">Base · 1,0×</option>
+                  <option value="high">High · 1,6×</option>
+                </select>
+                <span className="planner-label-note">Mô phỏng tổng hợp theo một tuần mẫu; không phải dự báo xác suất.</span>
+              </label>
+              <label>
                 Thời điểm đánh giá
-                <input type="datetime-local" value={asOf} onChange={(event) => setAsOf(event.target.value)} required />
+                <input type="datetime-local" value={asOf} onChange={(event) => { clearResultsForInputChange(); setAsOf(event.target.value); }} required />
               </label>
               <div className="planner-field-pair">
-                <label>Horizon (năm)<input type="number" min={1} value={horizonYears} onChange={(event) => setHorizonYears(Number(event.target.value))} required /></label>
-                <label>Seed<input type="number" value={seed} onChange={(event) => setSeed(Number(event.target.value))} required /></label>
+                <label>Horizon (năm)<input type="number" min={1} value={horizonYears} onChange={(event) => { clearResultsForInputChange(); setHorizonYears(Number(event.target.value)); }} required /></label>
+                <label>Seed<input type="number" value={seed} onChange={(event) => { clearResultsForInputChange(); setSeed(Number(event.target.value)); }} required /></label>
               </div>
               <label>
-                Config version <span className="planner-label-note">(để trống dùng mặc định server)</span>
-                <input value={configVersion} onChange={(event) => setConfigVersion(event.target.value)} placeholder="Tùy chọn" />
+                Config version
+                <input value={configVersion} readOnly />
               </label>
               <div className="planner-field-pair">
-                <label>Ngưỡng tiếp cận (phút)<input type="number" min={1} value={coverageMinutes} onChange={(event) => setCoverageMinutes(Number(event.target.value))} required /></label>
-                <label>Ngân sách (VND)<input type="number" min={0} value={budgetVnd} onChange={(event) => setBudgetVnd(event.target.value)} placeholder="Chưa đặt" /></label>
+                <label>Ngưỡng tiếp cận (phút)<input type="number" min={1} value={coverageMinutes} onChange={(event) => { clearResultsForInputChange(); setCoverageMinutes(Number(event.target.value)); }} required /></label>
+                <label>Ngưỡng CAPEX tối đa từng candidate (VND)<input type="number" min={0} value={budgetVnd} onChange={(event) => { clearResultsForInputChange(); setBudgetVnd(event.target.value); }} placeholder="Chưa đặt" /></label>
               </div>
               <div className="planner-field-pair">
-                <label>Loại sạc<select value={chargerType} onChange={(event) => setChargerType(event.target.value as "AC" | "DC")}><option value="DC">DC</option><option value="AC">AC</option></select></label>
-                <label>Số cổng<input type="number" min={1} value={portCount} onChange={(event) => setPortCount(Number(event.target.value))} required /></label>
+                <label>Loại sạc<select value={chargerType} onChange={(event) => { clearResultsForInputChange(); setChargerType(event.target.value as "AC" | "DC"); }}><option value="DC">DC</option><option value="AC">AC</option></select></label>
+                <label>Số cổng<input type="number" min={1} value={portCount} onChange={(event) => { clearResultsForInputChange(); setPortCount(Number(event.target.value)); }} required /></label>
               </div>
-              <label>Công suất mỗi cổng (kW)<input type="number" min={0.1} step={0.1} value={powerKw} onChange={(event) => setPowerKw(Number(event.target.value))} required /></label>
-              <p className="planner-illustrative-note">Các thông số ban đầu chỉ là giá trị minh họa để chỉnh sửa, không phải tiêu chuẩn kỹ thuật hay khuyến nghị thị trường.</p>
+              <label>Công suất mỗi cổng (kW)<input type="number" min={0.1} step={0.1} value={powerKw} onChange={(event) => { clearResultsForInputChange(); setPowerKw(Number(event.target.value)); }} required /></label>
+              <p className="planner-illustrative-note">Mặc định M1: access proxy normal, 15 phút và DC 4 × 80 kW. M1 có budget tham chiếu cho portfolio; bộ lọc ngân sách từng candidate để trống đến khi bạn nhập ngưỡng riêng. CAPEX là giả định minh họa, không phải báo giá thị trường.</p>
             </div>
 
             <div className="planner-package-note">
-              Profile policy và investor chưa bật vì chưa có package/adapter đã xác thực. Chi phí sẽ là “chưa có dữ liệu” khi chưa có nguồn phù hợp.
+              Profile policy/investor và ROI chưa bật. CAPEX chỉ hiện như giả định base_cost tổng hợp khi cấu hình khớp M1; đổi cấu hình sẽ đưa chi phí về “chưa có dữ liệu”.
             </div>
-            <button className="planner-run-button" type="submit" disabled={busy}>
+            <button className="planner-run-button" type="submit" disabled={busy || catalogLoading || !demo || selectedCandidateIds.length === 0}>
               {busy ? "Đang chạy…" : "Chạy scenario"}
             </button>
           </form>
@@ -452,6 +511,7 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
               <div className="planner-run-meta">
                 <span>Run <b>{response.run_id}</b></span>
                 <span>Snapshot <b>{response.scenario.data_snapshot_id}</b></span>
+                <span>Demand <b>{response.scenario.demand_scenario}</b></span>
                 <span>Algorithm <b>{response.scenario.algorithm_version ?? "Chưa có"}</b></span>
                 <span>Config <b>{response.scenario.config_version ?? "Chưa có"}</b></span>
               </div>
@@ -467,12 +527,16 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
           <div className="planner-map-area">
             <PlannerMap
               recommendations={response?.recommendations ?? []}
-              stationCatalog={stationCatalog}
+              candidates={demo?.candidates ?? []}
+              existingSites={demo?.existing_sites ?? []}
+              demandNodes={demo?.demand_nodes ?? []}
+              boundaryGeometry={demo?.snapshot.geometry ?? null}
+              coverageMinutes={coverageMinutes}
               selectedCandidateId={selectedCandidateId}
               onSelect={setSelectedCandidateId}
             />
             <div className="planner-boundary-note">
-              Pilot boundary và polygon coverage cần geometry đã version hóa từ M1.{stationCatalogError ? ` Danh mục trạm chưa tải được: ${stationCatalogError}` : ""}
+              Ranh giới và lớp demand/station lấy từ cùng snapshot M1. Demand node màu xanh nghĩa là nằm trong ngưỡng access-time proxy của trạm hiện hữu.
             </div>
           </div>
 
@@ -524,8 +588,8 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
 
           {!response && !requestError && !busy && (
             <div className="planner-empty-state initial">
-              <strong>Chưa chạy scenario</strong>
-              <p>Nhập boundary, snapshot và candidate ID do M1 cung cấp để gửi request tới API planning.</p>
+              <strong>{catalogLoading ? "Đang tải dữ liệu M1" : "Chưa chạy scenario"}</strong>
+              <p>{catalogLoading ? "Planner đang tải snapshot, candidate, demand node và trạm hiện hữu." : "Chọn candidate và kịch bản, sau đó chạy để xem ranking cùng giải thích."}</p>
             </div>
           )}
         </section>

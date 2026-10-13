@@ -13,7 +13,6 @@ from backend.app.domain.models import (
     Vehicle,
 )
 
-
 # Current product configuration. Keep connector and vehicle catalog data intact
 # so the search policy can be expanded without changing the database schema.
 ASSUMED_CHARGER_CONNECTOR = "CCS2"

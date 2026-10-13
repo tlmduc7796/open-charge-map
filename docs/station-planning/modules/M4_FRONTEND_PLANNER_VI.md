@@ -12,7 +12,7 @@ Người xem có thể chọn pilot/scenario, xem danh sách địa điểm đ�
 
 1. **Điểm vào:** thêm tab/mode Planner theo pattern navigation hiện tại; giữ nguyên màn hình hành trình/tìm trạm của tài xế.
 2. **Map interaction:** hiển thị candidate markers, existing stations/coverage layer, selected candidate và pilot boundary. Dùng map provider/types hiện có nếu phù hợp.
-3. **Scenario panel:** chọn profile/pilot extent/data snapshot/technical options; finance/policy chỉ hiện khi package hỗ trợ. Dùng default demo có nhãn, không giả làm default thị trường.
+3. **Scenario panel:** nạp pilot/data snapshot/candidate choices từ metadata endpoint; chọn demand scenario low/base/high, coverage threshold và technical options. Finance/policy chỉ hiện khi package hỗ trợ. Dùng default demo có nhãn, không giả làm default thị trường.
 4. **Recommendations:** ranking list hiển thị rank, score, evidence coverage, eligibility, demand/coverage/capacity/overload/cost status. Null/unknown phải hiện “chưa có dữ liệu”, không 0.
 5. **Explanation/comparison:** component score, constraint reasons, source, timestamp, synthetic/proxy labels, warnings và delta giữa hai phương án.
 6. **Typed client:** khai báo TS request/response theo shared API contract; không query DB hoặc tự tính score ở browser.
@@ -27,9 +27,9 @@ Người xem có thể chọn pilot/scenario, xem danh sách địa điểm đ�
 
 ## Acceptance
 
-- Từ tab Planner chạy được một scenario và nhìn thấy recommendation list + map.
+- Từ tab Planner chọn được candidate/scenario, chạy được một run và nhìn thấy recommendation list + map có boundary, candidate, existing sites và demand coverage proxy.
 - Chọn candidate hiển thị đầy đủ lý do, điều kiện, nguồn và missing data.
-- Scenario result phân biệt synthetic/proxy/observed; chi phí/finance chưa có thì unavailable.
+- Scenario result phân biệt synthetic/proxy/observed; CAPEX giả định chỉ hiển thị dạng scenario có provenance; ROI/finance chưa có thì unavailable.
 - Driver flow vẫn hoạt động như trước.
 - UI có thể dùng mock JSON đúng contract nếu backend chưa merge, sau đó thay bằng API client không đổi semantics.
 

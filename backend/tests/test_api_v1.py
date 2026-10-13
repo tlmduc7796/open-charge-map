@@ -94,6 +94,7 @@ def test_station_availability_forecast_covers_next_30_minutes(fake_request) -> N
 def test_internal_port_status_requires_configuration_and_key(fake_request) -> None:
     original = app.state.settings
     try:
+        app.state.settings = replace(original, internal_api_key=None)
         with pytest.raises(HTTPException) as unconfigured:
             _require_internal_key(fake_request, None)
         app.state.settings = replace(original, internal_api_key="test-secret")

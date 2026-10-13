@@ -41,6 +41,7 @@ export interface PlanningRequest {
     data_snapshot_id: string;
     seed: number;
     config_version: string | null;
+    demand_scenario: "low" | "base" | "high";
   };
   candidate_source: {
     mode: "provided";
@@ -110,6 +111,7 @@ export interface PlanningRecommendationResponse {
     horizon_years: number;
     seed: number;
     data_snapshot_id: string;
+    demand_scenario: "low" | "base" | "high";
     algorithm_version: string | null;
     config_version: string | null;
     policy_package_id: string | null;
@@ -120,5 +122,67 @@ export interface PlanningRecommendationResponse {
   recommendations: PlanningRecommendation[];
   unranked_candidates: { candidate_id: string; reason: string }[];
   excluded_candidates: { candidate_id: string; constraints: PlanningConstraint[] }[];
+  warnings: string[];
+}
+
+export interface PlanningDemoSnapshotResponse {
+  contract_version: "0.1";
+  study_area: {
+    city_id: string;
+    boundary_version: string;
+    pilot_extent_id: string;
+  };
+  snapshot: {
+    data_snapshot_id: string;
+    prepared_on: string;
+    dataset_contract_version: string;
+    boundary_id: string;
+    geometry: {
+      type: "Polygon" | "MultiPolygon";
+      coordinates: number[][][][] | number[][][];
+    };
+    properties: Record<string, unknown>;
+  };
+  defaults: {
+    horizon_years: number;
+    seed: number;
+    config_version: string;
+    demand_scenario: "low" | "base" | "high";
+    coverage_minutes: number;
+    charger_option: {
+      charger_type: "AC" | "DC";
+      port_count: number;
+      power_kw_per_port: number;
+    };
+    budget_vnd: number | null;
+    portfolio_budget_vnd: number | null;
+  };
+  candidates: {
+    candidate_id: string;
+    label: string;
+    candidate_type: string;
+    eligibility: "eligible" | "conditional";
+    is_synthetic: boolean;
+    location: { lat: number; lon: number };
+    source_ref: string | null;
+  }[];
+  existing_sites: {
+    site_id: string;
+    label: string;
+    site_type: string;
+    charger_type: string;
+    port_count: number | null;
+    power_kw: number | null;
+    is_synthetic: boolean;
+    location: { lat: number; lon: number };
+    source_ref: string | null;
+  }[];
+  demand_nodes: {
+    demand_node_id: string;
+    unit_id: string;
+    location: { lat: number; lon: number };
+    nearest_existing_access_minutes_proxy: number;
+    is_synthetic: boolean;
+  }[];
   warnings: string[];
 }

@@ -9,7 +9,7 @@ M1 snapshot, then validates the returned mapping against the shared HTTP respons
 ```python
 {
     "snapshot": {
-        "city_id": "hcmc",
+        "city_id": "VN-HCMC",
         "boundary_version": "...",
         "pilot_extent_id": "...",
         "data_snapshot_id": "...",
@@ -23,6 +23,8 @@ M1 snapshot, then validates the returned mapping against the shared HTTP respons
             "covered_demand_cell_ids": ["cell-a"],
             "coverage_source_ids": ["..."],
             "coverage_status": "observed",
+            "coverage_is_synthetic": False,
+            "estimated_cost": {"value": None, "unit": "VND", "status": "unknown"},
             "constraints": [
                 {"id": "site_access", "status": "pass", "source_id": "...",
                  "evidence_status": "observed"}
@@ -45,6 +47,7 @@ M1 snapshot, then validates the returned mapping against the shared HTTP respons
     "existing_covered_demand_cell_ids": ["cell-b"],
     "existing_coverage_source_ids": ["..."],
     "existing_coverage_status": "observed",
+    "existing_coverage_is_synthetic": False,
 }
 ```
 
@@ -74,8 +77,9 @@ These are screening defaults, not partner policy or finance assumptions.
 - Competition is the share of candidate catchment demand already covered by existing sites;
   network-gap fit is its complement. Absolute coverage gain, residual coverage gap, competition,
   and network fit are returned as separate metrics.
-- Grid/site readiness averages source-backed passing gates and reported grid-capacity fit. Unknown
-  gates are omitted from the component score and reduce its evidence coverage.
+- Grid/site readiness averages source-backed passing physical readiness gates and reported
+  grid-capacity fit. Boundary, candidate spacing, and individual budget are separate hard screens;
+  they do not imply site/grid readiness. Unknown gates are omitted and reduce evidence coverage.
 - Segment fit is a weighted mean of available 0-100 road-accessibility, POI/dwell, fleet, and
   charger-mix evidence. Its weights are part of the versioned scoring config.
 - Weighted component contributions are normalized over known components. Ranking is limited to a
@@ -84,9 +88,13 @@ These are screening defaults, not partner policy or finance assumptions.
 
 The requested charger configuration is emitted as scenario capacity. Capacity fit is a direct
 comparison with source-backed reported grid capacity; the `overload_risk` category is deterministic
-and is neither a probability nor utility approval. Cost/ROI is not computed without a qualified
-finance package. This v0.1 engine ranks individual candidates and does not select a multi-site
-portfolio.
+and is neither a probability nor utility approval. An applicable CAPEX input may be returned as a
+scenario estimate and compared with a per-candidate budget supplied for that run; M1's portfolio
+budget reference is not used as the per-candidate default. CAPEX never contributes to readiness
+or implies market pricing. ROI/finance is unavailable without a qualified finance package. This
+v0.1 engine ranks individual candidates and does not select a multi-site portfolio. The pinned M1
+adapter uses node-level weekly demand and computes access from the `normal` proxy profile using the
+request's `coverage_minutes`; `demand_scenario` selects exactly one of low/base/high.
 
 ## Sensitivity reruns
 
@@ -102,7 +110,7 @@ single-run shared HTTP response contract.
 
 ```python
 engine = TechnicalOpportunityEngine()
-assert engine.algorithm_version == "m2b-technical-screen-0.1.0"
+assert engine.algorithm_version == "m2b-technical-screen-0.2.0"
 assert engine.config_version == "technical-demo-v1"
 result = engine.recommend(run_config, versioned_m1_snapshot)
 ```

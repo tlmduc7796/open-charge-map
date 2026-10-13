@@ -16,6 +16,14 @@ POST /api/v1/planning/recommendations
 
 Endpoint nhận một request bất biến mô tả study area, data snapshot, candidate set, technical/policy/finance scenario tùy chọn và trả một run kết quả. MVP không cần endpoint save project, user management hoặc cập nhật dữ liệu nguồn.
 
+Planner cần metadata để chọn candidate và vẽ đúng snapshot trước khi chạy; endpoint bootstrap chỉ đọc này trả catalog demo đã pin:
+
+```http
+GET /api/v1/planning/demo-snapshot
+```
+
+Response gồm study area/snapshot ID, boundary GeoJSON, candidate options, existing-site markers, demand nodes kèm access-time proxy và các giá trị scenario mặc định. Endpoint không thay thế request run và không chứa ranking.
+
 Các API chuyên biệt như candidate generation, capacity compare, run history và finance adapter chỉ được tách thêm khi implementation cho thấy cần. Không tạo nhiều endpoint `score`, `simulate`, `ROI` trước khi biết luồng UI/API thực sự cần chúng.
 
 ## 2. Request contract (khái niệm v0.1)
@@ -33,7 +41,8 @@ Các API chuyên biệt như candidate generation, capacity compare, run history
     "horizon_years": 3,
     "data_snapshot_id": "demo-hcmc-v1",
     "seed": 42,
-    "config_version": null
+    "config_version": null,
+    "demand_scenario": "base"
   },
   "candidate_source": {
     "mode": "provided",
@@ -54,7 +63,9 @@ Các API chuyên biệt như candidate generation, capacity compare, run history
 
 Trên API thật, field bắt buộc và optional phải được biểu diễn bằng Pydantic/OpenAPI. Trên JSON, thời gian ISO-8601 có timezone; tọa độ dùng WGS84 (EPSG:4326); khoảng cách tính bằng m/km; công suất kW; tiền VND; năng lượng kWh; thời lượng phút. `null` nghĩa là chưa có giá trị/unknown nếu schema cho phép; không dùng `0` thay unknown.
 
-`contract_version`, `study_area`, `run`, `candidate_source`, `profile` và `technical` là bắt buộc. Trong `run`, `as_of`, `horizon_years`, `data_snapshot_id`, `seed` và `config_version` đều là field bắt buộc; `as_of` phải có timezone, `horizon_years` là số nguyên dương, `data_snapshot_id` phải chỉ rõ snapshot được dùng. `config_version: null` chọn cấu hình mặc định hiện hành; nếu truyền phiên bản cụ thể thì backend phải dùng đúng phiên bản đó hoặc trả `invalid_input`. Backend trả lại phiên bản cấu hình thực tế trong response. Muốn chạy lại đúng cấu hình, client gửi lại `config_version` đã được echo.
+`contract_version`, `study_area`, `run`, `candidate_source`, `profile` và `technical` là bắt buộc. Trong `run`, `as_of`, `horizon_years`, `data_snapshot_id`, `seed` và `config_version` đều là field bắt buộc; `as_of` phải có timezone, `horizon_years` là số nguyên dương, `data_snapshot_id` phải chỉ rõ snapshot được dùng. `demand_scenario` nhận `low`, `base` hoặc `high` và mặc định là `base` cho client cũ. `config_version: null` chọn cấu hình mặc định hiện hành; nếu truyền phiên bản cụ thể thì backend phải dùng đúng phiên bản đó hoặc trả `invalid_input`. Backend trả lại phiên bản cấu hình thực tế trong response. Muốn chạy lại đúng cấu hình, client gửi lại `config_version` đã được echo.
+
+`technical.budget_vnd` là ngưỡng sàng lọc CAPEX do người dùng nhập cho từng candidate trong run xếp hạng đơn điểm. Nó không thực hiện chọn portfolio hoặc kiểm tra tổng chi phí nhiều site. Snapshot demo có `portfolio_budget_vnd` tham chiếu 10 tỷ VND nhưng không dùng giá trị đó làm ngân sách từng candidate. `base_cost` chỉ minh họa cấu hình DC 4 × 80 kW; khi cấu hình khác, cost/budget gate là unknown.
 
 `candidate_source.mode` v0.1 chỉ nhận `provided`; `candidate_ids` phải là mảng ID dạng chuỗi, không trùng nhau. Sai kiểu, enum, đơn vị, miền giá trị hoặc thiếu field bắt buộc là lỗi HTTP 422. Mảng `candidate_ids` rỗng là request đúng cấu trúc nhưng sai miền dữ liệu, trả run `invalid_input`. ID không tồn tại, snapshot không khả dụng hoặc package không hợp lệ cũng là lỗi miền dữ liệu theo semantics ở mục 4. Không âm thầm bỏ qua candidate không hợp lệ.
 
@@ -75,6 +86,7 @@ Trên API thật, field bắt buộc và optional phải được biểu diễn 
     "horizon_years": 3,
     "seed": 42,
     "data_snapshot_id": "demo-hcmc-v1",
+    "demand_scenario": "base",
     "algorithm_version": "site-ranker-0.1",
     "config_version": "technical-default-v0",
     "policy_package_id": null,
@@ -163,7 +175,7 @@ Trên API thật, field bắt buộc và optional phải được biểu diễn 
 
 Số liệu ví dụ ở trên chỉ minh họa hình dạng payload, không phải dự báo hay ngưỡng đã chốt. Response thật phải trả các metric thực sự tính được, không tạo placeholder có vẻ như kết quả thật.
 
-`scenario` là cấu hình đã resolve và phải echo `profile`, `as_of`, `horizon_years`, `seed`, `data_snapshot_id`, `algorithm_version`, `config_version` cùng ID/version của package đã áp dụng; ID/version package không dùng là `null`. Các field vẫn có mặt ở `invalid_input`; giá trị chưa resolve được là `null`, còn input đã nhận (profile, thời điểm, horizon, seed và snapshot ID) được echo để giải thích lỗi. Mỗi lần xử lý request hợp lệ về cấu trúc có `run_id` mới; MVP không lưu run bền vững. Cùng input, snapshot, algorithm và config phải cho cùng kết quả xếp hạng. `run_id` có thể khác giữa các lần chạy.
+`scenario` là cấu hình đã resolve và phải echo `profile`, `as_of`, `horizon_years`, `seed`, `data_snapshot_id`, `demand_scenario`, `algorithm_version`, `config_version` cùng ID/version của package đã áp dụng; ID/version package không dùng là `null`. Các field vẫn có mặt ở `invalid_input`; giá trị chưa resolve được là `null`, còn input đã nhận (profile, thời điểm, horizon, seed, snapshot ID và demand scenario) được echo để giải thích lỗi. Mỗi lần xử lý request hợp lệ về cấu trúc có `run_id` mới; MVP không lưu run bền vững. Cùng input, snapshot, algorithm và config phải cho cùng kết quả xếp hạng. `run_id` có thể khác giữa các lần chạy.
 
 `recommendations` chỉ chứa candidate còn đủ điều kiện xếp hạng và có `technical_score` so sánh được trong profile đang chạy; `rank` liên tục từ 1. `eligibility` là `eligible` hoặc `conditional`. Candidate chưa bị hard constraint loại nhưng thiếu evidence đến mức không thể tính score so sánh được nằm trong `unranked_candidates`, kèm `candidate_id` và `reason`; không gán rank/score giả. Candidate có hard constraint đã xác nhận `fail` nằm trong `excluded_candidates`. Mỗi phần tử bị loại có `candidate_id` và danh sách `constraints` gồm `id`, `status: "fail"`, `reason`. Cả `unranked_candidates` và `excluded_candidates` luôn có mặt, kể cả khi rỗng.
 

@@ -343,12 +343,18 @@ class DatabaseStationRepository:
         """ + _STATION_SELECT + """
                 AND ST_DWithin(
                     s.location,
-                    ST_SetSRID(ST_MakePoint(candidate_points.longitude, candidate_points.latitude), 4326)::geography,
+                    ST_SetSRID(
+                        ST_MakePoint(candidate_points.longitude, candidate_points.latitude),
+                        4326
+                    )::geography,
                     :radius_m
                 )
                 ORDER BY ST_Distance(
                     s.location,
-                    ST_SetSRID(ST_MakePoint(candidate_points.longitude, candidate_points.latitude), 4326)::geography
+                    ST_SetSRID(
+                        ST_MakePoint(candidate_points.longitude, candidate_points.latitude),
+                        4326
+                    )::geography
                 ), s.code
             ) AS station_rows
             ORDER BY candidate_points.candidate_id, station_rows.code

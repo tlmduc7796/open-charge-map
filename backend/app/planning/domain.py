@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Mapping, Protocol
+from typing import Any, Protocol
 
 
 @dataclass(frozen=True)
@@ -22,6 +23,7 @@ class PlanningRunConfig:
     coverage_minutes: int
     charger_options: tuple[Mapping[str, Any], ...]
     budget_vnd: float | None
+    demand_scenario: str = "base"
 
 
 class PlanningDataError(Exception):
@@ -45,6 +47,8 @@ class PlanningDataRepository(Protocol):
     """
 
     def load_dataset(self, config: PlanningRunConfig) -> Mapping[str, Any]: ...
+
+    def load_demo_catalog(self) -> Mapping[str, Any]: ...
 
 
 class PlanningEngine(Protocol):

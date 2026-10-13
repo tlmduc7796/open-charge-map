@@ -30,6 +30,8 @@ HARD_CONSTRAINTS = (
     "charger_configuration",
     "candidate_type",
     "site_rights",
+    "candidate_spacing",
+    "individual_budget",
 )
 DATA_STATUSES = {"observed", "proxy", "synthetic", "scenario", "unknown", "not_applicable"}
 CONSTRAINT_STATUSES = {"pass", "fail", "conditional", "unknown", "not_applicable"}
@@ -96,6 +98,7 @@ class _DemandRecord:
     unit: str
     status: str
     source_id: str | None
+    source_ref: str | None
     model_version: str | None
     data_snapshot_id: str | None
     scenario: str
@@ -106,7 +109,7 @@ class _DemandRecord:
 class TechnicalOpportunityEngine:
     """Rank candidates for one-site comparison using a versioned technical profile."""
 
-    algorithm_version = "m2b-technical-screen-0.1.0"
+    algorithm_version = "m2b-technical-screen-0.2.0"
 
     def __init__(self, scoring: TechnicalScoringConfig | None = None) -> None:
         self.scoring = scoring or TechnicalScoringConfig()
@@ -133,9 +136,14 @@ class TechnicalOpportunityEngine:
         if warning:
             return _empty_result("invalid_input", warning)
 
-        existing_cells, existing_sources, existing_is_known, existing_status = _existing_coverage(
-            dataset
-        )
+        (
+            existing_cells,
+            existing_sources,
+            existing_is_known,
+            existing_status,
+            existing_is_synthetic,
+            existing_source_ref,
+        ) = _existing_coverage(dataset)
         cell_records = {
             item.subject_id: item for item in demand_records if item.subject_type == "demand_cell"
         }
@@ -158,6 +166,7 @@ class TechnicalOpportunityEngine:
             point = _candidate_point(candidate)
             candidate_id = str(candidate["candidate_id"])
             constraint_items = _constraints_for_candidate(
+                config,
                 candidate,
                 point,
                 boundary,
@@ -194,6 +203,8 @@ class TechnicalOpportunityEngine:
                 existing_sources,
                 existing_is_known,
                 existing_status,
+                existing_is_synthetic,
+                existing_source_ref,
                 total_cell_demand,
                 all_cell_values_known,
             )
@@ -463,6 +474,21 @@ class TechnicalOpportunityEngine:
             )
             else "eligible"
         )
+        estimated_cost = candidate.get("estimated_cost")
+        estimated_cost_metric = _metric(
+            estimated_cost.get("value") if isinstance(estimated_cost, Mapping) else None,
+            estimated_cost.get("unit", "VND") if isinstance(estimated_cost, Mapping) else "VND",
+            estimated_cost.get("status", "unknown")
+            if isinstance(estimated_cost, Mapping)
+            else "unknown",
+            1.0
+            if isinstance(estimated_cost, Mapping) and estimated_cost.get("value") is not None
+            else 0.0,
+            estimated_cost.get("source_id") if isinstance(estimated_cost, Mapping) else None,
+            estimated_cost.get("note")
+            if isinstance(estimated_cost, Mapping)
+            else "No scenario cost assumption is available.",
+        )
         metrics = {
             "demand_potential": _metric(
                 item["demand_value"],
@@ -480,19 +506,25 @@ class TechnicalOpportunityEngine:
             "recommended_capacity": item["capacity"]["recommended_capacity"],
             "capacity_fit": item["capacity"]["capacity_fit"],
             "overload_risk": item["capacity"]["overload_risk"],
-            "estimated_cost": _metric(
-                None,
-                "VND",
-                "not_applicable",
-                0.0,
-                note="Finance is outside the technical opportunity profile.",
-            ),
+            "estimated_cost": estimated_cost_metric,
         }
         provenance = _candidate_provenance(candidate)
         provenance.extend(_constraint_provenance(constraints))
         provenance.extend(item["demand_sources"])
         provenance.extend(item["coverage"]["provenance"])
         provenance.extend(item["capacity"]["provenance"])
+        if isinstance(estimated_cost, Mapping) and estimated_cost.get("value") is not None:
+            provenance.append(
+                {
+                    "field": "metrics.estimated_cost",
+                    "source_id": estimated_cost.get("source_id"),
+                    "source_ref": estimated_cost.get("source_ref"),
+                    "status": estimated_cost.get("status", "unknown"),
+                    "is_synthetic": estimated_cost.get("status") == "synthetic",
+                    "observed_at": None,
+                    "note": estimated_cost.get("note"),
+                }
+            )
         provenance = _dedupe_provenance(provenance)
         return {
             "rank": rank,
@@ -668,6 +700,7 @@ def _candidate_point(candidate: Mapping[str, Any]) -> tuple[float, float] | None
 
 
 def _constraints_for_candidate(
+    config: PlanningRunConfig,
     candidate: Mapping[str, Any],
     point: tuple[float, float],
     boundary: Mapping[str, Any],
@@ -704,6 +737,56 @@ def _constraints_for_candidate(
         }
     ]
     for constraint_id in HARD_CONSTRAINTS[1:]:
+        if constraint_id == "individual_budget":
+            cost = candidate.get("estimated_cost")
+            cost_value = cost.get("value") if isinstance(cost, Mapping) else None
+            source_id = cost.get("source_id") if isinstance(cost, Mapping) else None
+            source_ids = _source_ids(source_id)
+            if config.budget_vnd is None:
+                result.append(
+                    {
+                        "id": constraint_id,
+                        "status": "not_applicable",
+                        "reason": "No individual budget constraint was supplied for this run.",
+                        "source_ids": (),
+                        "source_ref": None,
+                        "evidence_status": "not_applicable",
+                        "confirmed_infeasible": False,
+                    }
+                )
+            elif _finite_number(cost_value) and float(cost_value) >= 0 and source_ids:
+                within_budget = float(cost_value) <= config.budget_vnd
+                result.append(
+                    {
+                        "id": constraint_id,
+                        "status": "pass" if within_budget else "fail",
+                        "reason": (
+                            "Scenario CAPEX assumption is within the individual budget."
+                            if within_budget
+                            else "Scenario CAPEX assumption exceeds the individual budget."
+                        ),
+                        "source_ids": source_ids,
+                        "source_ref": cost.get("source_ref"),
+                        "evidence_status": cost.get("status", "scenario"),
+                        "confirmed_infeasible": not within_budget,
+                    }
+                )
+            else:
+                result.append(
+                    {
+                        "id": constraint_id,
+                        "status": "unknown",
+                        "reason": (
+                            "Budget was supplied, but no applicable source-backed cost "
+                            "assumption is available."
+                        ),
+                        "source_ids": (),
+                        "source_ref": cost.get("source_ref") if isinstance(cost, Mapping) else None,
+                        "evidence_status": "unknown",
+                        "confirmed_infeasible": False,
+                    }
+                )
+            continue
         fact = facts.get(constraint_id)
         if fact is None:
             result.append(
@@ -712,6 +795,7 @@ def _constraints_for_candidate(
                     "status": "unknown",
                     "reason": "No verified evidence was provided for this hard constraint.",
                     "source_ids": (),
+                    "source_ref": None,
                     "evidence_status": "unknown",
                     "confirmed_infeasible": False,
                 }
@@ -731,6 +815,8 @@ def _constraints_for_candidate(
         evidence_status = fact.get("evidence_status", fact.get("data_status", "observed"))
         if evidence_status not in DATA_STATUSES:
             evidence_status = "unknown"
+        if status == "pass" and evidence_status in {"unknown", "not_applicable"}:
+            status = "unknown"
         reason = fact.get("reason")
         if fact.get("status") == "pass" and not sources:
             reason = "Pass finding has no source ID, so this constraint remains unknown."
@@ -747,6 +833,7 @@ def _constraints_for_candidate(
                 "status": status,
                 "reason": reason,
                 "source_ids": sources,
+                "source_ref": fact.get("source_ref"),
                 "evidence_status": evidence_status,
                 "confirmed_infeasible": confirmed,
             }
@@ -833,6 +920,7 @@ def _resolve_demand_records(
                 unit=unit,
                 status=status,
                 source_id=source_id,
+                source_ref=item.get("source_ref"),
                 model_version=item.get("model_version"),
                 data_snapshot_id=snapshot_id,
                 scenario=scenario,
@@ -902,6 +990,8 @@ def _coverage_metrics(
     existing_sources: tuple[str, ...],
     existing_is_known: bool,
     existing_status: str,
+    existing_is_synthetic: bool,
+    existing_source_ref: str | None,
     total_cell_demand: float | None,
     all_cell_values_known: bool,
 ) -> dict[str, Any]:
@@ -986,9 +1076,10 @@ def _coverage_metrics(
         {
             "field": "metrics.coverage_gain",
             "source_id": source_id,
-            "source_ref": None,
+            "source_ref": candidate.get("coverage_source_ref"),
             "status": candidate_coverage_status,
-            "is_synthetic": candidate_coverage_status == "synthetic",
+            "is_synthetic": candidate.get("coverage_is_synthetic") is True
+            or candidate_coverage_status == "synthetic",
             "observed_at": None,
             "note": "M1 candidate catchment coverage evidence.",
         }
@@ -998,9 +1089,9 @@ def _coverage_metrics(
         {
             "field": "metrics.coverage_gain",
             "source_id": source_id,
-            "source_ref": None,
+            "source_ref": existing_source_ref,
             "status": existing_status,
-            "is_synthetic": existing_status == "synthetic",
+            "is_synthetic": existing_is_synthetic or existing_status == "synthetic",
             "observed_at": None,
             "note": "M1 versioned existing-site coverage evidence.",
         }
@@ -1171,7 +1262,11 @@ def _capacity_metrics(config: PlanningRunConfig, candidate: Mapping[str, Any]) -
 def _readiness_component(
     constraints: Sequence[Mapping[str, Any]], capacity: Mapping[str, Any]
 ) -> dict[str, Any]:
-    readiness_facts = [item for item in constraints if item["id"] != "inside_boundary"]
+    readiness_facts = [
+        item
+        for item in constraints
+        if item["id"] not in {"inside_boundary", "candidate_spacing", "individual_budget"}
+    ]
     known = [item for item in readiness_facts if item["status"] == "pass"]
     scores = [100.0 for _ in known]
     sources = [source for item in known for source in item["source_ids"]]
@@ -1283,18 +1378,27 @@ def _add_demand_scores(evaluations: list[dict[str, Any]]) -> None:
         )
 
 
-def _existing_coverage(dataset: Mapping[str, Any]) -> tuple[set[str], tuple[str, ...], bool, str]:
+def _existing_coverage(
+    dataset: Mapping[str, Any],
+) -> tuple[set[str], tuple[str, ...], bool, str, bool, str | None]:
     raw = dataset.get("existing_covered_demand_cell_ids")
     if raw is None:
-        return set(), (), False, "unknown"
+        return set(), (), False, "unknown", False, None
     ids = _string_ids(raw)
     if ids is None:
-        return set(), (), False, "unknown"
+        return set(), (), False, "unknown", False, None
     sources = _source_ids(dataset.get("existing_coverage_source_ids"))
     status = dataset.get("existing_coverage_status", "unknown")
     if not sources or status not in DATA_STATUSES - {"unknown", "not_applicable"}:
-        return set(), (), False, "unknown"
-    return set(ids), sources, True, status
+        return set(), (), False, "unknown", False, None
+    return (
+        set(ids),
+        sources,
+        True,
+        status,
+        dataset.get("existing_coverage_is_synthetic") is True,
+        dataset.get("existing_coverage_source_ref"),
+    )
 
 
 def _string_ids(value: Any) -> tuple[str, ...] | None:
@@ -1398,7 +1502,7 @@ def _constraint_provenance(constraints: Sequence[Mapping[str, Any]]) -> list[dic
         {
             "field": f"constraints.{item['id']}",
             "source_id": source,
-            "source_ref": None,
+            "source_ref": item.get("source_ref"),
             "status": item["evidence_status"],
             "is_synthetic": item["evidence_status"] == "synthetic",
             "observed_at": None,
@@ -1418,7 +1522,7 @@ def _demand_provenance(record: _DemandRecord, field: str) -> dict[str, Any]:
     return {
         "field": field,
         "source_id": record.source_id,
-        "source_ref": None,
+        "source_ref": record.source_ref,
         "status": record.status,
         "is_synthetic": record.status == "synthetic",
         "observed_at": None,

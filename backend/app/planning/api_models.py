@@ -25,12 +25,10 @@ def _parse_iso_datetime(value: Any) -> Any:
         return datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
         return value
-ConstraintStatus = Literal[
-    "pass", "fail", "conditional", "unknown", "not_applicable"
-]
-PlanningProfile = Literal[
-    "technical_opportunity", "public_policy", "investor_economic"
-]
+
+
+ConstraintStatus = Literal["pass", "fail", "conditional", "unknown", "not_applicable"]
+PlanningProfile = Literal["technical_opportunity", "public_policy", "investor_economic"]
 PlanningRunStatus = Literal[
     "completed",
     "completed_with_unknowns",
@@ -63,6 +61,7 @@ class RunInput(PlanningModel):
     data_snapshot_id: str = Field(min_length=1)
     seed: int
     config_version: str | None = Field(min_length=1)
+    demand_scenario: Literal["low", "base", "high"] = "base"
 
     @field_validator("as_of", mode="before")
     @classmethod
@@ -113,12 +112,14 @@ class PlanningRecommendationRequest(PlanningModel):
     policy_package: dict[str, Any] | None = None
     finance_package: dict[str, Any] | None = None
 
+
 class ScenarioEcho(PlanningModel):
     profile: PlanningProfile
     as_of: datetime
     horizon_years: int
     seed: int
     data_snapshot_id: str
+    demand_scenario: Literal["low", "base", "high"] = "base"
     algorithm_version: str | None
     config_version: str | None
     policy_package_id: str | None
@@ -242,3 +243,49 @@ class PlanningRecommendationResponse(PlanningModel):
         ):
             raise ValueError("no_feasible_candidates requires only excluded candidates")
         return self
+
+
+class PlanningDemoLocation(PlanningModel):
+    lat: float = Field(ge=-90, le=90)
+    lon: float = Field(ge=-180, le=180)
+
+
+class PlanningDemoCandidate(PlanningModel):
+    candidate_id: str = Field(min_length=1)
+    label: str = Field(min_length=1)
+    candidate_type: str = Field(min_length=1)
+    eligibility: Literal["eligible", "conditional"]
+    is_synthetic: bool
+    location: PlanningDemoLocation
+    source_ref: str | None
+
+
+class PlanningDemoSite(PlanningModel):
+    site_id: str = Field(min_length=1)
+    label: str = Field(min_length=1)
+    site_type: str = Field(min_length=1)
+    charger_type: str = Field(min_length=1)
+    port_count: int | None
+    power_kw: float | None
+    is_synthetic: bool
+    location: PlanningDemoLocation
+    source_ref: str | None
+
+
+class PlanningDemoDemandNode(PlanningModel):
+    demand_node_id: str = Field(min_length=1)
+    unit_id: str = Field(min_length=1)
+    location: PlanningDemoLocation
+    nearest_existing_access_minutes_proxy: float = Field(ge=0)
+    is_synthetic: bool
+
+
+class PlanningDemoSnapshotResponse(PlanningModel):
+    contract_version: Literal["0.1"]
+    study_area: StudyAreaInput
+    snapshot: dict[str, Any]
+    defaults: dict[str, Any]
+    candidates: list[PlanningDemoCandidate]
+    existing_sites: list[PlanningDemoSite]
+    demand_nodes: list[PlanningDemoDemandNode]
+    warnings: list[str]
