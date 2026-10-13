@@ -3,8 +3,18 @@ import goongjs from "@goongmaps/goong-js";
 import "@goongmaps/goong-js/dist/goong-js.css";
 import { CircleMarker, MapContainer, Polyline, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 
+import { hideGoongPoiLayers, loadSdfIcon } from "../goongMapStyle";
 import { COLOR_HEX } from "../stationColor";
 import type { GeoPoint, PickTarget, RecommendationItem, RouteResult, Station, StationColor } from "../types";
+
+// MDI "ev-station" glyph (https://pictogrammers.com/library/mdi/icon/ev-station/).
+const STATION_ICON_PATH =
+  "M19.77,7.23L19.78,7.22L16.06,3.5L15,4.56L17.11,6.67C16.17,7.03 15.5,7.93 15.5,9A2.5,2.5 0 0,0 18,11.5C18.36,11.5 18.69,11.42 19,11.29V18.5A1,1 0 0,1 18,19.5A1,1 0 0,1 17,18.5V14A2,2 0 0,0 15,12H14V5A2,2 0 0,0 12,3H6A2,2 0 0,0 4,5V21H14V13.5H15.5V18.5A2.5,2.5 0 0,0 18,21A2.5,2.5 0 0,0 20.5,18.5V9C20.5,8.31 20.22,7.68 19.77,7.23M18,10A1,1 0 0,1 17,9A1,1 0 0,1 18,8A1,1 0 0,1 19,9A1,1 0 0,1 18,10M8,18V13.5H6L10,6V11H12L8,18Z";
+const STATION_ICON_ID = "ev-station-icon";
+const STATION_SOURCE = "station-markers";
+const STATION_DOT_LAYER = "station-markers-dot";
+const STATION_ICON_LAYER = "station-markers-icon";
+const STATION_RANK_LAYER = "station-markers-rank";
 
 interface MapViewProps {
   stations: Station[];
@@ -30,16 +40,31 @@ const EMPTY_ITEMS: RecommendationItem[] = [];
 const ROUTE_SOURCE = "journey-route";
 const ROUTE_LAYER = "journey-route-line";
 
-// Selected/hovered only toggle classes on existing markers; they never rebuild the map.
-function applyMarkerClasses(
-  elements: Map<string, HTMLElement>,
+function stationFeatureCollection(
+  stations: Station[],
+  colors: Record<string, StationColor>,
+  items: RecommendationItem[],
   selectedStationId: string | null,
   hoveredStationId: string | null | undefined,
 ) {
-  elements.forEach((element, stationId) => {
-    element.classList.toggle("map-marker--selected", stationId === selectedStationId);
-    element.classList.toggle("map-marker--hovered", stationId === hoveredStationId);
-  });
+  const ranks = new Map(items.map((item, index) => [item.station_id, index + 1]));
+  return {
+    type: "FeatureCollection" as const,
+    features: stations.map((station) => {
+      const stationId = station.properties.station_id;
+      return {
+        type: "Feature" as const,
+        geometry: station.geometry,
+        properties: {
+          stationId,
+          color: colors[stationId] ?? "grey",
+          rank: ranks.get(stationId) ?? null,
+          selected: stationId === selectedStationId,
+          hovered: stationId === hoveredStationId,
+        },
+      };
+    }),
+  };
 }
 
 function GoongMap({
@@ -58,7 +83,6 @@ function GoongMap({
   onFailure,
 }: Omit<MapViewProps, "onProviderChange"> & { onFailure: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const markerElements = useRef(new Map<string, HTMLElement>());
   const [map, setMap] = useState<InstanceType<typeof goongjs.Map> | null>(null);
   const mapToken = import.meta.env.VITE_GOONG_MAPTILES_KEY;
   const originLat = origin?.lat;
@@ -110,6 +134,7 @@ function GoongMap({
     });
     instance.on("load", () => {
       loaded = true;
+      hideGoongPoiLayers(instance);
       setMap(instance);
     });
     return () => {
@@ -118,37 +143,108 @@ function GoongMap({
     };
   }, [mapToken]);
 
-  // Markers are rebuilt only when the data they show changes.
+  // Station markers are a GL source/layers, not DOM elements: goong-js's DOM Marker
+  // repositions an HTML element via JS on every "move" event, which can visibly lag
+  // behind the WebGL canvas during a fast zoom/pan. A GL layer is drawn by the same
+  // pipeline as the basemap in the same frame, so it can never drift from it.
+  // The source is created once; later updates just call setData (cheap for ~dozens
+  // of points), matching the pattern PlannerMap.tsx already uses for its GL layers.
   useEffect(() => {
     if (!map) return;
-    const ranks = new Map(items.map((item, index) => [item.station_id, index + 1]));
-    const elements = new Map<string, HTMLElement>();
-    const markers: Array<{ remove(): void }> = [];
-    for (const station of stations) {
-      const stationId = station.properties.station_id;
-      const element = document.createElement("button");
-      element.type = "button";
-      element.className = `map-marker map-marker--${colors[stationId] ?? "grey"}`;
-      element.textContent = ranks.has(stationId) ? String(ranks.get(stationId)) : "•";
-      element.title = station.properties.name;
-      element.dataset.stationId = stationId;
-      element.setAttribute("aria-label", `Mở ${station.properties.name}`);
-      element.addEventListener("click", () => {
-        // While picking, the map's own click handler takes this click.
-        if (!latest.current.pickTarget) latest.current.onStationSelect(stationId);
-      });
-      element.addEventListener("mouseenter", () => latest.current.onStationHover?.(stationId));
-      element.addEventListener("mouseleave", () => latest.current.onStationHover?.(null));
-      elements.set(stationId, element);
-      markers.push(new goongjs.Marker(element).setLngLat(station.geometry.coordinates).addTo(map));
+    const data = stationFeatureCollection(stations, colors, items, selectedStationId, hoveredStationId);
+    const source = map.getSource(STATION_SOURCE);
+    if (source) {
+      source.setData(data);
+      return;
     }
-    markerElements.current = elements;
-    applyMarkerClasses(elements, latest.current.selectedStationId, latest.current.hoveredStationId);
-    return () => {
-      markers.forEach((marker) => marker.remove());
-      markerElements.current = new Map();
+    map.addSource(STATION_SOURCE, { type: "geojson", data });
+    map.addLayer({
+      id: STATION_DOT_LAYER,
+      type: "circle",
+      source: STATION_SOURCE,
+      paint: {
+        "circle-radius": ["case", ["get", "selected"], 16, ["get", "hovered"], 15, 13],
+        "circle-color": [
+          "match",
+          ["get", "color"],
+          "green", COLOR_HEX.green,
+          "yellow", COLOR_HEX.yellow,
+          "red", COLOR_HEX.red,
+          COLOR_HEX.grey,
+        ],
+        "circle-stroke-color": "#ffffff",
+        "circle-stroke-width": ["case", ["get", "selected"], 3, 2],
+      },
+    });
+    map.addLayer({
+      id: STATION_ICON_LAYER,
+      type: "symbol",
+      source: STATION_SOURCE,
+      layout: {
+        "icon-image": STATION_ICON_ID,
+        "icon-size": ["case", ["get", "selected"], 0.27, ["get", "hovered"], 0.25, 0.22],
+        "icon-allow-overlap": true,
+        "icon-ignore-placement": true,
+      },
+      paint: { "icon-color": "#ffffff" },
+    });
+    map.addLayer({
+      id: STATION_RANK_LAYER,
+      type: "symbol",
+      source: STATION_SOURCE,
+      filter: ["!=", ["get", "rank"], null],
+      layout: {
+        "text-field": ["to-string", ["get", "rank"]],
+        "text-font": ["Roboto Medium"],
+        "text-size": 10,
+        "text-offset": [0.95, -1.1],
+        "text-allow-overlap": true,
+        "text-ignore-placement": true,
+      },
+      paint: {
+        "text-color": "#ffffff",
+        "text-halo-color": "#123d35",
+        "text-halo-width": 1.5,
+      },
+    });
+    // The icon registers asynchronously; a symbol layer with no image yet for its
+    // "icon-image" just skips drawing icons until addImage resolves, so this doesn't
+    // need to block (or gate) the addLayer calls above.
+    loadSdfIcon(map, STATION_ICON_ID, STATION_ICON_PATH).catch(() => undefined);
+  }, [map, stations, colors, items, selectedStationId, hoveredStationId]);
+
+  // Click/hover are bound once to the stable layer id rather than rebuilding per
+  // station-data change (mirrors the layer click/hover wiring in PlannerMap.tsx).
+  useEffect(() => {
+    if (!map) return;
+    const canvas = map.getCanvas();
+    const stationIdOf = (event: { features?: Array<{ properties: Record<string, unknown> }> }) => {
+      const value = event.features?.[0]?.properties.stationId;
+      return typeof value === "string" ? value : undefined;
     };
-  }, [map, stations, colors, items]);
+    const handleClick = (event: { features?: Array<{ properties: Record<string, unknown> }> }) => {
+      const stationId = stationIdOf(event);
+      // While picking, the map's own click handler (below) takes this click.
+      if (stationId && !latest.current.pickTarget) latest.current.onStationSelect(stationId);
+    };
+    const handleEnter = (event: { features?: Array<{ properties: Record<string, unknown> }> }) => {
+      const stationId = stationIdOf(event);
+      if (stationId) latest.current.onStationHover?.(stationId);
+      if (!latest.current.pickTarget) canvas.style.cursor = "pointer";
+    };
+    const handleLeave = () => {
+      latest.current.onStationHover?.(null);
+      if (!latest.current.pickTarget) canvas.style.cursor = "";
+    };
+    map.on("click", STATION_DOT_LAYER, handleClick);
+    map.on("mouseenter", STATION_DOT_LAYER, handleEnter);
+    map.on("mouseleave", STATION_DOT_LAYER, handleLeave);
+    return () => {
+      map.off("click", STATION_DOT_LAYER, handleClick);
+      map.off("mouseenter", STATION_DOT_LAYER, handleEnter);
+      map.off("mouseleave", STATION_DOT_LAYER, handleLeave);
+    };
+  }, [map]);
 
   // Journey endpoints live in their own effect so moving them never rebuilds the station markers.
   // goong-js owns each marker element's inline transform, so the visual shape lives on a child.
@@ -196,10 +292,6 @@ function GoongMap({
       canvas.style.cursor = previousCursor;
     };
   }, [map, pickTarget]);
-
-  useEffect(() => {
-    applyMarkerClasses(markerElements.current, selectedStationId, hoveredStationId);
-  }, [map, selectedStationId, hoveredStationId]);
 
   useEffect(() => {
     if (!map) return;

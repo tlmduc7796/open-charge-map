@@ -19,6 +19,10 @@ declare module "@goongmaps/goong-js" {
     addLayer(layer: unknown): void;
     getSource(id: string): GoongSource | undefined;
     getLayer(id: string): unknown;
+    getStyle(): { layers?: Array<{ id: string }> } | undefined;
+    setLayoutProperty(layerId: string, name: string, value: unknown): void;
+    hasImage(id: string): boolean;
+    addImage(id: string, image: unknown, options?: Record<string, unknown>): void;
     flyTo(options: Record<string, unknown>): void;
     fitBounds(bounds: [[number, number], [number, number]], options?: Record<string, unknown>): void;
     removeLayer(id: string): void;

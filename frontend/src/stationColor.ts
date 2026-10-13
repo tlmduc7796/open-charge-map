@@ -8,7 +8,7 @@ export const COLOR_LABEL: Record<StationColor, string> = {
   grey: "Chưa có dữ liệu",
 };
 
-/** Same hues as the `.map-marker--*` rules in styles.css, for the Leaflet fallback map. */
+/** Same hues as the Goong station GL layer's "circle-color" match expression, for the Leaflet fallback map. */
 export const COLOR_HEX: Record<StationColor, string> = {
   green: "#22c55e",
   yellow: "#f59e0b",

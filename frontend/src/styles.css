@@ -213,7 +213,6 @@ button { cursor: pointer; }
 .map-frame { position: relative; height: min(59vh, 650px); min-height: 420px; overflow: hidden; border: 1px solid #d2dfd7; border-radius: 18px; background: #e7eee9; box-shadow: 0 14px 35px rgba(32, 65, 56, 0.08); }
 .map-canvas { width: 100%; height: 100%; }
 .map-provider-chip { position: absolute; z-index: 500; left: 14px; bottom: 14px; background: rgba(255, 255, 255, 0.94); color: #36554d; }
-.map-marker { width: 22px; height: 22px; padding: 0; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 3px 10px rgba(15, 46, 38, 0.35); }
 .origin-marker { width: 28px; height: 28px; display: grid; place-items: center; }
 .origin-badge { width: 26px; height: 26px; display: grid; place-items: center; color: #fff; background: #2563eb; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 3px 10px rgba(37, 99, 235, 0.45); font-size: 10px; font-weight: 800; line-height: 1; }
 .destination-marker { width: 28px; height: 34px; display: grid; place-items: center; }
@@ -221,11 +220,6 @@ button { cursor: pointer; }
 .destination-pin span { font-size: 12px; font-weight: 800; transform: rotate(45deg); }
 .map-pick-hint { position: absolute; z-index: 1100; top: 12px; left: 50%; max-width: calc(100% - 24px); transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 14px; border: 1px solid #1b584b; border-radius: 999px; color: #fff; background: #123d35; box-shadow: 0 8px 24px rgba(18, 61, 53, 0.3); font-size: 12px; font-weight: 700; }
 .map-pick-hint button { padding: 5px 12px; border: 0; border-radius: 999px; color: #123d35; background: #fff; font-size: 11px; font-weight: 800; }
-.map-marker--green { background: #22c55e; }
-.map-marker--yellow { background: #f59e0b; }
-.map-marker--red { background: #ef4444; }
-.map-marker--grey { background: #64748b; }
-.map-marker--selected { width: 30px; height: 30px; outline: 3px solid rgba(18, 61, 53, 0.25); }
 
 .station-details { margin-top: 16px; padding: 18px; border: 1px solid #dce6df; border-radius: 16px; background: #fff; }
 .detail-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; }
@@ -357,10 +351,6 @@ button { cursor: pointer; }
   .map-legend-overlay { padding: 10px 12px; border: 1px solid #dce6df; border-radius: 11px; background: rgba(255,255,255,.96); box-shadow: 0 5px 18px rgba(20,50,40,.12); color: #294a40; font-size: 11px; }
   .map-legend-overlay span { gap: 7px; }
   .map-provider-chip { right: 14px; left: auto; bottom: 14px; }
-  .map-marker { width: 28px; height: 28px; display: grid; place-items: center; color: white; font-size: 12px; line-height: 1; font-weight: 800; border-width: 2px; }
-  /* goong-js sets an inline transform on marker elements, so no transform/transition here. */
-  .map-marker--hovered { z-index: 2; box-shadow: 0 0 0 5px rgba(18, 61, 53, 0.28), 0 3px 10px rgba(15, 46, 38, 0.35); }
-  .map-marker--selected { width: 34px; height: 34px; }
   .station-details { position: absolute; z-index: 600; right: 22px; bottom: 22px; width: min(440px, calc(100% - 44px)); max-height: calc(100% - 44px); overflow: auto; margin: 0; padding: 16px; border-color: #d5e1da; border-radius: 16px; box-shadow: 0 14px 42px rgba(20,50,40,.22); }
   .station-details .detail-title h2 { padding-right: 20px; margin: 7px 0 4px; font-size: 17px; line-height: 1.25; }
   .station-details .detail-title p { color: #536b62; font-size: 11px; line-height: 1.45; }

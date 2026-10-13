@@ -4,6 +4,7 @@ import "@goongmaps/goong-js/dist/goong-js.css";
 import { latLngBounds } from "leaflet";
 import { CircleMarker, GeoJSON, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
 
+import { hideGoongPoiLayers } from "../goongMapStyle";
 import type { PlanningDemoSnapshotResponse, PlanningRecommendation } from "./types";
 
 type Candidate = PlanningDemoSnapshotResponse["candidates"][number];
@@ -264,6 +265,7 @@ function GoongPlannerMap({
     });
     instance.on("load", () => {
       loaded = true;
+      hideGoongPoiLayers(instance);
       setMap(instance);
     });
     return () => {

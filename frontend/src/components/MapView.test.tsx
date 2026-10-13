@@ -5,31 +5,88 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import type { RecommendationItem } from "../types";
 import { route, station } from "../test/fixtures";
 
+const STATION_SOURCE = "station-markers";
+const STATION_DOT_LAYER = "station-markers-dot";
+
 const goong = vi.hoisted(() => {
   const instances: FakeMap[] = [];
   const markers: FakeMarker[] = [];
+
+  class FakeSource {
+    data: unknown;
+    setData = vi.fn((data: unknown) => {
+      this.data = data;
+    });
+    constructor(data: unknown) {
+      this.data = data;
+    }
+  }
 
   class FakeMap {
     handlers: Record<string, () => void> = {};
     remove = vi.fn();
     flyTo = vi.fn();
     addControl = vi.fn();
-    addSource = vi.fn();
-    addLayer = vi.fn();
-    getSource = vi.fn(() => undefined);
-    getLayer = vi.fn(() => undefined);
-    removeLayer = vi.fn();
-    removeSource = vi.fn();
+    sources: Record<string, FakeSource> = {};
+    layers = new Set<string>();
+    addSource = vi.fn((id: string, source: { data: unknown }) => {
+      this.sources[id] = new FakeSource(source.data);
+    });
+    getSource = vi.fn((id: string) => this.sources[id]);
+    addLayer = vi.fn((layer: { id: string }) => {
+      this.layers.add(layer.id);
+    });
+    getLayer = vi.fn((id: string) => (this.layers.has(id) ? {} : undefined));
+    removeLayer = vi.fn((id: string) => {
+      this.layers.delete(id);
+    });
+    removeSource = vi.fn((id: string) => {
+      delete this.sources[id];
+    });
+    getStyle = vi.fn(() => ({ layers: [] }));
+    setLayoutProperty = vi.fn();
+    hasImage = vi.fn(() => false);
+    addImage = vi.fn();
     canvas = document.createElement("canvas");
     getCanvas = vi.fn(() => this.canvas);
     clickHandlers: Array<(event: unknown) => void> = [];
-    on = vi.fn((event: string, handler: (event?: unknown) => void) => {
-      if (event === "click") this.clickHandlers.push(handler);
-      else this.handlers[event] = handler as () => void;
-    });
-    off = vi.fn((event: string, handler: (event?: unknown) => void) => {
-      if (event === "click") this.clickHandlers = this.clickHandlers.filter((item) => item !== handler);
-    });
+    // goong-js's `on`/`off` are overloaded: a plain handler for map-wide events,
+    // or a layer id + handler for events scoped to one layer (symbol/circle click & hover).
+    layerHandlers: Record<string, Record<string, Array<(event?: unknown) => void>>> = {};
+    on = vi.fn(
+      (
+        event: string,
+        layerIdOrHandler: string | ((event?: unknown) => void),
+        layerHandler?: (event?: unknown) => void,
+      ) => {
+        if (typeof layerIdOrHandler === "function") {
+          if (event === "click") this.clickHandlers.push(layerIdOrHandler);
+          else this.handlers[event] = layerIdOrHandler as () => void;
+          return;
+        }
+        const perEvent = (this.layerHandlers[layerIdOrHandler] ??= {});
+        (perEvent[event] ??= []).push(layerHandler as (event?: unknown) => void);
+      },
+    );
+    off = vi.fn(
+      (
+        event: string,
+        layerIdOrHandler: string | ((event?: unknown) => void),
+        layerHandler?: (event?: unknown) => void,
+      ) => {
+        if (typeof layerIdOrHandler === "function") {
+          this.clickHandlers = this.clickHandlers.filter((item) => item !== layerIdOrHandler);
+          return;
+        }
+        const list = this.layerHandlers[layerIdOrHandler]?.[event];
+        if (list && layerHandler) {
+          this.layerHandlers[layerIdOrHandler][event] = list.filter((item) => item !== layerHandler);
+        }
+      },
+    );
+    fireLayerEvent(layerId: string, event: string, payload?: unknown) {
+      this.layerHandlers[layerId]?.[event]?.forEach((handler) => handler(payload));
+    }
     constructor() {
       instances.push(this);
     }
@@ -75,6 +132,15 @@ vi.mock("react-leaflet", () => ({
 
 import MapView from "./MapView";
 
+interface StationFeature {
+  properties: { stationId: string; color: string; rank: number | null; selected: boolean; hovered: boolean };
+}
+
+function stationFeatures(map: InstanceType<typeof goong.FakeMap>): StationFeature[] {
+  const source = map.getSource(STATION_SOURCE) as unknown as { data: { features: StationFeature[] } } | undefined;
+  return source?.data.features ?? [];
+}
+
 beforeEach(() => {
   vi.stubEnv("VITE_GOONG_MAPTILES_KEY", "");
   goong.instances.length = 0;
@@ -100,7 +166,7 @@ test("uses Leaflet and OSM when the Goong map key is unavailable", async () => {
   await waitFor(() => expect(onProviderChange).toHaveBeenCalledWith("osm"));
 });
 
-test("keeps the Goong map instance on hover and selection changes", async () => {
+test("keeps the Goong station layer in sync with hover and selection changes", async () => {
   vi.stubEnv("VITE_GOONG_MAPTILES_KEY", "test-key");
   const stationId = station.properties.station_id;
   // Data props keep their identity across renders, as they do in App; only callbacks are fresh.
@@ -127,25 +193,27 @@ test("keeps the Goong map instance on hover and selection changes", async () => 
   const map = goong.instances[0];
 
   act(() => map.handlers.load());
-  await waitFor(() => expect(goong.markers).toHaveLength(1));
-  const stationMarker = goong.markers[0].element;
-  expect(stationMarker.dataset.stationId).toBe(stationId);
+  await waitFor(() => expect(stationFeatures(map)).toHaveLength(1));
+  expect(stationFeatures(map)[0].properties.stationId).toBe(stationId);
+  expect(stationFeatures(map)[0].properties.selected).toBe(false);
+  expect(stationFeatures(map)[0].properties.hovered).toBe(false);
 
   rerender(view(null, stationId));
-  expect(stationMarker).toHaveClass("map-marker--hovered");
+  expect(stationFeatures(map)[0].properties.hovered).toBe(true);
   rerender(view(null, null));
-  expect(stationMarker).not.toHaveClass("map-marker--hovered");
+  expect(stationFeatures(map)[0].properties.hovered).toBe(false);
 
   rerender(view(stationId, null));
-  expect(stationMarker).toHaveClass("map-marker--selected");
+  expect(stationFeatures(map)[0].properties.selected).toBe(true);
   expect(map.flyTo).toHaveBeenCalledTimes(1);
 
+  // The GL layer is created once; later updates go through setData, not addLayer again.
+  expect(map.addLayer).toHaveBeenCalledTimes(3);
   expect(goong.instances).toHaveLength(1);
-  expect(goong.markers).toHaveLength(1);
   expect(map.remove).not.toHaveBeenCalled();
 });
 
-test("colours each Goong marker with the backend colour and falls back to grey", async () => {
+test("colours each Goong station feature with the backend colour and falls back to grey", async () => {
   vi.stubEnv("VITE_GOONG_MAPTILES_KEY", "test-key");
   const stations = [station, { ...station, properties: { ...station.properties, station_id: "ST_OTHER" } }];
   render(
@@ -158,11 +226,12 @@ test("colours each Goong marker with the backend colour and falls back to grey",
       onProviderChange={() => undefined}
     />,
   );
-  act(() => goong.instances[0].handlers.load());
-  await waitFor(() => expect(goong.markers).toHaveLength(2));
+  const map = goong.instances[0];
+  act(() => map.handlers.load());
+  await waitFor(() => expect(stationFeatures(map)).toHaveLength(2));
 
-  expect(goong.markers[0].element).toHaveClass("map-marker--yellow");
-  expect(goong.markers[1].element).toHaveClass("map-marker--grey");
+  expect(stationFeatures(map)[0].properties.color).toBe("yellow");
+  expect(stationFeatures(map)[1].properties.color).toBe("grey");
 });
 
 test("draws the route on the existing Goong map", async () => {
@@ -177,16 +246,16 @@ test("draws the route on the existing Goong map", async () => {
   const { rerender } = render(<MapView {...props} route={null} />);
   const map = goong.instances[0];
   act(() => map.handlers.load());
-  await waitFor(() => expect(goong.markers).toHaveLength(1));
-  expect(map.addSource).not.toHaveBeenCalled();
+  await waitFor(() => expect(stationFeatures(map)).toHaveLength(1));
+  expect(map.addSource).not.toHaveBeenCalledWith("journey-route", expect.anything());
 
   rerender(<MapView {...props} route={route} />);
   expect(map.addSource).toHaveBeenCalledWith("journey-route", expect.anything());
-  expect(map.addLayer).toHaveBeenCalledTimes(1);
+  expect(map.addLayer).toHaveBeenCalledWith(expect.objectContaining({ id: "journey-route-line" }));
   expect(goong.instances).toHaveLength(1);
 });
 
-test("shows origin and destination markers without rebuilding station markers when they move", async () => {
+test("shows origin and destination markers and leaves the station layer untouched when they move", async () => {
   vi.stubEnv("VITE_GOONG_MAPTILES_KEY", "test-key");
   const stations = [station];
   const colors = {};
@@ -201,16 +270,18 @@ test("shows origin and destination markers without rebuilding station markers wh
   const { rerender } = render(
     <MapView {...base} origin={{ lat: 10.7, lon: 106.7 }} destination={{ lat: 10.8, lon: 106.68 }} />,
   );
-  act(() => goong.instances[0].handlers.load());
-  await waitFor(() => expect(goong.markers).toHaveLength(3));
+  const map = goong.instances[0];
+  act(() => map.handlers.load());
+  await waitFor(() => expect(goong.markers).toHaveLength(2));
   const classes = goong.markers.map((marker) => marker.element.className);
   expect(classes).toContain("origin-marker");
   expect(classes).toContain("destination-marker");
+  const addLayerCallsBeforeMove = map.addLayer.mock.calls.length;
 
   rerender(<MapView {...base} origin={{ lat: 10.71, lon: 106.71 }} destination={{ lat: 10.8, lon: 106.68 }} />);
-  // Both endpoint markers are recreated; the station marker keeps its element.
-  expect(goong.markers).toHaveLength(5);
-  expect(goong.markers[0].remove).not.toHaveBeenCalled();
+  // Both endpoint markers are recreated; the station GL layer (a different effect) is untouched.
+  expect(goong.markers).toHaveLength(4);
+  expect(map.addLayer.mock.calls.length).toBe(addLayerCallsBeforeMove);
   expect(goong.instances).toHaveLength(1);
 });
 
@@ -250,11 +321,18 @@ test("pick mode turns map clicks into picked points and ignores station clicks",
   const { rerender } = render(<MapView {...base} pickTarget={null} />);
   const map = goong.instances[0];
   act(() => map.handlers.load());
-  await waitFor(() => expect(goong.markers).toHaveLength(1));
+  await waitFor(() => expect(stationFeatures(map)).toHaveLength(1));
   expect(map.clickHandlers).toHaveLength(0);
 
-  // Not picking: a marker click selects the station.
-  goong.markers[0].element.click();
+  const clickStation = () =>
+    act(() =>
+      map.fireLayerEvent(STATION_DOT_LAYER, "click", {
+        features: [{ properties: { stationId: station.properties.station_id } }],
+      }),
+    );
+
+  // Not picking: a station click selects the station.
+  clickStation();
   expect(onStationSelect).toHaveBeenCalledTimes(1);
 
   rerender(<MapView {...base} pickTarget="origin" />);
@@ -263,8 +341,8 @@ test("pick mode turns map clicks into picked points and ignores station clicks",
   act(() => map.clickHandlers[0]({ lngLat: { lat: 10.75, lng: 106.69 } }));
   expect(onMapPick).toHaveBeenCalledWith({ lat: 10.75, lon: 106.69 });
 
-  // Picking: the same marker click no longer selects a station.
-  goong.markers[0].element.click();
+  // Picking: the same station click no longer selects a station.
+  clickStation();
   expect(onStationSelect).toHaveBeenCalledTimes(1);
 
   rerender(<MapView {...base} pickTarget={null} />);
