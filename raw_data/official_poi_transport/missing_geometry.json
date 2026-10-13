@@ -1,0 +1,1412 @@
+[
+  {
+    "source_layer": "ICTHCM_GIAODUCTHUONGXUYEN",
+    "source_id": "32fb45cc-d500-47cf-904c-0a0a352216f0",
+    "name": "TT GDTX Thanh Niên Xung Phong",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_GIAODUCTHUONGXUYEN",
+    "source_id": "a12a08a1-332c-459e-b58a-5696172790a3",
+    "name": "TT GDTX Quận Tân Bình",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "6c474489-6973-47e6-a4af-d5a00f4686ea",
+    "name": "Cầu Tạm Mương Kinh 1",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "74bfe1b1-de33-48a5-a8bb-3eae9ded053d",
+    "name": "Cầu vượt B3",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "404dbd71-900c-4765-b81d-e6f590813216",
+    "name": "Bộ hành Bệnh Viện Nguyễn Tri Phương",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "692b51ca-6cf7-4275-bb46-247ef81ca36b",
+    "name": "Cầu đi bộ Số 9",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "d2ead7f6-da7e-43ba-b4f9-d344e1cdbd57",
+    "name": "Cầu đi bộ Số 7",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "7289ff56-6eba-440b-9d50-bdc09f2bf038",
+    "name": "Cầu đi bộ Số 6",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "00173ca4-9f25-42dd-a486-fd060c6114d3",
+    "name": "Cầu Cạn",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "97b1f0b0-fc8b-406d-9276-0cbc79732e41",
+    "name": "Cầu đi bộ số 3",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "92a97091-4fc1-4241-a099-4bcdcba8f926",
+    "name": "Cầu vượt ống cấp nước D2000 Võ Trường Toản",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "aaf4220d-8e88-4ee6-837b-1e004a441e5c",
+    "name": "Cầu Bộ hành Nơ Trang Long",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "e28841cf-749c-4463-a66b-be10d65f8419",
+    "name": "Cầu Bộ hành số 2",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "29f5fcd9-210d-4f8e-80e1-30054b018ba0",
+    "name": "Cầu đi bộ số 2",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "5bece3ef-bdc3-416c-b2e1-72d96c5ea3ef",
+    "name": "CầuVượt Bộ Hành Suối Tiên",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "003e67c6-d63f-404e-8cd4-6a4c26343521",
+    "name": "Cầu Vượt Ống Nước D2000 Tổng Kho Thủ Đức",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "e19f0118-775f-4b5a-ab2a-bbdceab2d534",
+    "name": "Cầu Vượt Ống Nước D2000 Trường Thọ",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "c60600df-0403-4b90-b343-8318e09d9148",
+    "name": "Cầu Vượt Ống Cấp Nước D2000 Truyền Tải Điện 4",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "519a3deb-c774-4658-86ac-4d7ce6125016",
+    "name": "Cầu Vượt Ống Cấp Nước D2000 Vận Tải Hà Tiên",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "795d4a79-be53-458e-a3cb-8bacdb57bca9",
+    "name": "Cầu Vượt ống cấp nước D2000 khu vực ngã tư RMK1",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "d93a502e-830d-45c8-8da9-6d3387d1c620",
+    "name": "Cầu Bộ hành Gò Dưa",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "e2f1700d-9e03-4a5e-b2a0-849bfb3292fa",
+    "name": "Cầu bộ hành số 4",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "51f6a81a-d1c1-4005-a16f-d687690c682c",
+    "name": "Cầu bộ hành số 5",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "d28ec843-2fca-4cf4-aa7b-67feea818fc0",
+    "name": "Hầm chui BT1",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "7fb9b4d3-99a5-478d-b3e0-d0408fc5fc46",
+    "name": "Hầm chui BT2",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "04f7517d-54b2-4d9d-a243-d74355f8e806",
+    "name": "Hầm chui BT3",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "e5372356-5f48-4ea1-907e-9f0b831f76de",
+    "name": "Tuynel TN1 (Km0+247)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "0993b087-5df0-4726-867c-feb5b274b82d",
+    "name": "Tuynel TN2 (Km1918+561)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "7cd3f752-db2e-46a2-acc4-2df38b74aa35",
+    "name": "Tuynel TN3 (Km1919+090)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "3c3a6607-6db8-4e68-a069-780c8f6cd4be",
+    "name": "Tuynel TN3 (Km1+080)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "553051d8-e7c6-4516-819b-85540611b848",
+    "name": "Cầu vượt ống cấp nước D2000 Quốc Hương 1",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "0ae94ce1-3523-4407-8390-0d93ec276d6e",
+    "name": "Ông Ba",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "203ed4bf-b4cd-4e24-a9b8-9778dbdb0aa4",
+    "name": "Hầm hở",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "a0d5af2f-98b5-44f6-86cf-bc98e9bcef55",
+    "name": "Cầu Vượt Văn Thánh 2A",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "4b549825-7f7c-49f7-91d4-1eae7a5bf50f",
+    "name": "Cầu Vượt Văn Thánh 2B",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "ce2da257-b472-4b57-b450-f43aee1de306",
+    "name": "Hầm chui dưới cầu vượt Văn Thánh 2 (phía cầu Thị Nghè 2)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "2182dd77-9ab6-4b27-b3fb-3333fddf6867",
+    "name": "Hầm chui dưới cầu vượt Văn Thánh 2 (phía cầu Sài Gòn)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "84d4240d-2823-497e-bb7c-12936903f3b9",
+    "name": "Cầu Bình Lợi Mới 1 (hướng từ Gò Vấp đến Thủ Đức)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "03a417b6-4ba5-493a-b387-a4988545def8",
+    "name": "Móng",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "c355a194-d2c5-47aa-b1e0-e9556e61b225",
+    "name": "Cầu bản trên đường Trường Sa",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "6633f6b8-4036-447c-bec7-411dd6667865",
+    "name": "Cầu bản trên đường Trường Sa 1",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "5e9d150d-5eca-4bf6-83da-16fab449a9a3",
+    "name": "Cầu bộ hành số 1",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "33d0cb97-fb71-46d0-bc74-0a1a364d9e1e",
+    "name": "Cầu bộ hành số 2",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "0a0e91e8-a517-4c34-9c86-dbe34655dddb",
+    "name": "Cầu Vượt Ống Nước D2000 ngã 4 Bình Thái",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "af1fa7ee-9780-4d94-b4ea-df3087fba93d",
+    "name": "Cầu Vượt ống cấp nước D2000 khu vực ngã tư RMK2",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "7b1f0abd-b200-4d19-b386-5d6e587dd780",
+    "name": "Cầu bộ hành số 1",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "9d5fa19f-929d-4138-b1e2-6a5d3dc696a1",
+    "name": "Cầu bộ hành số 2",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "bb8fc7b2-68ad-4115-91fb-c2843d656c28",
+    "name": "Cầu vượt ống cấp nước D2000 Giang Văn Minh",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "94e44ff8-5151-43a6-ae07-c030e1443e9d",
+    "name": "Cầu vượt ống cấp nước D2000 Lê Thước",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "0330a573-f9f8-4f47-81db-b65230f89d30",
+    "name": "Cầu vượt ống cấp nước D2000 Quốc Hương 2",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "d479dd11-bd85-4573-8849-8b9175b82c08",
+    "name": "Cầu vượt ống cấp nước D2000 Thảo Điền",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "f6538e70-a1db-4ba1-8825-5f8ea1a1cd87",
+    "name": "Cầu vượt ống cấp nước D2000 Thảo Điền 2",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "bd51c318-8cc8-4658-af44-9ddad752f1a1",
+    "name": "Chùa Chandaransay",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "eb48755a-b0d5-4e9f-9b97-6721340c5ee2",
+    "name": "Cầu Chính",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "bd3fb096-3708-46c4-93ea-dea89fe59883",
+    "name": "Cầu đi bộ Số 5",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "01804331-2f4c-416e-bb58-2754a4e909e3",
+    "name": "Cầu Tôn Thọ Tường",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "78cabcd2-57af-4f7d-b126-2a03b98b3d83",
+    "name": "Cầu Bình Lợi Mới 1 (hướng từ Gò Vấp đến Thủ Đức)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "15e3db1d-53b4-4a83-a10a-d1b53de035dc",
+    "name": "Cầu Bình Lợi Mới 2 (hướng từ Thủ Đức đến Gò Vấp)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "8be263b2-c507-49a9-9ca0-23efcbf1bc4e",
+    "name": "Cầu bộ hành số 3",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "d4e94196-93dd-44f7-825f-941a29f92d2a",
+    "name": "Phước Long (bỏ)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "2fc94575-51d2-427b-8b5c-1f677e58f0ff",
+    "name": "Cầu Kênh N23",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAU",
+    "source_id": "5b157b4a-11d6-4ee9-810c-75754eea153a",
+    "name": "Cầu Kênh N25-SN",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "e9539070-d669-4507-940c-c02987481551",
+    "name": "Đường dẫn vào đường cao tốc nút giao Bình Thuận Nhánh 1 (nhánh nối)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "1ae2f5f8-ae13-4a06-be7e-95b9c91c8707",
+    "name": "Đường dẫn vào đường cao tốc nút giao Bình Thuận nhánh 2",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "da1d8b1d-f896-448b-a89c-2c271cca0b3b",
+    "name": "Đường dẫn vào đường cao tốc nút giao Bình Thuận Nhánh 3",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "81b52346-bef8-4e7f-a9ec-96f84915afef",
+    "name": "Đường dẫn nút giao Võ Văn Kiệt - Quốc lộ 1,Đường gom DG3",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "59320ede-b95b-4e28-bb40-cbba8cfddcf4",
+    "name": "Điện Biên Phủ",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "899d227f-4f43-452f-9b8a-428a4f7bb2e2",
+    "name": "Bùi Đình Túy",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "0446328f-3bda-4b90-a204-43308f8fe53a",
+    "name": "Nguyễn Bình",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "e63e17a3-f0a1-49ff-bea9-36cf28487cbe",
+    "name": "Nguyễn Bình",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "de43504e-96c8-4c38-9092-cedfcdb71b2d",
+    "name": "Phạm Văn Đồng",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "82aae46f-3d0b-42c2-b4ae-10f2878a6bd6",
+    "name": "Phạm Văn Đồng",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "c90f8dd2-c4b3-4e22-aad5-2bb35bca310a",
+    "name": "Phạm Văn Đồng",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "af7b7db7-7852-4c21-a27f-1d13749488ee",
+    "name": "Đường số 14",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "00dc1f12-0384-4d30-91a2-653a83a5019a",
+    "name": "Nguyễn Tất Thành",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "9f1e45f7-7899-476c-9b1b-e0318f54acff",
+    "name": "Bến Vân Đồn",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "50a0b3e2-4ee8-4fcb-9b8e-3e3efbc6c9aa",
+    "name": "Bến Vân Đồn",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "35969ce3-63e1-4b92-9c71-095c4e3bd7c9",
+    "name": "Nguyễn Hữu Hào",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "cf1a6b74-a6e3-4290-bb3f-e0a93e9d775a",
+    "name": "Nguyễn Trường Tộ",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "ac8c9bec-fef9-4e8f-99bb-c1c33178137b",
+    "name": "Tôn Thất Thuyết",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "a3eb212f-290c-4604-ae1f-9de1810457cf",
+    "name": "Hoàng Diệu",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "02a2c8bc-0617-4d52-bd1f-5d1b09e6ad57",
+    "name": "Bến Vân Đồn",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "230dc61b-587a-4948-8b7c-fc3331540a13",
+    "name": "Bãi Sậy",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "1a336b05-a4e2-4ff2-b3ce-c7aae3f86375",
+    "name": "Hồng Bàng",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "5d2d9e68-c09a-44f5-a88a-f2fd9e5b22f7",
+    "name": "Trần Hưng Đạo",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "34a5f859-3518-40d6-93f6-a8490c9122a1",
+    "name": "Võ Văn Kiệt",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "abea5fbb-e46c-49fc-b19e-83426e354cb4",
+    "name": "Bình Tiên",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "7b1e7f19-ec31-40c6-9f55-1dc3230e6c04",
+    "name": "Hồng Bàng",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "dc4d73ed-8edc-481a-a544-fddf8eff0890",
+    "name": "Kinh Dương Vương",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "e6b1ac1a-5cef-4d63-9093-70de3f383418",
+    "name": "NÚT GIAO THÔNG KHU A NAM SÀI GòN Nhánh E",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "16529339-ef81-4813-9608-161f313b62f5",
+    "name": "Xa lộ Hà Nội",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "79598cf5-cde6-4b08-890f-f1c01285fa9b",
+    "name": "Lạc Long Quân",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "f0a05f32-66e5-4711-b2df-3e16d5263848",
+    "name": "Xô Viết Nghệ Tĩnh",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "64d67301-e9f1-42e0-9d84-61038722865f",
+    "name": "Ba Vân",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "be2cf137-04d7-4572-b093-f7c67281d240",
+    "name": "Trường Chinh",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "35aa21dd-7fd4-4bfd-8965-d16e5e43f7c8",
+    "name": "Đường dẫn nút giao Võ Văn Kiệt - Quốc lộ 1,Đường dẫn F",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "fff1b54d-000a-4c2e-bcc4-e19b798d6380",
+    "name": "Đường Liên phường Phú Hữu",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "0a32c525-ae6a-4c6c-8266-68d8095e3cfa",
+    "name": "3 Tháng 2",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "56c926d4-337c-4a28-9d6b-8830ffb265a7",
+    "name": "Trương Đình Hợi",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "0f3a400b-afdb-4641-aaa6-736888e0d7de",
+    "name": "Tôn Thất Thuyết",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "a4797579-2f3d-4a4d-b02d-7c4f18a83085",
+    "name": "Tôn Đức Thắng",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "40b307a2-bac6-4ae5-977c-276b2a3dfd19",
+    "name": "Võ Văn Kiệt",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "1e972370-3202-47d0-a09c-cc5b0fb37a33",
+    "name": "Đường C",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "1619df9f-a10b-41fe-a2bb-f3e0cae14a8a",
+    "name": "Mai Chí Thọ",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "c798aa16-74ae-4eef-8fb2-bdabf7c9c32a",
+    "name": "Đường số 2",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "ecdde4cf-7d66-4dad-9235-b62bad938474",
+    "name": "Đường số 3",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "2392b7be-1174-4391-9efa-d51793a84669",
+    "name": "Hoàng Diệu",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "4d484593-8086-4530-a38e-96286f90bdc6",
+    "name": "Nút giao thông đầu cầu Kênh Tẻ (209 Tôn Thất Thuyết)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "87e27b65-28e8-4bf1-a370-7300de30b243",
+    "name": "Lý Thường Kiệt",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "345af8c6-88f9-4e46-a717-5b54546a9b53",
+    "name": "Nguyễn Chí Thanh",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "018156a4-b95c-4e8a-9047-ae4b5a66ae36",
+    "name": "Võ Văn Kiệt",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "2dcdcc23-c498-405e-b57b-8a018546bfe1",
+    "name": "Tân Hòa Đông",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "2fb66e96-8c28-4c3e-8ab1-36a8ebc8a796",
+    "name": "Vành đai phía Đông",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "6361e534-081e-42de-99f9-3046200aec90",
+    "name": "Vành đai phía Đông",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "4e7bcf8e-4ede-41ea-94b4-685d3b7ca2a4",
+    "name": "Trường Sơn",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "1cdb6f3a-98ad-4564-ac14-fcb1f6aabf6f",
+    "name": "3 Tháng 2",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "1a58c627-7d44-4562-8076-9b3b9cfbdf6b",
+    "name": "Ông Ích Khiêm",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "34456c02-9b5a-4cd7-bf89-881f6ec9cb82",
+    "name": "Tô Hiệu",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "45ace73d-b1ab-4c5c-8f96-2c412a96660c",
+    "name": "Lê Văn Sỹ",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "f87899c0-9918-4946-a569-3255cbf38da1",
+    "name": "Lê Lợi",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "b2e41b1a-fbd1-43df-ad6f-e14c64fe2e8f",
+    "name": "Nguyễn Hữu Cảnh",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "6d576090-6e2b-4f5a-b613-40c5f83f6820",
+    "name": "Nguyễn Trãi",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "c9b413d9-aa41-4bf0-b569-835f0b4fa02e",
+    "name": "Võ Văn Kiệt",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "dfe121da-a3be-45ee-8b59-d41922210173",
+    "name": "Võ Văn Kiệt",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "71c1f542-80a7-4db1-83ea-170531ee3447",
+    "name": "Nguyễn Trường Tộ",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "cdada86f-a8ba-4341-b077-887548314ff7",
+    "name": "Hải Thượng Lãn Ông",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "0b28d89d-8f0c-4079-a33e-12e64a3b9306",
+    "name": "Hải Thượng Lãn Ông",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "9dd3dbf4-30dd-4352-8b29-b7b22e55250b",
+    "name": "Ngô Gia Tự",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "0aa141cd-a924-40d4-afcc-bdc664a19bb0",
+    "name": "Nguyễn Văn Cừ",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "5f1431e2-a927-498e-a26c-60af7f964ecc",
+    "name": "Võ Văn Kiệt",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "f974118f-1085-4960-909b-9573dc2222ac",
+    "name": "Võ Văn Kiệt",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "f4544123-c938-4776-b713-9d6d901ec114",
+    "name": "Hòa Bình",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "8ddc4ad1-e141-447e-bfb2-3e57a24d899a",
+    "name": "Lê Đại Hành",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "3c2bea23-206a-4179-9b4c-9d407fe4525b",
+    "name": "Lữ Gia",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "db612359-6bc5-48fb-835d-830ce2de5568",
+    "name": "Nguyễn Thị Nhỏ",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "9c2d4179-a674-46fc-a4ac-6f6189670dc5",
+    "name": "Đường trên cống hộp (Kênh nước đen)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "6a1b98e2-6f34-4418-b7b0-e31c000553eb",
+    "name": "Cộng Hòa",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "1d1af273-43cd-46fe-b037-165c08fe1866",
+    "name": "Hoàng Văn Thụ",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "412df3e5-2910-4965-90ba-9137078d4315",
+    "name": "Đường dẫn Tân Tạo - Chợ Đệm",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "ba0c1e7b-f533-4f30-8376-bdd82e467f22",
+    "name": "KHU DÂN CƯ TRUNG SƠN Lối đi ngược chiều trên vỉa hè Quốc lộ 1 (nút giao Bình Chánh)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "c48d197b-4b31-4db9-a730-a0be49d11c8a",
+    "name": "Đường dẫn vào đường cao tốc nút giao Bình Thuận Nhánh 1 (N.V.Linh)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "246dbbe4-bee1-4285-89a5-8a950c2639b3",
+    "name": "Đường dẫn nút giao Võ Văn Kiệt - Quốc lộ 1,Đường dẫn B",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "03d493c5-c122-4cb5-b0ac-3e634bbea55b",
+    "name": "Đường dẫn nút giao Võ Văn Kiệt - Quốc lộ 1,Đường dẫn G",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "2eafc4b3-2353-4253-b84a-8d1756edd03b",
+    "name": "Đường dẫn nút giao Võ Văn Kiệt - Quốc lộ 1,Đường dẫn E",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "93c813e3-553f-4786-9bd7-0f330d610691",
+    "name": "Đường dẫn nút giao Võ Văn Kiệt - Quốc lộ 1,Đường dẫn S",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "512ad609-3683-4baf-ac8e-c5efc4f3a970",
+    "name": "Nguyễn Văn Tạo",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "a1f98c2b-e3a9-44a3-b3e9-220747f2fe22",
+    "name": "Bến Vân Đồn",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "c837cdda-80b8-43cb-9e05-7baad1605b94",
+    "name": "Hoàng Diệu",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "843e068a-a3e7-4d48-bef4-6a6d4874fd76",
+    "name": "Đoàn Như Hài",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "0759fe0c-5869-4800-a0b9-1d8d5e3ff688",
+    "name": "Đoàn Như Hài",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "e90efaaa-002d-4c48-b971-1edcf23a44dd",
+    "name": "Đoàn Như Hài",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "22a42f85-30a1-491a-9daa-bd2f10679d6e",
+    "name": "Hoàng Diệu",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "2dc4eaa5-8f2e-451c-91ab-5b492edf5e67",
+    "name": "Đường số 26",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "4da4fb07-ea75-4dd3-9a95-63ce525782a4",
+    "name": "Bãi Sậy",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "1ba280a3-58ae-4648-8677-c2785151e42b",
+    "name": "Phan Văn Khỏe",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "7d7334fd-4b98-4357-a99a-2ee57a4a9216",
+    "name": "Phan Văn Khỏe",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "6e01daac-f4db-478e-9105-b6d83a27031a",
+    "name": "Đường dẫn vào đường cao tốc nút giao Bình Thuận Nhánh 7",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "7e4b9b75-d79b-4f6c-a4b9-9b2c7a41d818",
+    "name": "Đường dẫn vào đường cao tốc nút giao Bình Thuận Nhánh 8",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "b893d00d-0f2e-416f-9ef5-bab1cd0da79a",
+    "name": "Đường dẫn nút giao Võ Văn Kiệt - Quốc lộ 1,Đường dẫn T",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "85ad2ab3-6173-44f7-8855-f3aaae8bf038",
+    "name": "Đường dẫn nút giao Võ Văn Kiệt - Quốc lộ 1,Đường gom DG4",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "2af7f73f-46cf-4c23-a762-656ddf8ce0c5",
+    "name": "Tỉnh Lộ 43",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "e416ed89-fcc8-46fb-8a57-0ebd3a37e6c0",
+    "name": "Điện Biên Phủ",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "0b081469-23e2-4ec3-a9d9-fc6e59fe0453",
+    "name": "Lê Văn Linh",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "87f61b75-4e26-47b1-9b01-18801f548cfa",
+    "name": "Tôn Thất Thuyết",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "14944705-9e4c-49b2-972b-fa8c50b8f423",
+    "name": "Nam Kỳ Khởi Nghĩa",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "ffc4b654-933c-4427-a55c-54159069b92c",
+    "name": "Nguyễn Huệ",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "7481e81c-9b53-45f8-94a8-c62c5e0a08fc",
+    "name": "Đường Công Vụ S1",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "c1ded247-8845-42af-9c3d-28d6af5deb52",
+    "name": "Đường Công Vụ S1",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "987e62ff-7d8c-408e-9bcc-a4d87133305e",
+    "name": "Đường Công Vụ S1",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "cccf64d4-1147-4d10-83dd-ecbb601f0bb7",
+    "name": "Cách Mạng Tháng 8",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "b050b70c-6434-49b3-8c0e-49cf6ea7244e",
+    "name": "Hồng Bàng",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "b707db76-f634-452d-bc41-88932416e270",
+    "name": "Hồng Bàng",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "f54526da-c664-4d49-91cf-f29e02a67618",
+    "name": "Võ Văn Kiệt",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "a3670424-5df2-4efb-9559-ef5114386c58",
+    "name": "Minh Phụng",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "5e2d0120-779c-4947-9dcf-8d7740c3b0b5",
+    "name": "Phạm Văn Chí",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "71707f48-3500-4f93-bb36-78c9bb18a37b",
+    "name": "Võ Văn Kiệt",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "6df72ec0-8280-4125-9611-836541a3b298",
+    "name": "Võ Văn Kiệt",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "564e84a5-97fe-4707-b614-540e05f36f6b",
+    "name": "Trường Sơn",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "49583677-2992-407e-8e88-c77adf03a478",
+    "name": "Minh Phụng",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "87d961d8-1224-475e-8f47-bc56ff6a6114",
+    "name": "Nguyễn Trãi",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "b1b5edf5-5ff8-4444-b070-1ab124e95672",
+    "name": "3 Tháng 2",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "628976cb-f620-493a-bd4d-6df62af2b96d",
+    "name": "Nguyễn Hữu Thọ",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "852c40f2-98bb-4c0e-977a-2b733ba74a71",
+    "name": "Vườn Lài",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "afe62f79-4ef0-4232-8364-a0b64e740f79",
+    "name": "Bạch Đằng",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "28ec7a21-8c7d-4852-a033-bc494f95cf49",
+    "name": "Xô Viết Nghệ Tĩnh",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "713ee90b-4e4e-4229-88b6-c8f5195bce28",
+    "name": "Cao tốc TPHCM - Trung Lương",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "7b084ddf-4666-4529-a333-6b7ca8a42a85",
+    "name": "Nguyễn Hữu Thọ",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "8aca2fd6-2e18-4db7-a507-4ab5576111e2",
+    "name": "Đường số 1",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "21965ae8-0391-427d-828a-38d0e10499b2",
+    "name": "Vành đai phía Đông",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "fadc8c3c-87be-4855-b68c-2e71d64d6f1d",
+    "name": "Vành đai phía Đông",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "27097043-7332-49d2-81fb-4bb8a82bfd58",
+    "name": "Cao Xuân Dục",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "893f370e-0197-4d56-9dcd-360b4bcbb3e1",
+    "name": "Mai Chí Thọ",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "87e2cb80-edbc-4a5a-90da-c449a7fece4e",
+    "name": "Tôn Đản",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "5a7688fe-3aad-44a7-be0d-ccb4213fe0f3",
+    "name": "Đoàn Như Hài",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "c8db904e-99cc-488c-9fd2-20aba3f4172f",
+    "name": "Lê Lai",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "ae3ff2f6-4118-4827-9f84-a3ecc421a117",
+    "name": "Nguyễn Đình Chiểu",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "e994822e-730f-455c-ab89-0e2329a34485",
+    "name": "Nguyễn Hữu Cảnh",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "06a7bc6d-dbcf-4394-a4f9-a229a430e736",
+    "name": "Nguyễn Thị Minh Khai",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "1208b200-7222-4d4a-8b2a-f9ac349108e0",
+    "name": "Trương Định",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "bb0d6a5b-6e22-4aab-b484-61cccab34ef2",
+    "name": "Đường Công Vụ S3",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "e08a0cfb-6096-4ec8-827e-cfa4083f3262",
+    "name": "Xa lộ Hà Nội",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "4fb250fb-f8c1-494f-96bf-00364233e2b7",
+    "name": "Âu Cơ",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "010a1da1-a25c-4a7d-be09-649b23f3e13a",
+    "name": "Bình Thới",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "33c0e994-d80e-4104-92ec-d27d7a7a4f75",
+    "name": "Hàn Hải Nguyên",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "87086bc9-ff27-44e1-9a46-88ed08666ced",
+    "name": "Hòa Hảo",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "c7e834a2-f043-498c-b690-0f9223cd32b2",
+    "name": "Lý Thường Kiệt",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "dfda82a8-38d3-415e-962e-e87cd3f7b2a1",
+    "name": "Trường Sơn",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "19d1c253-0a11-4e7f-b6f2-63c05bb2de26",
+    "name": "Đường dẫn Tân Tạo - Chợ Đệm",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "7aa19581-b3e8-4ae9-948f-9dcd6d9aac42",
+    "name": "Đường song hành 2 bên kênh nước đen (nhánh 1)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "62c885ff-37c5-4268-9440-bc2f6e7e8e4b",
+    "name": "Đường dẫn nút giao Võ Văn Kiệt - Quốc lộ 1,Đường gom DG2",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "02a13259-1d23-4819-957b-9b0047c33d3b",
+    "name": "Phạm Văn Đồng",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "9557f313-f691-4c48-b22d-eca9e9dbb7cc",
+    "name": "Đường dẫn vào đường cao tốc nút giao Bình Thuận Nhánh 4",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "3d4260ac-cf3a-428a-b678-716fa34ebb1e",
+    "name": "Đường dẫn vào đường cao tốc nút giao Bình Thuận Nhánh 5",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "a19a043e-4ebc-40e7-a978-0a2c360a1ae2",
+    "name": "Đường dẫn vào đường cao tốc nút giao Bình Thuận Nhánh 6",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "49f1f7f6-42f0-4df6-b510-a84f9943e5c6",
+    "name": "Vòng xoay Ngã 3 Giồng",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "8393a16f-f34f-4177-86c1-2d1c36b76919",
+    "name": "Pasteur",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "7bb82e4b-01fa-40f1-9c4c-063aa901da89",
+    "name": "Đường D",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "7f15d177-a05c-4829-a34f-224a330e79eb",
+    "name": "Pasteur",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "f2f173e6-47f1-43a6-9065-6d67d0729d0a",
+    "name": "An Dương Vương",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "19ba09e7-b496-4618-84c7-3016a96ea032",
+    "name": "Châu Văn Liêm",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "6ccaf404-f5f5-4ae0-8cc3-572570a57cde",
+    "name": "Châu Văn Liêm",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "aed11e1a-0786-4395-95ef-be9f078c8093",
+    "name": "Thuận Kiều",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "a5f09b5e-f947-4d75-8d9d-33d8e6d1409c",
+    "name": "Võ Văn Kiệt",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "6425cda8-83a2-415f-ab6d-a7fb60e05f74",
+    "name": "Phạm Văn Chí",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "2733648d-1b77-4231-b30d-42910ea5b45a",
+    "name": "Xô Viết Nghệ Tĩnh",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "a407436d-4c5a-4911-ba88-5c6a4fa52e1b",
+    "name": "Trường Sa",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "7ee51af1-37fc-4ed4-83c0-8ac3f35bd400",
+    "name": "Ct. Mê Linh",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "87c2397d-a7e5-4fcb-91ae-c594ff11d72d",
+    "name": "Cách Mạng Tháng 8",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "d2402c12-1f50-443a-aa8a-4c15c135f571",
+    "name": "Hàm Nghi",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "7f0de34b-2512-4edb-af9b-3943b32d5dcb",
+    "name": "Trần Văn Giàu",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "b05cb884-fbfa-496d-9b9e-a9c1448daf37",
+    "name": "Vòng xoay Ngã 6 Gò Vấp",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "fee74616-29e6-4d2b-8723-c564df82f9de",
+    "name": "Đường song hành 2 bên kênh nước đen (nhánh 2)",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "72a9038f-10fb-4098-bd93-4124e99a65fa",
+    "name": "Kinh Dương Vương",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "80021100-5c96-48f4-a9ed-d09a25a4b832",
+    "name": "Kinh Dương Vương",
+    "reason": "missing_or_invalid_geographic_geometry"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_DUONG",
+    "source_id": "f358739f-2575-4f18-af5a-c0073799f1a4",
+    "name": "Đường gom DG1",
+    "reason": "missing_or_invalid_geographic_geometry"
+  }
+]

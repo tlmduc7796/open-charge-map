@@ -8,6 +8,14 @@ Nhánh này nghiên cứu câu hỏi đầu tư: **nên đặt trạm mới ở 
 
 Tên gọi giai đoạn demo là **xếp hạng phương án địa điểm theo các kịch bản được cấu hình**. Tài chính/chính sách là một giao diện đầu vào hạng nhất: đơn vị đầu tư hoặc cơ quan phụ trách đưa vào các ràng buộc, mục tiêu và giả định; hệ thống ghép chúng với nhu cầu, bản đồ, công suất và các phương án site để tính lại kết quả đồng bộ. Đội kỹ thuật triển khai schema, bộ tính, kiểm tra và so sánh kịch bản; đơn vị chuyên môn sở hữu giá trị/ý nghĩa của chính sách và ngưỡng ra quyết định.
 
+## Bộ dữ liệu demo ban đầu
+
+Existing sites dùng `raw_data/charging_stations/hcm_dc80kw/hcm_dc80kw_5wards.geojson` (CSV cùng tên để đối chiếu): **37 trạm mô phỏng tại 9 phường**. Tên file `5wards` được giữ dù bản trích đã mở rộng thành 9 phường. Pilot lấy hợp của 9 polygon tương ứng trong lớp địa giới 2025; POI, giao thông, dân số, demand và candidates được giới hạn theo pilot này. Ưu tiên bộ nhỏ để demo, không tự nạp toàn bộ 668 trạm.
+
+`raw_data/admin_boundaries/ref.kml` bị loại khỏi đầu vào bài toán: không dùng để dựng existing sites, bổ sung thuộc tính, sinh dữ liệu hoặc chạy ranking. Chi tiết nguồn và xử lý dữ liệu xem [Data plan](DATA_PLAN_VI.md#bộ-dữ-liệu-đã-chốt-cho-demo-ban-đầu).
+
+Snapshot hiện hành đã có tại `data_platform/station_planning/demo_hcmc_v3`; v1/v2 được lưu trong Git stash local, không được push. [P7/P8 đã chốt](P7_P8_DECISIONS_VI.md): access proxy theo tọa độ và technical constraint package có xử lý unknown. Xem [hướng dẫn dữ liệu](../../data_platform/station_planning/README.md) để nạp file, hiểu giả định và tạo lại. Đây chưa phải một run của recommendation engine.
+
 ## Phạm vi
 
 **Trong phạm vi:**
@@ -53,6 +61,9 @@ Không dùng lượt sạc hiện tại làm đại diện duy nhất cho nhu c�
 
 ## Tài liệu
 
+- [Tổng kết dữ liệu chuẩn hóa và sơ đồ luồng sử dụng](NORMALIZED_DATA_SUMMARY_VI.md)
+- [Bổ sung field/view và đối chiếu schema DATA_PLAN](DATA_PLAN_ALIGNMENT_VI.md)
+- [Quyết định P7/P8, công thức tiếp cận và ràng buộc demo](P7_P8_DECISIONS_VI.md)
 - [Kế hoạch triển khai tổng thể](IMPLEMENTATION_PLAN_VI.md)
 - [Hợp đồng API/domain và brief triển khai theo module](modules/README.md)
 - [Blueprint sản phẩm và mô hình quyết định](PROBLEM_BLUEPRINT_VI.md)

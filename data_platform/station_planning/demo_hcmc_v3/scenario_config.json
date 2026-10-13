@@ -1,0 +1,96 @@
+{
+  "scenario_id": "hcmc-technical-opportunity-demo",
+  "version": 7,
+  "owner": "student-team",
+  "effective_from": null,
+  "created_at": "2026-10-13T00:00:00+07:00",
+  "study_area": {
+    "administrative_name": "Ho Chi Minh City",
+    "boundary_version": "ADMINISTRATIVE_2025",
+    "spatial_reference": "EPSG:4326",
+    "boundary_geometry_ref": "pilot_units.geojson",
+    "pilot_extent": "named_subarea",
+    "pilot_extent_label": "Nine-ward pilot: Sai Gon, Ben Thanh, Xuan Hoa, Tan Dinh, Phu Nhuan, Binh Thanh, Tan Son Hoa, Thanh My Tay, Binh Quoi; hcm_dc80kw_5wards contains 37 simulated existing sites",
+    "included_legacy_areas": [
+      "former_ho_chi_minh_city",
+      "former_binh_duong_province",
+      "former_ba_ria_vung_tau_province"
+    ]
+  },
+  "boundary_version": "ADMINISTRATIVE_2025",
+  "pilot_extent": "pilot_extent.geojson",
+  "horizon_years": 3,
+  "data_snapshot_id": "hcmc-nine-wards-demo-v3",
+  "algorithm_version": "site-ranking-baseline-v0",
+  "technical": {
+    "coverage_minutes": 15,
+    "capacity_target": {
+      "maximum_utilization": 0.8,
+      "status": "illustrative_service_target_not_forecast"
+    },
+    "connector_mix": null,
+    "candidate_rules": "technical_constraints_package.json",
+    "access_model_ref": "access_model.json",
+    "charger_options": [
+      {
+        "charger_type": "DC",
+        "port_count": 4,
+        "power_kw_per_port": 80
+      }
+    ]
+  },
+  "policy": {
+    "enabled": false,
+    "priority_zones": [],
+    "minimum_coverage_share": null,
+    "grant_per_port": null,
+    "eligibility_rules": null
+  },
+  "finance": {
+    "budget_vnd": 10000000000,
+    "capex_per_port_vnd": 250000000,
+    "annual_opex_per_site_vnd": 210000000.0,
+    "tariff_vnd_per_kwh": null,
+    "revenue_vnd_per_kwh": 6500,
+    "discount_rate": 0.1,
+    "payback_limit_years": 7,
+    "tariff_regime_ref": "selected_electricity_tariffs.csv",
+    "assumption_range_ref": "finance_package.json"
+  },
+  "demand_profiles": {
+    "low": {
+      "scenario_id": "hcmc-technical-opportunity-demo-low",
+      "multiplier": 0.6
+    },
+    "base": {
+      "scenario_id": "hcmc-technical-opportunity-demo-base",
+      "multiplier": 1.0
+    },
+    "high": {
+      "scenario_id": "hcmc-technical-opportunity-demo-high",
+      "multiplier": 1.6
+    }
+  },
+  "source": "generation_config.json;scenario.json",
+  "quality_status": "demo_mixed_source_and_synthetic",
+  "is_synthetic": true,
+  "value_status": "provided",
+  "units": {
+    "horizon_years": "year",
+    "coverage_minutes": "minute",
+    "budget_vnd": "VND",
+    "capex_per_port_vnd": "VND/port",
+    "annual_opex_per_site_vnd": "VND/site/year",
+    "discount_rate": "fraction/year",
+    "revenue_vnd_per_kwh": "VND/kWh"
+  },
+  "notes": "Provided scenario values are illustrative, not observed market/site facts. Nullable disabled-policy inputs are not_applicable; missing physical inputs are unknown.",
+  "field_status": {
+    "effective_from": "unknown",
+    "technical.connector_mix": "unknown",
+    "policy.minimum_coverage_share": "not_applicable",
+    "policy.grant_per_port": "not_applicable",
+    "policy.eligibility_rules": "not_applicable",
+    "finance.tariff_vnd_per_kwh": "not_applicable"
+  }
+}

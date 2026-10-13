@@ -12,14 +12,26 @@ Study area của dự án là toàn TP.HCM theo địa giới hành chính hiệ
 
 Nếu dữ liệu demo không đủ phủ toàn thành phố, vẫn giữ TP.HCM là macro study area nhưng ghi `pilot_extent` riêng và chỉ báo cáo kết quả trong extent đó. Không ngoại suy kết quả pilot thành ranking/coverage cho cả TP.HCM.
 
+### Pilot mặc định đã chọn
+
+Demo ban đầu dùng **37 existing sites mô phỏng** từ `raw_data/charging_stations/hcm_dc80kw/hcm_dc80kw_5wards.geojson`, phủ **9 phường**: Sài Gòn, Bến Thành, Xuân Hòa, Tân Định, Phú Nhuận, Bình Thạnh, Tân Sơn Hòa, Thạnh Mỹ Tây và Bình Quới. Tên file `5wards` là tên giữ lại của bản trích. Pilot extent là hợp polygon của 9 phường trong lớp `hcm_planning_units_2025.geojson`; demand, POI, giao thông và candidates phải được lọc/cắt về cùng extent.
+
+Không dùng `raw_data/admin_boundaries/ref.kml` ở bất kỳ bước chuẩn bị hoặc tính toán nào. Không tự bổ sung bộ 668 trạm vào existing sites của run mặc định. Existing sites và công suất DC 80 kW là fixture mô phỏng; gap của bộ 37 trạm không được diễn giải thành thiếu hụt hạ tầng thực tế. Nếu thử ít trạm hơn, giữ danh sách IDs và snapshot riêng, chạy các baseline trên cùng tập trạm.
+
+### Nguồn từng lớp đã chốt
+
+Phần 3 lọc dân số/POI/giao thông đã thu thập về pilot. Phần 4–6 (candidates, nhu cầu và vận hành) synthetic hoàn toàn; vị trí ứng viên có thể dựa trên POI/bãi xe nguồn, nhưng bản ghi trạm đề xuất và số liệu sạc vẫn gắn synthetic. Phần 9 dùng biểu giá điện đã thu thập cùng chi phí/hệ số kinh tế giả định. P7 dùng access proxy tính từ tọa độ; P8 dùng technical demo package, giữ feasibility unknown là conditional. Xem [quyết định P7/P8](P7_P8_DECISIONS_VI.md) và [Data plan](DATA_PLAN_VI.md#lựa-chọn-nguồn-theo-10-phần-chuẩn-bị).
+
+Ưu tiên ứng viên ở POI phù hợp chưa trùng existing site của fixture hoặc khu có giao thông cao giả định. Nguồn giao thông hiện không có counts/OD theo giờ: vùng giao thông cao phải ghi là scenario hoặc proxy hạ tầng, kèm lý do, không phải traffic đo được. Không suy quyền lắp trạm, khả năng đấu nối hoặc hiệu quả đầu tư từ POI.
+
 Tạo các lớp:
 
 1. **Nhu cầu hiện tại giả lập:** cells/OD theo khung giờ và ngày thường/cuối tuần.
 2. **Nhu cầu tăng trưởng:** 3 scenario `low/base/high` cho EV share; một biến riêng cho khả năng sạc tại nhà.
 3. **Dòng du lịch/fleet:** luồng qua hành lang, điểm đến, depot và thời gian hoạt động; `autonomous` chỉ là sensitivity tùy chọn.
-4. **Cung hiện có:** trạm, số cổng, loại sạc, uptime/availability và giá; nếu là data thật thì trích nguồn/ngày; thiếu thì gắn synthetic.
-5. **Ứng viên:** nút trên road graph, bãi/parcel giả định hoặc các điểm có thể triển khai; thêm cờ grid/land/permit `feasible`, `infeasible`, `unknown`.
-6. **Policy/finance packages:** cấu hình ngân sách, grant, vùng ưu tiên, capex/opex, tariff, pricing hoặc ngưỡng payback; mọi giá trị demo gắn `illustrative_assumption` và `scenario_version`.
+4. **Cung hiện có và vận hành:** 37 trạm của fixture đã chọn; sinh synthetic uptime/availability, outage, occupancy và session/queue theo capacity khi cần. Không nhập số vận hành như observed.
+5. **Ứng viên synthetic:** vị trí có căn cứ từ POI/bãi xe/ngữ cảnh giao thông trong pilot, giữ nguồn vị trí và lý do sinh; grid/land/permit chưa xác minh là `unknown`.
+6. **Policy/finance packages:** finance dùng tariff nguồn thu thập và chi phí/pricing/hệ số minh họa, phân biệt provenance từng input. P8 technical rules đã chốt; public-policy overlay tắt và physical evidence thiếu giữ unknown, không tự coi chúng là synthetic feasibility đã được xác nhận.
 
 ## Sinh synthetic có kiểm soát
 
@@ -29,7 +41,7 @@ Không sinh từng điểm ngẫu nhiên độc lập. Sinh cấu trúc có th�
 - Gán intensity theo loại vùng/ngày/giờ; thêm seasonal/tourism multiplier như tham số scenario.
 - Sample session count từ Poisson/negative binomial với seed cố định; energy/session theo phân phối cấu hình.
 - Bắt đầu EV share, home-charging share, fleet fraction và tăng trưởng bằng config JSON có đơn vị, range, nguồn tham khảo/nhãn `illustrative_assumption`.
-- Tạo trạm hiện có và availability độc lập với cầu, để mô phỏng outage; sinh occupancy/queue theo capacity để thử tín hiệu áp lực.
+- Nạp trạm hiện có từ fixture pilot đã chọn; mô phỏng availability/outage và occupancy/queue theo capacity với giả định riêng. Không tạo thêm existing sites ngoài fixture để lấp gap.
 - Không tạo nhãn “optimal site” trực tiếp từ cùng công thức score rồi dùng nó để tuyên bố model học được optimum. Thuật toán phải tính giải pháp từ demand/candidate inputs.
 
 Ví dụ cấu hình cần ghi (giá trị demo phải chọn và công khai trong file, không chôn trong code):
@@ -37,11 +49,12 @@ Ví dụ cấu hình cần ghi (giá trị demo phải chọn và công khai tro
 ```yaml
 scenario_id: base_demo_v1
 scenario_version: 1
-data_status: synthetic
+data_status: mixed # source context/tariffs plus synthetic candidates, demand and operations
 study_area:
   name: Ho Chi Minh City
   boundary_version: post-2025-administrative-merger
-  pilot_extent: synthetic-citywide
+  pilot_extent: named_subarea
+  pilot_extent_label: hcm_dc80kw_5wards - 37 simulated sites in nine wards
 technical:
   horizon_years: 3
   coverage_threshold_minutes: 15 # team illustrative; not a universal or legal standard
@@ -72,7 +85,7 @@ Payload mẫu và contract nằm ở [JSON Schema](schemas/planning-scenario.sch
 ## Thuật toán demo
 
 1. Chuyển demand cells/OD thành điểm nhu cầu có trọng số theo scenario.
-2. Tính thời gian tiếp cận đến trạm hiện có theo road graph; gắn compatibility/access/uptime.
+2. Demo v3 dùng P7: haversine × 1,3, tốc độ giả định 25/20/12 km/h và cộng 2 phút; baseline `normal`, ngưỡng 15 phút. Gắn nhãn proxy, áp thêm opening hours/capacity/compatibility khi đánh giá cung; không gọi đây là road routing. Road graph đủ chất lượng có thể thay adapter sau.
 3. Tính unmet/underserved weight. Nếu không mô hình được censored demand thì gọi là proxy, không gọi là ground truth.
 4. Với mỗi candidate, tính marginal demand/coverage mới trừ overlap đã được phục vụ.
 5. Loại candidate infeasible; giữ unknown nhưng gắn risk/uncertainty rõ.

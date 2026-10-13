@@ -1,0 +1,214 @@
+{
+  "package_id": "hcmc-demo-technical-constraints-v1",
+  "version": 1,
+  "owner": "student-team",
+  "unknown_site_handling": "conditional_candidate",
+  "allow_conditional_screening": true,
+  "charger_option": {
+    "charger_type": "DC",
+    "port_count": 4,
+    "power_kw_per_port": 80
+  },
+  "capacity_target": {
+    "maximum_utilization": 0.8,
+    "status": "illustrative_service_target_not_forecast"
+  },
+  "portfolio_budget_vnd": 10000000000,
+  "portfolio_cost_profile": "base_cost",
+  "minimum_evidence_coverage": 0.6,
+  "score_weights": {
+    "demand_potential": 30,
+    "marginal_coverage": 25,
+    "grid_site_readiness": 20,
+    "network_segment_fit": 15,
+    "network_gap_fit": 10
+  },
+  "unknown_score_rule": "omit unknown component from numerator and denominator; report available weight / 100; never impute unknown as zero",
+  "external_feasibility_rule": "confirmed negative evidence fails; missing evidence stays unknown and candidate stays conditional",
+  "public_policy_overlay": "disabled; no invented statutory rules, equity targets, grants or permit approvals",
+  "status": "technical_demo_assumptions_not_legal_or_investment_approval",
+  "access_model_ref": "access_model.json",
+  "source": "generation_config.json#/constraints",
+  "effective_from": null,
+  "effective_to": null,
+  "formula_version": "demo-constraints-evaluation-v1",
+  "quality_status": "illustrative_technical_rules_with_unknown_physical_feasibility",
+  "units": {
+    "portfolio_budget_vnd": "VND",
+    "power_kw_per_port": "kW/port",
+    "minimum_evidence_coverage": "fraction",
+    "maximum_utilization": "fraction"
+  },
+  "rules": [
+    {
+      "rule_id": "valid_geometry",
+      "category": "technical_demo",
+      "effect": "hard_gate",
+      "value_status": "illustrative",
+      "source_ref": "generation_config.json#/constraints",
+      "value": {
+        "phase": "data_preparation"
+      },
+      "effective_date": null,
+      "notes": "Demo rule; physical feasibility fails only with confirmed source evidence."
+    },
+    {
+      "rule_id": "inside_pilot",
+      "category": "technical_demo",
+      "effect": "hard_gate",
+      "value_status": "illustrative",
+      "source_ref": "generation_config.json#/constraints",
+      "value": {
+        "phase": "data_preparation"
+      },
+      "effective_date": null,
+      "notes": "Demo rule; physical feasibility fails only with confirmed source evidence."
+    },
+    {
+      "rule_id": "new_site_fixture_spacing",
+      "category": "technical_demo",
+      "effect": "hard_gate",
+      "value_status": "illustrative",
+      "source_ref": "generation_config.json#/constraints",
+      "value": {
+        "phase": "data_preparation"
+      },
+      "effective_date": null,
+      "notes": "Demo rule; physical feasibility fails only with confirmed source evidence."
+    },
+    {
+      "rule_id": "technical_option",
+      "category": "technical_demo",
+      "effect": "hard_gate",
+      "value_status": "illustrative",
+      "source_ref": "generation_config.json#/constraints",
+      "value": {
+        "phase": "configuration"
+      },
+      "effective_date": null,
+      "notes": "Demo rule; physical feasibility fails only with confirmed source evidence."
+    },
+    {
+      "rule_id": "land_site_control",
+      "category": "technical_demo",
+      "effect": "hard_gate",
+      "value_status": "illustrative",
+      "source_ref": "generation_config.json#/constraints",
+      "value": {
+        "phase": "physical_feasibility",
+        "requires_confirmed_evidence": true
+      },
+      "effective_date": null,
+      "notes": "Demo rule; physical feasibility fails only with confirmed source evidence."
+    },
+    {
+      "rule_id": "grid_capacity",
+      "category": "technical_demo",
+      "effect": "hard_gate",
+      "value_status": "illustrative",
+      "source_ref": "generation_config.json#/constraints",
+      "value": {
+        "phase": "physical_feasibility",
+        "requires_confirmed_evidence": true
+      },
+      "effective_date": null,
+      "notes": "Demo rule; physical feasibility fails only with confirmed source evidence."
+    },
+    {
+      "rule_id": "permit_safety",
+      "category": "technical_demo",
+      "effect": "hard_gate",
+      "value_status": "illustrative",
+      "source_ref": "generation_config.json#/constraints",
+      "value": {
+        "phase": "physical_feasibility",
+        "requires_confirmed_evidence": true
+      },
+      "effective_date": null,
+      "notes": "Demo rule; physical feasibility fails only with confirmed source evidence."
+    },
+    {
+      "rule_id": "physical_road_access",
+      "category": "technical_demo",
+      "effect": "hard_gate",
+      "value_status": "illustrative",
+      "source_ref": "generation_config.json#/constraints",
+      "value": {
+        "phase": "physical_feasibility",
+        "requires_confirmed_evidence": true
+      },
+      "effective_date": null,
+      "notes": "Demo rule; physical feasibility fails only with confirmed source evidence."
+    },
+    {
+      "rule_id": "connector_compatibility",
+      "category": "technical_demo",
+      "effect": "hard_gate",
+      "value_status": "illustrative",
+      "source_ref": "generation_config.json#/constraints",
+      "value": {
+        "phase": "physical_feasibility",
+        "requires_confirmed_evidence": true
+      },
+      "effective_date": null,
+      "notes": "Demo rule; physical feasibility fails only with confirmed source evidence."
+    },
+    {
+      "rule_id": "individual_budget",
+      "category": "technical_demo",
+      "effect": "hard_gate",
+      "value_status": "illustrative",
+      "source_ref": "generation_config.json#/constraints",
+      "value": {
+        "phase": "scenario_screening"
+      },
+      "effective_date": null,
+      "notes": "Demo rule; physical feasibility fails only with confirmed source evidence."
+    },
+    {
+      "rule_id": "portfolio_budget",
+      "category": "technical_demo",
+      "effect": "hard_gate",
+      "value_status": "illustrative",
+      "source_ref": "generation_config.json#/constraints",
+      "value": {
+        "phase": "portfolio_selection",
+        "threshold": 10000000000,
+        "unit": "VND",
+        "cost_profile": "base_cost"
+      },
+      "effective_date": null,
+      "notes": "Demo rule; physical feasibility fails only with confirmed source evidence."
+    },
+    {
+      "rule_id": "evidence_coverage",
+      "category": "technical_demo",
+      "effect": "hard_gate",
+      "value_status": "illustrative",
+      "source_ref": "generation_config.json#/constraints",
+      "value": {
+        "phase": "ranking",
+        "threshold": 0.6,
+        "unit": "fraction"
+      },
+      "effective_date": null,
+      "notes": "Demo rule; physical feasibility fails only with confirmed source evidence."
+    }
+  ],
+  "unverified_inputs": [
+    "land/site control",
+    "grid connection/capacity",
+    "permit/safety",
+    "physical road access",
+    "physical connector compatibility",
+    "population reference date",
+    "legal boundary effective date"
+  ],
+  "limitations": [
+    "Chốt cách xử lý unknown không xác nhận đất/điện/cấp phép là khả thi.",
+    "Ma trận P7 là proxy scenario; cần áp capacity, opening hours và compatibility riêng.",
+    "Individual budget pass không chứng minh toàn bộ portfolio nằm trong budget.",
+    "Utilization target là giả định sizing; chưa chạy sizing/ranking/portfolio engine.",
+    "Không coi tỷ trọng tiêu chí có dữ liệu là xác suất thành công hoặc độ tin cậy thực tế."
+  ]
+}

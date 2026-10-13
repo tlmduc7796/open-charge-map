@@ -1,0 +1,680 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:station-planning:data-plan:1.0",
+  "title": "DATA_PLAN canonical prepared dataset rows",
+  "description": "Required fields are present even when the source value is unknown. Additional diagnostic/legacy columns are retained. power_kw is total synthetic site nameplate capacity; connector and local-fixture source URL may be null. No run results are required before the recommendation engine runs.",
+  "type": "object",
+  "x-tables": {
+    "existing_sites.csv": "existing_site",
+    "candidate_sites.csv": "candidate_site",
+    "demand_observations.csv": "demand_observation",
+    "demand_cells.csv": "demand_cell"
+  },
+  "x-json-files": {
+    "boundary_metadata.json": "boundary_metadata",
+    "scenario_config.json": "scenario_config",
+    "finance_package.json": "finance_package"
+  },
+  "$defs": {
+    "existing_site": {
+      "type": "object",
+      "required": [
+        "site_id",
+        "lat",
+        "lon",
+        "site_type",
+        "connector_type",
+        "port_count",
+        "power_kw",
+        "access_type",
+        "opening_hours",
+        "price_vnd_per_kwh",
+        "uptime_ratio",
+        "valid_from",
+        "valid_to",
+        "source_type",
+        "source_url",
+        "quality_status"
+      ],
+      "properties": {
+        "site_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lat": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "lon": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "site_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "connector_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "port_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "power_kw": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "power_kw_per_port": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "power_kw_scope": {
+          "const": "site"
+        },
+        "access_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "opening_hours": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "price_vnd_per_kwh": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "uptime_ratio": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "valid_from": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "valid_to": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "source_type": {
+          "enum": [
+            "observed",
+            "proxy",
+            "synthetic",
+            "scenario",
+            "unknown"
+          ]
+        },
+        "source_url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
+        },
+        "quality_status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "is_synthetic": {
+          "type": "boolean"
+        }
+      }
+    },
+    "candidate_site": {
+      "type": "object",
+      "required": [
+        "candidate_id",
+        "lat",
+        "lon",
+        "candidate_type",
+        "access_feasible",
+        "land_cost_vnd",
+        "grid_capacity_kw",
+        "interconnection_cost_vnd",
+        "permit_status",
+        "source_type",
+        "quality_status"
+      ],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lat": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "lon": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "candidate_type": {
+          "enum": [
+            "parcel",
+            "grid_cell",
+            "corridor_node",
+            "existing_site_upgrade"
+          ]
+        },
+        "access_feasible": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "land_cost_vnd": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "grid_capacity_kw": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "interconnection_cost_vnd": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "permit_status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_type": {
+          "enum": [
+            "observed",
+            "proxy",
+            "synthetic",
+            "scenario",
+            "unknown"
+          ]
+        },
+        "source_url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
+        },
+        "quality_status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "is_synthetic": {
+          "type": "boolean"
+        }
+      }
+    },
+    "demand_observation": {
+      "type": "object",
+      "required": [
+        "observation_id",
+        "site_id",
+        "interval_start",
+        "interval_minutes",
+        "session_count",
+        "energy_kwh",
+        "peak_ports_busy",
+        "available_ports",
+        "wait_p50_min",
+        "wait_p90_min",
+        "abandon_count",
+        "demand_class",
+        "source_type",
+        "is_synthetic",
+        "quality_status"
+      ],
+      "properties": {
+        "observation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "site_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "interval_start": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "interval_minutes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "session_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "energy_kwh": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "peak_ports_busy": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "available_ports": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "wait_p50_min": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "wait_p90_min": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "abandon_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "demand_class": {
+          "enum": [
+            "observed",
+            "proxy",
+            "synthetic"
+          ]
+        },
+        "source_type": {
+          "enum": [
+            "observed",
+            "proxy",
+            "synthetic",
+            "scenario",
+            "unknown"
+          ]
+        },
+        "is_synthetic": {
+          "type": "boolean"
+        },
+        "quality_status": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "demand_cell": {
+      "type": "object",
+      "required": [
+        "cell_id",
+        "period",
+        "spatial_resolution",
+        "population_or_flow",
+        "ev_share_scenario",
+        "home_charging_share",
+        "poi_mix",
+        "estimated_sessions",
+        "estimated_kwh",
+        "source_type",
+        "scenario_id",
+        "is_synthetic"
+      ],
+      "properties": {
+        "cell_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "period": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "spatial_resolution": {
+          "const": "administrative_ward_ADMINISTRATIVE_2025"
+        },
+        "population_or_flow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ev_share_scenario": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "home_charging_share": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "poi_mix": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "estimated_sessions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "estimated_kwh": {
+          "type": "number",
+          "minimum": 0
+        },
+        "source_type": {
+          "enum": [
+            "observed",
+            "proxy",
+            "synthetic",
+            "scenario",
+            "unknown"
+          ]
+        },
+        "scenario_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "is_synthetic": {
+          "type": "boolean"
+        }
+      }
+    },
+    "boundary_metadata": {
+      "type": "object",
+      "required": [
+        "boundary_id",
+        "boundary_version",
+        "valid_from",
+        "source_url",
+        "crosswalk_ref",
+        "crosswalk_status"
+      ],
+      "properties": {
+        "boundary_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "boundary_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "valid_from": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "valid_to": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "source_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "crosswalk_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "crosswalk_status": {
+          "enum": [
+            "provided",
+            "unknown",
+            "not_applicable"
+          ]
+        }
+      }
+    },
+    "scenario_config": {
+      "type": "object",
+      "required": [
+        "scenario_id",
+        "version",
+        "owner",
+        "effective_from",
+        "created_at",
+        "study_area",
+        "boundary_version",
+        "pilot_extent",
+        "horizon_years",
+        "data_snapshot_id",
+        "algorithm_version",
+        "technical",
+        "policy",
+        "finance",
+        "source",
+        "units",
+        "value_status",
+        "quality_status",
+        "is_synthetic"
+      ],
+      "properties": {
+        "scenario_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "owner": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "effective_from": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "horizon_years": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "data_snapshot_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "technical": {
+          "type": "object",
+          "required": [
+            "coverage_minutes",
+            "capacity_target",
+            "connector_mix",
+            "candidate_rules"
+          ]
+        },
+        "policy": {
+          "type": "object",
+          "required": [
+            "priority_zones",
+            "minimum_coverage_share",
+            "grant_per_port",
+            "eligibility_rules"
+          ]
+        },
+        "finance": {
+          "type": "object"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "units": {
+          "type": "object"
+        },
+        "value_status": {
+          "enum": [
+            "provided",
+            "estimated",
+            "unknown",
+            "not_applicable"
+          ]
+        },
+        "is_synthetic": {
+          "type": "boolean"
+        }
+      }
+    },
+    "finance_package": {
+      "type": "object",
+      "required": [
+        "package_id",
+        "version",
+        "owner",
+        "source",
+        "effective_from",
+        "effective_to",
+        "units",
+        "rules",
+        "formula_version",
+        "quality_status"
+      ],
+      "properties": {
+        "package_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effective_from": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "effective_to": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "units": {
+          "type": "object"
+        },
+        "rules": {
+          "type": "array"
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "value",
+              "unit",
+              "value_status",
+              "source_type",
+              "source_ref",
+              "is_synthetic"
+            ],
+            "properties": {
+              "value_status": {
+                "enum": [
+                  "provided",
+                  "estimated",
+                  "unknown",
+                  "not_applicable"
+                ]
+              },
+              "source_type": {
+                "enum": [
+                  "observed",
+                  "proxy",
+                  "synthetic",
+                  "scenario",
+                  "unknown"
+                ]
+              },
+              "is_synthetic": {
+                "type": "boolean"
+              },
+              "unit": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source_ref": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

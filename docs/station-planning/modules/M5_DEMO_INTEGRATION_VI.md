@@ -11,7 +11,7 @@ Tạo kịch bản demo nhỏ, tái lập ở một pilot extent TP.HCM; kết n
 ## Task nhỏ
 
 1. **Demo narrative:** chọn một câu hỏi cụ thể (ví dụ so sánh candidate ở vùng dân cư, hành lang liên tỉnh hoặc điểm đến du lịch) và pilot scope có geometry/nguồn.
-2. **Seed scenario:** tạo 2–5 candidate, catalog trạm lân cận, demand cells/proxy và một thiếu dữ liệu có chủ đích như grid capacity. Tất cả synthetic phải gắn nhãn.
+2. **Seed scenario:** existing sites dùng fixture `hcm_dc80kw_5wards` (37 trạm/9 phường), không đọc `ref.kml` hoặc ghép bộ 668 trạm. Phần 3 lọc dữ liệu bối cảnh trong pilot; phần 4–6 tạo synthetic candidates, demand và vận hành. Bắt đầu 2–5 candidate để trình diễn từ pool 18 ứng viên, giữ grid/permit unknown. Finance ghép biểu giá đã thu thập với chi phí giả định. Nạp P7 access matrix và P8 technical constraints của snapshot v3 theo `../P7_P8_DECISIONS_VI.md`. Giữ provenance từng input; traffic/time/session proxy không phải observed.
 3. **End-to-end:** chạy scenario qua API và UI; xác minh cùng candidate IDs, versions, units, ranks, reason codes và warnings.
 4. **Sensitivity:** đổi một đầu vào (coverage target, weight profile hoặc scenario demand) và thể hiện output thay đổi; không gán probability cho low/base/high.
 5. **Acceptance checklist:** kiểm tra pass/fail/conditional/unknown; missing finance; no feasible candidates; candidate ranking comparison; partial pilot label; provenance; driver flow.

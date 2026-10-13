@@ -1,0 +1,187 @@
+{
+  "snapshot_id": "hcmc-nine-wards-demo-v3",
+  "generator_version": "1.2",
+  "scenario_version": 7,
+  "dataset_contract_version": "1.0",
+  "prepared_on": "2026-10-13",
+  "seed": 20261013,
+  "output_directory": "data_platform/station_planning/demo_hcmc_v3",
+  "sources": {
+    "boundaries": "raw_data/admin_boundaries/hcm_planning_units_2025.geojson",
+    "ward_selection": "raw_data/charging_stations/hcm_dc80kw/five_wards_report.json",
+    "existing_sites": "raw_data/charging_stations/hcm_dc80kw/hcm_dc80kw_5wards.geojson",
+    "poi": "raw_data/official_poi_transport/hcm_poi_official.geojson",
+    "transport": "raw_data/official_poi_transport/hcm_transport_official.geojson",
+    "population_manifest": "raw_data/admin_boundaries/planning_manifest.json",
+    "context_manifest": "raw_data/official_poi_transport/collection_manifest.json",
+    "tariffs": "raw_data/electricity_tariffs/evnspc_business_electricity_tariffs.csv"
+  },
+  "excluded_sources": [
+    "raw_data/admin_boundaries/ref.kml"
+  ],
+  "calendar": {
+    "start": "2025-07-07T00:00:00+07:00",
+    "days": 7,
+    "interval_minutes": 30,
+    "timezone": "Asia/Ho_Chi_Minh",
+    "status": "synthetic_calendar_historical_tariff_reference_not_replay"
+  },
+  "context": {
+    "possible_duplicate_rule": "retain_source_records; downweight flagged group members to a total modeling weight of one",
+    "source_url": "https://bando.tphcm.gov.vn/"
+  },
+  "candidates": {
+    "per_ward": 2,
+    "minimum_existing_distance_m": 150,
+    "minimum_candidate_spacing_m": 250,
+    "transport_context_radius_m": 500,
+    "high_traffic_proxy_threshold_points": 20,
+    "eligible_categories": [
+      "Bãi xe",
+      "Trung tâm thương mại",
+      "Siêu thị",
+      "Khách sạn",
+      "Khu du lịch",
+      "Bến xe, trạm dừng"
+    ],
+    "status": "synthetic_poi_grounded_not_confirmed_buildable",
+    "traffic_status": "scenario_from_infrastructure_proxy_not_measured_flow"
+  },
+  "demand": {
+    "nodes_per_ward": 3,
+    "vehicles_per_person": 0.08,
+    "ev_share": 0.12,
+    "home_charging_share": 0.35,
+    "sessions_per_ev_per_day": 0.25,
+    "poi_allocation_weight": 0.4,
+    "energy_per_session_mean_kwh": 26,
+    "energy_per_session_std_kwh": 6,
+    "energy_per_session_min_kwh": 8,
+    "energy_per_session_max_kwh": 38,
+    "weekend_multiplier": 1.15,
+    "hour_weights": [
+      0.2,
+      0.15,
+      0.12,
+      0.1,
+      0.12,
+      0.3,
+      0.7,
+      1.5,
+      1.8,
+      1.5,
+      1.2,
+      1.3,
+      1.6,
+      1.2,
+      1.0,
+      1.2,
+      1.5,
+      2.0,
+      2.2,
+      1.8,
+      1.3,
+      0.9,
+      0.5,
+      0.3
+    ],
+    "profiles": {
+      "low": 0.6,
+      "base": 1.0,
+      "high": 1.6
+    },
+    "status": "fully_synthetic_illustrative_not_calibrated"
+  },
+  "operations": {
+    "outage_probability_per_interval": 0.03,
+    "partial_port_outage_probability": 0.04,
+    "maximum_wait_minutes": 60,
+    "power_kw_per_port_assumption": 80,
+    "grid_delivery_efficiency": 0.93,
+    "assignment": "synthetic_ward_port_weighted; not travel routing or revealed driver choice",
+    "charging_model": "constant_power; one request per port per 30-minute slot; all served requests complete inside that slot",
+    "status": "fully_synthetic"
+  },
+  "finance": {
+    "schedule_id": "tt16_reference_2025",
+    "voltage_band_id": "lt_6kv",
+    "voltage_selection_status": "illustrative_assumption_not_observed_connection_voltage",
+    "budget_vnd": 10000000000,
+    "reference_new_site_ports": 4,
+    "capex_per_port_vnd": 250000000,
+    "site_setup_vnd": 100000000,
+    "interconnection_vnd": 80000000,
+    "annual_lease_vnd": 120000000,
+    "annual_fixed_opex_vnd": 60000000,
+    "maintenance_fraction_of_charger_capex": 0.03,
+    "revenue_vnd_per_kwh_ex_vat": 6500,
+    "discount_rate": 0.1,
+    "payback_limit_years": 7,
+    "cost_sensitivity_factors": {
+      "low_cost": 0.8,
+      "base_cost": 1.0,
+      "high_cost": 1.25
+    },
+    "formula_version": "demo-cash-inputs-and-electricity-cost-v1",
+    "assumption_status": "illustrative_only_not_market_estimates",
+    "annualization": "not_performed; one synthetic week is not an annual revenue forecast"
+  },
+  "access": {
+    "version": "geodesic-circuity-speed-v1",
+    "method": "great_circle_distance_times_circuity_divided_by_assumed_speed",
+    "circuity_factor": 1.3,
+    "fixed_access_minutes": 2,
+    "target_access_minutes": 15,
+    "baseline_profile": "normal",
+    "speed_kmh_by_profile": {
+      "fast": 25,
+      "normal": 20,
+      "slow": 12
+    },
+    "geometry_validation_tolerance_degrees": 1e-09,
+    "scope": "all pilot demand nodes to all selected existing sites and candidates, including cross-ward pairs",
+    "capacity_and_hours": "apply downstream using operations/opening_hours; not encoded into geometric reachability",
+    "compatibility": "generic DC service scenario; physical connector compatibility remains unknown",
+    "status": "illustrative_proxy_not_road_routing_or_observed_travel_time"
+  },
+  "constraints": {
+    "package_id": "hcmc-demo-technical-constraints-v1",
+    "version": 1,
+    "owner": "student-team",
+    "unknown_site_handling": "conditional_candidate",
+    "allow_conditional_screening": true,
+    "charger_option": {
+      "charger_type": "DC",
+      "port_count": 4,
+      "power_kw_per_port": 80
+    },
+    "capacity_target": {
+      "maximum_utilization": 0.8,
+      "status": "illustrative_service_target_not_forecast"
+    },
+    "portfolio_budget_vnd": 10000000000,
+    "portfolio_cost_profile": "base_cost",
+    "minimum_evidence_coverage": 0.6,
+    "score_weights": {
+      "demand_potential": 30,
+      "marginal_coverage": 25,
+      "grid_site_readiness": 20,
+      "network_segment_fit": 15,
+      "network_gap_fit": 10
+    },
+    "unknown_score_rule": "omit unknown component from numerator and denominator; report available weight / 100; never impute unknown as zero",
+    "external_feasibility_rule": "confirmed negative evidence fails; missing evidence stays unknown and candidate stays conditional",
+    "public_policy_overlay": "disabled; no invented statutory rules, equity targets, grants or permit approvals",
+    "status": "technical_demo_assumptions_not_legal_or_investment_approval"
+  },
+  "pending_parts": {},
+  "unknown_inputs": [
+    "land/site control",
+    "grid connection/capacity",
+    "permit/safety",
+    "physical road access",
+    "physical connector compatibility",
+    "population reference date",
+    "legal boundary effective date"
+  ]
+}

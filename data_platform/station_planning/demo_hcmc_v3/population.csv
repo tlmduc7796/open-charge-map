@@ -1,0 +1,10 @@
+﻿unit_id,unit_name,unit_type,population,population_reference_date,population_status,source_type,is_synthetic,source_ref,source_url
+hcm_2025_26737,Phường Tân Định,ward,48524,,source_reported_date_unknown,observed,False,raw_data/admin_boundaries/hcm_planning_units_2025.geojson,https://bando.tphcm.gov.vn/
+hcm_2025_26740,Phường Sài Gòn,ward,47022,,source_reported_date_unknown,observed,False,raw_data/admin_boundaries/hcm_planning_units_2025.geojson,https://bando.tphcm.gov.vn/
+hcm_2025_26743,Phường Bến Thành,ward,71875,,source_reported_date_unknown,observed,False,raw_data/admin_boundaries/hcm_planning_units_2025.geojson,https://bando.tphcm.gov.vn/
+hcm_2025_26911,Phường Bình Quới,ward,46200,,source_reported_date_unknown,observed,False,raw_data/admin_boundaries/hcm_planning_units_2025.geojson,https://bando.tphcm.gov.vn/
+hcm_2025_26929,Phường Bình Thạnh,ward,126300,,source_reported_date_unknown,observed,False,raw_data/admin_boundaries/hcm_planning_units_2025.geojson,https://bando.tphcm.gov.vn/
+hcm_2025_26956,Phường Thạnh Mỹ Tây,ward,153216,,source_reported_date_unknown,observed,False,raw_data/admin_boundaries/hcm_planning_units_2025.geojson,https://bando.tphcm.gov.vn/
+hcm_2025_26977,Phường Tân Sơn Hòa,ward,64150,,source_reported_date_unknown,observed,False,raw_data/admin_boundaries/hcm_planning_units_2025.geojson,https://bando.tphcm.gov.vn/
+hcm_2025_27073,Phường Phú Nhuận,ward,68420,,source_reported_date_unknown,observed,False,raw_data/admin_boundaries/hcm_planning_units_2025.geojson,https://bando.tphcm.gov.vn/
+hcm_2025_27139,Phường Xuân Hòa,ward,48446,,source_reported_date_unknown,observed,False,raw_data/admin_boundaries/hcm_planning_units_2025.geojson,https://bando.tphcm.gov.vn/

@@ -8,6 +8,12 @@ Bạn phụ trách nhánh M2B (site recommendation/optimization) trong M2. Đọ
 
 Với candidate set và cùng một scenario, xác định eligibility, tính các thành phần kỹ thuật, sắp xếp candidate và trả lý do. Kết quả là screening/ranking có giới hạn dữ liệu, không phải dự báo chắc chắn nhu cầu hay đầu tư tối ưu.
 
+## Input P7/P8 đã chốt
+
+Snapshot `data_platform/station_planning/demo_hcmc_v3` có `access_matrix.csv`, `access_model.json`, `technical_constraints_package.json`, `candidate_constraints.csv` và `candidate_eligibility.csv`. Đọc [quyết định P7/P8](../P7_P8_DECISIONS_VI.md). Baseline access profile `normal` là proxy 20 km/h, circuity 1,3, cộng 2 phút và ngưỡng 15 phút. Access profiles không được tự ghép với demand low/base/high. Ma trận có cả cặp khác phường.
+
+P8 dùng 4 DC × 80 kW, budget 10 tỷ VND theo `base_cost`, utilization target 0,8 và minimum evidence coverage 0,6. Weights 30/25/20/15/10; bỏ metric unknown khỏi tử/mẫu nhưng báo trọng số thiếu. Giữ physical feasibility unknown là conditional; không gán readiness cao từ chi phí synthetic. Kiểm tra budget tổng và marginal coverage sau từng site khi chọn portfolio. Các helper chuẩn bị dữ liệu chỉ xuất constraints/eligibility, chưa thực hiện ranking/sizing/portfolio engine.
+
 ## Task nhỏ
 
 1. **Domain types:** ánh xạ candidate, site inventory, demand evidence, scenario, constraint result, metric, provenance và recommendation response theo shared contract.

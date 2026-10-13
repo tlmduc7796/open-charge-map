@@ -1,0 +1,4 @@
+﻿scenario_profile,period_days,delivered_energy_kwh,electricity_cost_vnd_ex_vat,illustrative_revenue_vnd_ex_vat,revenue_minus_electricity_vnd,metric_status,npv,payback_years
+low,7,116281.293536,470669130.53,755828407.98,285159277.45,scenario_before_other_costs_not_profit,,
+base,7,194787.679396,786548613.39,1266119916.07,479571302.68,scenario_before_other_costs_not_profit,,
+high,7,315784.72337,1282400452.39,2052600701.91,770200249.52,scenario_before_other_costs_not_profit,,

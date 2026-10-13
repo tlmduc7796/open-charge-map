@@ -8,6 +8,17 @@ Bạn phụ trách module M1 cho tính năng station planning trong ứng dụng
 
 Tạo tập dữ liệu không gian có thể giải thích và kiểm tra: địa giới/pilot extent, catalog trạm hiện có, candidate sites, demand cells/proxies và nguồn của từng dữ liệu. Module này cung cấp dữ liệu/adapter để domain engine truy cập; không tự quyết định site nào tốt.
 
+## Dữ liệu và phạm vi demo đã chốt
+
+- Existing sites chỉ lấy từ `raw_data/charging_stations/hcm_dc80kw/hcm_dc80kw_5wards.geojson` (37 trạm mô phỏng tại 9 phường; CSV cùng tên để đối chiếu). Chọn một định dạng ingest, giữ ID EVC và gắn synthetic; không tự ghép toàn bộ 668 trạm.
+- Không sử dụng `raw_data/admin_boundaries/ref.kml` để ingest, enrich, tái sinh fixture hoặc xây feature cho bài toán.
+- Pilot extent là hợp 9 polygon tương ứng trong `raw_data/admin_boundaries/hcm_planning_units_2025.geojson`; danh sách phường và ID có trong `five_wards_report.json` của bộ trạm. Demand/candidates/POI/giao thông phải cùng extent; dân số lấy đúng 9 phường.
+- Connector, uptime, giá bán sạc, grid/land/permit chưa có bằng chứng phải để unknown hoặc ghi giả định scenario riêng. Không trình bày bộ trạm/capacity mô phỏng như inventory thực.
+- Nếu giảm thêm số trạm để demo, lưu selection IDs/rule/version trong snapshot riêng; chỉ tính coverage của fixture được chọn. Mở rộng dữ liệu là scenario riêng.
+- Phần 3 lọc dân số/POI/giao thông đã thu thập về pilot, giữ provenance và xử lý trùng. Phần 4–6 synthetic hoàn toàn: candidate dựa trên POI phù hợp và vùng giao thông cao giả định; demand và vận hành có seed, cấu trúc giờ/ngày và capacity checks. Không nhập occupancy/wait từ nguồn khác như observed vào demo mặc định.
+- Vị trí candidate có thể tham chiếu POI nguồn nhưng bản ghi candidate là synthetic; “POI chưa có trạm” được kiểm tra với fixture 37 site. Chưa có lưu lượng xe đo được, nên mọi traffic intensity dùng cho sinh candidate/demand phải có nhãn scenario hoặc proxy hạ tầng.
+- Phần 9 ghép biểu giá điện nguồn thu thập với chi phí/hệ số giả định; metadata phải tách hai loại input. P7/P8 đã chốt tại `../P7_P8_DECISIONS_VI.md`: ma trận haversine/circuity/speed proxy và technical constraints có provenance/unknown handling. Snapshot hiện hành là `demo_hcmc_v3`; không tự thay công thức/giá trị đã chốt.
+
 ## Phạm vi và task nhỏ
 
 1. **Khảo sát baseline:** kiểm tra bảng/trường station, connector/port, status, occupancy, spatial index, repository, schema loader và quy tắc seed trên `fix/ui` hiện tại. Ghi file/field thật; không dựa duy nhất vào `ideas.md` snapshot.

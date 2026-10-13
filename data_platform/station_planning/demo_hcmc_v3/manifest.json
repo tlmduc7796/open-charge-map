@@ -1,0 +1,219 @@
+{
+  "snapshot_id": "hcmc-nine-wards-demo-v3",
+  "prepared_on": "2026-10-13",
+  "generator_version": "1.2",
+  "generator": "scripts/prepare_station_planning_demo.py",
+  "generator_sha256": "28e1e70dab546798fd843d02effa4d608524d18b508fb218ba96f31bf814645b",
+  "rules_module_sha256": "115b75149ab32af882b0277b6702391ac76d4fa879ede5f42a0ea075747cd7c5",
+  "data_plan_module_sha256": "143b396c4e7e4120c63bf44f7103cdc5c0b03bbe0d2db9cf07b736a139bee280",
+  "dataset_contract_version": "1.0",
+  "configuration_source": {
+    "path": "config\\station_planning_demo.json",
+    "sha256": "a1b91844b0dd2394b85afac4509f015e74b7e69cd59abecff452f45446f9c892"
+  },
+  "scenario_template": {
+    "path": "docs/station-planning/examples/hcmc-scenario-base.json",
+    "sha256": "e007e1a813513137a0d4bad4bd0cb1038e93222903d65495ac345d0733eaaa28"
+  },
+  "seed": 20261013,
+  "dependencies": {
+    "numpy": "2.3.5",
+    "shapely": "2.1.2",
+    "jsonschema": "4.25.1"
+  },
+  "source_files": {
+    "boundaries": {
+      "path": "raw_data/admin_boundaries/hcm_planning_units_2025.geojson",
+      "sha256": "f7560fd2e53c1865445d7812e0bb7d13ab456d51fe9bf2d7863f1d7bebad75f1"
+    },
+    "ward_selection": {
+      "path": "raw_data/charging_stations/hcm_dc80kw/five_wards_report.json",
+      "sha256": "3ab1cbc476ad60f1b609a019453ab8b1c97cb7cf29fa1e5e6da543960012daab"
+    },
+    "existing_sites": {
+      "path": "raw_data/charging_stations/hcm_dc80kw/hcm_dc80kw_5wards.geojson",
+      "sha256": "d4e95c493b4b5f8fc6e614441a453a175fa2e4718e3e5ccbd02a4fa3db3b350f"
+    },
+    "poi": {
+      "path": "raw_data/official_poi_transport/hcm_poi_official.geojson",
+      "sha256": "2b3422a4815b51db59b7e6235ed4f7cd524c805a829f5eba353da64adf07415f"
+    },
+    "transport": {
+      "path": "raw_data/official_poi_transport/hcm_transport_official.geojson",
+      "sha256": "e80882e11ec8ae4ee198f56fd33dcf84aa492c96a9839ad0069222d8e1e9a5d1"
+    },
+    "population_manifest": {
+      "path": "raw_data/admin_boundaries/planning_manifest.json",
+      "sha256": "007a87a5e72bcbfd5e87b976937c23e582fef614765ff500769f7f396faf737d"
+    },
+    "context_manifest": {
+      "path": "raw_data/official_poi_transport/collection_manifest.json",
+      "sha256": "87c43e18e795cba9825bddcd42891c3ea87fb37a79fb8f818c336674d214e3e1"
+    },
+    "tariffs": {
+      "path": "raw_data/electricity_tariffs/evnspc_business_electricity_tariffs.csv",
+      "sha256": "75b10373f2a33ce049a94d4d0f34e52bfcaf2d64002230dc42551dc860947eb3"
+    }
+  },
+  "excluded_sources": [
+    "raw_data/admin_boundaries/ref.kml"
+  ],
+  "pending_parts": {},
+  "source_geometry_handling": "pilot union; point inclusion; transport line intersection with pilot; no invented source coordinates",
+  "geometry_validation_tolerance_degrees": 1e-09,
+  "files": {
+    "access_matrix.csv": {
+      "bytes": 934567,
+      "sha256": "f9cd881ad0b63ab6d8b020441234cde7953090ce13776d0b8269d28ce7f529a3"
+    },
+    "access_model.json": {
+      "bytes": 793,
+      "sha256": "4644f26cc97db0db25d30cb16660331ca98ab235ee6c944376b1aaa31b44cf57"
+    },
+    "boundary_metadata.json": {
+      "bytes": 1058,
+      "sha256": "8c6170d7812144d038557da4398e922dc0de9702c00b51ce0dc9e224e44c7ed2"
+    },
+    "candidate_constraints.csv": {
+      "bytes": 26250,
+      "sha256": "dfe1df1c08e32af7ac197542703d900b4dfa982243c436eaff7664923156fea8"
+    },
+    "candidate_cost_assumptions.csv": {
+      "bytes": 10138,
+      "sha256": "55c55f705b0c6490cc0ea97a79b715d94ccb60d8369904e03f8097a8a7d6f956"
+    },
+    "candidate_eligibility.csv": {
+      "bytes": 2046,
+      "sha256": "75636141041ec196e777474e9555bb428f18a52d8a62205ce5f29afce5ceca99"
+    },
+    "candidate_sites.csv": {
+      "bytes": 11533,
+      "sha256": "09f645352353fd815a6ef6bbc988893925bfc4d26b341fe257672c15a94df8e1"
+    },
+    "candidate_sites.geojson": {
+      "bytes": 32158,
+      "sha256": "1a3cc27ebfad944e926640f7532f943b9e31c7a9a4a391317e4db7736d7b6ce0"
+    },
+    "charging_requests.csv": {
+      "bytes": 9740422,
+      "sha256": "dced70eadcaa66d32c206854107403d8b8780afe3a92a0bad52fbbf0b75f1ac2"
+    },
+    "context_poi.geojson": {
+      "bytes": 4178152,
+      "sha256": "be33042e620a20459b81be78cf9aeb04fd721d1bc399f7c155c424321724d29f"
+    },
+    "context_transport.geojson": {
+      "bytes": 3108333,
+      "sha256": "4020860b609bd58e2622d96d11a3ecace66a41447cb03d9f0d56c13494d69c75"
+    },
+    "data_dictionary.json": {
+      "bytes": 4005,
+      "sha256": "0e1287e7c39b67feb727b6d5d96e617701c8fe7d730c948158e9c186a84550fc"
+    },
+    "data_plan_alignment_report.json": {
+      "bytes": 1901,
+      "sha256": "b251c9dc5257c23323bf3e5f2ddecb7e6e49dd99dfeb082e11e8a9585e3fb162"
+    },
+    "data_plan_contract.schema.json": {
+      "bytes": 15618,
+      "sha256": "1eeb753dc3683b926a67b16b4077e287ce2bc9d2df389be0d317323d4bfd23b3"
+    },
+    "demand_cells.csv": {
+      "bytes": 5673705,
+      "sha256": "13c0401648fdbcd4e04f5d207d1ab83084b9dcf219743680f6ed25514ad37cf6"
+    },
+    "demand_intervals.csv": {
+      "bytes": 7019620,
+      "sha256": "ac315c652bfecc35939ac46ec3bc5a00a3d7e3fa5475c35eb1bc1e2ec891c6dc"
+    },
+    "demand_node_cell_map.csv": {
+      "bytes": 3106,
+      "sha256": "2919a8e01374470db00574a735704728b31bf3c1a011c3155bff5646e192e255"
+    },
+    "demand_nodes.csv": {
+      "bytes": 8303,
+      "sha256": "a6b10af59d32873d88b06aaad1cdca9e6b2aa712b0b4e6702c71608503a2fff3"
+    },
+    "demand_nodes.geojson": {
+      "bytes": 27621,
+      "sha256": "59c14b1bec59eeafa8ff19d7708264e204fd8b1c0eb7fbb48e3fc0d22d390d81"
+    },
+    "demand_observations.csv": {
+      "bytes": 12586835,
+      "sha256": "9baf39943764b852b426589b9d4a48363e96b3aa6f320f4064b07a05ebcb28b0"
+    },
+    "electricity_cost_intervals.csv": {
+      "bytes": 8919987,
+      "sha256": "237acedd88a87a24a0abb72c59503da5eac4d8dabbf1f7d856ea00588e0d24a6"
+    },
+    "existing_sites.csv": {
+      "bytes": 14193,
+      "sha256": "b3ad1c221f08ff18cf7e645f693ab736788199cbbe6a02b0e34a7a7400ef0ce1"
+    },
+    "existing_sites.geojson": {
+      "bytes": 51265,
+      "sha256": "ac0935cc59c8aa18c38e5e74e9af76e6985d36ce0ab8e78a8f01c0aa1cc73727"
+    },
+    "finance_package.json": {
+      "bytes": 5704,
+      "sha256": "6d8b2364fcde3251e459a4fa013f472d216100fd49a374d6a34e62151a1d5665"
+    },
+    "finance_period_summary.csv": {
+      "bytes": 483,
+      "sha256": "34dca7d3adc702ac3f1d1bf8d3523f7c972e868e62630546f37c129ef6a5fa92"
+    },
+    "generation_config.json": {
+      "bytes": 6673,
+      "sha256": "a1b91844b0dd2394b85afac4509f015e74b7e69cd59abecff452f45446f9c892"
+    },
+    "pilot_extent.geojson": {
+      "bytes": 211500,
+      "sha256": "f783b9b7b5cfed4ed50defde37c2ce6ef2aee489f6a1a56d73738b3ed8ef5c7f"
+    },
+    "pilot_units.geojson": {
+      "bytes": 294055,
+      "sha256": "a7efa1d179efb11bbb5f2b4d54f52138fd7282c767b1b2777b1a10cb276ee0ea"
+    },
+    "poi_model_weights.csv": {
+      "bytes": 450239,
+      "sha256": "f28eb40a80e07299c7944a43421eb304792ea70ac322db0b0b663cd43e3dafb8"
+    },
+    "population.csv": {
+      "bytes": 1768,
+      "sha256": "043306b6859b5b4a7009858a69a278b60225a9a2ab5953f39712f0e2014bb1da"
+    },
+    "scenario.json": {
+      "bytes": 3490,
+      "sha256": "e22e6ff98de8a49c3fe1a0d74e3f5ae856dd281bfeb6760d2557d7e74fab3424"
+    },
+    "scenario_config.json": {
+      "bytes": 3288,
+      "sha256": "965847db6ec554c7149675ae967fb45d549075dad564f8d4ce68861b7ea2fc20"
+    },
+    "selected_electricity_tariffs.csv": {
+      "bytes": 8316,
+      "sha256": "ebdd01afcedb211f29d527a35cd81051ded794329f2924d20cdad3f7a9d93628"
+    },
+    "station_operations.csv": {
+      "bytes": 8184658,
+      "sha256": "b52494fb052bc2a9700ebf3816b80d68f7afc5a043a1e5dbb20f697fd3d336e0"
+    },
+    "technical_constraints_package.json": {
+      "bytes": 7772,
+      "sha256": "f7bf9805aa2808328e078e89f63ba9547a8b96690426aaeb0e54a8bb1e77d49f"
+    },
+    "validation_report.json": {
+      "bytes": 1775,
+      "sha256": "8ea8f9bbfdb6ff14e5ef0596156aa378c1906585f3ff876603a6216752140420"
+    }
+  },
+  "warnings": [
+    "Observed context does not make synthetic charging data observed.",
+    "Population reference dates and legal boundary effective date remain unknown.",
+    "POI duplicate groups downweighted conservatively, not verified merged entities.",
+    "Coverage gaps describe the selected simulated existing-site fixture.",
+    "P7 is illustrative access, not road routing or measured journey time.",
+    "P8 handles unknown feasibility; no statutory policy or investment approval.",
+    "No ranking, capacity sizing or portfolio recommendation generated."
+  ]
+}

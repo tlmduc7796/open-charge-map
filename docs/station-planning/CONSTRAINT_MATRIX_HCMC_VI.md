@@ -2,6 +2,8 @@
 
 ## Mục đích và cách dùng
 
+Demo v3 dùng các tham số và cách xử lý unknown trong [P7_P8_DECISIONS_VI.md](P7_P8_DECISIONS_VI.md). Ma trận dưới đây vẫn là taxonomy tham khảo; nguồn công khai không xác nhận các ngưỡng demo hay feasibility của từng ứng viên.
+
 Đây là **ma trận khởi điểm cho demo kỹ thuật**, không phải tiêu chuẩn pháp lý, tiêu chuẩn ngành hay trọng số lấy từ một doanh nghiệp. Nguồn doanh nghiệp công khai giúp xác định các yếu tố thực tế cần xét; họ không công bố công thức/weights nội bộ. Vì vậy file tách rõ:
 
 1. **Hard feasibility gates:** candidate có được phép đưa vào danh sách xếp hạng/triển khai hay không.

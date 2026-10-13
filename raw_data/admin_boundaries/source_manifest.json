@@ -1,0 +1,62 @@
+{
+  "source": "https://bando.tphcm.gov.vn/",
+  "query_endpoint": "https://bando.tphcm.gov.vn/service/vdms/api/v1/query",
+  "source_config": {
+    "path": "/root/vdms/tangthu/data/administrative/2025",
+    "layers": [
+      "ADMINISTRATIVE_2025"
+    ],
+    "isInTree": true,
+    "searchKey": "",
+    "start": 0,
+    "count": -1,
+    "returnFields": [
+      "Title",
+      "Priority",
+      "AdministrativeID",
+      "AdminID",
+      "Longitude",
+      "Latitude"
+    ],
+    "filterQuery": [],
+    "sortOption": {
+      "sortInfo": [
+        {
+          "Field": "Title",
+          "Direction": "Ascending"
+        }
+      ]
+    }
+  },
+  "downloaded_at_utc": "2026-10-11T13:43:30.228224+00:00",
+  "boundary_version": "2025",
+  "legal_effective_date": null,
+  "coordinate_reference": "longitude/latitude degrees, WGS84-compatible with site map; source has no explicit CRS declaration",
+  "geometry_field": "COLLECTION",
+  "simplified": false,
+  "kml_ring_orientation": "outer CCW, inner CW; reversal only, no coordinate changes",
+  "kml_rings_reoriented": 186,
+  "province_admin_id": "79",
+  "province_administrative_id": 33,
+  "ward_api_total": 168,
+  "ward_exported": 168,
+  "city_exported": 1,
+  "bbox": [
+    106.088860571815,
+    8.576980094727,
+    107.571400961458,
+    11.50135678162
+  ],
+  "rings": 232,
+  "vertices": 159506,
+  "files": {
+    "hcm_admin_2025.geojson": {
+      "bytes": 5914468,
+      "sha256": "bca1b81c35544e42e8694becac49ea74433738411f3e7fbd8beb8cb121ed0cdf"
+    },
+    "hcm_admin_2025.kml": {
+      "bytes": 5688159,
+      "sha256": "d116f63d9997a66c4843975a0703c39b7c50093788a7bb85638f0cf3fdba13d3"
+    }
+  }
+}

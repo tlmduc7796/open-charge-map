@@ -2,3 +2,11 @@
 *.sh text eol=lf
 *.awk text eol=lf
 database/docker/** text eol=lf
+
+# Planning manifests hash exact bytes; retain collected/generated file content.
+raw_data/** -text whitespace=cr-at-eol
+data_platform/station_planning/demo_hcmc_v3/** -text whitespace=cr-at-eol
+scripts/prepare_station_planning_demo.py text eol=lf
+data_platform/station_planning/*.py text eol=lf
+config/station_planning_demo.json -text whitespace=cr-at-eol
+docs/station-planning/examples/hcmc-scenario-base.json -text whitespace=cr-at-eol

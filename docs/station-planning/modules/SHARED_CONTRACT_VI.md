@@ -238,6 +238,12 @@ M2A (demand ML/baseline) và M2B (site engine) trao đổi một record cho mỗ
 - M2B giữ provenance này trong component `demand_potential` của output; API adapter ánh xạ sang response contract ở mục 3.
 - M1 cung cấp geometry/features/label và data provenance cho M2A; M1 không chịu trách nhiệm train/evaluate model.
 
+### Artifact P7/P8 của demo v3
+
+`data_platform/station_planning/demo_hcmc_v3` cung cấp `access_model.json`, `access_matrix.csv`, `technical_constraints_package.json`, `candidate_constraints.csv` và `candidate_eligibility.csv`. Package giữ metadata source/version/owner/units và rules có envelope `rule_id`, `category`, `effect`, `value_status`, `source_ref`; đây là technical demo config, không tự bật public-policy overlay. Xem [quyết định P7/P8](../P7_P8_DECISIONS_VI.md).
+
+Adapter ánh xạ artifact vào domain theo request hiện hữu; không đưa travel proxy thành road routing hoặc unknown thành pass. Contract API v0.1 giữ nguyên; các artifact mới bổ sung input chuẩn bị dữ liệu, không phải endpoint/ranking output mới.
+
 ```text
 HTTP/Pydantic router -> planning application service -> pure domain engine
                                           -> repository/PostGIS adapter

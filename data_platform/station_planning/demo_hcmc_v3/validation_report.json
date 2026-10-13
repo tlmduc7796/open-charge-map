@@ -1,0 +1,62 @@
+{
+  "status": "PASS",
+  "checks": {
+    "source_allowlist_excludes_ref": true,
+    "nine_wards_and_37_sites": true,
+    "geometries_within_pilot": true,
+    "candidate_spacing_and_existing_exclusion": true,
+    "population_allocation_conserved": true,
+    "port_and_energy_bounds": true,
+    "closed_sites_have_no_charging": true,
+    "request_count_and_energy_conserved": true,
+    "session_duration_and_energy_consistent": true,
+    "traffic_is_not_measured_flow": true,
+    "access_matrix_complete": true,
+    "constraints_preserve_unknown_feasibility": true,
+    "data_plan_views_conserve_sessions_energy": true
+  },
+  "scenario_summaries": {
+    "low": {
+      "requests": 4510,
+      "completed": 4466,
+      "abandoned": 42,
+      "pending_at_horizon": 2,
+      "demand_kwh": 117420.626895,
+      "delivered_kwh": 116281.293536
+    },
+    "base": {
+      "requests": 7615,
+      "completed": 7543,
+      "abandoned": 72,
+      "pending_at_horizon": 0,
+      "demand_kwh": 196655.228402,
+      "delivered_kwh": 194787.679396
+    },
+    "high": {
+      "requests": 12285,
+      "completed": 12161,
+      "abandoned": 123,
+      "pending_at_horizon": 1,
+      "demand_kwh": 318986.915254,
+      "delivered_kwh": 315784.72337
+    }
+  },
+  "counts": {
+    "wards": 9,
+    "sites": 37,
+    "candidates": 18,
+    "poi": 3708,
+    "transport": 1640,
+    "demand_nodes": 27,
+    "demand_intervals": 27216,
+    "operation_intervals": 37296,
+    "requests": 24410,
+    "selected_tariff_intervals": 10,
+    "flagged_duplicate_groups": 30,
+    "access_pairs_profiles": 4455,
+    "candidate_constraint_results": 180,
+    "demand_observations": 37296,
+    "administrative_demand_cells": 9072
+  },
+  "pending_parts": {}
+}
