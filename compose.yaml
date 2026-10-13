@@ -10,9 +10,7 @@ services:
       POSTGRES_DB: smart_ev_data
       POSTGRES_USER: smart_ev
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smart_ev}
-      RESET_ON_START: ${RESET_ON_START:-0}
-      # CSV nằm trong git (database/fixtures/simulator) nên luôn có; thiếu thì dừng thay vì chạy
-      # với lịch sử rỗng.
+      RESET_ON_START: ${RESET_ON_START:-1}
       HISTORY_REQUIRED: "1"
     ports:
       - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
