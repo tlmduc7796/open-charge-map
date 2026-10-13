@@ -31,9 +31,23 @@
   padding: 18px;
   display: flex;
   flex-direction: column;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: scroll;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #9aafa4 #eef3ef;
 }
+/* The shared .control-column rule hides overflow on desktop; keep Planner's
+   left panel independently scrollable after the shared stylesheet loads. */
+.control-column.planner-control-column {
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+.planner-control-column::-webkit-scrollbar { width: 10px; }
+.planner-control-column::-webkit-scrollbar-track { border-radius: 8px; background: #eef3ef; }
+.planner-control-column::-webkit-scrollbar-thumb { border: 2px solid #eef3ef; border-radius: 8px; background: #9aafa4; }
+.planner-control-column::-webkit-scrollbar-thumb:hover { background: #6f8f80; }
 .planner-control-column .app-mode-switch { flex: 0 0 auto; margin-bottom: 14px; }
 .planner-heading { flex: 0 0 auto; }
 .planner-heading h1 { margin: 5px 0 7px; color: #123d35; font-size: 22px; line-height: 1.15; letter-spacing: -0.035em; }
@@ -207,7 +221,7 @@
   .planner-app-shell { overflow: visible; }
   .planner-workspace { display: flex; flex-direction: column; }
   .planner-results-column { order: -1; padding: 14px; }
-  .planner-control-column { padding: 14px; border-right: 0; }
+  .planner-control-column { max-height: 70dvh; overflow-y: scroll; padding: 14px; border-right: 0; }
   .planner-map-shell { min-height: 280px; height: 38vh; }
 }
 
