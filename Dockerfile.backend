@@ -17,6 +17,7 @@ RUN pip install --no-cache-dir -r /app/backend/requirements.txt
 COPY backend/ /app/backend/
 COPY ml/ /app/ml/
 COPY database/fixtures/ /app/database/fixtures/
+COPY data_platform/ /app/data_platform/
 
 RUN useradd --system --uid 10001 --create-home appuser \
     && chown -R appuser:appuser /app
