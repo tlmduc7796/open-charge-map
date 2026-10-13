@@ -38,6 +38,22 @@ vi.mock("./components/MapView", () => ({
   ),
 }));
 
+vi.mock("./planning/PlannerView", async () => {
+  const { useState } = await import("react");
+  return {
+    default: ({ onModeChange }: { onModeChange: (mode: "driver" | "planner") => void }) => {
+      const [count, setCount] = useState(0);
+      return (
+        <section>
+          <output>Planner local state: {count}</output>
+          <button type="button" onClick={() => setCount((value) => value + 1)}>Change planner state</button>
+          <button type="button" onClick={() => onModeChange("driver")}>Return to driver</button>
+        </section>
+      );
+    },
+  };
+});
+
 const mockedApi = vi.mocked(api);
 
 const forecast: StationForecast = {
@@ -152,4 +168,19 @@ test("going back to real time calls the reset endpoint", async () => {
 
   await waitFor(() => expect(mockedApi.resetDemoClock).toHaveBeenCalledTimes(1));
   expect(await screen.findByText("Giờ thật")).toBeInTheDocument();
+});
+
+test("keeps planner state when switching to driver and back", async () => {
+  render(<App />);
+
+  fireEvent.click(await screen.findByRole("button", { name: "Planner" }));
+  expect(await screen.findByText("Planner local state: 0")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Change planner state" }));
+  expect(screen.getByText("Planner local state: 1")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Return to driver" }));
+  expect(await screen.findByRole("button", { name: "Tìm đường đi" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Planner" }));
+
+  expect(await screen.findByText("Planner local state: 1")).toBeInTheDocument();
 });

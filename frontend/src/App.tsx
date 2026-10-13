@@ -81,6 +81,7 @@ async function settle<T>(call: () => Promise<T>): Promise<T | null> {
 
 export default function App() {
   const [appMode, setAppMode] = useState<AppMode>("driver");
+  const [hasVisitedPlanner, setHasVisitedPlanner] = useState(false);
   const [currentTime, setCurrentTime] = useState(() => new Date());
   // The server's demo clock, and the local time at which it was read (see demoMsAt).
   const [demoClock, setDemoClock] = useState<DemoClock | null>(null);
@@ -520,32 +521,34 @@ export default function App() {
     [activeItems, destination, initialSoc, origin, searchMode, vehicleId],
   );
 
-  if (appMode === "planner") {
-    return <PlannerView onModeChange={setAppMode} />;
-  }
+  const handleModeChange = useCallback((mode: AppMode) => {
+    if (mode === "planner") setHasVisitedPlanner(true);
+    setAppMode(mode);
+  }, []);
 
-  if (loading) {
-    return (
+  const driverContent = (() => {
+    if (loading) {
+      return (
       <main className="app-loading">
-        <AppModeSwitch active="driver" onChange={setAppMode} />
+        <AppModeSwitch active={appMode} onChange={handleModeChange} />
         <div className="loader" />
         <p>Đang kết nối Smart EV backend…</p>
       </main>
-    );
-  }
+      );
+    }
 
-  if (!vehicles.length) {
-    return (
+    if (!vehicles.length) {
+      return (
       <main className="app-loading error-screen">
-        <AppModeSwitch active="driver" onChange={setAppMode} />
+        <AppModeSwitch active={appMode} onChange={handleModeChange} />
         <h1>Không thể khởi tạo ứng dụng</h1>
         <p>{error ?? "Không có hồ sơ xe khả dụng."}</p>
         <button className="primary-button" onClick={() => void loadInitialData()}>Thử lại</button>
       </main>
-    );
-  }
+      );
+    }
 
-  return (
+    return (
     <main className="app-shell">
       {debugMode && (
         <header className="topbar">
@@ -562,7 +565,7 @@ export default function App() {
 
       <div className="workspace" id="top">
         <section className="control-column">
-          <AppModeSwitch active="driver" onChange={setAppMode} />
+          <AppModeSwitch active={appMode} onChange={handleModeChange} />
           {formOpen && (
             <JourneyForm
               searchMode={searchMode}
@@ -693,5 +696,17 @@ export default function App() {
         </section>
       </div>
     </main>
+    );
+  })();
+
+  return (
+    <>
+      <div hidden={appMode !== "driver"}>{driverContent}</div>
+      {hasVisitedPlanner && (
+        <div hidden={appMode !== "planner"}>
+          <PlannerView onModeChange={handleModeChange} />
+        </div>
+      )}
+    </>
   );
 }
