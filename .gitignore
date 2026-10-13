@@ -20,3 +20,4 @@ simulator/data/
 simulator/**/*.csv
 ml/data/
 ml/model/
+ml/artifacts/station_demand/

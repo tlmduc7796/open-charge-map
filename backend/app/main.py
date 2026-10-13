@@ -50,6 +50,7 @@ from backend.app.occupancy_history_repository import (
     DatabaseOccupancyHistoryRepository,
     DatabaseOccupancyRange,
 )
+from backend.app.planning.recommendation_engine import TechnicalOpportunityEngine
 from backend.app.planning.repository import UnconfiguredPlanningDataRepository
 from backend.app.planning.router import router as planning_router
 from backend.app.planning.service import PlanningApplicationService
@@ -242,7 +243,7 @@ app.state.trip_repository = (
 )
 app.state.planning_service = PlanningApplicationService(
     UnconfiguredPlanningDataRepository(),
-    engine=None,
+    engine=TechnicalOpportunityEngine(),
 )
 app.include_router(router)
 app.include_router(v1_router)
