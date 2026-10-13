@@ -24,7 +24,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "1.0"
+      "const": "1.1"
     },
     "scenario_id": {
       "type": "string",
@@ -46,7 +46,7 @@
       "enum": [
         "technical_opportunity",
         "public_policy",
-        "investor_scenario"
+        "investor_economic"
       ]
     },
     "study_area": {
@@ -264,7 +264,7 @@
       "required": ["profile", "method", "weight_status", "weights", "minimum_evidence_coverage"],
       "properties": {
         "profile": {
-          "enum": ["technical_opportunity", "public_policy", "investor_scenario"]
+          "enum": ["technical_opportunity", "public_policy", "investor_economic"]
         },
         "method": {
           "enum": ["weighted_sum", "pareto", "lexicographic"]
