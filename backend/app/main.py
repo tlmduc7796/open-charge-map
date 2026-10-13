@@ -50,6 +50,9 @@ from backend.app.occupancy_history_repository import (
     DatabaseOccupancyHistoryRepository,
     DatabaseOccupancyRange,
 )
+from backend.app.planning.repository import UnconfiguredPlanningDataRepository
+from backend.app.planning.router import router as planning_router
+from backend.app.planning.service import PlanningApplicationService
 from backend.app.prediction_repository import PredictionWriter
 from backend.app.profile_repository import (
     DatabaseOccupancyProfileRepository,
@@ -237,8 +240,13 @@ app.state.trip_repository = (
     if app.state.database_engine is not None
     else None
 )
+app.state.planning_service = PlanningApplicationService(
+    UnconfiguredPlanningDataRepository(),
+    engine=None,
+)
 app.include_router(router)
 app.include_router(v1_router)
+app.include_router(planning_router)
 
 
 @app.middleware("http")

@@ -16,6 +16,10 @@ import type {
   StationStatus,
   Vehicle,
 } from "./types";
+import type {
+  PlanningRecommendationResponse,
+  PlanningRequest,
+} from "./planning/types";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000").replace(
   /\/$/,
@@ -323,5 +327,22 @@ export const api = {
       missing_km: response.missingKm,
       reachable_km: response.reachableKm,
     };
+  },
+  planningRecommendations: async (payload: PlanningRequest) => {
+    try {
+      return await requestJson<PlanningRecommendationResponse>("/api/v1/planning/recommendations", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.code === "VALIDATION_ERROR") {
+        const issues = error.details?.["issues"] as { location: string[]; message: string }[] | undefined;
+        if (issues?.length) {
+          const description = issues.map((issue) => `${issue.location.join(".")}: ${issue.message}`).join("; ");
+          throw new Error(`${error.message} — ${description}`);
+        }
+      }
+      throw error;
+    }
   },
 };

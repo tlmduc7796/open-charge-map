@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import math
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -65,6 +67,28 @@ class StationRepository:
             )
             <= radius_m
         )
+
+    def nearby_many(
+        self,
+        points: Sequence[tuple[str, float, float]],
+        radius_m: float,
+    ) -> dict[str, tuple[Station, ...]]:
+        """Return existing stations around (candidate_id, longitude, latitude) points."""
+        if not math.isfinite(radius_m) or radius_m <= 0:
+            raise ValueError("radius_m must be positive")
+        for candidate_id, longitude, latitude in points:
+            if not candidate_id.strip():
+                raise ValueError("candidate IDs in points must not be blank")
+            if not math.isfinite(longitude) or not -180 <= longitude <= 180:
+                raise ValueError("longitude must be within [-180, 180]")
+            if not math.isfinite(latitude) or not -90 <= latitude <= 90:
+                raise ValueError("latitude must be within [-90, 90]")
+        if len({candidate_id for candidate_id, _, _ in points}) != len(points):
+            raise ValueError("candidate IDs in points must be unique")
+        return {
+            candidate_id: self.nearby(longitude, latitude, radius_m)
+            for candidate_id, longitude, latitude in points
+        }
 
     def candidates(
         self,

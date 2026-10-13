@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import json
+import math
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from typing import Any
 
@@ -302,6 +304,63 @@ class DatabaseStationRepository:
                 },
             ).mappings()
             return tuple(_station_from_row(row) for row in rows)
+
+    def nearby_many(
+        self,
+        points: Sequence[tuple[str, float, float]],
+        radius_m: float,
+    ) -> dict[str, tuple[Station, ...]]:
+        """Batch existing-site lookup for candidate coordinates with one PostGIS query."""
+        if not math.isfinite(radius_m) or radius_m <= 0:
+            raise ValueError("radius_m must be positive")
+        for candidate_id, longitude, latitude in points:
+            if not candidate_id.strip():
+                raise ValueError("candidate IDs in points must not be blank")
+            if not math.isfinite(longitude) or not -180 <= longitude <= 180:
+                raise ValueError("longitude must be within [-180, 180]")
+            if not math.isfinite(latitude) or not -90 <= latitude <= 90:
+                raise ValueError("latitude must be within [-90, 90]")
+        candidate_ids = [candidate_id for candidate_id, _, _ in points]
+        if len(set(candidate_ids)) != len(candidate_ids):
+            raise ValueError("candidate IDs in points must be unique")
+        results: dict[str, list[Station]] = {candidate_id: [] for candidate_id in candidate_ids}
+        if not points:
+            return {}
+
+        point_records = [
+            {"candidate_id": candidate_id, "longitude": longitude, "latitude": latitude}
+            for candidate_id, longitude, latitude in points
+        ]
+        query = """
+            WITH candidate_points AS (
+                SELECT candidate_id, longitude, latitude
+                FROM jsonb_to_recordset(CAST(:points_json AS jsonb))
+                    AS p(candidate_id text, longitude double precision, latitude double precision)
+            )
+            SELECT candidate_points.candidate_id AS planning_candidate_id, station_rows.*
+            FROM candidate_points
+            CROSS JOIN LATERAL (
+        """ + _STATION_SELECT + """
+                AND ST_DWithin(
+                    s.location,
+                    ST_SetSRID(ST_MakePoint(candidate_points.longitude, candidate_points.latitude), 4326)::geography,
+                    :radius_m
+                )
+                ORDER BY ST_Distance(
+                    s.location,
+                    ST_SetSRID(ST_MakePoint(candidate_points.longitude, candidate_points.latitude), 4326)::geography
+                ), s.code
+            ) AS station_rows
+            ORDER BY candidate_points.candidate_id, station_rows.code
+        """
+        with self._engine.connect() as connection:
+            rows = connection.execute(
+                text(query),
+                {"points_json": json.dumps(point_records), "radius_m": radius_m},
+            ).mappings()
+            for row in rows:
+                results[row["planning_candidate_id"]].append(_station_from_row(row))
+        return {candidate_id: tuple(stations) for candidate_id, stations in results.items()}
 
     def candidates(
         self,

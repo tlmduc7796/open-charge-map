@@ -20,6 +20,9 @@ export interface Station {
     connectors: StationConnector[];
     access: "public" | "customers" | "private" | "unknown";
     notes: string[];
+    source_provider?: string;
+    source_updated_at?: string | null;
+    synthetic_fields?: string[];
   };
 }
 

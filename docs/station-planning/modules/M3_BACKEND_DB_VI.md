@@ -16,7 +16,7 @@ Expose planning domain qua API có schema ổn định, lấy dữ liệu bằng
 4. **Repository/PostGIS:** tái dùng catalog hiện tại và thêm spatial queries tối thiểu. Tránh N+1 và không trả toàn bộ station catalog nếu chỉ cần vùng phân tích.
 5. **Data lineage:** trả data snapshot/source/algorithm/config/package versions, warning và `is_synthetic`/status xuyên suốt.
 6. **Persistence:** MVP không tạo bảng project/run nếu request-response cùng demo đủ. Nếu cần lưu, nộp thiết kế bảng/retention/owner trước; dùng đúng schema/table ordering/seeding workflow repo, không tự thêm Alembic.
-7. **Failure behavior:** malformed input → validation response; no candidates → `no_feasible_candidates`; partial unknown → `completed_with_unknowns`; DB failure không bị báo nhầm thành kết quả score thấp.
+7. **Failure behavior:** malformed input → validation response; danh sách candidate rỗng → `invalid_input`; chỉ trả `no_feasible_candidates` khi đã đánh giá candidate hợp lệ và tất cả đều fail hard constraint đã xác nhận; partial unknown → `completed_with_unknowns`; DB failure không bị báo nhầm thành kết quả score thấp.
 
 ## Không thuộc module
 
