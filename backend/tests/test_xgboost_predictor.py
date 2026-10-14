@@ -16,8 +16,19 @@ from backend.app.domain.xgboost_predictor import (  # noqa: E402
     model_files_available,
 )
 from ml import build_dataset, features  # noqa: E402
+from ml import geo_features as gf  # noqa: E402
 
 TOTAL_PORTS = 6
+# Distinct non-zero values so a served/trained mismatch on a geo column would be caught.
+GEO_VALUES = tuple(float(index + 1) for index in range(len(gf.GEO_COLUMNS)))
+
+
+def _geo_table() -> "pd.DataFrame":
+    # Single-station universe: self-referencing nearest station (see
+    # ml.geo_features._neighbor_features's degenerate-case convention).
+    row = dict(zip(gf.GEO_COLUMNS, GEO_VALUES, strict=True))
+    row[gf.NEAREST_STATION_ID_COLUMN] = "ST_TEST"
+    return pd.DataFrame([row], index=pd.Index(["ST_TEST"], name="station_id"))
 
 
 @pytest.fixture(scope="module")
@@ -33,7 +44,7 @@ def frame() -> "pd.DataFrame":
             "occupied_ports": rng.integers(0, TOTAL_PORTS + 1, size=len(index)),
         }
     )
-    return build_dataset.build_frame(raw, warmup_hours=0)
+    return build_dataset.build_frame(raw, geo_table=_geo_table(), warmup_hours=0)
 
 
 def _train(frame: "pd.DataFrame", model_dir, *, wrong_features_for: int | None = None) -> None:
@@ -64,6 +75,8 @@ def _window(row: "pd.Series") -> OccupancyWindow:
         lags=tuple(float(row[name]) for name in features.LAG_COLUMNS),
         t_last=row["t_last"].to_pydatetime(),
         total_ports=int(row["total_ports"]),
+        geo_features=tuple(float(row[name]) for name in features.GEO_COLUMNS),
+        nearest_station_occupancy=float(row[features.SPATIAL_LAG_COLUMNS[0]]),
     )
 
 

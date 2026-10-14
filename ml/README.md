@@ -27,6 +27,7 @@ Chạy thử nhanh: `python -m ml.train_eval --max-train-rows 50000 --n-estimato
 | File | Vai trò |
 |---|---|
 | `features.py` | hợp đồng cột + hàm đặc trưng thuần (cửa sổ, động lực, thời gian) |
+| `geo_features.py` | bảng đặc trưng địa lý tĩnh theo trạm (POI 300m, dân số, trạm lân cận) |
 | `build_dataset.py` | CSV → `dataset.parquet` + `dataset.meta.json` |
 | `train_eval.py` | huấn luyện 6 model, so với persistence, ghi metric |
 | `tests/` | pytest cho đặc trưng, dựng dataset, train smoke |
@@ -59,7 +60,7 @@ Ba thư mục độc lập, đổi bằng tham số: dữ liệu (`build_dataset
   test 09-01…09-30 (`--val-start`, `--test-start`). Dòng có `t_last` và `t_last + 30'` thuộc hai
   split khác nhau bị loại để không rò nhãn qua ranh giới.
 
-## Đặc trưng X (26 cột mỗi mô hình)
+## Đặc trưng X (40 cột mỗi mô hình)
 
 | Nhóm | Cột | Định nghĩa |
 |---|---|---|
@@ -69,11 +70,19 @@ Ba thư mục độc lập, đổi bằng tham số: dữ liệu (`build_dataset
 | | `n_changes_12` | số cặp liền kề đổi giá trị, trong 11 cặp của 12 lag |
 | | `steps_since_change` | số cặp liền kề không đổi liên tiếp từ mới nhất (0…11) |
 | Sức chứa (1) | `total_ports` | số cổng của trạm tại bucket `t_last` |
+| Địa lý tĩnh (13) | `poi_weighted_*_r300` (8) | tổng trọng số POI (chung + 7 `category_group`) trong 300m — xem `ml/geo_features.py` |
+| | `ward_population` | dân số phường chứa trạm |
+| | `n_stations_within_300m`, `competing_ports_within_300m` | số trạm khác + tổng cổng của chúng trong 300m |
+| | `nearest_other_station_m`, `nearest_station_total_ports` | khoảng cách + số cổng của trạm gần nhất |
+| Spatial lag (1) | `nearest_station_occupancy_lag1` | occupancy của trạm gần nhất tại cùng `t_last` |
 | Thời gian `t_last` (4) | `last_tod_sin/cos`, `last_dow_sin/cos` | giờ trong ngày và thứ của `t_last` |
 | Thời gian mốc dự đoán (4) | `pred_hk_tod_sin/cos`, `pred_hk_dow_sin/cos` | như trên, tại `t_last + 5k` phút |
 
-- **Mô hình k** (k = 1…6, +5k phút) dùng 22 cột chung + 4 cột `pred_hk_*` của chính nó. Dataset
+- **Mô hình k** (k = 1…6, +5k phút) dùng 36 cột chung + 4 cột `pred_hk_*` của chính nó. Dataset
   lưu cả 6 bộ `pred_h1…pred_h6`.
+- **Đặc trưng địa lý** đọc từ `data_platform/station_planning/demo_hcmc_v3/` (POI, dân số,
+  danh sách trạm) — độc lập với `station_occupancy_5m`; `build_dataset.py --geo-table` cho
+  phép nạp một bảng khác (vd. cho dữ liệu tổng hợp/kiểm thử).
 - **Mã hoá chu kỳ:** `sin/cos(2π · phút_trong_ngày / 1440)` và `sin/cos(2π · thứ / 7)`, thứ
   Hai = 0. Giờ/thứ tính theo `Asia/Ho_Chi_Minh`; mốc đích đi qua nửa đêm thì thứ đổi theo.
 - **Nhãn:** `y1…y6`. Cột meta (không vào X): `station_id`, `t_last`, `split`.

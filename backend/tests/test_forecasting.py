@@ -62,6 +62,8 @@ def _window(status: StationStatus, ratio: float = 0.75) -> OccupancyWindow:
         lags=(ratio,) * 12,
         t_last=status.timestamp,
         total_ports=status.total_ports,
+        geo_features=(0.0,) * 13,
+        nearest_station_occupancy=ratio,
     )
 
 

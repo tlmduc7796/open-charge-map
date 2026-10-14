@@ -2,7 +2,7 @@
 
     python -m ml.train_eval               # chạy từ gốc repo, sau `python -m ml.build_dataset`
 
-Mô hình k dự đoán `y_k` từ 26 đặc trưng (`ml.features.feature_columns(k)`), early stopping trên
+Mô hình k dự đoán `y_k` từ 40 đặc trưng (`ml.features.feature_columns(k)`), early stopping trên
 tập val; so với persistence (`lag_1`) trên val và test.
 """
 

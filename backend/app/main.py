@@ -141,8 +141,24 @@ def _load_predictor(model_dir):
     return predictor
 
 
+def _load_geo_table():
+    """Static geo features for the occupancy model (`ml.geo_features`), or None on failure."""
+    try:
+        from ml.geo_features import build_station_geo_table
+
+        return build_station_geo_table()
+    except Exception:
+        logger.exception("occupancy_geo_table_load_failed")
+        return None
+
+
 # The model needs the last 12 five-minute buckets, which only exist in database mode.
 occupancy_predictor = _load_predictor(settings.model_dir) if uses_database else None
+# Every prediction row needs the station's geo features (ml.features.GEO_COLUMNS); without
+# them the model cannot be fed a valid input at all, so it degrades the same as a missing model.
+occupancy_geo_table = _load_geo_table() if occupancy_predictor is not None else None
+if occupancy_predictor is not None and occupancy_geo_table is None:
+    occupancy_predictor = None
 app.state.occupancy_predictor = occupancy_predictor
 app.state.occupancy_profile_repository = (
     DatabaseOccupancyProfileRepository(app.state.database_engine)
@@ -159,7 +175,7 @@ app.state.occupancy_forecast_service = OccupancyForecastService(
     ),
     ml_gateway=app.state.ml_gateway,
     window_provider=(
-        DatabaseOccupancyHistoryRepository(app.state.database_engine)
+        DatabaseOccupancyHistoryRepository(app.state.database_engine, occupancy_geo_table)
         if occupancy_predictor is not None
         else None
     ),

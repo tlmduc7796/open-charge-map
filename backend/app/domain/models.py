@@ -193,17 +193,33 @@ class QueueAssumptions(DomainModel):
         return self
 
 
+# Số cột tĩnh của ml.geo_features.GEO_COLUMNS (POI theo bán kính 300m, dân số phường, tác
+# động trạm lân cận) — không import ml.geo_features ở đây để models.py không cần pandas/numpy
+# chỉ để định nghĩa kiểu dữ liệu; thứ tự khớp với GEO_COLUMNS, do occupancy_history_repository
+# đảm bảo khi dựng OccupancyWindow.
+GEO_FEATURE_COUNT = 13
+
+
 class OccupancyWindow(DomainModel):
     """The 12 most recent contiguous 5-minute occupancy ratios of one station.
 
     `lags[0]` is the newest bucket (`lag_1` in `ml/features.py`), `lags[11]` the oldest.
     `t_last` is the bucket start of `lags[0]`.
+
+    `geo_features` are the station's static geo columns, in `ml.geo_features.GEO_COLUMNS`
+    order. `nearest_station_occupancy` is the occupancy ratio of the nearest station
+    (`ml.geo_features.NEAREST_STATION_ID_COLUMN`) at this same `t_last`, or this station's own
+    `lags[0]` when that is unavailable (see `occupancy_history_repository`).
     """
 
     station_id: str = Field(min_length=1)
     lags: tuple[float, ...] = Field(min_length=12, max_length=12)
     t_last: datetime
     total_ports: int = Field(gt=0)
+    geo_features: tuple[float, ...] = Field(
+        min_length=GEO_FEATURE_COUNT, max_length=GEO_FEATURE_COUNT
+    )
+    nearest_station_occupancy: float = Field(ge=0, le=1)
 
     @model_validator(mode="after")
     def validate_window(self) -> OccupancyWindow:

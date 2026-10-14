@@ -111,6 +111,8 @@ class XgboostOccupancyPredictor:
             {name: float(column[0]) for name, column in ft.dynamics_features(lags).items()}
         )
         values["total_ports"] = float(window.total_ports)
+        values.update(dict(zip(ft.GEO_COLUMNS, window.geo_features, strict=True)))
+        values[ft.SPATIAL_LAG_COLUMNS[0]] = float(window.nearest_station_occupancy)
         last = ft.time_features(pd.DatetimeIndex([window.t_last]))
         values.update({f"last_{suffix}": float(v[0]) for suffix, v in last.items()})
         target = ft.time_features(

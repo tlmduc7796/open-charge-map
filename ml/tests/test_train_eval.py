@@ -9,6 +9,7 @@ import pytest
 from ml import build_dataset as bd
 from ml import features as ft
 from ml import train_eval as te
+from ml.tests.conftest import make_geo_table
 
 pytest.importorskip("xgboost")
 
@@ -44,11 +45,15 @@ def test_evaluate_split_groups_and_persistence():
 def test_train_eval_smoke(tmp_path, random_raw):
     csv_path = tmp_path / "occupancy.csv"
     random_raw.to_csv(csv_path, index=False)
+    geo_path = tmp_path / "geo.parquet"
+    geo_table = make_geo_table(sorted(random_raw["station_id"].unique()))
+    geo_table.reset_index().to_parquet(geo_path, index=False)
     data_dir = tmp_path / "out"
     bd.main(
         [
             "--input", str(csv_path),
             "--out-dir", str(data_dir),
+            "--geo-table", str(geo_path),
             "--warmup-hours", "0",
             "--val-start", "2026-09-13",
             "--test-start", "2026-09-15",
@@ -82,5 +87,5 @@ def test_train_eval_smoke(tmp_path, random_raw):
     assert cell["model"]["mae"] >= 0 and cell["persistence"]["rmse"] >= 0
 
     importance = pd.read_csv(out_dir / "feature_importance.csv")
-    assert len(importance) == ft.N_HORIZONS * 26
+    assert len(importance) == ft.N_HORIZONS * 40
     assert set(importance["horizon_min"]) == set(ft.HORIZONS_MIN)

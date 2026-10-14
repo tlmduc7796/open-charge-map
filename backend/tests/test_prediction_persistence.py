@@ -29,6 +29,7 @@ from backend.app.station_state_repository import (
     DatabaseStationStateRepository,
     occupancy_bucket,
 )
+from ml.geo_features import GEO_COLUMNS, NEAREST_STATION_ID_COLUMN
 
 TEST_DATABASE_URL = os.getenv("BACKEND_TEST_DATABASE_URL")
 STATION = "ST_VF_NGO_QUYEN"
@@ -36,6 +37,14 @@ HEADERS = {"X-API-Key": "integration-test-key"}
 REQUIRES_DATABASE = pytest.mark.skipif(
     not TEST_DATABASE_URL, reason="PostgreSQL test database required"
 )
+
+
+def _geo_table():
+    """One row, self-referencing nearest station: these tests don't exercise geo features."""
+    import pandas as pd
+
+    row = {**dict.fromkeys(GEO_COLUMNS, 0.0), NEAREST_STATION_ID_COLUMN: STATION}
+    return pd.DataFrame([row], index=pd.Index([STATION], name="station_id"))
 
 
 class StubPredictor:
@@ -112,7 +121,7 @@ def _writer(engine, ratio: float) -> PredictionWriter:
     forecasting = OccupancyForecastService(
         StubPredictor(ratio),
         supported_model_horizons=MODEL_HORIZONS_MIN,
-        window_provider=DatabaseOccupancyHistoryRepository(engine),
+        window_provider=DatabaseOccupancyHistoryRepository(engine, _geo_table()),
     )
     estimator = WaitEstimator(ml_gateway=DefaultMlGateway())
     return PredictionWriter(engine, statuses, forecasting, estimator)
@@ -127,7 +136,7 @@ def test_history_window_profile_and_predictions_are_persisted() -> None:
     try:
         _report(engine, buckets, occupied)
 
-        window = DatabaseOccupancyHistoryRepository(engine).window(STATION)
+        window = DatabaseOccupancyHistoryRepository(engine, _geo_table()).window(STATION)
         assert window is not None
         assert window.t_last == newest
         assert window.total_ports == 4
@@ -178,7 +187,7 @@ def test_busy_station_gets_the_maximum_wait_and_a_gap_removes_the_window() -> No
                 ),
                 {"bucket": buckets[6], "code": STATION},
             )
-        assert DatabaseOccupancyHistoryRepository(engine).window(STATION) is None
+        assert DatabaseOccupancyHistoryRepository(engine, _geo_table()).window(STATION) is None
 
         _writer(engine, 1.0).refresh([STATION])
         assert {row["source"] for row in _prediction_rows(engine)} == {"persistence"}

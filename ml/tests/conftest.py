@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from ml import geo_features as gf
+
 
 def make_raw(
     *,
@@ -33,6 +35,33 @@ def make_raw(
 @pytest.fixture
 def raw_factory():
     return make_raw
+
+
+def make_geo_table(
+    station_ids: list[str], total_ports: dict[str, int] | None = None
+) -> pd.DataFrame:
+    """Bảng geo tổng hợp (mọi `GEO_COLUMNS` = 0) cho các `station_ids` tuỳ ý trong test.
+
+    Trạm gần nhất là trạm kế tiếp theo vòng tròn (1 trạm thì tự tham chiếu chính nó, giống
+    quy ước thoái hoá của `geo_features._neighbor_features`).
+    """
+    ids = list(station_ids)
+    total_ports = total_ports or {}
+    n = len(ids)
+    nearest = {sid: ids[(i + 1) % n] for i, sid in enumerate(ids)}
+    table = pd.DataFrame(
+        {column: 0.0 for column in gf.GEO_COLUMNS}, index=pd.Index(ids, name="station_id")
+    )
+    table["nearest_station_total_ports"] = [
+        float(total_ports.get(nearest[sid], 0)) for sid in ids
+    ]
+    table[gf.NEAREST_STATION_ID_COLUMN] = [nearest[sid] for sid in ids]
+    return table
+
+
+@pytest.fixture
+def geo_factory():
+    return make_geo_table
 
 
 @pytest.fixture

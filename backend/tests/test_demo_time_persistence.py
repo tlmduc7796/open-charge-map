@@ -21,6 +21,7 @@ from backend.app.occupancy_history_repository import (
 )
 from backend.app.profile_repository import DatabaseOccupancyProfileRepository
 from backend.app.station_state_repository import DatabaseStationStateRepository
+from ml.geo_features import GEO_COLUMNS, NEAREST_STATION_ID_COLUMN
 
 TEST_DATABASE_URL = os.getenv("BACKEND_TEST_DATABASE_URL")
 STATION = "ST_VF_NGO_QUYEN"
@@ -28,6 +29,14 @@ T0 = datetime(2030, 3, 12, 3, 0, tzinfo=UTC)  # a Tuesday, 10:00 Vietnam time
 REQUIRES_DATABASE = pytest.mark.skipif(
     not TEST_DATABASE_URL, reason="PostgreSQL test database required"
 )
+
+
+def _geo_table():
+    """One row, self-referencing nearest station: these tests don't exercise geo features."""
+    import pandas as pd
+
+    row = {**dict.fromkeys(GEO_COLUMNS, 0.0), NEAREST_STATION_ID_COLUMN: STATION}
+    return pd.DataFrame([row], index=pd.Index([STATION], name="station_id"))
 
 
 def _report(engine, occupied: list[int]) -> list[datetime]:
@@ -102,7 +111,7 @@ def test_history_window_ends_at_the_requested_moment() -> None:
     engine = create_engine(TEST_DATABASE_URL, pool_pre_ping=True)
     buckets = _report(engine, [1] * 10 + [2] * 6)
     try:
-        history = DatabaseOccupancyHistoryRepository(engine)
+        history = DatabaseOccupancyHistoryRepository(engine, _geo_table())
 
         newest = history.window(STATION)
         assert newest is not None and newest.t_last == buckets[-1]

@@ -8,6 +8,7 @@ import pytest
 
 from ml import build_dataset as bd
 from ml import features as ft
+from ml.tests.conftest import make_geo_table
 
 TOTAL = 1000  # ratio = occupied / TOTAL, nên occupied = chỉ số bước cho ra ratio = i / 1000
 
@@ -18,6 +19,7 @@ def _build(raw, **overrides):
         "warmup_hours": 0.0,
         "val_start": "2099-01-01",
         "test_start": "2099-02-01",
+        "geo_table": make_geo_table(sorted(raw["station_id"].unique())),
     }
     options.update(overrides)
     return bd.build_frame(raw, **options)
@@ -159,12 +161,17 @@ def test_validation_rejects_bad_input(raw_factory):
 def test_main_writes_dataset_and_meta(tmp_path, random_raw):
     csv_path = tmp_path / "occupancy.csv"
     random_raw.to_csv(csv_path, index=False)
+    geo_path = tmp_path / "geo.parquet"
+    total_ports = random_raw.drop_duplicates("station_id").set_index("station_id")["total_ports"]
+    geo_table = make_geo_table(sorted(random_raw["station_id"].unique()), total_ports.to_dict())
+    geo_table.reset_index().to_parquet(geo_path, index=False)
     out_dir = tmp_path / "out"
 
     code = bd.main(
         [
             "--input", str(csv_path),
             "--out-dir", str(out_dir),
+            "--geo-table", str(geo_path),
             "--exclude-months", "2026-10",
             "--warmup-hours", "0",
             "--val-start", "2026-09-13",
@@ -183,4 +190,4 @@ def test_main_writes_dataset_and_meta(tmp_path, random_raw):
     assert len(meta["sources"][0]["sha256"]) == 64
     for k in range(1, 7):
         assert meta["feature_columns_by_horizon"][str(k)] == list(ft.feature_columns(k))
-        assert len(meta["feature_columns_by_horizon"][str(k)]) == 26
+        assert len(meta["feature_columns_by_horizon"][str(k)]) == 40

@@ -47,6 +47,15 @@ def test_profile_cell_uses_local_time_and_monday_zero() -> None:
     assert (day, step) == (1, 1)
 
 
+GEO_FEATURES = tuple(float(i) for i in range(13))
+
+
+def _window(station_id, rows, **overrides):
+    overrides.setdefault("geo_features", GEO_FEATURES)
+    overrides.setdefault("nearest_station_occupancy", 0.5)
+    return build_window(station_id, rows, **overrides)
+
+
 def _rows(count: int = 12, *, gap_at: int | None = None, operational: int = 4):
     rows = []
     for index in range(count):
@@ -63,21 +72,23 @@ def _rows(count: int = 12, *, gap_at: int | None = None, operational: int = 4):
 
 
 def test_window_is_built_newest_first() -> None:
-    window = build_window("ST", _rows())
+    window = _window("ST", _rows())
 
     assert window is not None
     assert window.t_last == T0
     assert window.lags[:4] == (0.0, 0.25, 0.5, 0.0)
     assert window.total_ports == 4
+    assert window.geo_features == GEO_FEATURES
+    assert window.nearest_station_occupancy == 0.5
 
 
 def test_window_requires_twelve_buckets() -> None:
-    assert build_window("ST", _rows(11)) is None
+    assert _window("ST", _rows(11)) is None
 
 
 def test_window_rejects_a_gap_between_buckets() -> None:
-    assert build_window("ST", _rows(gap_at=6)) is None
+    assert _window("ST", _rows(gap_at=6)) is None
 
 
 def test_window_rejects_buckets_without_operational_ports() -> None:
-    assert build_window("ST", _rows(operational=0)) is None
+    assert _window("ST", _rows(operational=0)) is None

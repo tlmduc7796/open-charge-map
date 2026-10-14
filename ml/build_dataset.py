@@ -3,7 +3,9 @@
     python -m ml.build_dataset            # chạy từ gốc repo
 
 Mỗi dòng ứng với một (trạm, `t_last`): 12 lag đến `t_last`, các đặc trưng xu hướng, sức chứa,
-đặc trưng thời gian của `t_last` và của 6 thời điểm đích, cùng 6 nhãn y1…y6 tại +5…+30 phút.
+đặc trưng địa lý tĩnh của trạm (`ml.geo_features.GEO_COLUMNS`), occupancy của trạm gần nhất
+tại cùng `t_last` (spatial lag), đặc trưng thời gian của `t_last` và của 6 thời điểm đích,
+cùng 6 nhãn y1…y6 tại +5…+30 phút.
 """
 
 from __future__ import annotations
@@ -20,6 +22,7 @@ import numpy as np
 import pandas as pd
 
 from ml import features as ft
+from ml import geo_features as gf
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = REPO_ROOT / "simulator" / "data" / "station_occupancy_5m.csv"
@@ -80,6 +83,46 @@ def _local_timestamp(value: str | pd.Timestamp) -> pd.Timestamp:
     return stamp.tz_localize(ft.TIMEZONE) if stamp.tz is None else stamp.tz_convert(ft.TIMEZONE)
 
 
+def load_geo_table(path: Path | None) -> pd.DataFrame:
+    """Bảng geo tĩnh theo trạm, có chỉ mục khớp với `station_id` của occupancy thô.
+
+    `path=None`: dùng `geo_features.build_station_geo_table()` (37 trạm `EVC-*` thật, chỉ mục
+    là `stations.code`), rồi đổi chỉ mục sang `stations.id` (UUID) — `station_occupancy_5m`
+    thô (và `simulator/data/station_occupancy_5m.csv`) dùng UUID làm `station_id`, không phải
+    `code` như tầng domain của backend.
+    Một `path` tường minh đọc một bảng đã lưu sẵn (csv/parquet, cột `station_id` làm chỉ mục) —
+    dùng cho dữ liệu tổng hợp/kiểm thử không trùng với 37 trạm thật, giữ nguyên chỉ mục đã có.
+    """
+    if path is None:
+        table = gf.build_station_geo_table()
+        code_to_id = gf.load_station_code_to_id()
+        missing = set(table.index) - set(code_to_id)
+        if missing:
+            raise ValueError(f"stations.sql misses code(s) from existing_sites.csv: {missing}")
+        table.index = table.index.map(code_to_id)
+        table[gf.NEAREST_STATION_ID_COLUMN] = table[gf.NEAREST_STATION_ID_COLUMN].map(code_to_id)
+        return table
+    table = pd.read_parquet(path) if path.suffix == ".parquet" else pd.read_csv(path)
+    if "station_id" in table.columns:
+        table = table.set_index("station_id")
+    required = set(gf.GEO_COLUMNS) | {gf.NEAREST_STATION_ID_COLUMN}
+    missing = required - set(table.columns)
+    if missing:
+        raise ValueError(f"geo table misses columns: {sorted(missing)}")
+    return table
+
+
+def _validate_geo_table(geo_table: pd.DataFrame, station_ids: Iterable[str]) -> None:
+    if geo_table.index.duplicated().any():
+        raise ValueError("duplicate station_id in geo table")
+    missing = set(station_ids) - set(geo_table.index)
+    if missing:
+        raise ValueError(f"geo table misses station(s): {sorted(missing)}")
+    required = list(gf.GEO_COLUMNS) + [gf.NEAREST_STATION_ID_COLUMN]
+    if geo_table.loc[list(station_ids), required].isna().any().any():
+        raise ValueError("geo table contains NaN for a station used in the dataset")
+
+
 def assign_split(
     timestamps: pd.DatetimeIndex, val_start: pd.Timestamp, test_start: pd.Timestamp
 ) -> np.ndarray:
@@ -92,6 +135,7 @@ def assign_split(
 def build_frame(
     raw: pd.DataFrame,
     *,
+    geo_table: pd.DataFrame,
     exclude_months: Iterable[str] = (),
     warmup_hours: float = 24.0,
     val_start: str | pd.Timestamp = "2026-07-01",
@@ -99,30 +143,43 @@ def build_frame(
 ) -> pd.DataFrame:
     """Dựng bảng (meta, X, y) từ bảng occupancy thô. Không có I/O.
 
+    - `geo_table`: một dòng mỗi trạm (`gf.GEO_COLUMNS` + `gf.NEAREST_STATION_ID_COLUMN`,
+      chỉ mục `station_id`) — xem `load_geo_table`. Phải có đủ mọi `station_id` xuất hiện
+      trong `raw`.
     - `exclude_months` (`YYYY-MM`, theo giờ địa phương) bị loại trước khi dựng cửa sổ.
     - Chỉ giữ cửa sổ 18 bucket liên tục, không NaN; bỏ `warmup_hours` đầu mỗi trạm
       (simulator khởi động từ trạng thái rỗng).
     - Dòng có `t_last` và `t_last + 30'` thuộc hai split khác nhau bị loại (chống rò nhãn).
+    - Dòng mà trạm gần nhất (`gf.NEAREST_STATION_ID_COLUMN`) không có occupancy đúng tại
+      `t_last` cũng bị loại (không tính được `nearest_station_occupancy_lag1`).
     """
     val_ts, test_ts = _local_timestamp(val_start), _local_timestamp(test_start)
     if not val_ts < test_ts:
         raise ValueError("val_start must be earlier than test_start")
     df = validate_raw(raw)
+    _validate_geo_table(geo_table, df["station_id"].unique())
     series_start = df.groupby("station_id")["bucket_at"].min()  # trước khi loại tháng
     local_month = df["bucket_at"].dt.tz_convert(ft.TIMEZONE).dt.strftime("%Y-%m")
     df = df.loc[~local_month.isin(set(exclude_months))]
     if df.empty:
         raise ValueError("no observations left after excluding months")
 
-    parts: list[pd.DataFrame] = []
-    horizon_end = pd.Timedelta(minutes=ft.HORIZONS_MIN[-1])
-    for station_id, group in df.groupby("station_id", sort=True):
-        group = group.sort_values("bucket_at")
+    sorted_groups = {
+        sid: g.sort_values("bucket_at") for sid, g in df.groupby("station_id", sort=True)
+    }
+    ratio_by_station: dict[str, pd.Series] = {}
+    for sid, group in sorted_groups.items():
         occupied = group["occupied_ports"].to_numpy(dtype=float)
         operational = group["operational_ports"].to_numpy(dtype=float)
         ratio = np.divide(
             occupied, operational, out=np.full(len(group), np.nan), where=operational > 0
         )
+        ratio_by_station[sid] = pd.Series(ratio, index=pd.DatetimeIndex(group["bucket_at"]))
+
+    parts: list[pd.DataFrame] = []
+    horizon_end = pd.Timedelta(minutes=ft.HORIZONS_MIN[-1])
+    for station_id, group in sorted_groups.items():
+        ratio = ratio_by_station[station_id].to_numpy()
         starts = ft.valid_window_starts(epoch_minutes(group["bucket_at"]), ratio)
         if starts.size == 0:
             continue
@@ -136,6 +193,23 @@ def build_frame(
             continue
         starts, last_index, t_last = starts[keep], last_index[keep], t_last[keep]
 
+        nearest_id = geo_table.at[station_id, gf.NEAREST_STATION_ID_COLUMN]
+        neighbor_ratio = ratio_by_station.get(nearest_id)
+        if neighbor_ratio is None:
+            neighbor_values = np.full(len(t_last), np.nan)
+        else:
+            neighbor_values = neighbor_ratio.reindex(t_last).to_numpy(dtype=float)
+        has_neighbor = ~np.isnan(neighbor_values)
+        if not has_neighbor.any():
+            continue
+        if not has_neighbor.all():
+            starts, last_index, t_last = (
+                starts[has_neighbor],
+                last_index[has_neighbor],
+                t_last[has_neighbor],
+            )
+            neighbor_values = neighbor_values[has_neighbor]
+
         lags, targets = ft.split_windows(ratio, starts)
         columns: dict[str, np.ndarray | pd.Series] = {
             "station_id": np.full(len(starts), station_id, dtype=object),
@@ -146,6 +220,10 @@ def build_frame(
             columns[name] = lags[:, index]
         columns.update(ft.dynamics_features(lags))
         columns["total_ports"] = group["total_ports"].to_numpy()[last_index]
+        geo_row = geo_table.loc[station_id, list(gf.GEO_COLUMNS)]
+        for name, value in geo_row.items():
+            columns[name] = np.full(len(starts), float(value))
+        columns["nearest_station_occupancy_lag1"] = neighbor_values
         for suffix, values in ft.time_features(t_last).items():
             columns[f"last_{suffix}"] = values
         for k in range(1, ft.N_HORIZONS + 1):
@@ -263,6 +341,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="tháng YYYY-MM (giờ địa phương) bị loại; mặc định 2026-10",
     )
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
+    parser.add_argument(
+        "--geo-table",
+        type=Path,
+        default=None,
+        help="bảng geo tĩnh đã export (csv/parquet, cột station_id); mặc định dùng "
+        "geo_features.build_station_geo_table() (37 trạm EVC-* thật)",
+    )
     parser.add_argument("--warmup-hours", type=float, default=24.0)
     parser.add_argument("--val-start", default="2026-07-01")
     parser.add_argument("--test-start", default="2026-09-01")
@@ -273,8 +358,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
     raw, sources = load_inputs(args.input)
+    geo_table = load_geo_table(args.geo_table)
     frame = build_frame(
         raw,
+        geo_table=geo_table,
         exclude_months=args.exclude_months,
         warmup_hours=args.warmup_hours,
         val_start=args.val_start,

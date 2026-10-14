@@ -12,6 +12,8 @@ import numpy as np
 import pandas as pd
 from numpy.lib.stride_tricks import sliding_window_view
 
+from ml.geo_features import GEO_COLUMNS
+
 INTERVAL_MIN = 5
 N_LAGS = 12
 N_HORIZONS = 6
@@ -32,12 +34,23 @@ DYNAMIC_COLUMNS = (
     "steps_since_change",
 )
 CAPACITY_COLUMNS = ("total_ports",)
+# Đặc trưng địa lý tĩnh theo trạm (POI theo bán kính 300m, dân số phường, quy mô trạm lân
+# cận) — xem ml/geo_features.py. `SPATIAL_LAG_COLUMNS` không tĩnh: là occupancy của trạm gần
+# nhất tại cùng t_last, build_dataset.py tính lại cho mỗi dòng giống lag_1..lag_12.
+SPATIAL_LAG_COLUMNS = ("nearest_station_occupancy_lag1",)
 TIME_SUFFIXES = ("tod_sin", "tod_cos", "dow_sin", "dow_cos")
 LAST_TIME_COLUMNS = tuple(f"last_{suffix}" for suffix in TIME_SUFFIXES)
 TARGET_COLUMNS = tuple(f"y{k}" for k in range(1, N_HORIZONS + 1))
 
-# 22 cột dùng chung cho cả 6 mô hình; mô hình k thêm 4 cột `pred_hk_*` của chính nó.
-SHARED_FEATURES = LAG_COLUMNS + DYNAMIC_COLUMNS + CAPACITY_COLUMNS + LAST_TIME_COLUMNS
+# 36 cột dùng chung cho cả 6 mô hình; mô hình k thêm 4 cột `pred_hk_*` của chính nó.
+SHARED_FEATURES = (
+    LAG_COLUMNS
+    + DYNAMIC_COLUMNS
+    + CAPACITY_COLUMNS
+    + GEO_COLUMNS
+    + SPATIAL_LAG_COLUMNS
+    + LAST_TIME_COLUMNS
+)
 
 
 def _check_horizon_index(k: int) -> None:
@@ -52,7 +65,7 @@ def pred_time_columns(k: int) -> tuple[str, ...]:
 
 
 def feature_columns(k: int) -> tuple[str, ...]:
-    """26 đặc trưng, đúng thứ tự, của mô hình thứ k."""
+    """40 đặc trưng, đúng thứ tự, của mô hình thứ k."""
     return SHARED_FEATURES + pred_time_columns(k)
 
 

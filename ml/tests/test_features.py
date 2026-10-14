@@ -7,15 +7,15 @@ import pytest
 from ml import features as ft
 
 
-def test_feature_contract_has_26_unique_columns_per_horizon():
-    assert len(ft.SHARED_FEATURES) == 22
+def test_feature_contract_has_40_unique_columns_per_horizon():
+    assert len(ft.SHARED_FEATURES) == 36
     assert ft.HORIZONS_MIN == (5, 10, 15, 20, 25, 30)
     for k in range(1, 7):
         columns = ft.feature_columns(k)
-        assert len(columns) == 26
-        assert len(set(columns)) == 26
-        assert columns[:22] == ft.SHARED_FEATURES
-        assert all(c.startswith(f"pred_h{k}_") for c in columns[22:])
+        assert len(columns) == 40
+        assert len(set(columns)) == 40
+        assert columns[:36] == ft.SHARED_FEATURES
+        assert all(c.startswith(f"pred_h{k}_") for c in columns[36:])
     with pytest.raises(ValueError):
         ft.feature_columns(7)
 
