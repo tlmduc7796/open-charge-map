@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import csv
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -169,3 +171,24 @@ def test_demo_reports_no_feasible_candidates_for_explicit_tiny_budget_scenario()
         for item in result["excluded_candidates"]
         for constraint in item["constraints"]
     )
+
+
+def test_heatmap_weekly_values_match_the_pinned_demand_intervals() -> None:
+    path = (Path(__file__).resolve().parents[2] / "data_platform" / "station_planning"
+            / "demo_hcmc_v3" / "demand_intervals.csv")
+    totals = {}
+    with path.open(encoding="utf-8-sig", newline="") as stream:
+        for row in csv.DictReader(stream):
+            key = (row["demand_node_id"] or row["cell_id"], row["scenario_profile"])
+            totals[key] = totals.get(key, 0.0) + float(row["expected_sessions"])
+    with TestClient(app) as client:
+        response = client.get("/api/v1/planning/demo-snapshot")
+    assert response.status_code == 200
+    nodes = response.json()["demand_nodes"]
+    for node in nodes:
+        values = node["weekly_expected_sessions"]
+        assert set(values) == {"low", "base", "high"}
+        assert 0 <= values["low"] < values["base"] < values["high"]
+        for profile, value in values.items():
+            assert value == pytest.approx(totals[(node["demand_node_id"], profile)], abs=1e-6)
+    assert len(totals) == len(nodes) * 3

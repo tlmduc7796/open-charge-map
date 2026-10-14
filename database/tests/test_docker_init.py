@@ -6,9 +6,13 @@ does with tables.toml. These tests keep the two readings identical.
 
 from __future__ import annotations
 
+import csv
+import re
 import shutil
 import subprocess
 import sys
+from collections import Counter
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -92,13 +96,28 @@ def test_history_sql_uses_only_documented_variables() -> None:
 def test_history_csv_is_the_september_october_fixture() -> None:
     """The mounted CSV is loaded unmodified and must cover exactly 2026-09-01 .. 2026-10-31."""
     path = ROOT / "fixtures" / "simulator" / "station_occupancy_5m.csv"
-    lines = path.read_text(encoding="utf-8").splitlines()
-    assert lines[0] == "station_id,bucket_at,total_ports,operational_ports,occupied_ports"
-    stamps = [line.split(",", 2)[1] for line in lines[1:]]
-    assert min(stamps) == "2026-09-01T00:00:00+07:00"
-    assert max(stamps) == "2026-10-31T23:55:00+07:00"
-    # 61 days x 288 five-minute buckets for each of the 11 stations, no gaps.
-    assert len(stamps) == 11 * 61 * 288
+    catalog = (ROOT / "data" / "catalog" / "stations.sql").read_text(encoding="utf-8")
+    station_ids = set(re.findall(r"\('([0-9a-f-]{36})',", catalog))
+    assert len(station_ids) == next(t.rows for t in MANIFEST.tables if t.name == "stations")
+    start = datetime.fromisoformat("2026-09-01T00:00:00+07:00")
+    end = datetime.fromisoformat("2026-11-01T00:00:00+07:00")
+    step = timedelta(minutes=5)
+    next_bucket = dict.fromkeys(station_ids, start)
+    counts = Counter()
+    with path.open(encoding="utf-8", newline="") as stream:
+        reader = csv.DictReader(stream)
+        assert reader.fieldnames == [
+            "station_id", "bucket_at", "total_ports", "operational_ports", "occupied_ports"
+        ]
+        for row in reader:
+            station_id = row["station_id"]
+            assert station_id in station_ids
+            assert datetime.fromisoformat(row["bucket_at"]) == next_bucket[station_id]
+            next_bucket[station_id] += step
+            counts[station_id] += 1
+    assert set(counts) == station_ids
+    assert all(stamp == end for stamp in next_bucket.values())
+    assert all(count == (end - start) // step for count in counts.values())
 
 
 def test_compose_mounts_the_september_october_csv() -> None:

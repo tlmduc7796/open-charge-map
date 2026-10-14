@@ -17,11 +17,12 @@ Trạng thái hiện tại:
 
 - **Database** là SQL viết tay (`database/schema/*.sql`), không dùng migration; xem
   [database/README.md](database/README.md).
-- **ML** chưa tích hợp: mọi lời gọi backend → ML trả giá trị mặc định cố định
-  (`backend/app/domain/ml_gateway.py`, `prediction_source=default`).
+- **ML occupancy** đã có adapter cho sáu XGBoost 40 đặc trưng. Khi thiếu model hoặc bảng
+  địa lý, backend dùng `prediction_source=default`; thiếu lịch sử/bucket trạm lân cận dùng
+  `persistence`. Model và dữ liệu huấn luyện chỉ phục vụ demo synthetic, chưa có `RELEASE PASS`.
 - **Kịch bản demo đã được gỡ** (scenario, event giả lập, route cache, `/planned-arrivals`); phần
   này sẽ thiết kế lại sau. Frontend dùng `/api/v1/search/route`.
-- Phase 03–04 (UrbanEV preprocessing, model occupancy) chưa hoàn thành nên chưa có `RELEASE PASS`.
+- UrbanEV không còn là đầu vào bắt buộc; pipeline occupancy hiện dùng dữ liệu simulator.
 
 ## Yêu cầu
 
@@ -82,9 +83,10 @@ chỉnh, không phải giờ máy:
   khởi động lại backend quay về `DEMO_NOW`.
 - Ngoài khoảng dữ liệu (trước 01/09 hoặc sau 31/10/2026) mọi trạm là `unknown`; giao diện cảnh báo.
 
-Compose mặc định `RESET_ON_START=0`; dữ liệu PostgreSQL được giữ trong named volume. Để dựng lại
-toàn bộ dữ liệu, chạy `docker compose down -v` rồi `docker compose up --build`. Để dừng nhưng giữ
-dữ liệu, chạy `docker compose down`.
+Compose mặc định `RESET_ON_START=1`: mỗi lần container PostgreSQL khởi động, database được
+dựng lại từ seed và CSV occupancy. Đặt `RESET_ON_START=0` nếu cần giữ dữ liệu giữa các lần
+khởi động. `docker compose down` giữ named volume nhưng lần khởi động kế tiếp vẫn reset nếu
+`RESET_ON_START=1`.
 
 CSV occupancy trong git chỉ gồm tháng 9–10/2026 (~13,6 MB), cắt từ file đầy đủ của simulator bằng
 `python scripts/trim_occupancy_csv.py` (đọc `simulator/data/`, ghi `database/fixtures/simulator/`).

@@ -4,8 +4,10 @@ from pathlib import Path
 from unittest import mock
 
 from scripts.collect_station_candidates import (
+    DEFAULT_CONFIG,
     CollectorError,
     collect_goong,
+    configured_bounds,
     deduplicate,
     goong_search_centers,
     make_candidate,
@@ -34,35 +36,20 @@ class StationCollectorTests(unittest.TestCase):
         self.assertTrue(all(claim["status"] == "provider_reported" for claim in claims))
         self.assertEqual(osm_site_amenities({"vending": "parking_tickets"}), [])
 
-    def test_hcm_config_uses_only_pre_2025_city_search_areas(self):
-        config_path = (
-            Path(__file__).resolve().parents[1]
-            / "database"
-            / "config"
-            / "hcm_station_collector.json"
-        )
-        config = json.loads(config_path.read_text(encoding="utf-8"))
-
-        self.assertEqual(config["scope"]["boundary_version"], "pre-2025")
-        self.assertEqual(
-            {bounds["name"] for bounds in config["search_bounds"]},
-            {"HCMC_SW", "HCMC_SE", "HCMC_NW", "HCMC_NE"},
-        )
-        excluded_names = {
-            "Thủ Dầu Một",
-            "Dĩ An",
-            "Thuận An",
-            "Bến Cát",
-            "Tân Uyên",
-            "Vũng Tàu",
-            "Bà Rịa",
-            "Phú Mỹ",
-            "Hồ Tràm - Xuyên Mộc",
-            "Côn Đảo",
-        }
-        self.assertTrue(
-            excluded_names.isdisjoint(center.get("name") for center in config["search_centers"])
-        )
+    def test_default_config_limits_collection_to_the_hcmc_demo_extent(self):
+        config = json.loads(DEFAULT_CONFIG.read_text(encoding="utf-8"))
+        bounds = configured_bounds(config)
+        self.assertEqual(bounds, [config["demo_bounds"]])
+        extent = bounds[0]
+        self.assertTrue(10.6 <= extent["south"] < extent["north"] <= 10.9)
+        self.assertTrue(106.5 <= extent["west"] < extent["east"] <= 106.9)
+        centers = goong_search_centers(config)
+        self.assertTrue(centers)
+        self.assertTrue(all(
+            extent["south"] <= center["lat"] <= extent["north"]
+            and extent["west"] <= center["lon"] <= extent["east"]
+            for center in centers
+        ))
 
     def test_goong_grid_covers_bounds_with_multiple_centers(self):
         config = {
@@ -150,7 +137,8 @@ class StationCollectorTests(unittest.TestCase):
     def test_parse_evone_hcm_list_item(self):
         html = """
         <ul>
-          <li>EV ONE – Audi Hồ Chí Minh: 6B Tôn Đức Thắng, TP.HCM (DC 180KW &amp; 2 trụ AC 11KW)</li>
+          <li>EV ONE – Audi Hồ Chí Minh: 6B Tôn Đức Thắng, TP.HCM
+          (DC 180KW &amp; 2 trụ AC 11KW)</li>
           <li>EV ONE – Hà Nội: 1 Example, Hà Nội (AC 11KW)</li>
         </ul>
         """

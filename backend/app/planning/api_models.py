@@ -272,12 +272,19 @@ class PlanningDemoSite(PlanningModel):
     source_ref: str | None
 
 
+class PlanningDemoWeeklyDemand(PlanningModel):
+    low: float = Field(ge=0, allow_inf_nan=False)
+    base: float = Field(ge=0, allow_inf_nan=False)
+    high: float = Field(ge=0, allow_inf_nan=False)
+
+
 class PlanningDemoDemandNode(PlanningModel):
     demand_node_id: str = Field(min_length=1)
     unit_id: str = Field(min_length=1)
     location: PlanningDemoLocation
     nearest_existing_access_minutes_proxy: float = Field(ge=0)
     is_synthetic: bool
+    weekly_expected_sessions: PlanningDemoWeeklyDemand
 
 
 class PlanningDemoSnapshotResponse(PlanningModel):

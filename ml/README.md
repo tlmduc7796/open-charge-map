@@ -22,6 +22,18 @@ ruff check ml
 
 Chạy thử nhanh: `python -m ml.train_eval --max-train-rows 50000 --n-estimators 50`.
 
+Nếu chỉ có CSV tháng 9–10 đã commit, dùng split trong tháng 9 và giữ tháng 10 ngoài đánh giá:
+
+```powershell
+python -m ml.build_dataset --input database/fixtures/simulator/station_occupancy_5m.csv --val-start 2026-09-15 --test-start 2026-09-22
+python -m ml.train_eval
+```
+
+Model cũ 26 đặc trưng không tương thích: dựng lại dataset và cả sáu booster. Artifact vẫn
+ở `ml/model/` (gitignore); metrics và nguồn/split của từng lần chạy ở `ml/data/occupancy_xgb/`.
+Training và serving đều yêu cầu bucket của trạm gần nhất đúng tại `t_last`; thiếu bucket,
+serving trả fallback persistence có cờ `HISTORY_UNAVAILABLE`, không thay bằng dữ liệu trạm mình.
+
 ## Cấu trúc
 
 | File | Vai trò |

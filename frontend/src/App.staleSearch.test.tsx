@@ -6,6 +6,8 @@ import App from "./App";
 import { demoClock, modelStatus, recommendation, station, status, vehicle } from "./test/fixtures";
 import type { Station, StationForecast } from "./types";
 
+vi.mock("./planning/PlannerView", () => ({ default: () => null }));
+
 vi.mock("./api", () => ({
   api: {
     stations: vi.fn(),

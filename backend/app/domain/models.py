@@ -208,8 +208,8 @@ class OccupancyWindow(DomainModel):
 
     `geo_features` are the station's static geo columns, in `ml.geo_features.GEO_COLUMNS`
     order. `nearest_station_occupancy` is the occupancy ratio of the nearest station
-    (`ml.geo_features.NEAREST_STATION_ID_COLUMN`) at this same `t_last`, or this station's own
-    `lags[0]` when that is unavailable (see `occupancy_history_repository`).
+    (`ml.geo_features.NEAREST_STATION_ID_COLUMN`) at this same `t_last`. Missing neighbor
+    observations make the model window unavailable (see `occupancy_history_repository`).
     """
 
     station_id: str = Field(min_length=1)

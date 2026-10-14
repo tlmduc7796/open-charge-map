@@ -266,10 +266,38 @@ def test_arrival_forecast_spans_the_milestones_around_the_arrival(
     assert arrival.milestones_min == (10, 15, 20, 25, 30, 35, 40)
     assert [item.used_horizon_min for item in arrival.forecasts] == [10, 15, 20, 25, 30, 35, 40]
     assert arrival.at_arrival is arrival.forecasts[1]
-    # One window lookup serves every milestone and later calls for the same bucket.
+    # One window lookup serves every milestone; later requests refresh neighbor observations.
     assert provider.calls == 1
     service.forecast_occupancy(deutsches_status, horizon_min=5)
-    assert provider.calls == 1
+    assert provider.calls == 2
+
+
+def test_neighbor_updates_are_read_with_unchanged_station_status(deutsches_status) -> None:
+    class NeighborPredictor:
+        def predict(self, window, horizon_min):
+            return window.nearest_station_occupancy
+
+    service, provider = _service(deutsches_status, NeighborPredictor())
+    provider.window_value = _window(deutsches_status).model_copy(
+        update={"nearest_station_occupancy": 0.1}
+    )
+    first = service.forecast_occupancy(deutsches_status, horizon_min=5)
+    provider.window_value = provider.window_value.model_copy(
+        update={"nearest_station_occupancy": 0.9}
+    )
+    second = service.forecast_occupancy(deutsches_status, horizon_min=5)
+    assert first.predicted_occupancy_ratio == pytest.approx(0.1)
+    assert second.predicted_occupancy_ratio == pytest.approx(0.9)
+
+
+def test_missing_neighbor_can_recover_without_a_new_station_bucket(deutsches_status) -> None:
+    service, provider = _service(deutsches_status, FixedPredictor(0.2), window=False)
+    first = service.forecast_occupancy(deutsches_status, horizon_min=5)
+    assert first.prediction_source == "persistence"
+    assert "HISTORY_UNAVAILABLE" in first.flags
+    provider.window_value = _window(deutsches_status)
+    second = service.forecast_occupancy(deutsches_status, horizon_min=5)
+    assert second.prediction_source == "model"
 
 
 def test_arrival_on_the_grid_starts_at_that_milestone(deutsches_status: StationStatus) -> None:

@@ -59,10 +59,11 @@ def test_default_paths_are_rooted_at_project(monkeypatch) -> None:
     assert settings.demo_clock_writable is True
 
 
-def test_required_phase_data_exists() -> None:
+def test_required_runtime_data_exists_without_urbanev() -> None:
     missing = [path for path in load_settings().required_data_paths() if not path.is_file()]
 
     assert missing == []
+    assert not any("urbanev" in str(path).lower() for path in load_settings().required_data_paths())
 
 
 def test_demo_now_is_read_as_vietnam_time(monkeypatch) -> None:

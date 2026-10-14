@@ -220,6 +220,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         "created_at": datetime.now(UTC).isoformat(),
         "data_origin": meta.get("data_origin"),
         "is_synthetic": meta.get("is_synthetic"),
+        "dataset": {
+            key: meta.get(key)
+            for key in ("sources", "split", "rows_by_split", "t_last_min", "t_last_max",
+                        "feature_columns_by_horizon", "excluded_months", "warmup_hours")
+        },
         "params": {
             key: value
             for key, value in vars(args).items()

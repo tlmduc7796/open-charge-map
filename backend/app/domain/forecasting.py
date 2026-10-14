@@ -82,8 +82,6 @@ class OccupancyForecastService:
         self._profile_tau_min = profile_tau_min
         self._clock = clock or (lambda: datetime.now(UTC))
         self._supported_model_horizons = tuple(sorted(set(supported_model_horizons)))
-        # station_id -> (status key the window was read for, window or None)
-        self._window_cache: dict[str, tuple[tuple, OccupancyWindow | None]] = {}
 
     @property
     def model_loaded(self) -> bool:
@@ -158,11 +156,8 @@ class OccupancyForecastService:
     def _window_for(self, status: StationStatus) -> OccupancyWindow | None:
         if self._predictor is None or self._window_provider is None:
             return None
-        # A report may overwrite the newest bucket, so the counts are part of the key.
-        key = (status.timestamp, status.operational_ports, status.occupied_ports)
-        cached = self._window_cache.get(status.station_id)
-        if cached is not None and cached[0] == key:
-            return cached[1]
+        # The neighbor's bucket can arrive or change while this station's status stays
+        # identical. Refresh between requests; each arrival reuses one window for its milestones.
         try:
             # The window ends at the bucket the status was read from, so the model never sees
             # buckets recorded after the moment the status describes.
@@ -170,7 +165,6 @@ class OccupancyForecastService:
         except Exception:  # A history outage must degrade to persistence, not fail the search.
             logger.exception("occupancy_window_unavailable station=%s", status.station_id)
             return None
-        self._window_cache[status.station_id] = (key, window)
         return window
 
     def _forecast(

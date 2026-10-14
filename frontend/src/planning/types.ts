@@ -183,6 +183,7 @@ export interface PlanningDemoSnapshotResponse {
     location: { lat: number; lon: number };
     nearest_existing_access_minutes_proxy: number;
     is_synthetic: boolean;
+    weekly_expected_sessions: Record<"low" | "base" | "high", number>;
   }[];
   warnings: string[];
 }

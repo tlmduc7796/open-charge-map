@@ -121,15 +121,15 @@ class DatabaseOccupancyHistoryRepository:
         if len(rows) < LOOKBACK_STEPS:
             return None
         newest = rows[0]
-        own_operational = int(newest["operational_ports"])
-        own_ratio = (
-            int(newest["occupied_ports"]) / own_operational if own_operational > 0 else 0.0
-        )
         geo_row = self._geo_table.loc[station_id]
         nearest_id = geo_row[self._nearest_station_id_column]
         nearest_occupancy = self._neighbor_occupancy(
-            nearest_id, newest["bucket_at"], fallback=own_ratio
+            nearest_id, newest["bucket_at"]
         )
+        # Training excludes rows without the neighbor's exact bucket. Use the same rule
+        # here; the forecast service labels the resulting persistence fallback explicitly.
+        if nearest_occupancy is None:
+            return None
         return build_window(
             station_id,
             rows,
@@ -138,20 +138,20 @@ class DatabaseOccupancyHistoryRepository:
         )
 
     def _neighbor_occupancy(
-        self, nearest_id: str, bucket_at: datetime, *, fallback: float
-    ) -> float:
-        """The nearest station's occupancy ratio at this exact `bucket_at`, or `fallback`."""
+        self, nearest_id: str, bucket_at: datetime
+    ) -> float | None:
+        """The nearest station's ratio at this exact bucket, or None if unavailable."""
         if nearest_id not in self._geo_table.index:
-            return fallback
+            return None
         rows = self._rows(nearest_id, bucket_at, limit=1)
         if not rows or rows[0]["bucket_at"] != bucket_at:
-            return fallback
+            return None
         operational = int(rows[0]["operational_ports"])
         if operational <= 0:
-            return fallback
+            return None
         occupied = int(rows[0]["occupied_ports"])
         if not 0 <= occupied <= operational:
-            return fallback
+            return None
         return occupied / operational
 
     def _rows(

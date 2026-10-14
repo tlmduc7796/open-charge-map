@@ -63,6 +63,7 @@ Không dùng lượt sạc hiện tại làm đại diện duy nhất cho nhu c�
 
 ## Tài liệu
 
+- [Giải thích dữ liệu mô phỏng: demand node, ứng viên, công thức và giá trị giả định](SIMULATED_DATA_EXPLAINED_VI.md)
 - [Tổng kết dữ liệu chuẩn hóa và sơ đồ luồng sử dụng](NORMALIZED_DATA_SUMMARY_VI.md)
 - [Bổ sung field/view và đối chiếu schema DATA_PLAN](DATA_PLAN_ALIGNMENT_VI.md)
 - [Quyết định P7/P8, công thức tiếp cận và ràng buộc demo](P7_P8_DECISIONS_VI.md)

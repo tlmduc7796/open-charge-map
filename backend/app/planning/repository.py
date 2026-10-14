@@ -254,6 +254,19 @@ class FilePlanningDataRepository:
                     "source_ref": row.get("source_ref"),
                 }
             )
+        weekly_demand = {
+            profile: {node_id: 0.0 for node_id in demand_nodes}
+            for profile in DEMAND_SOURCE_PROFILES
+        }
+        for profile, rows in intervals_by_profile.items():
+            for interval in rows:
+                node_id = interval.get("demand_node_id") or interval.get("cell_id")
+                value = self._optional_float(interval.get("expected_sessions"))
+                self._require(
+                    node_id in demand_nodes and value is not None and value >= 0,
+                    "M1 demand intervals contain an invalid node or expected session value.",
+                )
+                weekly_demand[profile][node_id] += value
         nodes_for_catalog = []
         for node_id, row in demand_nodes.items():
             self._valid_point(row, f"demand node {node_id}")
@@ -264,6 +277,10 @@ class FilePlanningDataRepository:
                     "location": {"lat": float(row["lat"]), "lon": float(row["lon"])},
                     "nearest_existing_access_minutes_proxy": round(nearest_existing[node_id], 4),
                     "is_synthetic": self._as_bool(row.get("is_synthetic")),
+                    "weekly_expected_sessions": {
+                        profile: round(totals[node_id], 6)
+                        for profile, totals in weekly_demand.items()
+                    },
                 }
             )
 

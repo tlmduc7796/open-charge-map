@@ -3,9 +3,11 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { api } from "../api";
 import AppModeSwitch, { type AppMode } from "./AppModeSwitch";
 import PlannerMap from "./PlannerMap";
+import { DEMAND_SCENARIO_LABELS } from "./demandHeatmap";
 import type {
   PlanningDemoSnapshotResponse,
   PlanningDataStatus,
+  PlanningConstraintStatus,
   PlanningMetric,
   PlanningRecommendation,
   PlanningRecommendationResponse,
@@ -33,8 +35,8 @@ function localDateTimeNow(): string {
 function statusLabel(status: PlanningDataStatus): string {
   const labels: Record<PlanningDataStatus, string> = {
     observed: "Đã quan sát",
-    proxy: "Proxy",
-    synthetic: "Tổng hợp",
+    proxy: "Ước tính gián tiếp",
+    synthetic: "Mô phỏng",
     scenario: "Theo kịch bản",
     unknown: "Chưa có dữ liệu",
     not_applicable: "Không áp dụng",
@@ -47,11 +49,34 @@ function metricValue(metric: PlanningMetric | undefined): string {
   const value = typeof metric.value === "number"
     ? metric.value.toLocaleString("vi-VN")
     : metric.value;
-  return `${value} ${metric.unit}`;
+  const units: Record<string, string> = {
+    sessions_per_week: "lượt/tuần", "sessions/week": "lượt/tuần",
+    percent_total_demand: "% nhu cầu toàn khu vực", percent_candidate_catchment_demand: "%",
+    percent: "%", score_0_100: "điểm", VND: "đồng", kW: "kW",
+  };
+  return `${value} ${units[metric.unit] ?? metric.unit}`;
 }
 
 function signedDifference(value: number, digits = 1): string {
   return `${value > 0 ? "+" : value < 0 ? "−" : ""}${Math.abs(value).toFixed(digits)}`;
+}
+
+function criterionLabel(id: string): string {
+  const labels: Record<string, string> = {
+    demand_potential: "Nhu cầu sạc", demand_coverage: "Nhu cầu sạc", marginal_coverage: "Nhu cầu được phủ thêm",
+    grid_site_readiness: "Điều kiện mặt bằng và nguồn điện", network_segment_fit: "Phù hợp với khu vực",
+    network_gap_fit: "Khoảng trống trạm hiện có", inside_boundary: "Trong khu vực khảo sát",
+    site_access: "Lối vào địa điểm", safety_permit: "Giấy phép và an toàn", grid_capacity: "Nguồn điện",
+    road_access: "Đường tiếp cận", charger_configuration: "Cấu hình trạm sạc",
+    candidate_type: "Loại địa điểm", site_rights: "Quyền sử dụng đất",
+    candidate_spacing: "Khoảng cách tới trạm hiện có", individual_budget: "Ngân sách xây trạm",
+  };
+  return labels[id] ?? id.replaceAll("_", " ");
+}
+
+function constraintStatusLabel(status: PlanningConstraintStatus | undefined): string {
+  const labels = { pass: "Đạt", fail: "Không đạt", conditional: "Cần xác minh", unknown: "Cần xác minh", not_applicable: "Không áp dụng" };
+  return status ? labels[status] : "Chưa có dữ liệu";
 }
 
 function runStatusLabel(status: PlanningRunStatus): string {
@@ -59,8 +84,8 @@ function runStatusLabel(status: PlanningRunStatus): string {
     completed: "Hoàn tất",
     completed_with_unknowns: "Hoàn tất, còn thiếu dữ liệu",
     invalid_input: "Chưa thể chạy với dữ liệu này",
-    no_feasible_candidates: "Không có candidate khả thi",
-    failed: "Run thất bại",
+    no_feasible_candidates: "Không có địa điểm phù hợp",
+    failed: "Đánh giá chưa thành công",
   };
   return labels[status];
 }
@@ -70,13 +95,13 @@ function MetricCell({ label, metric }: { label: string; metric: PlanningMetric |
     <div className="planner-metric-cell">
       <span>{label}</span>
       <strong>{metricValue(metric)}</strong>
-      <small>{metric ? statusLabel(metric.status) : "Chưa có dữ liệu"}</small>
     </div>
   );
 }
 
 function CandidateCard({
   item,
+  label,
   selected,
   compared,
   compareDisabled,
@@ -84,6 +109,7 @@ function CandidateCard({
   onCompare,
 }: {
   item: PlanningRecommendation;
+  label: string;
   selected: boolean;
   compared: boolean;
   compareDisabled: boolean;
@@ -95,8 +121,8 @@ function CandidateCard({
       <button type="button" className="planner-candidate-focus" aria-pressed={selected} onClick={onSelect}>
         <span className="planner-rank">{item.rank}</span>
         <span className="planner-candidate-main">
-          <strong>{item.candidate_id}</strong>
-          <small>{item.eligibility === "eligible" ? "Đủ điều kiện" : "Cần xác minh"} · bằng chứng {(item.evidence_coverage * 100).toFixed(0)}%</small>
+          <strong>{label}</strong>
+          <small>{item.eligibility === "eligible" ? "Đạt điều kiện sàng lọc" : "Cần xác minh"}</small>
           <span className="planner-card-metrics">
             <span>Nhu cầu <b>{metricValue(item.metrics.demand_potential)}</b></span>
             <span>Độ phủ <b>{metricValue(item.metrics.coverage_gain)}</b></span>
@@ -119,29 +145,16 @@ function CandidateCard({
   );
 }
 
-function ComparisonTable({ items }: { items: [PlanningRecommendation, PlanningRecommendation] }) {
+function ComparisonTable({ items, labels }: { items: [PlanningRecommendation, PlanningRecommendation]; labels: Record<string, string> }) {
   const [first, second] = items;
   const metricRows = [
     ["Nhu cầu", "demand_potential"],
     ["Độ phủ tăng thêm", "coverage_gain"],
     ["Công suất gợi ý", "recommended_capacity"],
-    ["Rủi ro quá tải", "overload_risk"],
     ["Chi phí ước tính", "estimated_cost"],
   ] as const;
   const componentIds = [...new Set([...first.score_breakdown, ...second.score_breakdown].map((part) => part.component_id))];
   const constraintIds = [...new Set([...first.constraints, ...second.constraints].map((constraint) => constraint.id))];
-  const provenanceRows = [first, second].flatMap((item) => item.provenance.map((source, index) => ({
-    id: `${source.field}|${source.source_id ?? source.source_ref ?? index}`,
-    field: source.field,
-  })));
-  const provenanceIds = [...new Set(provenanceRows.map((source) => source.id))];
-  const provenanceField = (item: PlanningRecommendation, id: string) => {
-    const source = item.provenance.find((entry, index) => `${entry.field}|${entry.source_id ?? entry.source_ref ?? index}` === id);
-    if (!source) return "Chưa có nguồn được trả về";
-    const reference = source.source_id ?? source.source_ref ?? "Không rõ nguồn";
-    const observedAt = source.observed_at ? new Date(source.observed_at).toLocaleString("vi-VN") : "chưa rõ thời điểm";
-    return `${reference} · ${statusLabel(source.status)}${source.is_synthetic ? " · tổng hợp" : ""} · ${observedAt}${source.note ? ` · ${source.note}` : ""}`;
-  };
   const delta = (key: (typeof metricRows)[number][1]) => {
     const left = first.metrics[key];
     const right = second.metrics[key];
@@ -149,8 +162,7 @@ function ComparisonTable({ items }: { items: [PlanningRecommendation, PlanningRe
       return "Chưa thể so sánh";
     }
     const difference = right.value - left.value;
-    const formatted = Math.abs(difference).toLocaleString("vi-VN", { maximumFractionDigits: 2 });
-    return `${difference > 0 ? "+" : difference < 0 ? "−" : ""}${formatted} ${left.unit}`;
+    return `${difference > 0 ? "+" : difference < 0 ? "−" : ""}${metricValue({ ...left, value: Math.abs(difference) })}`;
   };
 
   return (
@@ -161,17 +173,16 @@ function ComparisonTable({ items }: { items: [PlanningRecommendation, PlanningRe
       </div>
       <div className="planner-comparison-scroll">
         <table>
-          <thead><tr><th>Tiêu chí</th><th>A · {first.candidate_id}</th><th>B · {second.candidate_id}</th><th>Chênh lệch</th></tr></thead>
+          <thead><tr><th>Tiêu chí</th><th>A · {labels[first.candidate_id] ?? first.candidate_id}</th><th>B · {labels[second.candidate_id] ?? second.candidate_id}</th><th>Chênh lệch</th></tr></thead>
           <tbody>
             <tr><th>Thứ hạng</th><td>#{first.rank}</td><td>#{second.rank}</td><td>—</td></tr>
             <tr><th>Điểm kỹ thuật</th><td>{first.technical_score.toFixed(1)}/100</td><td>{second.technical_score.toFixed(1)}/100</td><td>{signedDifference(second.technical_score - first.technical_score)} điểm</td></tr>
-            <tr><th>Bằng chứng</th><td>{(first.evidence_coverage * 100).toFixed(0)}%</td><td>{(second.evidence_coverage * 100).toFixed(0)}%</td><td>{signedDifference((second.evidence_coverage - first.evidence_coverage) * 100, 0)} điểm %</td></tr>
-            <tr><th>Điều kiện</th><td>{first.eligibility}</td><td>{second.eligibility}</td><td>—</td></tr>
+            <tr><th>Điều kiện</th><td>{first.eligibility === "eligible" ? "Đạt sàng lọc" : "Cần xác minh"}</td><td>{second.eligibility === "eligible" ? "Đạt sàng lọc" : "Cần xác minh"}</td><td>—</td></tr>
             {metricRows.map(([label, key]) => (
               <tr key={key}>
                 <th>{label}</th>
-                <td>{metricValue(first.metrics[key])}<small>{first.metrics[key]?.status ?? "unknown"}</small></td>
-                <td>{metricValue(second.metrics[key])}<small>{second.metrics[key]?.status ?? "unknown"}</small></td>
+                <td>{metricValue(first.metrics[key])}</td>
+                <td>{metricValue(second.metrics[key])}</td>
                 <td>{delta(key)}</td>
               </tr>
             ))}
@@ -184,9 +195,9 @@ function ComparisonTable({ items }: { items: [PlanningRecommendation, PlanningRe
                 : "Chưa thể so sánh";
               return (
                 <tr key={`component-${id}`}>
-                  <th>{id.replaceAll("_", " ")}</th>
-                  <td>{left?.score === null || left === undefined ? "Chưa có điểm" : `${left.score.toFixed(1)} điểm`}<small>{left?.status ? statusLabel(left.status) : "Không được trả về"} · {left?.reason ?? ""}</small></td>
-                  <td>{right?.score === null || right === undefined ? "Chưa có điểm" : `${right.score.toFixed(1)} điểm`}<small>{right?.status ? statusLabel(right.status) : "Không được trả về"} · {right?.reason ?? ""}</small></td>
+                  <th>{criterionLabel(id)}</th>
+                  <td>{left?.score === null || left === undefined ? "Chưa có điểm" : `${left.score.toFixed(1)} điểm`}</td>
+                  <td>{right?.score === null || right === undefined ? "Chưa có điểm" : `${right.score.toFixed(1)} điểm`}</td>
                   <td>{scoreDelta}</td>
                 </tr>
               );
@@ -197,22 +208,13 @@ function ComparisonTable({ items }: { items: [PlanningRecommendation, PlanningRe
               const right = second.constraints.find((constraint) => constraint.id === id);
               return (
                 <tr key={`constraint-${id}`}>
-                  <th>{id.replaceAll("_", " ")}</th>
-                  <td>{left?.status ?? "Không được trả về"}<small>{left?.reason}</small></td>
-                  <td>{right?.status ?? "Không được trả về"}<small>{right?.reason}</small></td>
+                  <th>{criterionLabel(id)}</th>
+                  <td>{constraintStatusLabel(left?.status)}</td>
+                  <td>{constraintStatusLabel(right?.status)}</td>
                   <td>—</td>
                 </tr>
               );
             })}
-            {provenanceIds.length > 0 && <tr><th colSpan={4}>Nguồn và thời điểm</th></tr>}
-            {provenanceIds.map((id) => (
-              <tr key={`provenance-${id}`}>
-                <th>{provenanceRows.find((source) => source.id === id)?.field ?? "Nguồn"}</th>
-                <td>{provenanceField(first, id)}</td>
-                <td>{provenanceField(second, id)}</td>
-                <td>—</td>
-              </tr>
-            ))}
           </tbody>
         </table>
       </div>
@@ -220,53 +222,51 @@ function ComparisonTable({ items }: { items: [PlanningRecommendation, PlanningRe
   );
 }
 
-function CandidateExplanation({ item }: { item: PlanningRecommendation }) {
+function CandidateExplanation({ item, label }: { item: PlanningRecommendation; label: string }) {
+  const scored = item.score_breakdown.filter((part) => part.score !== null);
+  const missing = item.score_breakdown.filter((part) => part.score === null);
+  const pending = item.constraints.filter((constraint) => constraint.status === "unknown" || constraint.status === "conditional");
+  const failed = item.constraints.filter((constraint) => constraint.status === "fail");
+  const dataStatuses = [...new Set(item.provenance.map((source) => source.status))]
+    .filter((status) => status !== "unknown" && status !== "not_applicable");
   return (
     <section className="planner-explanation" aria-label={`Giải thích ${item.candidate_id}`}>
       <div className="planner-explanation-heading">
         <div>
-          <span className="planner-eyebrow">Giải thích candidate</span>
-          <h3>{item.candidate_id}</h3>
+          <span className="planner-eyebrow">Giải thích địa điểm · hạng {item.rank}</span>
+          <h3>{label}</h3>
         </div>
-        <span className={`planner-eligibility ${item.eligibility}`}>{item.eligibility === "eligible" ? "Đủ điều kiện" : "Có điều kiện"}</span>
+        <span className={`planner-eligibility ${item.eligibility}`}>{item.eligibility === "eligible" ? "Đạt sàng lọc" : "Cần xác minh"}</span>
       </div>
       <div className="planner-metric-grid">
         <MetricCell label="Nhu cầu" metric={item.metrics.demand_potential} />
         <MetricCell label="Độ phủ tăng thêm" metric={item.metrics.coverage_gain} />
         <MetricCell label="Công suất gợi ý" metric={item.metrics.recommended_capacity} />
-        <MetricCell label="Rủi ro quá tải" metric={item.metrics.overload_risk} />
         <MetricCell label="Chi phí ước tính" metric={item.metrics.estimated_cost} />
       </div>
       <div className="planner-explanation-grid">
         <section>
           <h4>Thành phần điểm</h4>
-          {item.score_breakdown.length ? item.score_breakdown.map((part) => (
+          {scored.length ? scored.map((part) => (
             <div className="planner-explanation-row" key={part.component_id}>
-              <span>{part.component_id.replaceAll("_", " ")}<small>{part.reason} · {statusLabel(part.status)} · trọng số {part.weight_percent === null ? "chưa có" : `${part.weight_percent}%`}</small></span>
-              <b>{part.score === null ? "Chưa có" : `${part.score.toFixed(1)} điểm`}<small>đóng góp {part.contribution_points === null ? "chưa có" : `${part.contribution_points.toFixed(2)} điểm`}</small></b>
+              <span>{criterionLabel(part.component_id)}</span>
+              <b>{part.score?.toFixed(1)}/100{part.contribution_points !== null && <small>đóng góp {part.contribution_points.toFixed(1)} điểm</small>}</b>
             </div>
-          )) : <p className="planner-muted">Chưa có breakdown từ engine.</p>}
+          )) : <p className="planner-summary-note">Chưa đủ dữ liệu để giải thích điểm.</p>}
+          {missing.length > 0 && <p className="planner-summary-note">Chưa chấm: {missing.map((part) => criterionLabel(part.component_id).toLowerCase()).join(", ")}.</p>}
+          <p className="planner-summary-note">Điểm chỉ dựa trên các tiêu chí đã có dữ liệu.</p>
         </section>
         <section>
-          <h4>Điều kiện</h4>
-          {item.constraints.length ? item.constraints.map((constraint) => (
-            <div className="planner-explanation-row" key={constraint.id}>
-              <span>{constraint.id.replaceAll("_", " ")}<small>{constraint.reason}</small></span>
-              <b className={`constraint-${constraint.status}`}>{constraint.status}</b>
-            </div>
-          )) : <p className="planner-muted">Không có điều kiện cần giải thích.</p>}
+          <h4>Cần xác minh</h4>
+          {pending.length > 0
+            ? <ul className="planner-checklist">{pending.map((constraint) => <li key={constraint.id}>{criterionLabel(constraint.id)}</li>)}</ul>
+            : <p className="planner-summary-note">Không còn điều kiện chờ xác minh trong dữ liệu hiện tại.</p>}
+          {failed.length > 0 && <p className="planner-summary-note constraint-fail">Không đạt: {failed.map((constraint) => criterionLabel(constraint.id)).join(", ")}.</p>}
         </section>
       </div>
       <section className="planner-provenance">
         <h4>Nguồn dữ liệu</h4>
-        {item.provenance.length ? item.provenance.map((source, index) => (
-          <div className="planner-source-row" key={`${source.field}-${source.source_id ?? index}`}>
-            <span><b>{source.field}</b><small>{source.source_id ?? source.source_ref ?? "Không rõ nguồn"}{source.observed_at ? ` · ${new Date(source.observed_at).toLocaleString("vi-VN")}` : " · chưa rõ thời điểm"}{source.note ? ` · ${source.note}` : ""}</small></span>
-            <span className={`provenance-tag ${source.status}`}>
-              {source.is_synthetic ? "Tổng hợp · " : ""}{statusLabel(source.status)}
-            </span>
-          </div>
-        )) : <p className="planner-muted">Response chưa có provenance cho candidate này.</p>}
+        <p className="planner-summary-note">{dataStatuses.length ? dataStatuses.map(statusLabel).join(" · ") : "Chưa có nguồn được xác minh"}. Kết quả dùng để sàng lọc địa điểm.</p>
       </section>
     </section>
   );
@@ -289,6 +289,7 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
   const [budgetVnd, setBudgetVnd] = useState("");
   const [response, setResponse] = useState<PlanningRecommendationResponse | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
+  const candidateLabels = useMemo(() => Object.fromEntries((demo?.candidates ?? []).map((candidate) => [candidate.candidate_id, candidate.label])), [demo]);
   const [comparisonIds, setComparisonIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
@@ -349,7 +350,7 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
     setComparisonIds([]);
     if (!demo || selectedCandidateIds.length === 0) {
       setBusy(false);
-      setRequestError("Chọn ít nhất một candidate trong snapshot M1.");
+      setRequestError("Chọn ít nhất một địa điểm để đánh giá.");
       return;
     }
     const request: PlanningRequest = {
@@ -405,30 +406,26 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
         <section className="control-column planner-control-column">
           <AppModeSwitch active="planner" onChange={onModeChange} />
           <div className="planner-heading">
-            <span className="planner-eyebrow">Station planning · MVP</span>
+            <span className="planner-eyebrow">Quy hoạch trạm sạc · Demo</span>
             <h1>Khám phá địa điểm đề xuất</h1>
-            <p>Chạy profile kỹ thuật, xem thứ hạng và kiểm tra nguồn dữ liệu của từng phương án.</p>
+            <p>Xem nơi có nhu cầu sạc cao và so sánh các địa điểm có thể đặt trạm.</p>
           </div>
 
           <form className="planner-form" onSubmit={(event) => void runScenario(event)}>
             <div className="planner-form-section">
               <div className="planner-section-heading"><span>01</span><h2>Phạm vi và dữ liệu</h2></div>
-              {catalogLoading && <p className="planner-muted">Đang tải snapshot M1…</p>}
+              {catalogLoading && <p className="planner-muted">Đang tải dữ liệu khu vực…</p>}
               {catalogError && <div className="planner-alert error" role="alert">{catalogError}</div>}
               {demo && (
                 <>
                   <div className="planner-demo-meta">
                     <span>Khu vực <b>{demo.study_area.city_id}</b></span>
-                    <span>Boundary <b>{demo.study_area.boundary_version}</b></span>
-                    <span>Pilot <b>9 phường</b></span>
-                    <span>Snapshot <b>{demo.snapshot.data_snapshot_id}</b></span>
-                    <span>Candidate <b>{demo.candidates.length}</b></span>
-                    {demo.defaults.portfolio_budget_vnd !== null && (
-                      <span>Budget portfolio M1 <b>{demo.defaults.portfolio_budget_vnd.toLocaleString("vi-VN")} VND</b></span>
-                    )}
+                    <span>Phạm vi <b>9 phường</b></span>
+                    <span>Địa điểm <b>{demo.candidates.length}</b></span>
+                    <details className="planner-data-details"><summary>Thông tin bộ dữ liệu</summary><span>{demo.snapshot.data_snapshot_id}</span><span>Ranh giới {demo.study_area.boundary_version}</span></details>
                   </div>
                   <fieldset className="planner-candidate-select" disabled={catalogLoading || busy}>
-                    <legend>Candidate đưa vào run</legend>
+                    <legend>Địa điểm muốn so sánh</legend>
                     <div className="planner-candidate-select-actions">
                       <span>{selectedCandidateIds.length} đã chọn</span>
                       <button type="button" onClick={() => { clearResultsForInputChange(); setSelectedCandidateIds(demo.candidates.map((item) => item.candidate_id)); }}>Chọn tất cả</button>
@@ -446,79 +443,75 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
                         </label>
                       ))}
                     </div>
-                    {selectedCandidateIds.length === 0 && <small className="planner-field-error">Chọn ít nhất một candidate để chạy.</small>}
+                    {selectedCandidateIds.length === 0 && <small className="planner-field-error">Chọn ít nhất một địa điểm để đánh giá.</small>}
                   </fieldset>
                 </>
               )}
             </div>
 
             <div className="planner-form-section">
-              <div className="planner-section-heading"><span>02</span><h2>Kịch bản kỹ thuật</h2></div>
+              <div className="planner-section-heading"><span>02</span><h2>Nhu cầu và trạm sạc</h2></div>
               <div className="planner-profile-row">
-                <span>Profile</span><strong>Technical opportunity</strong>
+                <span>Cách đánh giá</span><strong>Nhu cầu và độ phủ</strong>
               </div>
               <label>
-                Kịch bản nhu cầu
+                Mức nhu cầu sạc
                 <select value={demandScenario} onChange={(event) => { clearResultsForInputChange(); setDemandScenario(event.target.value as "low" | "base" | "high"); }}>
-                  <option value="low">Low · 0,6×</option>
-                  <option value="base">Base · 1,0×</option>
-                  <option value="high">High · 1,6×</option>
+                  <option value="low">Thấp · 60% mức thông thường</option>
+                  <option value="base">Thông thường</option>
+                  <option value="high">Cao · 160% mức thông thường</option>
                 </select>
-                <span className="planner-label-note">Mô phỏng tổng hợp theo một tuần mẫu; không phải dự báo xác suất.</span>
-              </label>
-              <label>
-                Thời điểm đánh giá
-                <input type="datetime-local" value={asOf} onChange={(event) => { clearResultsForInputChange(); setAsOf(event.target.value); }} required />
+                <span className="planner-label-note">Màu trên bản đồ cập nhật ngay theo lượt sạc dự kiến trong một tuần mô phỏng.</span>
               </label>
               <div className="planner-field-pair">
-                <label>Horizon (năm)<input type="number" min={1} value={horizonYears} onChange={(event) => { clearResultsForInputChange(); setHorizonYears(Number(event.target.value)); }} required /></label>
-                <label>Seed<input type="number" value={seed} onChange={(event) => { clearResultsForInputChange(); setSeed(Number(event.target.value)); }} required /></label>
-              </div>
-              <label>
-                Config version
-                <input value={configVersion} readOnly />
-              </label>
-              <div className="planner-field-pair">
-                <label>Ngưỡng tiếp cận (phút)<input type="number" min={1} value={coverageMinutes} onChange={(event) => { clearResultsForInputChange(); setCoverageMinutes(Number(event.target.value)); }} required /></label>
-                <label>Ngưỡng CAPEX tối đa từng candidate (VND)<input type="number" min={0} value={budgetVnd} onChange={(event) => { clearResultsForInputChange(); setBudgetVnd(event.target.value); }} placeholder="Chưa đặt" /></label>
+                <label>Thời gian đến trạm tối đa (phút)<input type="number" min={1} value={coverageMinutes} onChange={(event) => { clearResultsForInputChange(); setCoverageMinutes(Number(event.target.value)); }} required /></label>
+                <label>Chi phí xây mỗi trạm tối đa (đồng)<input type="number" min={0} value={budgetVnd} onChange={(event) => { clearResultsForInputChange(); setBudgetVnd(event.target.value); }} placeholder="Không giới hạn" /></label>
               </div>
               <div className="planner-field-pair">
-                <label>Loại sạc<select value={chargerType} onChange={(event) => { clearResultsForInputChange(); setChargerType(event.target.value as "AC" | "DC"); }}><option value="DC">DC</option><option value="AC">AC</option></select></label>
-                <label>Số cổng<input type="number" min={1} value={portCount} onChange={(event) => { clearResultsForInputChange(); setPortCount(Number(event.target.value)); }} required /></label>
+                <label>Loại sạc<select value={chargerType} onChange={(event) => { clearResultsForInputChange(); setChargerType(event.target.value as "AC" | "DC"); }}><option value="DC">Sạc nhanh (DC)</option><option value="AC">Sạc thường (AC)</option></select></label>
+                <label>Số cổng sạc mỗi trạm<input type="number" min={1} value={portCount} onChange={(event) => { clearResultsForInputChange(); setPortCount(Number(event.target.value)); }} required /></label>
               </div>
               <label>Công suất mỗi cổng (kW)<input type="number" min={0.1} step={0.1} value={powerKw} onChange={(event) => { clearResultsForInputChange(); setPowerKw(Number(event.target.value)); }} required /></label>
-              <p className="planner-illustrative-note">Mặc định M1: access proxy normal, 15 phút và DC 4 × 80 kW. M1 có budget tham chiếu cho portfolio; bộ lọc ngân sách từng candidate để trống đến khi bạn nhập ngưỡng riêng. CAPEX là giả định minh họa, không phải báo giá thị trường.</p>
+              <p className="planner-illustrative-note">Thời gian đến trạm là ước tính. Chi phí mẫu áp dụng cho trạm sạc nhanh 4 cổng × 80 kW; để trống ngân sách nếu chưa muốn giới hạn.</p>
+              <details className="planner-extra-settings">
+                <summary>Thông tin lần đánh giá</summary>
+                <label>Thời điểm đánh giá<input type="datetime-local" value={asOf} onChange={(event) => { clearResultsForInputChange(); setAsOf(event.target.value); }} required /></label>
+                <label>Thời gian dự kiến (năm)<input type="number" min={1} value={horizonYears} onChange={(event) => { clearResultsForInputChange(); setHorizonYears(Number(event.target.value)); }} required /></label>
+                <p className="planner-label-note">Hai thông tin này được lưu cùng lần đánh giá. Demo vẫn dùng một tuần dữ liệu mẫu, chưa dự báo nhu cầu theo năm.</p>
+              </details>
             </div>
 
             <div className="planner-package-note">
-              Profile policy/investor và ROI chưa bật. CAPEX chỉ hiện như giả định base_cost tổng hợp khi cấu hình khớp M1; đổi cấu hình sẽ đưa chi phí về “chưa có dữ liệu”.
+              Demo chưa tính lợi nhuận hay thời gian hoàn vốn. Chi phí là số liệu mô phỏng; đổi cấu hình trạm có thể khiến chi phí chưa xác định.
             </div>
             <button className="planner-run-button" type="submit" disabled={busy || catalogLoading || !demo || selectedCandidateIds.length === 0}>
-              {busy ? "Đang chạy…" : "Chạy scenario"}
+              {busy ? "Đang đánh giá…" : "Đánh giá địa điểm"}
             </button>
           </form>
         </section>
 
         <section className="map-column planner-results-column">
           <div className="planner-results-header">
-            <div><span className="planner-eyebrow">Kết quả và bản đồ</span><h2>Candidate ranking</h2></div>
+            <div><span className="planner-eyebrow">Kết quả và bản đồ</span><h2>Bản đồ nhu cầu và địa điểm</h2></div>
             {response && <span className={`planner-run-status ${response.status}`}>{runStatusLabel(response.status)}</span>}
           </div>
 
           {requestError && <div className="planner-alert error" role="alert">{requestError}</div>}
           {response && (
             <>
-              <div className="planner-run-meta">
+              <details className="planner-run-details">
+                <summary>Thông tin lần đánh giá</summary>
+                <div className="planner-run-meta">
                 <span>Run <b>{response.run_id}</b></span>
                 <span>Snapshot <b>{response.scenario.data_snapshot_id}</b></span>
-                <span>Demand <b>{response.scenario.demand_scenario}</b></span>
+                <span>Nhu cầu <b>{DEMAND_SCENARIO_LABELS[response.scenario.demand_scenario]}</b></span>
                 <span>Algorithm <b>{response.scenario.algorithm_version ?? "Chưa có"}</b></span>
                 <span>Config <b>{response.scenario.config_version ?? "Chưa có"}</b></span>
-              </div>
+                </div>
+              </details>
               {response.warnings.length > 0 && (
                 <div className="planner-warnings" role="status">
-                  <strong>Giới hạn của run</strong>
-                  {response.warnings.map((warning, index) => <p key={`${index}-${warning}`}>{warning}</p>)}
+                  <p>Dữ liệu mô phỏng cho 9 phường. Thời gian tiếp cận là ước tính; điều kiện đất, điện và giấy phép cần xác minh.</p>
                 </div>
               )}
             </>
@@ -532,22 +525,26 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
               demandNodes={demo?.demand_nodes ?? []}
               boundaryGeometry={demo?.snapshot.geometry ?? null}
               coverageMinutes={coverageMinutes}
+              demandScenario={demandScenario}
+              selectedCandidateIds={selectedCandidateIds}
               selectedCandidateId={selectedCandidateId}
               onSelect={setSelectedCandidateId}
             />
             <div className="planner-boundary-note">
-              Ranh giới và lớp demand/station lấy từ cùng snapshot M1. Demand node màu xanh nghĩa là nằm trong ngưỡng access-time proxy của trạm hiện hữu.
+              Vàng → đỏ: nhu cầu từ thấp đến cao. Vùng màu được làm mượt từ dữ liệu mô phỏng, không phải ranh giới phục vụ. Đổi thời gian đến trạm rồi đánh giá lại để cập nhật độ phủ và thứ hạng.
             </div>
           </div>
 
           {response && response.recommendations.length > 0 && (
             <div className="planner-candidate-results">
-              <div className="planner-results-subheading"><h3>Phương án được xếp hạng</h3><span>{response.recommendations.length} candidate</span></div>
+              <div className="planner-results-subheading"><h3>Phương án được xếp hạng</h3><span>{response.recommendations.length} địa điểm</span></div>
+              <p className="planner-ranking-note">Thứ hạng so sánh điểm đánh giá trong kịch bản hiện tại; địa điểm vẫn cần xác minh thực tế trước khi xây trạm.</p>
               <div className="planner-candidate-list">
                 {response.recommendations.map((item) => (
                   <CandidateCard
                     key={item.candidate_id}
                     item={item}
+                    label={candidateLabels[item.candidate_id] ?? item.candidate_id}
                     selected={item.candidate_id === selectedCandidateId}
                     compared={comparisonIds.includes(item.candidate_id)}
                     compareDisabled={comparisonIds.length >= 2 && !comparisonIds.includes(item.candidate_id)}
@@ -556,16 +553,16 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
                   />
                 ))}
               </div>
-              {comparisonIds.length === 1 && <p className="planner-comparison-hint">Chọn thêm một candidate để xem chênh lệch giữa hai phương án.</p>}
-              {comparisonItems && <ComparisonTable items={comparisonItems} />}
-              {selectedCandidate && <CandidateExplanation item={selectedCandidate} />}
+              {comparisonIds.length === 1 && <p className="planner-comparison-hint">Chọn thêm một địa điểm để so sánh hai phương án.</p>}
+              {comparisonItems && <ComparisonTable items={comparisonItems} labels={candidateLabels} />}
+              {selectedCandidate && <CandidateExplanation item={selectedCandidate} label={candidateLabels[selectedCandidate.candidate_id] ?? selectedCandidate.candidate_id} />}
             </div>
           )}
 
           {response && response.recommendations.length === 0 && (
             <div className="planner-empty-state">
-              <strong>{response.status === "no_feasible_candidates" ? "Không có candidate khả thi" : "Chưa có kết quả để xếp hạng"}</strong>
-              <p>Không có điểm số hoặc vị trí nào được tự tạo khi repository chưa xác nhận dữ liệu đầu vào.</p>
+              <strong>{response.status === "no_feasible_candidates" ? "Không có địa điểm phù hợp" : "Chưa có kết quả để xếp hạng"}</strong>
+              <p>Kiểm tra dữ liệu, địa điểm đã chọn và giới hạn ngân sách rồi đánh giá lại.</p>
             </div>
           )}
 
@@ -574,13 +571,13 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
               {response.unranked_candidates.length > 0 && (
                 <details open>
                   <summary>Chưa đủ bằng chứng để xếp hạng · {response.unranked_candidates.length}</summary>
-                  {response.unranked_candidates.map((candidate) => <p key={candidate.candidate_id}><b>{candidate.candidate_id}</b> — {candidate.reason}</p>)}
+                  {response.unranked_candidates.map((candidate) => <p key={candidate.candidate_id}><b>{candidateLabels[candidate.candidate_id] ?? candidate.candidate_id}</b> — chưa đủ dữ liệu để chấm điểm.</p>)}
                 </details>
               )}
               {response.excluded_candidates.length > 0 && (
                 <details open>
-                  <summary>Bị loại do hard constraint · {response.excluded_candidates.length}</summary>
-                  {response.excluded_candidates.map((candidate) => <p key={candidate.candidate_id}><b>{candidate.candidate_id}</b> — {candidate.constraints.map((constraint) => constraint.reason).join("; ")}</p>)}
+                  <summary>Không đáp ứng điều kiện · {response.excluded_candidates.length}</summary>
+                  {response.excluded_candidates.map((candidate) => <p key={candidate.candidate_id}><b>{candidateLabels[candidate.candidate_id] ?? candidate.candidate_id}</b> — {candidate.constraints.map((constraint) => `${criterionLabel(constraint.id)}: ${constraintStatusLabel(constraint.status).toLowerCase()}`).join("; ")}</p>)}
                 </details>
               )}
             </div>
@@ -588,8 +585,8 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
 
           {!response && !requestError && !busy && (
             <div className="planner-empty-state initial">
-              <strong>{catalogLoading ? "Đang tải dữ liệu M1" : "Chưa chạy scenario"}</strong>
-              <p>{catalogLoading ? "Planner đang tải snapshot, candidate, demand node và trạm hiện hữu." : "Chọn candidate và kịch bản, sau đó chạy để xem ranking cùng giải thích."}</p>
+              <strong>{catalogLoading ? "Đang tải dữ liệu" : "Chưa đánh giá địa điểm"}</strong>
+              <p>{catalogLoading ? "Đang tải khu vực, nhu cầu và các trạm sạc." : "Chọn mức nhu cầu và địa điểm bên trái, sau đó bấm Đánh giá địa điểm để xem kết quả."}</p>
             </div>
           )}
         </section>

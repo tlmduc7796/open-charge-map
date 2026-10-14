@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import goongjs from "@goongmaps/goong-js";
 import "@goongmaps/goong-js/dist/goong-js.css";
 import { latLngBounds } from "leaflet";
 import { CircleMarker, GeoJSON, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
 
 import { hideGoongPoiLayers } from "../goongMapStyle";
+import {
+  DEMAND_COLORS, DEMAND_LABELS, DEMAND_SCENARIO_LABELS, demandColor, demandFeature,
+  demandAccessSummary, demandScale, visibleDemandNodes, weeklyDemand, type DemandScenario,
+} from "./demandHeatmap";
 import type { PlanningDemoSnapshotResponse, PlanningRecommendation } from "./types";
 
 type Candidate = PlanningDemoSnapshotResponse["candidates"][number];
@@ -24,8 +28,15 @@ interface PlannerMapProps {
   demandNodes: DemandNode[];
   boundaryGeometry: BoundaryGeometry | null;
   coverageMinutes: number;
+  demandScenario: DemandScenario;
+  selectedCandidateIds: string[];
   selectedCandidateId: string | null;
   onSelect: (candidateId: string) => void;
+}
+
+interface PlannerMapDisplayProps extends PlannerMapProps {
+  onlyUncovered: boolean;
+  onToggleUncovered: () => void;
 }
 
 const HCMC_CENTER: [number, number] = [106.7009, 10.7769];
@@ -33,22 +44,17 @@ const BOUNDARY_SOURCE = "planner-boundary";
 const BOUNDARY_FILL_LAYER = "planner-boundary-fill";
 const BOUNDARY_LINE_LAYER = "planner-boundary-line";
 const DEMAND_SOURCE = "planner-demand";
-const DEMAND_LAYER = "planner-demand-layer";
+const DEMAND_HEAT_LAYER = "planner-demand-heatmap";
 const SITES_SOURCE = "planner-sites";
 const SITES_LAYER = "planner-sites-layer";
 const CANDIDATES_SOURCE = "planner-candidates";
 const CANDIDATES_LAYER = "planner-candidates-layer";
+const MARKER_COLORS = { station: "#16a34a", selected: "#2563eb", ranked: "#7c3aed", unselected: "#94a3b8" };
 
-function demandNodeFeature(node: DemandNode, coverageMinutes: number) {
-  return {
-    type: "Feature" as const,
-    geometry: { type: "Point" as const, coordinates: [node.location.lon, node.location.lat] },
-    properties: {
-      demand_node_id: node.demand_node_id,
-      covered: node.nearest_existing_access_minutes_proxy <= coverageMinutes,
-      access_minutes: node.nearest_existing_access_minutes_proxy,
-    },
-  };
+function candidateColor(ranked: boolean, focused: boolean, included: boolean) {
+  if (focused) return MARKER_COLORS.selected;
+  if (ranked) return MARKER_COLORS.ranked;
+  return included ? MARKER_COLORS.selected : MARKER_COLORS.unselected;
 }
 
 function existingSiteFeature(site: ExistingSite) {
@@ -65,7 +71,7 @@ function existingSiteFeature(site: ExistingSite) {
   };
 }
 
-function candidateFeature(candidate: Candidate, item: PlanningRecommendation | undefined, selected: boolean) {
+function candidateFeature(candidate: Candidate, item: PlanningRecommendation | undefined, selected: boolean, included: boolean) {
   return {
     type: "Feature" as const,
     geometry: { type: "Point" as const, coordinates: [candidate.location.lon, candidate.location.lat] },
@@ -74,7 +80,7 @@ function candidateFeature(candidate: Candidate, item: PlanningRecommendation | u
       label: candidate.label,
       candidate_type: candidate.candidate_type,
       ranked: Boolean(item),
-      eligible: item?.eligibility === "eligible",
+      marker_color: candidateColor(Boolean(item), selected, included),
       rank: item?.rank ?? null,
       technical_score: item?.technical_score ?? null,
       selected,
@@ -84,26 +90,102 @@ function candidateFeature(candidate: Candidate, item: PlanningRecommendation | u
 
 function PlannerMapLegendAndEmpty({
   isEmpty,
+  demandNodes,
+  demandScenario,
+  coverageMinutes,
+  onlyUncovered,
+  onToggleUncovered,
 }: {
   isEmpty: boolean;
+  demandNodes: DemandNode[];
+  demandScenario: DemandScenario;
+  coverageMinutes: number;
+  onlyUncovered: boolean;
+  onToggleUncovered: () => void;
 }) {
+  const format = (value: number) => value.toLocaleString("vi-VN", { maximumFractionDigits: 0 });
+  const access = demandAccessSummary(demandNodes, demandScenario, coverageMinutes);
   return (
     <>
       {isEmpty && (
         <div className="planner-map-empty">
-          <strong>Chưa tải được snapshot M1</strong>
-          <span>Ranh giới, demand node và site sẽ xuất hiện sau khi API trả metadata.</span>
+          <strong>Đang tải dữ liệu bản đồ</strong>
+          <span>Các vùng nhu cầu và địa điểm sẽ xuất hiện khi dữ liệu sẵn sàng.</span>
         </div>
       )}
       <div className="planner-map-legend" aria-label="Chú giải bản đồ">
         <span><i className="planner-map-dot station" />Trạm hiện hữu</span>
-        <span><i className="planner-map-dot demand-covered" />Demand trong ngưỡng</span>
-        <span><i className="planner-map-dot demand-gap" />Demand ngoài ngưỡng</span>
-        <span><i className="planner-map-dot eligible" />Candidate được xếp hạng</span>
-        <span><i className="planner-map-dot conditional" />Cần xác minh</span>
+        <span><i className="planner-map-dot ranked" />Đã có thứ hạng</span>
+        <span><i className="planner-map-dot selected" />Ứng viên đang chọn · cần xác minh</span>
+        <span><i className="planner-map-dot unselected" />Ứng viên chưa chọn</span>
       </div>
+      {!isEmpty && (
+        <div className="planner-heatmap-legend" aria-label="Chú giải nhu cầu">
+          <div className="planner-heatmap-heading"><strong>Nhu cầu sạc</strong><span>{DEMAND_SCENARIO_LABELS[demandScenario]}</span></div>
+          <div className="planner-heatmap-scale">
+            {DEMAND_LABELS.map((label, index) => (
+              <span key={label}><i style={{ background: DEMAND_COLORS[index] }} /><b>{label}</b></span>
+            ))}
+          </div>
+          <p>{access.missingDemand === 0 ? `Tổng ${format(access.total)} lượt dự kiến/tuần` : "Dữ liệu nhu cầu chưa đầy đủ"}</p>
+          <span className="planner-heatmap-access-key">Ngoài {coverageMinutes} phút đến trạm hiện hữu: <b>{access.outsidePercent === null ? "chưa xác định" : `${format(access.outsidePercent)}% nhu cầu có dữ liệu`}</b></span>
+          <label className="planner-heatmap-filter">
+            <input type="checkbox" checked={onlyUncovered} onChange={onToggleUncovered} />
+            Chỉ xem vùng xa trạm (&gt; {coverageMinutes} phút)
+          </label>
+          {onlyUncovered && access.outside === 0 && <p>Không có nhu cầu xa trạm được xác định ở ngưỡng này.</p>}
+          {access.unknownAccessDemand > 0 && <small>Một phần nhu cầu chưa có thời gian tiếp cận.</small>}
+          <small>Mô phỏng · thời gian ước tính · màu thể hiện mức tập trung tương đối</small>
+        </div>
+      )}
     </>
   );
+}
+
+// The fallback draws the same data-driven heat colors on a canvas below map markers.
+// No plugin or extra tile service is needed; pan/zoom keep the overlay aligned with Leaflet.
+function LeafletDemandHeatmap({ demandNodes, demandScenario, coverageMinutes, onlyUncovered }: Pick<PlannerMapDisplayProps, "demandNodes" | "demandScenario" | "coverageMinutes" | "onlyUncovered">) {
+  const map = useMap();
+  useEffect(() => {
+    const pane = map.getPane("planner-demand-heat") ?? map.createPane("planner-demand-heat");
+    pane.style.zIndex = "350";
+    pane.style.pointerEvents = "none";
+    const canvas = document.createElement("canvas");
+    canvas.style.position = "absolute";
+    canvas.style.pointerEvents = "none";
+    canvas.setAttribute("aria-hidden", "true");
+    pane.appendChild(canvas);
+    const scale = demandScale(demandNodes);
+    const draw = () => {
+      const size = map.getSize();
+      const topLeft = map.containerPointToLayerPoint([0, 0]);
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = size.x * ratio;
+      canvas.height = size.y * ratio;
+      Object.assign(canvas.style, { width: `${size.x}px`, height: `${size.y}px`, left: `${topLeft.x}px`, top: `${topLeft.y}px` });
+      const context = canvas.getContext("2d");
+      if (!context) return;
+      context.scale(ratio, ratio);
+      const radius = Math.max(24, Math.min(72, 24 + (map.getZoom() - 10) * 8));
+      for (const node of visibleDemandNodes(demandNodes, demandScenario, coverageMinutes, onlyUncovered)) {
+        const value = weeklyDemand(node, demandScenario);
+        if (value === null || value <= 0) continue;
+        const point = map.latLngToContainerPoint([node.location.lat, node.location.lon]);
+        const color = demandColor(value, scale.thresholds);
+        const gradient = context.createRadialGradient(point.x, point.y, 0, point.x, point.y, radius);
+        gradient.addColorStop(0, `${color}b3`);
+        gradient.addColorStop(0.45, `${color}60`);
+        gradient.addColorStop(1, `${color}00`);
+        context.globalAlpha = 0.35 + 0.65 * value / scale.maximum;
+        context.fillStyle = gradient;
+        context.fillRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
+      }
+    };
+    draw();
+    map.on("move zoom resize", draw);
+    return () => { map.off("move zoom resize", draw); canvas.remove(); };
+  }, [map, demandNodes, demandScenario, coverageMinutes, onlyUncovered]);
+  return null;
 }
 
 function FitMapItems({
@@ -130,9 +212,13 @@ function OsmPlannerMap({
   demandNodes,
   boundaryGeometry,
   coverageMinutes,
+  demandScenario,
+  selectedCandidateIds,
   selectedCandidateId,
   onSelect,
-}: PlannerMapProps) {
+  onlyUncovered,
+  onToggleUncovered,
+}: PlannerMapDisplayProps) {
   const byCandidateId = new Map(recommendations.map((item) => [item.candidate_id, item]));
   const boundaryFeature = boundaryGeometry
     ? { type: "Feature" as const, properties: {}, geometry: boundaryGeometry }
@@ -146,41 +232,19 @@ function OsmPlannerMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <FitMapItems candidates={candidates} existingSites={existingSites} demandNodes={demandNodes} />
+        <LeafletDemandHeatmap demandNodes={demandNodes} demandScenario={demandScenario} coverageMinutes={coverageMinutes} onlyUncovered={onlyUncovered} />
         {boundaryFeature && (
           <GeoJSON
             data={boundaryFeature as GeoJSON.GeoJsonObject}
             style={() => ({ color: "#28614f", weight: 2, fillColor: "#b9dfcd", fillOpacity: 0.12 })}
           />
         )}
-        {demandNodes.map((node) => {
-          const covered = node.nearest_existing_access_minutes_proxy <= coverageMinutes;
-          return (
-            <CircleMarker
-              key={`demand-${node.demand_node_id}`}
-              center={[node.location.lat, node.location.lon]}
-              radius={4}
-              pathOptions={{
-                color: "#ffffff",
-                weight: 1,
-                fillColor: covered ? "#69a58b" : "#9ba9a2",
-                fillOpacity: 0.78,
-              }}
-            >
-              <Popup>
-                <strong>Demand node · {node.demand_node_id}</strong>
-                <br />Gần trạm hiện hữu nhất: {node.nearest_existing_access_minutes_proxy.toFixed(1)} phút proxy
-                <br />{covered ? `Trong ngưỡng ${coverageMinutes} phút` : `Ngoài ngưỡng ${coverageMinutes} phút`}
-                <br />Dữ liệu tổng hợp · profile normal
-              </Popup>
-            </CircleMarker>
-          );
-        })}
         {existingSites.map((site) => (
           <CircleMarker
             key={`site-${site.site_id}`}
             center={[site.location.lat, site.location.lon]}
             radius={5}
-            pathOptions={{ color: "#ffffff", weight: 1.2, fillColor: "#526c7a", fillOpacity: 0.9 }}
+            pathOptions={{ color: "#ffffff", weight: 1.2, fillColor: MARKER_COLORS.station, fillOpacity: 0.9 }}
           >
             <Popup>
               <strong>Trạm hiện hữu · {site.site_id}</strong>
@@ -198,20 +262,18 @@ function OsmPlannerMap({
               center={[candidate.location.lat, candidate.location.lon]}
               radius={selected ? 10 : item ? 8 : 6}
               pathOptions={{
-                color: selected ? "#123d35" : "#ffffff",
+                color: selected ? "#1e3a8a" : "#ffffff",
                 weight: selected ? 3.5 : 1.5,
-                fillColor: item
-                  ? item.eligibility === "eligible" ? "#2f9e74" : "#e3a526"
-                  : "#82958c",
+                fillColor: candidateColor(Boolean(item), selected, selectedCandidateIds.includes(candidate.candidate_id)),
                 fillOpacity: 0.95,
               }}
               eventHandlers={{ click: () => onSelect(candidate.candidate_id) }}
             >
               <Popup>
-                <strong>{item ? `#${item.rank} · ` : "Candidate · "}{candidate.label}</strong>
+                <strong>{item ? `#${item.rank} · ` : "Ứng viên · "}{candidate.label}</strong>
                 <br />{candidate.candidate_id} · {candidate.candidate_type}
                 {item && <><br />Điểm kỹ thuật: {item.technical_score.toFixed(1)}/100</>}
-                <br />Giả thuyết vị trí tổng hợp · cần xác minh site thực tế
+                <br />Vị trí mô phỏng · cần xác minh địa điểm thực tế
               </Popup>
             </CircleMarker>
           );
@@ -219,6 +281,8 @@ function OsmPlannerMap({
       </MapContainer>
       <PlannerMapLegendAndEmpty
         isEmpty={candidates.length === 0 && existingSites.length === 0 && demandNodes.length === 0}
+        demandNodes={demandNodes} demandScenario={demandScenario}
+        coverageMinutes={coverageMinutes} onlyUncovered={onlyUncovered} onToggleUncovered={onToggleUncovered}
       />
     </div>
   );
@@ -231,10 +295,15 @@ function GoongPlannerMap({
   demandNodes,
   boundaryGeometry,
   coverageMinutes,
+  demandScenario,
+  selectedCandidateIds,
   selectedCandidateId,
   onSelect,
   onFailure,
-}: PlannerMapProps & { onFailure: () => void }) {
+  onlyUncovered,
+  onToggleUncovered,
+}: PlannerMapDisplayProps & { onFailure: () => void }) {
+  const scale = useMemo(() => demandScale(demandNodes), [demandNodes]);
   const containerRef = useRef<HTMLDivElement>(null);
   const activePopup = useRef<InstanceType<typeof goongjs.Popup> | null>(null);
   const [map, setMap] = useState<InstanceType<typeof goongjs.Map> | null>(null);
@@ -300,13 +369,10 @@ function GoongPlannerMap({
     });
   }, [map, boundaryGeometry]);
 
-  // Demand nodes, existing sites and candidates are drawn as GL circle layers rather than
-  // one DOM element per node: the renderer composites them with the basemap on every frame,
-  // so they never lag behind the tiles while panning or zooming the way JS-repositioned DOM
-  // markers can once there are more than a handful of them.
+  // Demand points feed the heat layer internally; only station and candidate markers are shown.
   useEffect(() => {
     if (!map) return;
-    const data = { type: "FeatureCollection" as const, features: demandNodes.map((node) => demandNodeFeature(node, coverageMinutes)) };
+    const data = { type: "FeatureCollection" as const, features: visibleDemandNodes(demandNodes, demandScenario, coverageMinutes, onlyUncovered).map((node) => demandFeature(node, demandScenario, coverageMinutes, scale)) };
     const source = map.getSource(DEMAND_SOURCE);
     if (source) {
       source.setData(data);
@@ -314,18 +380,20 @@ function GoongPlannerMap({
     }
     map.addSource(DEMAND_SOURCE, { type: "geojson", data });
     map.addLayer({
-      id: DEMAND_LAYER,
-      type: "circle",
+      id: DEMAND_HEAT_LAYER,
+      type: "heatmap",
       source: DEMAND_SOURCE,
       paint: {
-        "circle-radius": 4,
-        "circle-color": ["case", ["get", "covered"], "#69a58b", "#9ba9a2"],
-        "circle-stroke-width": 1,
-        "circle-stroke-color": "#ffffff",
-        "circle-opacity": 0.78,
+        "heatmap-weight": ["get", "heat_weight"],
+        "heatmap-intensity": 3.2,
+        "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 10, 24, 13, 48, 16, 72],
+        "heatmap-opacity": 0.65,
+        "heatmap-color": ["interpolate", ["linear"], ["heatmap-density"],
+          0, "rgba(250,204,21,0)", 0.2, "rgba(250,204,21,0.35)",
+          0.4, "#fb923c", 0.65, "#f97316", 1, "#dc2626"],
       },
     });
-  }, [map, demandNodes, coverageMinutes]);
+  }, [map, demandNodes, coverageMinutes, demandScenario, scale, onlyUncovered]);
 
   useEffect(() => {
     if (!map) return;
@@ -342,7 +410,7 @@ function GoongPlannerMap({
       source: SITES_SOURCE,
       paint: {
         "circle-radius": 5,
-        "circle-color": "#526c7a",
+        "circle-color": MARKER_COLORS.station,
         "circle-stroke-width": 1.2,
         "circle-stroke-color": "#ffffff",
         "circle-opacity": 0.9,
@@ -356,7 +424,7 @@ function GoongPlannerMap({
     const data = {
       type: "FeatureCollection" as const,
       features: candidates.map((candidate) =>
-        candidateFeature(candidate, byCandidateId.get(candidate.candidate_id), candidate.candidate_id === selectedCandidateId),
+        candidateFeature(candidate, byCandidateId.get(candidate.candidate_id), candidate.candidate_id === selectedCandidateId, selectedCandidateIds.includes(candidate.candidate_id)),
       ),
     };
     const source = map.getSource(CANDIDATES_SOURCE);
@@ -371,13 +439,13 @@ function GoongPlannerMap({
       source: CANDIDATES_SOURCE,
       paint: {
         "circle-radius": ["case", ["get", "selected"], 10, ["get", "ranked"], 8, 6],
-        "circle-color": ["case", ["!", ["get", "ranked"]], "#82958c", ["get", "eligible"], "#2f9e74", "#e3a526"],
-        "circle-stroke-color": ["case", ["get", "selected"], "#123d35", "#ffffff"],
+        "circle-color": ["get", "marker_color"],
+        "circle-stroke-color": ["case", ["get", "selected"], "#1e3a8a", "#ffffff"],
         "circle-stroke-width": ["case", ["get", "selected"], 3.5, 1.5],
         "circle-opacity": 0.95,
       },
     });
-  }, [map, candidates, recommendations, selectedCandidateId]);
+  }, [map, candidates, recommendations, selectedCandidateIds, selectedCandidateId]);
 
   // Click/hover handlers are registered once: layer ids are stable, so this never re-runs
   // while panning/zooming or when the underlying data changes (setData above is enough).
@@ -390,18 +458,6 @@ function GoongPlannerMap({
         .setLngLat([lngLat.lng, lngLat.lat])
         .setHTML(html)
         .addTo(map);
-    };
-    const handleDemandClick = (event: GoongLayerClickEvent) => {
-      const props = event.features?.[0]?.properties;
-      if (!props) return;
-      const covered = Boolean(props.covered);
-      openPopup(
-        event.lngLat,
-        `<strong>Demand node · ${props.demand_node_id}</strong><br/>` +
-          `Gần trạm hiện hữu nhất: ${Number(props.access_minutes).toFixed(1)} phút proxy<br/>` +
-          `${covered ? `Trong ngưỡng ${coverageMinutes} phút` : `Ngoài ngưỡng ${coverageMinutes} phút`}<br/>` +
-          `Dữ liệu tổng hợp · profile normal`,
-      );
     };
     const handleSiteClick = (event: GoongLayerClickEvent) => {
       const props = event.features?.[0]?.properties;
@@ -421,33 +477,31 @@ function GoongPlannerMap({
       const ranked = Boolean(props.ranked);
       openPopup(
         event.lngLat,
-        `<strong>${ranked ? `#${props.rank} · ` : "Candidate · "}${props.label}</strong><br/>` +
+        `<strong>${ranked ? `#${props.rank} · ` : "Ứng viên · "}${props.label}</strong><br/>` +
           `${candidateId} · ${props.candidate_type}` +
           (ranked ? `<br/>Điểm kỹ thuật: ${Number(props.technical_score).toFixed(1)}/100` : "") +
-          `<br/>Giả thuyết vị trí tổng hợp · cần xác minh site thực tế`,
+          `<br/>Vị trí mô phỏng · cần xác minh địa điểm thực tế`,
       );
     };
     const pointerEnter = () => { canvas.style.cursor = "pointer"; };
     const pointerLeave = () => { canvas.style.cursor = ""; };
-    map.on("click", DEMAND_LAYER, handleDemandClick);
     map.on("click", SITES_LAYER, handleSiteClick);
     map.on("click", CANDIDATES_LAYER, handleCandidateClick);
-    for (const layerId of [DEMAND_LAYER, SITES_LAYER, CANDIDATES_LAYER]) {
+    for (const layerId of [SITES_LAYER, CANDIDATES_LAYER]) {
       map.on("mouseenter", layerId, pointerEnter);
       map.on("mouseleave", layerId, pointerLeave);
     }
     return () => {
-      map.off("click", DEMAND_LAYER, handleDemandClick);
       map.off("click", SITES_LAYER, handleSiteClick);
       map.off("click", CANDIDATES_LAYER, handleCandidateClick);
-      for (const layerId of [DEMAND_LAYER, SITES_LAYER, CANDIDATES_LAYER]) {
+      for (const layerId of [SITES_LAYER, CANDIDATES_LAYER]) {
         map.off("mouseenter", layerId, pointerEnter);
         map.off("mouseleave", layerId, pointerLeave);
       }
       activePopup.current?.remove();
       activePopup.current = null;
     };
-  }, [map, coverageMinutes]);
+  }, [map]);
 
   useEffect(() => {
     if (!map) return;
@@ -475,6 +529,8 @@ function GoongPlannerMap({
       <div className="planner-map" ref={containerRef} aria-label="Bản đồ Goong planner" />
       <PlannerMapLegendAndEmpty
         isEmpty={candidates.length === 0 && existingSites.length === 0 && demandNodes.length === 0}
+        demandNodes={demandNodes} demandScenario={demandScenario}
+        coverageMinutes={coverageMinutes} onlyUncovered={onlyUncovered} onToggleUncovered={onToggleUncovered}
       />
     </div>
   );
@@ -483,8 +539,10 @@ function GoongPlannerMap({
 export default function PlannerMap(props: PlannerMapProps) {
   const hasGoongKey = Boolean(import.meta.env.VITE_GOONG_MAPTILES_KEY);
   const [useFallback, setUseFallback] = useState(!hasGoongKey);
+  const [onlyUncovered, setOnlyUncovered] = useState(false);
   const handleFailure = useCallback(() => setUseFallback(true), []);
+  const displayProps = { ...props, onlyUncovered, onToggleUncovered: () => setOnlyUncovered((value) => !value) };
 
-  if (useFallback) return <OsmPlannerMap {...props} />;
-  return <GoongPlannerMap {...props} onFailure={handleFailure} />;
+  if (useFallback) return <OsmPlannerMap {...displayProps} />;
+  return <GoongPlannerMap {...displayProps} onFailure={handleFailure} />;
 }

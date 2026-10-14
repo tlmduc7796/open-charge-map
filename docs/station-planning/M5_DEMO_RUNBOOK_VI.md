@@ -20,7 +20,15 @@ Từ thư mục gốc repo:
 docker compose up --build
 ```
 
-Mở `http://127.0.0.1:5173`, chuyển sang Planner, xác nhận pilot/snapshot hiển thị đúng, giữ ba candidate mặc định, chọn coverage `5` phút và demand `base`, để budget trống rồi bấm **Chạy scenario**. Có thể đổi coverage sang `15`, hoặc demand sang `low`/`high`, rồi chạy lại để so sánh. Swagger backend ở `http://127.0.0.1:8000/docs`.
+Mở `http://127.0.0.1:5173`, chuyển sang Planner, giữ ba địa điểm mặc định, đặt **Thời gian đến trạm tối đa** là `5` phút, **Mức nhu cầu sạc** là **Thông thường**, để chi phí tối đa trống rồi bấm **Đánh giá địa điểm**. Có thể đổi thời gian sang `15`, hoặc nhu cầu sang **Thấp/Cao**, rồi đánh giá lại. Swagger backend ở `http://127.0.0.1:8000/docs`.
+
+Lớp màu nhu cầu dùng tổng lượt sạc kỳ vọng/tuần của 27 node trong snapshot, chỉ hiển thị
+vùng màu làm mượt và giữ node trong phép tính. Vàng → đỏ biểu thị mức tập trung nhu cầu
+tương đối, không phải biên vùng phục vụ hay diện tích được đo. Chú giải hiển thị tỷ lệ
+nhu cầu ngoài ngưỡng tiếp cận; bộ lọc “Chỉ xem vùng xa trạm” chỉ giữ vùng nhu cầu có thời
+gian đến trạm hiện hữu gần nhất vượt ngưỡng. Goong dùng heatmap layer, OSM dự phòng dùng
+canvas overlay. Xem [giải thích dữ liệu mô phỏng](SIMULATED_DATA_EXPLAINED_VI.md) để đối
+chiếu quy tắc chọn điểm, công thức, giá trị giả định và giới hạn diễn giải.
 
 Nếu chỉ nghiệm thu Planner trên máy chưa cài Docker, mở hai terminal tại thư mục gốc repo. Backend dùng catalog memory của luồng tài xế; dữ liệu planning vẫn đọc snapshot M1 đã pin:
 

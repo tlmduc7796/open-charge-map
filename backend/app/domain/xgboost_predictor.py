@@ -56,7 +56,9 @@ class XgboostOccupancyPredictor:
             booster.load_model(str(path))
             expected = list(features.feature_columns(horizon // features.INTERVAL_MIN))
             stored = booster.feature_names
-            if stored is not None and list(stored) != expected:
+            if booster.num_features() != len(expected) or (
+                stored is not None and list(stored) != expected
+            ):
                 raise ValueError(
                     f"{path.name} was trained on a different feature set than ml.features"
                 )
@@ -78,7 +80,15 @@ class XgboostOccupancyPredictor:
         model = self._models.get(horizon_min)
         if model is None:
             raise ValueError(f"no occupancy model for horizon {horizon_min} min")
-        key = (window.station_id, window.t_last, window.lags, window.total_ports, horizon_min)
+        key = (
+            window.station_id,
+            window.t_last,
+            window.lags,
+            window.total_ports,
+            window.geo_features,
+            window.nearest_station_occupancy,
+            horizon_min,
+        )
         cached = self._memo.get(key)
         if cached is not None:
             return cached

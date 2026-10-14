@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
 
 import { api } from "../api";
@@ -23,11 +23,13 @@ vi.mock("./PlannerMap", () => ({
     existingSites,
     demandNodes,
     boundaryGeometry,
+    demandScenario,
   }: {
     candidates: PlanningDemoSnapshotResponse["candidates"];
     existingSites: PlanningDemoSnapshotResponse["existing_sites"];
     demandNodes: PlanningDemoSnapshotResponse["demand_nodes"];
     boundaryGeometry: PlanningDemoSnapshotResponse["snapshot"]["geometry"] | null;
+    demandScenario: "low" | "base" | "high";
   }) => (
     <div
       data-testid="planner-map"
@@ -35,6 +37,7 @@ vi.mock("./PlannerMap", () => ({
       data-existing-site-count={existingSites.length}
       data-demand-node-count={demandNodes.length}
       data-has-boundary={String(boundaryGeometry !== null)}
+      data-demand-scenario={demandScenario}
     />
   ),
 }));
@@ -97,6 +100,7 @@ function demoSnapshot(): PlanningDemoSnapshotResponse {
       location: { lat: 10.66, lon: 106.66 },
       nearest_existing_access_minutes_proxy: 12,
       is_synthetic: true,
+      weekly_expected_sessions: { low: 240, base: 400, high: 640 },
     }],
     warnings: [],
   };
@@ -125,6 +129,9 @@ function recommendation(candidateId: string, rank: number): PlanningRecommendati
       contribution_points: 21.6,
       status: "synthetic",
       reason: "Nhu cầu theo kịch bản demo.",
+    }, {
+      component_id: "grid_site_readiness", score: null, weight_percent: 20,
+      contribution_points: null, status: "unknown", reason: "No source-backed site/grid readiness evidence is available.",
     }],
     provenance: [{
       field: "demand_potential",
@@ -180,9 +187,11 @@ test("runs the selected planner scenario and shows map, ranking, explanation and
   expect(screen.getByTestId("planner-map")).toHaveAttribute("data-demand-node-count", "1");
   expect(screen.getByTestId("planner-map")).toHaveAttribute("data-has-boundary", "true");
 
-  fireEvent.change(screen.getByLabelText(/Kịch bản nhu cầu/), { target: { value: "low" } });
-  fireEvent.change(screen.getByLabelText(/Ngưỡng tiếp cận \(phút\)/), { target: { value: "5" } });
-  fireEvent.click(screen.getByRole("button", { name: "Chạy scenario" }));
+  fireEvent.change(screen.getByLabelText(/Mức nhu cầu sạc/), { target: { value: "low" } });
+  expect(screen.getByTestId("planner-map")).toHaveAttribute("data-demand-scenario", "low");
+  expect(mockedApi.planningRecommendations).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText(/Thời gian đến trạm tối đa/), { target: { value: "5" } });
+  fireEvent.click(screen.getByRole("button", { name: "Đánh giá địa điểm" }));
 
   await waitFor(() => expect(mockedApi.planningRecommendations).toHaveBeenCalledTimes(1));
   const request = mockedApi.planningRecommendations.mock.calls[0][0] as PlanningRequest;
@@ -195,20 +204,27 @@ test("runs the selected planner scenario and shows map, ranking, explanation and
 
   expect(await screen.findByText("run-test-1")).toBeInTheDocument();
   expect(screen.getByText("Hoàn tất, còn thiếu dữ liệu")).toBeInTheDocument();
-  expect(screen.getByRole("status")).toHaveTextContent("Grid feasibility is unknown.");
-  expect(screen.getByRole("region", { name: `Giải thích ${candidateIds[0]}` })).toHaveTextContent("Tổng hợp");
+  expect(screen.getByRole("status")).toHaveTextContent("Dữ liệu mô phỏng cho 9 phường");
+  const explanation = screen.getByRole("region", { name: `Giải thích ${candidateIds[0]}` });
+  expect(explanation).toHaveTextContent("Mô phỏng");
+  expect(within(explanation).getByText("Nguồn điện")).toBeInTheDocument();
+  expect(explanation).toHaveTextContent("Chưa chấm: điều kiện mặt bằng và nguồn điện");
+  expect(explanation).not.toHaveTextContent("No source-backed");
+  expect(explanation).not.toHaveTextContent("demand-1");
+  expect(explanation).not.toHaveTextContent("Rủi ro quá tải");
 
   const compareButtons = screen.getAllByRole("button", { name: "So sánh" });
   fireEvent.click(compareButtons[0]);
   fireEvent.click(compareButtons[1]);
   expect(screen.getByRole("region", { name: "So sánh hai phương án" })).toBeInTheDocument();
+  expect(screen.getByRole("region", { name: "So sánh hai phương án" })).not.toHaveTextContent("No source-backed");
 });
 
 test("shows a recoverable error when a planning run fails", async () => {
   mockedApi.planningRecommendations.mockRejectedValueOnce(new Error("Planning API unavailable"));
   render(<PlannerView onModeChange={vi.fn()} />);
 
-  fireEvent.click(await screen.findByRole("button", { name: "Chạy scenario" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Đánh giá địa điểm" }));
 
   expect(await screen.findByRole("alert")).toHaveTextContent("Planning API unavailable");
   expect(screen.queryByText("run-test-1")).not.toBeInTheDocument();
@@ -232,14 +248,14 @@ test("shows excluded candidates when the scenario has no feasible option", async
   render(<PlannerView onModeChange={vi.fn()} />);
 
   expect(await screen.findByText("hcmc-nine-wards-demo-v3")).toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText(/Ngưỡng CAPEX tối đa từng candidate/), { target: { value: "1" } });
-  fireEvent.click(await screen.findByRole("button", { name: "Chạy scenario" }));
+  fireEvent.change(screen.getByLabelText(/Chi phí xây mỗi trạm tối đa/), { target: { value: "1" } });
+  fireEvent.click(await screen.findByRole("button", { name: "Đánh giá địa điểm" }));
 
   const result = await screen.findByText("run-no-feasible");
   expect(result).toBeInTheDocument();
-  expect(screen.getAllByText("Không có candidate khả thi")).toHaveLength(2);
-  const exclusions = screen.getByText("Bị loại do hard constraint · 3").closest("details");
-  expect(exclusions).toHaveTextContent("CAPEX giả định vượt ngân sách kịch bản đã nhập.");
+  expect(screen.getAllByText("Không có địa điểm phù hợp")).toHaveLength(2);
+  const exclusions = screen.getByText("Không đáp ứng điều kiện · 3").closest("details");
+  expect(exclusions).toHaveTextContent("Ngân sách xây trạm: không đạt");
   for (const candidateId of candidateIds) expect(exclusions).toHaveTextContent(candidateId);
 
   const request = mockedApi.planningRecommendations.mock.calls.at(-1)?.[0] as PlanningRequest;

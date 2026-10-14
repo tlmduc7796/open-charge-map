@@ -22,6 +22,11 @@ Planner cần metadata để chọn candidate và vẽ đúng snapshot trước 
 GET /api/v1/planning/demo-snapshot
 ```
 
+Metadata `demand_nodes` bổ sung `weekly_expected_sessions: {low, base, high}`: tổng
+`expected_sessions` của từng node trong một tuần từ `demand_intervals.csv`, đơn vị lượt/tuần.
+Frontend dùng số liệu này cho lớp màu nhu cầu, độc lập với `nearest_existing_access_minutes_proxy`
+(khả năng tiếp cận). Đây là tổng hợp snapshot synthetic, không phải model demand prediction.
+
 Response gồm study area/snapshot ID, boundary GeoJSON, candidate options, existing-site markers, demand nodes kèm access-time proxy và các giá trị scenario mặc định. Endpoint không thay thế request run và không chứa ranking.
 
 Các API chuyên biệt như candidate generation, capacity compare, run history và finance adapter chỉ được tách thêm khi implementation cho thấy cần. Không tạo nhiều endpoint `score`, `simulate`, `ROI` trước khi biết luồng UI/API thực sự cần chúng.

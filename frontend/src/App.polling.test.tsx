@@ -13,6 +13,8 @@ import {
 } from "./test/fixtures";
 import type { Station } from "./types";
 
+vi.mock("./planning/PlannerView", () => ({ default: () => null }));
+
 vi.mock("./api", () => ({
   api: {
     stations: vi.fn(),

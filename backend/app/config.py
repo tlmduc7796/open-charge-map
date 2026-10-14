@@ -86,8 +86,6 @@ class Settings:
             self.data_dir / "demo" / "vehicles.json",
             self.data_dir / "runtime" / "station_status.json",
             self.data_dir / "demo" / "queue_assumptions.json",
-            self.data_dir / "ml" / "urbanev" / "source_manifest.json",
-            self.data_dir / "ml" / "urbanev" / "raw" / "UrbanEVDataset.zip",
         )
 
 

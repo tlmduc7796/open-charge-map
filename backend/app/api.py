@@ -86,12 +86,11 @@ def model_status(request: Request) -> ModelStatus:
     if not model_loaded and forecasting.prediction_source == "default":
         flags.append("ML_DEFAULT_VALUES_ACTIVE")
     if model_loaded:
-        # The booster was trained on the simulator's data and loses to persistence at +5..+15
-        # minutes (see ml/data/occupancy_xgb/metrics.json), so it is never release ready.
+        # Simulator-trained boosters remain demo artifacts. Comparisons with persistence
+        # belong to each training run's report, not a hard-coded claim about every model.
         flags.extend(
             (
                 "SYNTHETIC_TRAINING_DATA",
-                "MODEL_BELOW_PERSISTENCE_AT_5_15_MIN",
                 "MODEL_METADATA_CONTRACT_NOT_MET",
             )
         )

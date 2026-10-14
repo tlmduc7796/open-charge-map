@@ -143,3 +143,41 @@ def test_models_trained_on_another_feature_set_are_rejected(frame, tmp_path) -> 
 
     with pytest.raises(ValueError, match="different feature set"):
         XgboostOccupancyPredictor(tmp_path)
+
+
+@pytest.mark.parametrize("column", [features.GEO_COLUMNS[0], features.SPATIAL_LAG_COLUMNS[0]])
+def test_cache_refreshes_when_geo_or_neighbor_input_changes(frame, model_dir, column) -> None:
+    predictor = XgboostOccupancyPredictor(model_dir)
+    index = features.feature_columns(1).index(column)
+    calls = []
+
+    class InputPredictor:
+        def predict(self, matrix, **kwargs):
+            calls.append(matrix)
+            return np.asarray([matrix.get_data().toarray()[0, index]])
+
+    predictor._models[5] = InputPredictor()
+    base = _window(frame.iloc[0])
+    if column in features.GEO_COLUMNS:
+        before = base.model_copy(update={"geo_features": (0.1, *base.geo_features[1:])})
+        after = base.model_copy(update={"geo_features": (0.9, *base.geo_features[1:])})
+    else:
+        before = base.model_copy(update={"nearest_station_occupancy": 0.1})
+        after = base.model_copy(update={"nearest_station_occupancy": 0.9})
+    assert predictor.predict(before, 5) == pytest.approx(0.1)
+    assert predictor.predict(after, 5) == pytest.approx(0.9)
+    assert predictor.predict(after, 5) == pytest.approx(0.9)
+    assert len(calls) == 2
+
+
+def test_unnamed_old_models_are_rejected(frame, tmp_path) -> None:
+    _train(frame, tmp_path)
+    old = xgboost.train(
+        {"tree_method": "hist", "max_depth": 2},
+        xgboost.DMatrix(frame[list(features.feature_columns(1))[:26]].to_numpy(),
+                        label=frame["y1"]),
+        num_boost_round=2,
+    )
+    old.save_model(str(tmp_path / "model_h5.json"))
+    with pytest.raises(ValueError, match="different feature set"):
+        XgboostOccupancyPredictor(tmp_path)

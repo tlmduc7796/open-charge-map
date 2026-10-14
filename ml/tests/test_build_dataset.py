@@ -39,6 +39,18 @@ def test_columns_order_and_dtypes(raw_factory):
     assert frame["lag_1"].dtype == np.float32
 
 
+def test_missing_neighbor_bucket_excludes_only_affected_spatial_lag(raw_factory):
+    first = raw_factory(start="2026-09-01T00:00:00+07:00", periods=60, station_id="A")
+    second = raw_factory(start="2026-09-01T00:00:00+07:00", periods=60, station_id="B")
+    missing_at = second.iloc[20]["bucket_at"]
+    raw = pd.concat([first, second.drop(index=20)], ignore_index=True)
+    frame = _build(raw)
+    times = set(frame.loc[frame["station_id"] == "A", "t_last"])
+    assert missing_at not in times
+    assert missing_at - pd.Timedelta(minutes=5) in times
+    assert missing_at + pd.Timedelta(minutes=5) in times
+
+
 def test_lag_and_target_alignment(raw_factory):
     frame = _build(raw_factory(start="2026-09-01T00:00:00+07:00", periods=60))
     # ratio(i) = i / 1000, nên y_k - lag_1 = k/1000 và lag_j = lag_1 - (j-1)/1000 ở mọi dòng.
