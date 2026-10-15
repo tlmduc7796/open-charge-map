@@ -1,0 +1,451 @@
+{
+  "source": "https://bando.tphcm.gov.vn/",
+  "query_endpoint": "https://bando.tphcm.gov.vn/service/vdms/api/v1/query",
+  "downloaded_at_utc": "2026-10-12T10:36:00.810019+00:00",
+  "scope": "Features inside/intersecting the official HCMC city polygon, ADMINISTRATIVE_2025; intersecting geometries clipped",
+  "boundary_file": "hcm_admin_2025.geojson",
+  "units_file": "hcm_planning_units_2025.geojson",
+  "filter_boundary_repaired": false,
+  "unit_filter_geometries_repaired": 0,
+  "source_layers": 49,
+  "downloaded_records": 36105,
+  "poi_features": 24698,
+  "transport_features": 11100,
+  "outside_city": 72,
+  "missing_or_invalid_geometry": 235,
+  "possible_duplicate_groups": 256,
+  "traffic_volume_available": false,
+  "traffic_volume_note": "Inspected public transport schemas contain infrastructure and operational/design attributes, not measured junction traffic density by hour.",
+  "coordinate_system": "Source JSON longitude/latitude degrees, WGS84-compatible with official map; no explicit source EPSG assertion",
+  "kml_coordinate_decimals": 6,
+  "layers": [
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_BENHVIEN",
+      "category": "Bệnh viện",
+      "api_total": 132,
+      "downloaded": 132,
+      "exported": 132
+    },
+    {
+      "dataset": "transport",
+      "layer": "ICTHCM_BEN_BUYT_DUONG_SONG",
+      "category": "Bến buýt đường sông",
+      "api_total": 6,
+      "downloaded": 6,
+      "exported": 6
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_BO_PHAN_MOT_CUA_CAP_TINH",
+      "category": "BỘ PHẬN MỘT CỬA CẤP TỈNH",
+      "api_total": 27,
+      "downloaded": 27,
+      "exported": 24,
+      "outside_city": 3
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_CONGANHCM",
+      "category": "Công an",
+      "api_total": 465,
+      "downloaded": 465,
+      "exported": 465
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_CO_SO_TRO_GIUP_XA_HOI_CONG_LAP",
+      "category": "Cơ sở trợ giúp xã hội công lập",
+      "api_total": 24,
+      "downloaded": 24,
+      "exported": 20,
+      "outside_city": 4
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_CO_SO_TRO_GIUP_XA_HOI_NGOAI_CONG_LAP_1",
+      "category": "Cơ sở trợ giúp xã hội ngoài công lập",
+      "api_total": 84,
+      "downloaded": 84,
+      "exported": 82,
+      "outside_city": 2
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_DIA_DIEM_TIEP_NHAN_HO_SO_CCCD",
+      "category": "ĐỊA ĐIỂM TIẾP NHẬN HỒ SƠ CCCD",
+      "api_total": 49,
+      "downloaded": 49,
+      "exported": 49
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_EDU_CAODANG",
+      "category": "Cao đẳng",
+      "api_total": 107,
+      "downloaded": 107,
+      "exported": 107
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_EDU_DAIHOC",
+      "category": "Đại học",
+      "api_total": 170,
+      "downloaded": 170,
+      "exported": 170
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_EDU_MAMNON",
+      "category": "Mầm non",
+      "api_total": 1757,
+      "downloaded": 1757,
+      "exported": 1757
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_EDU_PHONGGIAODUC",
+      "category": "Phòng giáo dục",
+      "api_total": 22,
+      "downloaded": 22,
+      "exported": 22
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_EDU_THCS",
+      "category": "Trung học cơ sở",
+      "api_total": 419,
+      "downloaded": 419,
+      "exported": 419
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_EDU_THPT",
+      "category": "Trung học phổ thông",
+      "api_total": 254,
+      "downloaded": 254,
+      "exported": 254
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_EDU_TIEUHOC",
+      "category": "Tiểu học",
+      "api_total": 792,
+      "downloaded": 792,
+      "exported": 792
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_EDU_TRUONGHOC",
+      "category": "Trường học (dữ liệu tích hợp)",
+      "api_total": 5256,
+      "downloaded": 5256,
+      "exported": 5252,
+      "outside_city": 4
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_GIAODUCTHUONGXUYEN",
+      "category": "Trung tâm giáo dục thường xuyên",
+      "api_total": 28,
+      "downloaded": 28,
+      "missing_or_invalid_geometry": 2,
+      "exported": 24,
+      "outside_city": 2
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_BAOTANG",
+      "category": "Bảo tàng, khu di tích",
+      "api_total": 33,
+      "downloaded": 33,
+      "exported": 33
+    },
+    {
+      "dataset": "transport",
+      "layer": "ICTHCM_HCM_BENXETRAMDUNG",
+      "category": "Bến xe, trạm dừng",
+      "api_total": 38,
+      "downloaded": 38,
+      "exported": 38
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_CHO",
+      "category": "Chợ",
+      "api_total": 352,
+      "downloaded": 352,
+      "exported": 352
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_CHUA",
+      "category": "Chùa",
+      "api_total": 653,
+      "downloaded": 653,
+      "exported": 653
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_CONGSO",
+      "category": "Công sở",
+      "api_total": 518,
+      "downloaded": 518,
+      "exported": 518
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_CONGTY",
+      "category": "Công ty",
+      "api_total": 999,
+      "downloaded": 999,
+      "exported": 989,
+      "outside_city": 10
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_CONGVIEN",
+      "category": "Công viên",
+      "api_total": 665,
+      "downloaded": 665,
+      "exported": 664,
+      "outside_city": 1
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_CUAHANGTIENLOI",
+      "category": "Cửa hàng tiện lợi",
+      "api_total": 1273,
+      "downloaded": 1273,
+      "exported": 1273
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_DOANHNGHIEPTUNHAN",
+      "category": "Doanh nghiệp tư nhân",
+      "api_total": 1010,
+      "downloaded": 1010,
+      "exported": 1010
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_KHACHSAN",
+      "category": "Khách sạn",
+      "api_total": 1350,
+      "downloaded": 1350,
+      "exported": 1350
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_KHUDULICH",
+      "category": "Khu du lịch",
+      "api_total": 25,
+      "downloaded": 25,
+      "exported": 25
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_NGANHANG",
+      "category": "Ngân hàng",
+      "api_total": 2318,
+      "downloaded": 2318,
+      "exported": 2318
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_NHAHANG",
+      "category": "Nhà hàng, quán ăn",
+      "api_total": 4182,
+      "downloaded": 4182,
+      "exported": 4182
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_NHATHO",
+      "category": "Nhà thờ",
+      "api_total": 661,
+      "downloaded": 661,
+      "exported": 661
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_SIEUTHI",
+      "category": "Siêu thị",
+      "api_total": 191,
+      "downloaded": 191,
+      "exported": 191
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_TRUNGTAMHOINGHI",
+      "category": "Trung tâm hội nghị",
+      "api_total": 18,
+      "downloaded": 18,
+      "exported": 18
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_HCM_TRUNGTAMTHUONGMAI",
+      "category": "Trung tâm thương mại",
+      "api_total": 75,
+      "downloaded": 75,
+      "exported": 75
+    },
+    {
+      "dataset": "transport",
+      "layer": "ICTHCM_NHA_GA_TRAM_DUNG_MRT",
+      "category": "Nhà ga MRT",
+      "api_total": 14,
+      "downloaded": 14,
+      "exported": 14
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_PHONGKHAM",
+      "category": "Phòng khám",
+      "api_total": 95,
+      "downloaded": 95,
+      "exported": 95
+    },
+    {
+      "dataset": "transport",
+      "layer": "ICTHCM_TIM_BAIXE",
+      "category": "Bãi xe",
+      "api_total": 59,
+      "downloaded": 59,
+      "exported": 59
+    },
+    {
+      "dataset": "transport",
+      "layer": "ICTHCM_TIM_CAMDUNGDAU",
+      "category": "Tuyến đường cấm dừng, cấm đậu",
+      "api_total": 227,
+      "downloaded": 227,
+      "exported": 225,
+      "repaired_geometry": 9,
+      "clipped_geometry": 9,
+      "outside_city": 2
+    },
+    {
+      "dataset": "transport",
+      "layer": "ICTHCM_TIM_CAU",
+      "category": "Cầu",
+      "api_total": 485,
+      "downloaded": 485,
+      "exported": 425,
+      "missing_or_invalid_geometry": 60,
+      "clipped_geometry": 6
+    },
+    {
+      "dataset": "transport",
+      "layer": "ICTHCM_TIM_DENTINHIEU",
+      "category": "Đèn tín hiệu",
+      "api_total": 3437,
+      "downloaded": 3437,
+      "exported": 3437
+    },
+    {
+      "dataset": "transport",
+      "layer": "ICTHCM_TIM_DUONG",
+      "category": "Đường",
+      "api_total": 1422,
+      "downloaded": 1422,
+      "exported": 1249,
+      "clipped_geometry": 3,
+      "missing_or_invalid_geometry": 173
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_TIM_NHAVESINH",
+      "category": "Nhà vệ sinh",
+      "api_total": 126,
+      "downloaded": 126,
+      "exported": 125,
+      "outside_city": 1
+    },
+    {
+      "dataset": "transport",
+      "layer": "ICTHCM_TRAM_XANG",
+      "category": "Trạm xăng",
+      "api_total": 261,
+      "downloaded": 261,
+      "exported": 261
+    },
+    {
+      "dataset": "transport",
+      "layer": "ICTHCM_TRAM_XE_BUYT",
+      "category": "Trạm xe buýt",
+      "api_total": 5377,
+      "downloaded": 5377,
+      "exported": 5342,
+      "outside_city": 35
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_TRUNGTAMYTE",
+      "category": "Trung tâm y tế",
+      "api_total": 44,
+      "downloaded": 44,
+      "exported": 44
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_TRUNG_TAM_HANH_CHINH_CONG",
+      "category": "TRUNG TÂM HÀNH CHÍNH CÔNG PHƯỜNG, XÃ, ĐẶC KHU (TPHCM_BD_BRVT)",
+      "api_total": 168,
+      "downloaded": 168,
+      "exported": 168
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_TRU_SO_CO_QUAN_DON_VI",
+      "category": "ĐẢNG ỦY PHƯỜNG, XÃ, ĐẶC KHU (TPHCM_BD_BRVT)",
+      "api_total": 183,
+      "downloaded": 183,
+      "exported": 183
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM_VPDKDD",
+      "category": "VĂN PHÒNG ĐĂNG KÝ ĐẤT ĐAI",
+      "api_total": 42,
+      "downloaded": 42,
+      "exported": 34,
+      "outside_city": 8
+    },
+    {
+      "dataset": "transport",
+      "layer": "ICTHCM_XE_DAP_CONG_CONG",
+      "category": "Xe đạp công cộng",
+      "api_total": 44,
+      "downloaded": 44,
+      "exported": 44
+    },
+    {
+      "dataset": "poi",
+      "layer": "ICTHCM__Y_BAN_NHAN_DAN_PHUONG_XA_168",
+      "category": "ỦY BAN NHÂN DÂN PHƯỜNG, XÃ, ĐẶC KHU (TPHCM_BD_BRVT)",
+      "api_total": 168,
+      "downloaded": 168,
+      "exported": 168
+    }
+  ],
+  "files": {
+    "hcm_poi_official.geojson": {
+      "bytes": 18874505,
+      "sha256": "2b3422a4815b51db59b7e6235ed4f7cd524c805a829f5eba353da64adf07415f"
+    },
+    "hcm_poi_official.kml": {
+      "bytes": 21167306,
+      "sha256": "906bba4314f6761ee320efba536f527a6211c2837fc90623810dde978f36c2a6"
+    },
+    "hcm_transport_official.geojson": {
+      "bytes": 11668902,
+      "sha256": "e80882e11ec8ae4ee198f56fd33dcf84aa492c96a9839ad0069222d8e1e9a5d1"
+    },
+    "hcm_transport_official.kml": {
+      "bytes": 10124553,
+      "sha256": "3711329d6ced4756e3e916e58c36e499cd6acbb1a14fdd794a5259ea67710201"
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "status": "PASS",
+  "contract_version": "1.0",
+  "basis": "DATA_PLAN_VI.md (design reference archived outside the repository)",
+  "new_views": {
+    "demand_observations.csv": 37296,
+    "demand_cells.csv": 9072
+  },
+  "added_fields": {
+    "existing_sites": [
+      "power_kw",
+      "power_kw_scope",
+      "source_url",
+      "source_url_status"
+    ],
+    "candidate_sites": [
+      "candidate_subtype",
+      "parcel_status"
+    ],
+    "boundary": [
+      "boundary_id",
+      "boundary_version",
+      "valid_from",
+      "source_url",
+      "crosswalk_ref",
+      "crosswalk_status"
+    ],
+    "finance_package": [
+      "source",
+      "effective_from",
+      "effective_to",
+      "units",
+      "rules"
+    ]
+  },
+  "unknowns_preserved": [
+    "connector type",
+    "physical dates",
+    "local fixture public URL",
+    "historical crosswalk",
+    "legacy area",
+    "land/grid/permit"
+  ],
+  "not_generated": {
+    "od_flows.csv": "administrative demand_cells chosen; no OD input or model",
+    "scenario_run_results": "recommendation engine has not run; no results fabricated"
+  },
+  "dataset_contract_version": "1.0",
+  "snapshot_id": "hcmc-nine-wards-demo-v3",
+  "validated_csv_rows": {
+    "existing_sites.csv": 37,
+    "candidate_sites.csv": 18,
+    "demand_observations.csv": 37296,
+    "demand_cells.csv": 9072
+  },
+  "validated_json_files": [
+    "boundary_metadata.json",
+    "scenario_config.json",
+    "finance_package.json"
+  ],
+  "checks": {
+    "power_units_and_unknowns_preserved": true,
+    "candidate_type_is_synthetic_parcel_hypothesis": true,
+    "administrative_cells_conserve_node_demand": true,
+    "node_to_administrative_cell_mapping": true,
+    "synthetic_observations_reconcile_with_operations_and_waits": true,
+    "no_fabricated_boundary_dates_or_crosswalk": true,
+    "schema_fields_types_enums_formats": true
+  }
+}

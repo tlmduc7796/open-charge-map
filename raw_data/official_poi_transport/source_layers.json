@@ -1,0 +1,296 @@
+[
+  {
+    "title": "Xe đạp công cộng",
+    "layer": "ICTHCM_XE_DAP_CONG_CONG",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaothong/icthcm_xe_dap_cong_cong"
+  },
+  {
+    "title": "Bến buýt đường sông",
+    "layer": "ICTHCM_BEN_BUYT_DUONG_SONG",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaothong/icthcm_ben_buyt_duong_song"
+  },
+  {
+    "title": "Bến xe, trạm dừng",
+    "layer": "ICTHCM_HCM_BENXETRAMDUNG",
+    "geometry_field": "ViTri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaothong/icthcm_hcm_benxetramdung"
+  },
+  {
+    "title": "Trung học phổ thông",
+    "layer": "ICTHCM_EDU_THPT",
+    "geometry_field": "vitri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaoduc/icthcm_edu_thpt"
+  },
+  {
+    "title": "Trung học cơ sở",
+    "layer": "ICTHCM_EDU_THCS",
+    "geometry_field": "vitri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaoduc/icthcm_edu_thcs"
+  },
+  {
+    "title": "Mầm non",
+    "layer": "ICTHCM_EDU_MAMNON",
+    "geometry_field": "vitri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaoduc/icthcm_edu_mamnon"
+  },
+  {
+    "title": "Tiểu học",
+    "layer": "ICTHCM_EDU_TIEUHOC",
+    "geometry_field": "vitri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaoduc/icthcm_edu_tieuhoc"
+  },
+  {
+    "title": "Chợ",
+    "layer": "ICTHCM_HCM_CHO",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dichvutienich/icthcm_hcm_cho"
+  },
+  {
+    "title": "Phòng khám",
+    "layer": "ICTHCM_PHONGKHAM",
+    "geometry_field": "vitri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuveyte/icthcm_phongkham"
+  },
+  {
+    "title": "Trung tâm y tế",
+    "layer": "ICTHCM_TRUNGTAMYTE",
+    "geometry_field": "vitri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuveyte/icthcm_trungtamyte"
+  },
+  {
+    "title": "Bệnh viện",
+    "layer": "ICTHCM_BENHVIEN",
+    "geometry_field": "vitri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuveyte/icthcm_benhvien"
+  },
+  {
+    "title": "Cao đẳng",
+    "layer": "ICTHCM_EDU_CAODANG",
+    "geometry_field": "vitri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaoduc/icthcm_edu_caodang"
+  },
+  {
+    "title": "Đại học",
+    "layer": "ICTHCM_EDU_DAIHOC",
+    "geometry_field": "vitri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaoduc/icthcm_edu_daihoc"
+  },
+  {
+    "title": "Phòng giáo dục",
+    "layer": "ICTHCM_EDU_PHONGGIAODUC",
+    "geometry_field": "vitri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaoduc/icthcm_edu_phonggiaoduc"
+  },
+  {
+    "title": "Trung tâm giáo dục thường xuyên",
+    "layer": "ICTHCM_GIAODUCTHUONGXUYEN",
+    "geometry_field": "vitri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaoduc/icthcm_giaoducthuongxuyen"
+  },
+  {
+    "title": "Công an",
+    "layer": "ICTHCM_CONGANHCM",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieucongso/icthcm_conganhcm"
+  },
+  {
+    "title": "Công sở",
+    "layer": "ICTHCM_HCM_CONGSO",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieucongso/icthcm_hcm_congso"
+  },
+  {
+    "title": "Siêu thị",
+    "layer": "ICTHCM_HCM_SIEUTHI",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dichvutienich/icthcm_hcm_sieuthi"
+  },
+  {
+    "title": "Trung tâm thương mại",
+    "layer": "ICTHCM_HCM_TRUNGTAMTHUONGMAI",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dichvutienich/icthcm_hcm_trungtamthuongmai"
+  },
+  {
+    "title": "Cửa hàng tiện lợi",
+    "layer": "ICTHCM_HCM_CUAHANGTIENLOI",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dichvutienich/icthcm_hcm_cuahangtienloi"
+  },
+  {
+    "title": "Công viên",
+    "layer": "ICTHCM_HCM_CONGVIEN",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/congtrinhcongcongtongiaovanhoagiaitri/icthcm_hcm_congvien"
+  },
+  {
+    "title": "Trung tâm hội nghị",
+    "layer": "ICTHCM_HCM_TRUNGTAMHOINGHI",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/congtrinhcongcongtongiaovanhoagiaitri/icthcm_hcm_trungtamhoinghi"
+  },
+  {
+    "title": "Khách sạn",
+    "layer": "ICTHCM_HCM_KHACHSAN",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/congtrinhcongcongtongiaovanhoagiaitri/icthcm_hcm_khachsan"
+  },
+  {
+    "title": "Chùa",
+    "layer": "ICTHCM_HCM_CHUA",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/congtrinhcongcongtongiaovanhoagiaitri/icthcm_hcm_chua"
+  },
+  {
+    "title": "Bảo tàng, khu di tích",
+    "layer": "ICTHCM_HCM_BAOTANG",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/congtrinhcongcongtongiaovanhoagiaitri/icthcm_hcm_baotang"
+  },
+  {
+    "title": "Khu du lịch",
+    "layer": "ICTHCM_HCM_KHUDULICH",
+    "geometry_field": null,
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/congtrinhcongcongtongiaovanhoagiaitri/icthcm_hcm_khudulich"
+  },
+  {
+    "title": "Nhà thờ",
+    "layer": "ICTHCM_HCM_NHATHO",
+    "geometry_field": "vitri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/congtrinhcongcongtongiaovanhoagiaitri/icthcm_hcm_nhatho"
+  },
+  {
+    "title": "Nhà hàng, quán ăn",
+    "layer": "ICTHCM_HCM_NHAHANG",
+    "geometry_field": "vitri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/congtrinhcongcongtongiaovanhoagiaitri/icthcm_hcm_nhahang"
+  },
+  {
+    "title": "Doanh nghiệp tư nhân",
+    "layer": "ICTHCM_HCM_DOANHNGHIEPTUNHAN",
+    "geometry_field": "vitri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvedoanhnghiep/icthcm_hcm_doanhnghieptunhan"
+  },
+  {
+    "title": "Công ty",
+    "layer": "ICTHCM_HCM_CONGTY",
+    "geometry_field": "Vitri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvedoanhnghiep/icthcm_hcm_congty"
+  },
+  {
+    "title": "Ngân hàng",
+    "layer": "ICTHCM_HCM_NGANHANG",
+    "geometry_field": "ViTri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dichvutienich/icthcm_hcm_nganhang"
+  },
+  {
+    "title": "Trường học (dữ liệu tích hợp)",
+    "layer": "ICTHCM_EDU_TRUONGHOC",
+    "geometry_field": null,
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaoduc/icthcm_edu_truonghoc"
+  },
+  {
+    "title": "Bãi xe",
+    "layer": "ICTHCM_TIM_BAIXE",
+    "geometry_field": "ViTri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaothong/icthcm_tim_baixe"
+  },
+  {
+    "title": "Tuyến đường cấm dừng, cấm đậu",
+    "layer": "ICTHCM_TIM_CAMDUNGDAU",
+    "geometry_field": "Collection",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaothong/icthcm_tim_camdungdau"
+  },
+  {
+    "title": "Nhà vệ sinh",
+    "layer": "ICTHCM_TIM_NHAVESINH",
+    "geometry_field": "ViTri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaothong/icthcm_tim_nhavesinh"
+  },
+  {
+    "title": "Cầu",
+    "layer": "ICTHCM_TIM_CAU",
+    "geometry_field": "Shape",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaothong/cau"
+  },
+  {
+    "title": "Đường",
+    "layer": "ICTHCM_TIM_DUONG",
+    "geometry_field": "Shape",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaothong/duong"
+  },
+  {
+    "title": "Đèn tín hiệu",
+    "layer": "ICTHCM_TIM_DENTINHIEU",
+    "geometry_field": "ToaDo",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaothong/dentinhieu"
+  },
+  {
+    "title": "Trạm xăng",
+    "layer": "ICTHCM_TRAM_XANG",
+    "geometry_field": "ViTri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaothong/icthcm_tram_xang"
+  },
+  {
+    "title": "Trạm xe buýt",
+    "layer": "ICTHCM_TRAM_XE_BUYT",
+    "geometry_field": "ViTri",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaothong/icthcm_tram_xe_buyt"
+  },
+  {
+    "title": "Nhà ga MRT",
+    "layer": "ICTHCM_NHA_GA_TRAM_DUNG_MRT",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuvegiaothong/icthcm_nha_ga_tram_dung_mrt"
+  },
+  {
+    "title": "BỘ PHẬN MỘT CỬA CẤP TỈNH",
+    "layer": "ICTHCM_BO_PHAN_MOT_CUA_CAP_TINH",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/tphcm/bophanmotcuacaptinh"
+  },
+  {
+    "title": "ĐẢNG ỦY PHƯỜNG, XÃ, ĐẶC KHU (TPHCM_BD_BRVT)",
+    "layer": "ICTHCM_TRU_SO_CO_QUAN_DON_VI",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/tphcm/danguytphcm_bd_brvt(168phuongxa)"
+  },
+  {
+    "title": "VĂN PHÒNG ĐĂNG KÝ ĐẤT ĐAI",
+    "layer": "ICTHCM_VPDKDD",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/tphcm/vanphongdangkydatdai"
+  },
+  {
+    "title": "TRUNG TÂM HÀNH CHÍNH CÔNG PHƯỜNG, XÃ, ĐẶC KHU (TPHCM_BD_BRVT)",
+    "layer": "ICTHCM_TRUNG_TAM_HANH_CHINH_CONG",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/tphcm/tthcctphcm_bd_brvt(168px)"
+  },
+  {
+    "title": "ĐỊA ĐIỂM TIẾP NHẬN HỒ SƠ CCCD",
+    "layer": "ICTHCM_DIA_DIEM_TIEP_NHAN_HO_SO_CCCD",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/tphcm/diadiemtiepnhanhosocccd"
+  },
+  {
+    "title": "ỦY BAN NHÂN DÂN PHƯỜNG, XÃ, ĐẶC KHU (TPHCM_BD_BRVT)",
+    "layer": "ICTHCM__Y_BAN_NHAN_DAN_PHUONG_XA_168",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/tphcm/ubndthcm_bd_brvt(168phuongxa)"
+  },
+  {
+    "title": "Cơ sở trợ giúp xã hội công lập",
+    "layer": "ICTHCM_CO_SO_TRO_GIUP_XA_HOI_CONG_LAP",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuveyte/cosotrogiupxahoiconglap"
+  },
+  {
+    "title": "Cơ sở trợ giúp xã hội ngoài công lập",
+    "layer": "ICTHCM_CO_SO_TRO_GIUP_XA_HOI_NGOAI_CONG_LAP_1",
+    "geometry_field": "vitritrenbando",
+    "path": "/root/vdms/hethong/layer/gisp/icthcm/customdata/thanhphohochiminh/dulieuveyte/cosotrogiupxahoingoaiconglap"
+  }
+]

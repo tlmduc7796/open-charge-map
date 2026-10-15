@@ -1,0 +1,788 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26737-01",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.694689,
+          10.790634
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26737-01",
+        "unit_id": "hcm_2025_26737",
+        "lat": 10.790634,
+        "lon": 106.694689,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.47774086378737546,
+        "population_proxy": 23181.897674418607,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NGANHANG:24a1c751-0e06-4bb7-8108-2ad38be150d2",
+        "weighted_poi_count": 209.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26737"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26737-02",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.685787,
+          10.795144
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26737-02",
+        "unit_id": "hcm_2025_26737",
+        "lat": 10.795144,
+        "lon": 106.685787,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.2770764119601329,
+        "population_proxy": 13444.855813953489,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NHATHO:3375408e-fefa-4e0c-a763-0d87c47303d6",
+        "weighted_poi_count": 58.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26737"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26737-03",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.701891,
+          10.792457
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26737-03",
+        "unit_id": "hcm_2025_26737",
+        "lat": 10.792457,
+        "lon": 106.701891,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.24518272425249169,
+        "population_proxy": 11897.246511627907,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NHAHANG:631d8d04-0cdd-4994-9934-583ad665a6e9",
+        "weighted_poi_count": 34.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26737"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26740-01",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.702686,
+          10.779768
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26740-01",
+        "unit_id": "hcm_2025_26740",
+        "lat": 10.779768,
+        "lon": 106.702686,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.46082725060827245,
+        "population_proxy": 21669.018978102187,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NHAHANG:2be71e1c-5315-411d-864f-6a43a8286167",
+        "weighted_poi_count": 536.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26740"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26740-02",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.703693,
+          10.79228
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26740-02",
+        "unit_id": "hcm_2025_26740",
+        "lat": 10.79228,
+        "lon": 106.703693,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.23454987834549879,
+        "population_proxy": 11029.004379562044,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NHAHANG:c2c32fe8-e513-47c2-929e-b1c3dcc323de",
+        "weighted_poi_count": 71.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26740"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26740-03",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.70377,
+          10.768963
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26740-03",
+        "unit_id": "hcm_2025_26740",
+        "lat": 10.768963,
+        "lon": 106.70377,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.3046228710462287,
+        "population_proxy": 14323.976642335767,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NGANHANG:302a22cd-3d0a-4e60-936e-dfb663492380",
+        "weighted_poi_count": 215.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26740"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26743-01",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.694178,
+          10.771274
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26743-01",
+        "unit_id": "hcm_2025_26743",
+        "lat": 10.771274,
+        "lon": 106.694178,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.46867469879518076,
+        "population_proxy": 33685.99397590361,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NHAHANG:1bc38586-38e7-4eae-9f75-51c747bce0fe",
+        "weighted_poi_count": 446.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26743"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26743-02",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.68524980545,
+          10.7690195630017
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26743-02",
+        "unit_id": "hcm_2025_26743",
+        "lat": 10.7690195630017,
+        "lon": 106.68524980545,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.2614457831325301,
+        "population_proxy": 18791.4156626506,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_TIM_NHAVESINH:1820154e-20e4-4f2d-9c8f-8ebe0e5b12fb",
+        "weighted_poi_count": 102.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26743"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26743-03",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.701757,
+          10.767624
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26743-03",
+        "unit_id": "hcm_2025_26743",
+        "lat": 10.767624,
+        "lon": 106.701757,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.26987951807228916,
+        "population_proxy": 19397.590361445782,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NGANHANG:92883a9d-4b99-4c68-8e10-d18b48a0b97d",
+        "weighted_poi_count": 116.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26743"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26911-01",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.740371,
+          10.818479
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26911-01",
+        "unit_id": "hcm_2025_26911",
+        "lat": 10.818479,
+        "lon": 106.740371,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.3189189189189189,
+        "population_proxy": 14734.054054054051,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_CHUA:640e088a-62e6-4d43-bcb0-f40414c1cf32",
+        "weighted_poi_count": 22.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26911"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26911-02",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.717,
+          10.8159
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26911-02",
+        "unit_id": "hcm_2025_26911",
+        "lat": 10.8159,
+        "lon": 106.717,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.4486486486486487,
+        "population_proxy": 20727.56756756757,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_EDU_TRUONGHOC:beb50e62-829e-45d7-9c7c-b8712cce7d4a",
+        "weighted_poi_count": 46.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26911"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26911-03",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.742166,
+          10.830989
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26911-03",
+        "unit_id": "hcm_2025_26911",
+        "lat": 10.830989,
+        "lon": 106.742166,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.23243243243243242,
+        "population_proxy": 10738.378378378378,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NHATHO:31efbc03-b299-4261-bae7-dd0e2195dd2e",
+        "weighted_poi_count": 6.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26911"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26929-01",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.7051010131836,
+          10.811309814453125
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26929-01",
+        "unit_id": "hcm_2025_26929",
+        "lat": 10.811309814453125,
+        "lon": 106.7051010131836,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.43506493506493504,
+        "population_proxy": 54948.70129870129,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_EDU_TRUONGHOC:97b20263-99bd-4057-b3be-fc924a1cb857",
+        "weighted_poi_count": 181.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26929"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26929-02",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.69572292217299,
+          10.8028137788974
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26929-02",
+        "unit_id": "hcm_2025_26929",
+        "lat": 10.8028137788974,
+        "lon": 106.69572292217299,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.2974025974025974,
+        "population_proxy": 37561.94805194805,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_TRU_SO_CO_QUAN_DON_VI:05d86e98-b3de-4334-a247-5d7afa3a26f9",
+        "weighted_poi_count": 75.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26929"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26929-03",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.716753813481,
+          10.8142219426706
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26929-03",
+        "unit_id": "hcm_2025_26929",
+        "lat": 10.8142219426706,
+        "lon": 106.716753813481,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.2675324675324675,
+        "population_proxy": 33789.35064935065,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_EDU_TRUONGHOC:cabf5e47-17aa-48fa-aabe-1a6aa76ce2d1",
+        "weighted_poi_count": 52.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26929"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26956-01",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.718822,
+          10.799337
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26956-01",
+        "unit_id": "hcm_2025_26956",
+        "lat": 10.799337,
+        "lon": 106.718822,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.4285714285714286,
+        "population_proxy": 65664.0,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NGANHANG:7669648a-c65b-40fc-be44-34993057e241",
+        "weighted_poi_count": 208.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26956"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26956-02",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.708203,
+          10.789424
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26956-02",
+        "unit_id": "hcm_2025_26956",
+        "lat": 10.789424,
+        "lon": 106.708203,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.3120879120879121,
+        "population_proxy": 47816.86153846154,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_CUAHANGTIENLOI:a736562f-a906-470a-9ca0-461702ed52d1",
+        "weighted_poi_count": 102.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26956"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26956-03",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.716603,
+          10.813015
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26956-03",
+        "unit_id": "hcm_2025_26956",
+        "lat": 10.813015,
+        "lon": 106.716603,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.2593406593406593,
+        "population_proxy": 39735.13846153846,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_KHACHSAN:fd34635a-4925-4293-849c-a1c49439a184",
+        "weighted_poi_count": 54.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26956"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26977-01",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.666883,
+          10.80479
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26977-01",
+        "unit_id": "hcm_2025_26977",
+        "lat": 10.80479,
+        "lon": 106.666883,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.36326530612244895,
+        "population_proxy": 23303.4693877551,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NHAHANG:018180c5-b282-4554-bd11-2eaacffd563c",
+        "weighted_poi_count": 120.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26977"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26977-02",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.675611371073,
+          10.8164095317817
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26977-02",
+        "unit_id": "hcm_2025_26977",
+        "lat": 10.8164095317817,
+        "lon": 106.675611371073,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.2639455782312925,
+        "population_proxy": 16932.108843537415,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_EDU_TRUONGHOC:4fa9058d-aa62-466d-8314-ffbeed9d1258",
+        "weighted_poi_count": 47.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26977"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_26977-03",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.661172,
+          10.792187
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_26977-03",
+        "unit_id": "hcm_2025_26977",
+        "lat": 10.792187,
+        "lon": 106.661172,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.3727891156462585,
+        "population_proxy": 23914.42176870748,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NHAHANG:0ea9da53-af78-4d87-b13f-9b16f9abc30f",
+        "weighted_poi_count": 127.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_26977"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_27073-01",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.672858,
+          10.793848
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_27073-01",
+        "unit_id": "hcm_2025_27073",
+        "lat": 10.793848,
+        "lon": 106.672858,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.48927335640138414,
+        "population_proxy": 33476.083044982704,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_CUAHANGTIENLOI:d442b352-ca15-4905-aedb-286f6fed2d5b",
+        "weighted_poi_count": 209.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_27073"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_27073-02",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.685728,
+          10.792787
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_27073-02",
+        "unit_id": "hcm_2025_27073",
+        "lat": 10.792787,
+        "lon": 106.685728,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.24705882352941175,
+        "population_proxy": 16903.764705882353,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NHAHANG:60b3821e-a2ab-4770-a8ff-5e8627e0f9b0",
+        "weighted_poi_count": 34.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_27073"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_27073-03",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.677456,
+          10.799302
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_27073-03",
+        "unit_id": "hcm_2025_27073",
+        "lat": 10.799302,
+        "lon": 106.677456,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.26366782006920414,
+        "population_proxy": 18040.152249134946,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NHATHO:2c25d2bf-d4e2-4c55-b706-10773016ca9b",
+        "weighted_poi_count": 46.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_27073"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_27139-01",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.691361,
+          10.782922
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_27139-01",
+        "unit_id": "hcm_2025_27139",
+        "lat": 10.782922,
+        "lon": 106.691361,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.44099821746880574,
+        "population_proxy": 21364.599643493762,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NHAHANG:3daaca0e-1297-46ac-b3b6-ab9ee4847290",
+        "weighted_poi_count": 338.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_27139"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_27139-02",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.681977,
+          10.791145
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_27139-02",
+        "unit_id": "hcm_2025_27139",
+        "lat": 10.791145,
+        "lon": 106.681977,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.25918003565062386,
+        "population_proxy": 12556.236007130125,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_CONGANHCM:baf4f3ad-2396-4164-9937-df85e7fdf658",
+        "weighted_poi_count": 83.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_27139"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "demand-hcm_2025_27139-03",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.682313,
+          10.776641
+        ]
+      },
+      "properties": {
+        "cell_id": "demand-hcm_2025_27139-03",
+        "unit_id": "hcm_2025_27139",
+        "lat": 10.776641,
+        "lon": 106.682313,
+        "spatial_resolution": "point_supported_poi_cluster",
+        "population_allocation_weight": 0.2998217468805704,
+        "population_proxy": 14525.164349376113,
+        "population_reference_date": null,
+        "context_feature_id": "ICTHCM_HCM_NHAHANG:c255c55f-d627-4863-b38e-f475539c9699",
+        "weighted_poi_count": 140.0,
+        "source_type": "synthetic",
+        "is_synthetic": true,
+        "quality_status": "synthetic_demand_support_not_measured_cell",
+        "source_ref": "generation_config.json#/demand",
+        "source_url": null,
+        "administrative_cell_id": "hcm_2025_27139"
+      }
+    }
+  ]
+}

@@ -9,6 +9,19 @@ pytest-cache-files-*/
 frontend/node_modules/
 frontend/dist/
 ml/artifacts/*.joblib
-data/ml/urbanev/raw/*.zip
-data/ml/urbanev/raw/*.part
+database/fixtures/ml/urbanev/raw/*.zip
+database/fixtures/ml/urbanev/raw/*.part
+database/fixtures/ml/urbanev/eda/
 AGENTS.md
+references/
+
+# Local drafts and superseded planning notes; keep out of the public repository.
+docs/BACKEND_KE_HOACH_HOAN_THIEN.md
+docs/VAN_DE_VA_GIAI_PHAP.md
+
+# simulator: snapshot DB, CSV sinh ra và báo cáo mỗi lần chạy
+simulator/data/
+simulator/**/*.csv
+ml/data/
+ml/model/
+ml/artifacts/station_demand/

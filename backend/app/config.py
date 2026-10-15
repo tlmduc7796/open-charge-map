@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+from backend.app.clock import parse_demo_time
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(PROJECT_ROOT / ".env", override=False)
@@ -40,51 +43,76 @@ def _read_csv(name: str, default: str) -> tuple[str, ...]:
     return tuple(item.strip() for item in os.getenv(name, default).split(",") if item.strip())
 
 
+def _read_choice(name: str, default: str, choices: set[str]) -> str:
+    value = os.getenv(name, default).strip().lower()
+    if value not in choices:
+        raise ValueError(f"{name} must be one of: {', '.join(sorted(choices))}")
+    return value
+
+
 @dataclass(frozen=True)
 class Settings:
     app_name: str
     app_env: str
     log_level: str
-    demo_mode: bool
+    internal_api_key: str | None
     goong_api_key: str | None
+    database_url: str
+    catalog_storage: str
     data_dir: Path
     model_artifact_path: Path
     model_preprocessor_path: Path
     model_meta_path: Path
+    model_dir: Path
+    profile_blend_tau_min: float
     wait_scoring_cap_min: float
     routing_timeout_s: float
     recommend_max_detour_min: float
     recommend_max_wait_min: float
     recommend_max_charge_min: float
     recommend_soc_risk_buffer: float
+    recommend_candidate_corridor_m: float
+    station_status_stale_after_s: float
+    availability_green_min: int
+    search_rate_limit_per_min: int
     cors_origins: tuple[str, ...]
+    # Initial demo time (`DEMO_NOW`, Vietnam time when it has no offset); None = real time.
+    demo_now: datetime | None
+    demo_clock_writable: bool
 
     def required_data_paths(self) -> tuple[Path, ...]:
         return (
             self.data_dir / "static" / "stations.geojson",
-            self.data_dir / "static" / "vehicles.json",
+            self.data_dir / "demo" / "vehicles.json",
             self.data_dir / "runtime" / "station_status.json",
-            self.data_dir / "runtime" / "planned_arrivals.json",
-            self.data_dir / "demo" / "demo_events.json",
-            self.data_dir / "demo" / "demo_scenarios.json",
             self.data_dir / "demo" / "queue_assumptions.json",
-            self.data_dir / "routes" / "route_base_direct.json",
-            self.data_dir / "routes" / "route_via_lavida.json",
-            self.data_dir / "routes" / "route_via_deutsches_haus.json",
-            self.data_dir / "ml" / "urbanev" / "source_manifest.json",
-            self.data_dir / "ml" / "urbanev" / "raw" / "UrbanEVDataset.zip",
         )
 
 
 def load_settings() -> Settings:
     key = os.getenv("GOONG_API_KEY", "").strip() or None
+    internal_api_key = os.getenv("INTERNAL_API_KEY", "").strip() or None
+    demo_now = os.getenv("DEMO_NOW", "").strip()
+    availability_green_min = int(os.getenv("AVAILABILITY_GREEN_MIN", "2"))
+    if availability_green_min <= 0:
+        raise ValueError("AVAILABILITY_GREEN_MIN must be positive")
+    search_rate_limit_per_min = int(os.getenv("SEARCH_RATE_LIMIT_PER_MIN", "30"))
+    if search_rate_limit_per_min <= 0:
+        raise ValueError("SEARCH_RATE_LIMIT_PER_MIN must be positive")
     return Settings(
         app_name="Smart EV Journey API",
         app_env=os.getenv("APP_ENV", "development"),
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
-        demo_mode=_read_bool("DEMO_MODE", True),
+        internal_api_key=internal_api_key,
         goong_api_key=key,
-        data_dir=_resolve_from_root(os.getenv("DATA_DIR", "data")),
+        database_url=os.getenv(
+            "DATABASE_URL",
+            "postgresql+psycopg://smart_ev:smart_ev@127.0.0.1:5433/smart_ev_data",
+        ),
+        catalog_storage=_read_choice(
+            "CATALOG_STORAGE", "database", {"database", "memory"}
+        ),
+        data_dir=_resolve_from_root(os.getenv("DATA_DIR", "database/fixtures")),
         model_artifact_path=_resolve_from_root(
             os.getenv("MODEL_ARTIFACT_PATH", "ml/artifacts/occupancy_model.joblib")
         ),
@@ -97,6 +125,9 @@ def load_settings() -> Settings:
         model_meta_path=_resolve_from_root(
             os.getenv("MODEL_META_PATH", "ml/artifacts/occupancy_model_meta.json")
         ),
+        # Six XGBoost boosters `model_h{5..30}.json` written by `python -m ml.train_eval`.
+        model_dir=_resolve_from_root(os.getenv("MODEL_DIR", "ml/model")),
+        profile_blend_tau_min=_read_positive_float("PROFILE_BLEND_TAU_MIN", 30),
         wait_scoring_cap_min=_read_positive_float("WAIT_SCORING_CAP_MIN", 120),
         routing_timeout_s=_read_positive_float("ROUTING_TIMEOUT_S", 8),
         recommend_max_detour_min=_read_positive_float(
@@ -109,5 +140,16 @@ def load_settings() -> Settings:
         recommend_soc_risk_buffer=_read_positive_float(
             "RECOMMEND_SOC_RISK_BUFFER", 0.20
         ),
+        recommend_candidate_corridor_m=_read_positive_float(
+            "RECOMMEND_CANDIDATE_CORRIDOR_M", 5_000
+        ),
+        # Occupancy buckets are five minutes apart, so tolerate three before a station is unknown.
+        station_status_stale_after_s=_read_positive_float(
+            "STATION_STATUS_STALE_AFTER_S", 900
+        ),
+        availability_green_min=availability_green_min,
+        search_rate_limit_per_min=search_rate_limit_per_min,
         cors_origins=_read_csv("CORS_ORIGINS", "http://127.0.0.1:5173"),
+        demo_now=(parse_demo_time(demo_now) if demo_now else None),
+        demo_clock_writable=_read_bool("DEMO_CLOCK_WRITABLE", True),
     )

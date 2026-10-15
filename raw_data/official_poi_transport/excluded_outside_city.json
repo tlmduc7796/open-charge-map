@@ -1,0 +1,362 @@
+[
+  {
+    "source_layer": "ICTHCM_BO_PHAN_MOT_CUA_CAP_TINH",
+    "source_id": "7f3c9b54-30e8-4a14-83fd-a8c22772553a",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_BO_PHAN_MOT_CUA_CAP_TINH",
+    "source_id": "fd3b49eb-76b4-4458-a81f-e41fd26a1536",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_BO_PHAN_MOT_CUA_CAP_TINH",
+    "source_id": "c9f075ae-ea15-4fb1-a809-30d6980ec653",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_CO_SO_TRO_GIUP_XA_HOI_CONG_LAP",
+    "source_id": "5144d133-ea51-41df-b7f4-ba25c7308104",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_CO_SO_TRO_GIUP_XA_HOI_CONG_LAP",
+    "source_id": "7f5ac363-3e79-47da-ab41-588ab235af6c",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_CO_SO_TRO_GIUP_XA_HOI_CONG_LAP",
+    "source_id": "3cf91e89-cb22-46ee-b5e2-fdca454f327a",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_CO_SO_TRO_GIUP_XA_HOI_CONG_LAP",
+    "source_id": "f6f07d10-8072-4fcd-a1b0-bc0e302ed9c5",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_CO_SO_TRO_GIUP_XA_HOI_NGOAI_CONG_LAP_1",
+    "source_id": "f926e510-5542-4c1b-966e-45696a1c390e",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_CO_SO_TRO_GIUP_XA_HOI_NGOAI_CONG_LAP_1",
+    "source_id": "9e6e041e-6b66-48a4-987b-67df8578a11c",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_EDU_TRUONGHOC",
+    "source_id": "c2d43661-f1f9-42a4-96b0-1d57cf13cf5c",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_EDU_TRUONGHOC",
+    "source_id": "c1bbe7fe-44ba-47b7-b94d-55bde0b2a1d4",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_EDU_TRUONGHOC",
+    "source_id": "99840292-614f-4663-b5e2-98c4e8103056",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_EDU_TRUONGHOC",
+    "source_id": "f5fa2875-db44-4785-a808-3c205a0a9c49",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_GIAODUCTHUONGXUYEN",
+    "source_id": "537ac8c7-3f16-4ec6-9ae2-5f7cd321794b",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_GIAODUCTHUONGXUYEN",
+    "source_id": "0011ce55-045c-4f68-9a67-7328b0885625",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_HCM_CONGTY",
+    "source_id": "7aa43037-ce2d-4085-b3ae-b82168d993a2",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_HCM_CONGTY",
+    "source_id": "df56fe88-e0f0-4197-8ce4-13d5d17f271f",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_HCM_CONGTY",
+    "source_id": "768a1ac0-5462-476d-bf01-ee6563618754",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_HCM_CONGTY",
+    "source_id": "583d191a-3ad0-428b-be19-a4c7c06f48ba",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_HCM_CONGTY",
+    "source_id": "629afab5-d7f1-4a9c-91c5-e5060b07b5cd",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_HCM_CONGTY",
+    "source_id": "e85c0e4f-0cc6-418d-8759-dcc050d6f0e7",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_HCM_CONGTY",
+    "source_id": "8ec6a4bd-ed10-4179-bf11-566e0c7e2ae6",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_HCM_CONGTY",
+    "source_id": "778472fd-58f2-4764-8d28-924ee921499e",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_HCM_CONGTY",
+    "source_id": "a591af73-6f69-4cfe-9ae2-1a768dd61529",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_HCM_CONGTY",
+    "source_id": "a8a5dbfd-476b-4ae1-911c-2a5964c144f1",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_HCM_CONGVIEN",
+    "source_id": "0d9622fe-6b33-49a8-b021-3064f3dc4b2e",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAMDUNGDAU",
+    "source_id": "5d9cb43c-37f2-40cf-a080-25a4fe761a69",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_CAMDUNGDAU",
+    "source_id": "6b90b914-77b7-43f7-b5c4-b16af1625dd6",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TIM_NHAVESINH",
+    "source_id": "42fbd797-8926-48df-bd26-82780c509a15",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "df5befca-83cb-4796-8f68-ed111dcaedf0",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "0e400c59-e1e1-476d-a4f6-bd651b9d06a8",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "920567b9-5cc7-4ab3-8b0b-2fdb64289c71",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "1bd10a63-88d1-4dca-be5d-ee1ae0f470ea",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "59757b63-abdb-4031-b2a7-37690e561922",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "45afa670-f964-4a13-91c1-9818496c3357",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "be16bece-4275-422a-86ad-142f7929cc75",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "c0e80c6a-24e2-46bd-9de7-0e21dfac7c11",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "4beccc36-c276-4243-944e-704a97ddef45",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "1d6c1b26-49f8-4c15-8468-c59cfc66a8da",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "03580b1e-ddbf-40b3-9d94-08e90b69b2a8",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "d565873d-b0b3-4d86-909f-0b0112120678",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "78fbe763-02b3-4ec8-9785-9d1276d0fdd3",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "4db61373-d253-4135-8d59-3e670ae13a15",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "a1702938-79a6-4eb8-814b-221522027b5e",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "fc24c65e-b064-49f5-bdbf-e1b8feb57829",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "611e28aa-8e6e-465f-8f8c-8d016b43ffe7",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "2c75e382-cc23-42ca-968f-2d30ad0e61f2",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "6b7bb218-ea2d-4c4f-9fe1-f0b515923269",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "66823fde-0273-45c7-9adc-84d0c06250f1",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "d6dcbcc0-8368-4ba7-b0ec-c72ab66aca72",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "5131dfa7-87b4-4ba8-81b9-6ad13fda8456",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "4e0bed55-7a70-43af-9997-b686d839b8db",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "7772c4a9-85f9-49a6-9055-5e9f9dbaa12a",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "7ee8a94c-91ec-4756-a64e-7c25c541e0ee",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "98373052-27a3-4bd9-97ff-0d46de29d287",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "23d3d79c-7485-4a21-a2d6-cc3d10fcc120",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "b21d7d32-d301-4903-9212-592723abee75",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "3e9654b3-ad30-470b-9410-41b6b5cef53f",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "6b4d4d9b-a9c3-4eb6-a450-98ce8d63dc06",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "d96ef727-a081-49d4-8746-94232bd0d706",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "d0e9adfb-bb56-4859-b09f-c0f3f1e9131b",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "aef278dc-719b-4d4b-9b12-da6bbd0af134",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "5ffdb84c-b144-41e2-b660-8d2c572559b1",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_TRAM_XE_BUYT",
+    "source_id": "b2f3e831-b01a-4657-b72f-487517df3af0",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_VPDKDD",
+    "source_id": "86e2a4d1-074d-40fc-b41c-e03a9a05499a",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_VPDKDD",
+    "source_id": "cf3a6692-1cbf-4b6a-9d2d-4e99d88e48fd",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_VPDKDD",
+    "source_id": "f7cd0d0d-c9b2-4b41-b8d3-f727f0d9fe6d",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_VPDKDD",
+    "source_id": "bbd63137-450b-4216-ad55-612314ec9bec",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_VPDKDD",
+    "source_id": "f028fe5b-98fd-4eda-bb8b-c4ce796e4e98",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_VPDKDD",
+    "source_id": "7bc55ac3-fc7c-4b8a-8d2a-f1c21ea3683f",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_VPDKDD",
+    "source_id": "488123a1-1c9f-4fa7-8146-63b415b0683d",
+    "reason": "outside_city_2025"
+  },
+  {
+    "source_layer": "ICTHCM_VPDKDD",
+    "source_id": "051a42f8-75e4-491a-86dc-5f20aa6e0745",
+    "reason": "outside_city_2025"
+  }
+]

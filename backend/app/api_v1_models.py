@@ -1,0 +1,344 @@
+"""Versioned public API models and boundary-unit adapters."""
+
+from __future__ import annotations
+
+from datetime import UTC, datetime
+from typing import Any, Literal
+
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
+from pydantic.alias_generators import to_camel
+
+
+class ApiModel(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        extra="forbid",
+        populate_by_name=True,
+        serialize_by_alias=True,
+    )
+
+    @field_serializer("*", when_used="json")
+    def serialize_datetime_utc(self, value):
+        if isinstance(value, datetime):
+            return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
+        return value
+
+
+class ApiPoint(ApiModel):
+    lat: float = Field(ge=-90, le=90)
+    lng: float = Field(ge=-180, le=180)
+
+
+class ApiErrorBody(ApiModel):
+    code: str
+    message: str
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
+class ApiErrorResponse(ApiModel):
+    error: ApiErrorBody
+    request_id: str
+
+
+class ConfigResponse(ApiModel):
+    api_version: Literal["v1"] = "v1"
+    reroute_deviation_m: int
+    reroute_eta_delta_min: int
+    near_station_radius_m: int
+    arrival_radius_m: int
+    position_interval_sec: int
+    reroute_cooldown_sec: int
+    low_battery_pct: int
+    stations_version: str
+    vehicles_version: str
+    station_status_stale_after_sec: int
+    updated_at: datetime
+
+
+class DemoClockResponse(ApiModel):
+    """The server's demo "now" and the span of occupancy data it can answer for."""
+
+    demo_now: datetime
+    wall_now: datetime
+    offset_s: float
+    is_shifted: bool
+    # Oldest / newest loaded occupancy bucket; None when the database holds none.
+    data_start: datetime | None
+    data_end: datetime | None
+    writable: bool
+
+
+class DemoClockUpdateRequest(ApiModel):
+    """Set the demo clock to `demoNow` (an offset-aware instant), or `reset` to real time."""
+
+    demo_now: datetime | None = None
+    reset: bool = False
+
+    @field_validator("demo_now")
+    @classmethod
+    def demo_now_requires_timezone(cls, value: datetime | None) -> datetime | None:
+        if value is not None and value.tzinfo is None:
+            raise ValueError("demoNow must include a timezone offset")
+        return value
+
+    @model_validator(mode="after")
+    def exactly_one_action(self) -> DemoClockUpdateRequest:
+        if self.reset == (self.demo_now is not None):
+            raise ValueError("send either demoNow or reset=true")
+        return self
+
+
+class PortStatusUpdate(ApiModel):
+    port_id: str = Field(min_length=1)
+    status: Literal["available", "charging", "out_of_service", "unknown"]
+    reported_at: datetime
+    session_started_at: datetime | None = None
+    estimated_finish_at: datetime | None = None
+
+    @field_validator("reported_at", "session_started_at", "estimated_finish_at")
+    @classmethod
+    def timestamps_require_timezone(cls, value: datetime | None) -> datetime | None:
+        if value is not None and value.tzinfo is None:
+            raise ValueError("timestamps require timezone")
+        return value
+
+
+class PortStatusBatchRequest(ApiModel):
+    updates: tuple[PortStatusUpdate, ...] = Field(min_length=1, max_length=1000)
+
+
+class PortStatusBatchResponse(ApiModel):
+    updated: int = Field(ge=0)
+    ignored: int = Field(ge=0)
+    updated_at: datetime
+
+
+class StationOccupancyUpdate(ApiModel):
+    """Number of ports in use at one station; which ports are busy is not reported."""
+
+    station_id: str = Field(min_length=1)
+    reported_at: datetime
+    # Defaults to the catalog's active port count when omitted.
+    total_ports: int | None = Field(default=None, gt=0)
+    operational_ports: int = Field(ge=0)
+    occupied_ports: int = Field(ge=0)
+    queue_length: int | None = Field(default=None, ge=0)
+
+    @field_validator("reported_at")
+    @classmethod
+    def reported_at_requires_timezone(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            raise ValueError("reportedAt requires timezone")
+        return value
+
+    @model_validator(mode="after")
+    def validate_port_counts(self) -> StationOccupancyUpdate:
+        if self.occupied_ports > self.operational_ports:
+            raise ValueError("occupiedPorts cannot exceed operationalPorts")
+        if self.total_ports is not None and self.operational_ports > self.total_ports:
+            raise ValueError("operationalPorts cannot exceed totalPorts")
+        return self
+
+
+class StationOccupancyBatchRequest(ApiModel):
+    updates: tuple[StationOccupancyUpdate, ...] = Field(min_length=1, max_length=1000)
+
+
+class StationOccupancyBatchResponse(ApiModel):
+    updated: int = Field(ge=0)
+    updated_at: datetime
+
+
+class StationSummary(ApiModel):
+    id: str
+    name: str
+    address: str
+    location: ApiPoint
+    color: Literal["green", "yellow", "red", "grey"]
+    available_ports: int = Field(ge=0)
+    total_ports: int = Field(ge=0)
+    connectors: tuple[str, ...]
+    updated_at: datetime
+    synthetic_fields: tuple[str, ...] = ()
+
+
+class ConnectorNow(ApiModel):
+    color: Literal["green", "yellow", "red", "grey"]
+    available: int = Field(ge=0)
+    charging: int = Field(ge=0)
+    out_of_service: int = Field(ge=0)
+    unknown: int = Field(ge=0)
+    total: int = Field(ge=0)
+
+
+class ConnectorDetail(ApiModel):
+    code: str
+    max_power_kw: float = Field(gt=0)
+    now: ConnectorNow
+
+
+class StationDetail(StationSummary):
+    opening_hours: str | dict | None
+    by_connector: tuple[ConnectorDetail, ...]
+
+
+class StationAvailability(ApiModel):
+    station_id: str
+    color: Literal["green", "yellow", "red", "grey"]
+    available_ports: int = Field(ge=0)
+    total_ports: int = Field(ge=0)
+    prediction_source: str
+    updated_at: datetime
+    synthetic_fields: tuple[str, ...] = ()
+
+
+class AvailabilityResponse(ApiModel):
+    offset: Literal[0, 5, 10, 15, 20, 25, 30]
+    is_prediction: bool
+    items: tuple[StationAvailability, ...]
+    updated_at: datetime
+    generated_at: datetime
+
+
+class AvailabilityPoint(ApiModel):
+    offset: Literal[0, 5, 10, 15, 20, 25, 30]
+    available_ports: int = Field(ge=0)
+    color: Literal["green", "yellow", "red", "grey"]
+    prediction_source: str
+    flags: tuple[str, ...] = ()
+
+
+class StationAvailabilityForecast(ApiModel):
+    """Free ports of one station at T+0..T+30 min (offset 0 is the live reading)."""
+
+    station_id: str
+    total_ports: int = Field(ge=0)
+    operational_ports: int = Field(ge=0)
+    points: tuple[AvailabilityPoint, ...]
+    updated_at: datetime
+    generated_at: datetime
+
+
+class PortResponse(ApiModel):
+    id: str
+    label: str
+    connector: str
+    status: Literal["available", "charging", "out_of_service", "unknown"]
+    minutes_to_finish: int | None = Field(default=None, ge=0)
+    updated_at: datetime
+    data_source: Literal["observed", "inferred", "synthetic", "unknown"] = "unknown"
+
+
+class SearchStationsRequest(ApiModel):
+    origin: ApiPoint
+    vehicle_id: str = Field(min_length=1)
+    battery_pct: float = Field(ge=0, le=100)
+    limit: int = Field(default=10, ge=1, le=25)
+
+
+class SearchRouteRequest(ApiModel):
+    origin: ApiPoint
+    destination: ApiPoint
+    vehicle_id: str = Field(min_length=1)
+    battery_pct: float = Field(ge=0, le=100)
+    limit: int = Field(default=10, ge=1, le=25)
+    # Only matters when the battery already reaches the destination ("enough"): also rank the
+    # stations a driver could voluntarily stop at. Off by default: it routes through every
+    # candidate station.
+    include_optional_stops: bool = False
+
+
+class SearchRouteSummary(ApiModel):
+    route_id: str
+    provider: str
+    distance_km: float = Field(ge=0)
+    travel_min: float = Field(ge=0)
+    geometry: tuple[tuple[float, float], ...]
+
+
+class WaitDistributionResponse(ApiModel):
+    p_wait: float = Field(ge=0, le=1)
+    expected_wait_min: float = Field(ge=0)
+    p90_wait_min: float = Field(ge=0)
+    source: Literal["model", "default"]
+
+
+class SearchStationOption(ApiModel):
+    rank: int = Field(gt=0)
+    station: StationSummary
+    route: SearchRouteSummary
+    distance_km: float = Field(ge=0)
+    travel_min: float = Field(ge=0)
+    wait_min: float = Field(ge=0)
+    wait_distribution: WaitDistributionResponse | None = None
+    charge_min: float = Field(ge=0)
+    to_dest_min: float | None = Field(default=None, ge=0)
+    total_min: float = Field(ge=0)
+    arrive_battery_pct: float
+    prediction_source: str
+    flags: tuple[str, ...]
+    synthetic_fields: tuple[str, ...] = ()
+
+
+class SearchExclusion(ApiModel):
+    station_id: str
+    reason_codes: tuple[str, ...] = Field(min_length=1)
+
+
+class SearchStationsResponse(ApiModel):
+    search_id: str
+    reachable_km: float = Field(ge=0)
+    stations: tuple[SearchStationOption, ...]
+    excluded_candidates: tuple[SearchExclusion, ...] = ()
+    nearest_station: StationSummary | None = None
+    missing_km: float | None = Field(default=None, ge=0)
+    updated_at: datetime
+    generated_at: datetime
+
+
+class SearchRouteResponse(ApiModel):
+    search_id: str
+    case: Literal["enough", "needCharge", "fallback"]
+    direct_route: SearchRouteSummary
+    direct_min: float = Field(ge=0)
+    stations: tuple[SearchStationOption, ...]
+    excluded_candidates: tuple[SearchExclusion, ...] = ()
+    missing_km: float | None = Field(default=None, ge=0)
+    nearest_station: StationSummary | None = None
+    updated_at: datetime
+    generated_at: datetime
+
+
+class DirectionClickRequest(ApiModel):
+    """The user pressed "Chỉ đường" (opens Google Maps); logged as one `trips` row."""
+
+    mode: Literal["find_station", "route"]
+    vehicle_id: str = Field(min_length=1)
+    origin: ApiPoint
+    # Null for find_station, required for route.
+    destination: ApiPoint | None = None
+    battery_pct: float = Field(ge=0, le=100)
+    # Rank-1 station the system recommended for this search.
+    recommended_station_id: str = Field(min_length=1)
+    # Station the user actually pressed "Chỉ đường" on.
+    actual_station_id: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def destination_matches_mode(self) -> DirectionClickRequest:
+        if self.mode == "route" and self.destination is None:
+            raise ValueError("destination is required when mode is route")
+        if self.mode == "find_station" and self.destination is not None:
+            raise ValueError("destination must be null when mode is find_station")
+        return self
+
+
+class DirectionClickResponse(ApiModel):
+    id: str
+    created_at: datetime

@@ -1,209 +1,138 @@
-"""Deterministic Erlang C wait estimation with runtime state kept separate."""
+"""Wait estimation from forecast free ports at the milestones around the arrival.
+
+Forecasts exist on a five-minute grid. A driver arriving between two milestones (say at
+minute 12, between 10 and 15) is judged by the worse of the two surrounding milestones:
+
+- if `min(free(before), free(after))` already offers the required free ports, there is no wait;
+- otherwise the wait is the time from the arrival to the first later milestone that does;
+- when none of the six milestones after the arrival qualifies, the wait is 30 minutes.
+
+This is a deterministic rule on top of the occupancy forecast, not a queueing model.
+"""
 
 from __future__ import annotations
 
-import math
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from backend.app.domain.models import (
-    OccupancyForecastResult,
-    PlannedArrival,
-    StationStatus,
-    WaitEstimateResult,
+from backend.app.domain.forecasting import (
+    MILESTONE_STEP_MIN,
+    MILESTONES_AFTER_ARRIVAL,
+    available_ports,
 )
-from backend.app.domain.repositories import QueueAssumptionsRepository
+from backend.app.domain.ml_gateway import MlGateway
+from backend.app.domain.models import ArrivalForecast, StationStatus, WaitEstimateResult
+
+MAX_WAIT_MIN = MILESTONE_STEP_MIN * MILESTONES_AFTER_ARRIVAL
+REQUIRED_FREE_PORTS = 1
 
 
 class WaitEstimator:
     def __init__(
         self,
-        assumptions: QueueAssumptionsRepository,
         *,
-        scoring_wait_cap_min: float = 120,
+        scoring_wait_cap_min: float = MAX_WAIT_MIN,
+        required_free_ports: int = REQUIRED_FREE_PORTS,
+        ml_gateway: MlGateway | None = None,
     ) -> None:
         if scoring_wait_cap_min <= 0:
             raise ValueError("scoring_wait_cap_min must be positive")
-        self._assumptions = assumptions
-        self._scoring_wait_cap_min = scoring_wait_cap_min
+        if required_free_ports <= 0:
+            raise ValueError("required_free_ports must be positive")
+        self._gateway = ml_gateway
+        # The rule never waits longer than the last milestone, whatever the configured cap.
+        self._cap_min = min(float(scoring_wait_cap_min), float(MAX_WAIT_MIN))
+        self._required_free_ports = required_free_ports
 
     def estimate_wait(
         self,
         status: StationStatus,
-        forecast: OccupancyForecastResult,
+        arrival: ArrivalForecast,
         *,
         evaluation_at: datetime,
-        planned_arrivals: tuple[PlannedArrival, ...] = (),
-        include_planned_arrivals: bool = True,
-        scenario_id: str | None = None,
-        excluded_arrival_id: str | None = None,
     ) -> WaitEstimateResult:
         if evaluation_at.tzinfo is None:
             raise ValueError("evaluation_at must include a timezone")
-        if status.station_id != forecast.station_id:
-            raise ValueError("status and forecast must reference the same station")
-        if forecast.predicted_occupied_ports > status.operational_ports:
-            raise ValueError("predicted occupied ports exceed current operational capacity")
-
-        flags: list[str] = []
-        baseline_rate = self._assumptions.baseline_rate(status.station_id, scenario_id)
-        if scenario_id is not None and self._assumptions.has_override(
-            scenario_id, status.station_id
-        ):
-            flags.append("SCENARIO_OVERRIDE_APPLIED")
-
-        planned_rate = 0.0
-        if include_planned_arrivals:
-            planned_rate = self._planned_arrival_rate(
-                status.station_id,
-                evaluation_at,
-                planned_arrivals,
-                excluded_arrival_id,
+        if len(arrival.forecasts) != MILESTONES_AFTER_ARRIVAL + 1:
+            raise ValueError(
+                f"arrival forecast must hold {MILESTONES_AFTER_ARRIVAL + 1} milestones"
             )
-            if planned_rate > 0:
-                flags.append("PLANNED_ARRIVALS_INCLUDED")
-        total_arrival_rate = baseline_rate + planned_rate
-        service_rate = 60 / status.avg_session_duration_min
+        for forecast in arrival.forecasts:
+            if forecast.station_id != status.station_id:
+                raise ValueError("status and forecast must reference the same station")
+            if forecast.predicted_occupied_ports > status.operational_ports:
+                raise ValueError("predicted occupied ports exceed current operational capacity")
 
-        if status.operational_ports == 0:
+        at_arrival = arrival.at_arrival
+        if status.operational_ports == 0 or at_arrival.predicted_occupancy_ratio is None:
             return self._result(
                 status,
-                forecast,
+                at_arrival.predicted_occupied_ports,
                 evaluation_at,
-                baseline_rate,
-                planned_rate,
-                total_arrival_rate,
-                service_rate,
-                traffic_intensity=None,
-                probability_wait=None,
-                erlang_wait=0,
-                current_state_wait=self._scoring_wait_cap_min,
-                estimated_wait=self._scoring_wait_cap_min,
-                flags=tuple([*flags, "STATION_OFFLINE", "CAPPED_WAIT"]),
+                required=0,
+                free_at_arrival=None,
+                satisfied_at_min=None,
+                estimated_wait=self._cap_min,
+                flags=("STATION_OFFLINE", "CAPPED_WAIT"),
             )
 
-        servers = status.operational_ports
-        capacity_rate = servers * service_rate
-        traffic_intensity = total_arrival_rate / capacity_rate
-        current_state_wait = self._current_state_wait(
-            forecast.predicted_occupied_ports,
-            status.queue_length,
-            servers,
-            status.avg_session_duration_min,
-        )
-
-        if total_arrival_rate >= capacity_rate:
+        # Guards a configured requirement above the station's size (e.g. 2 on a 1-port station).
+        required = min(self._required_free_ports, status.operational_ports)
+        free = [
+            available_ports(status.operational_ports, forecast.predicted_occupied_ports)
+            for forecast in arrival.forecasts
+        ]
+        # Index 0 is the milestone at or before the arrival, index 1 the first one after it
+        # (the same milestone as index 0 when the arrival lies exactly on the grid).
+        before = free[0]
+        after = free[0] if arrival.arrival_lead_min == arrival.milestones_min[0] else free[1]
+        free_at_arrival = min(before, after)
+        if free_at_arrival >= required:
             return self._result(
                 status,
-                forecast,
+                at_arrival.predicted_occupied_ports,
                 evaluation_at,
-                baseline_rate,
-                planned_rate,
-                total_arrival_rate,
-                service_rate,
-                traffic_intensity=traffic_intensity,
-                probability_wait=1,
-                erlang_wait=self._scoring_wait_cap_min,
-                current_state_wait=current_state_wait,
-                estimated_wait=self._scoring_wait_cap_min,
-                flags=tuple([*flags, "OVERLOADED", "CAPPED_WAIT"]),
+                required=required,
+                free_at_arrival=free_at_arrival,
+                satisfied_at_min=0.0,
+                estimated_wait=0.0,
+                flags=(),
             )
 
-        probability_wait, erlang_wait = self._erlang_c(
-            total_arrival_rate, service_rate, servers
-        )
-        projected_available_ports = servers - forecast.predicted_occupied_ports
-        if projected_available_ports >= 1 and status.queue_length == 0:
-            uncapped_wait = 0.0
-        else:
-            uncapped_wait = max(current_state_wait, erlang_wait)
-        estimated_wait = min(uncapped_wait, self._scoring_wait_cap_min)
-        if estimated_wait < uncapped_wait:
-            flags.append("CAPPED_WAIT")
-
+        for index in range(1, len(free)):
+            if free[index] < required:
+                continue
+            wait = float(arrival.milestones_min[index]) - arrival.arrival_lead_min
+            capped = min(wait, self._cap_min)
+            return self._result(
+                status,
+                at_arrival.predicted_occupied_ports,
+                evaluation_at,
+                required=required,
+                free_at_arrival=free_at_arrival,
+                satisfied_at_min=wait,
+                estimated_wait=capped,
+                flags=("CAPPED_WAIT",) if capped < wait else (),
+            )
         return self._result(
             status,
-            forecast,
+            at_arrival.predicted_occupied_ports,
             evaluation_at,
-            baseline_rate,
-            planned_rate,
-            total_arrival_rate,
-            service_rate,
-            traffic_intensity=traffic_intensity,
-            probability_wait=probability_wait,
-            erlang_wait=erlang_wait,
-            current_state_wait=current_state_wait,
-            estimated_wait=estimated_wait,
-            flags=tuple(flags),
+            required=required,
+            free_at_arrival=free_at_arrival,
+            satisfied_at_min=None,
+            estimated_wait=self._cap_min,
+            flags=("WAIT_NO_FREE_PORT_WITHIN_30MIN", "CAPPED_WAIT"),
         )
-
-    def _planned_arrival_rate(
-        self,
-        station_id: str,
-        evaluation_at: datetime,
-        arrivals: tuple[PlannedArrival, ...],
-        excluded_arrival_id: str | None,
-    ) -> float:
-        window_min = self._assumptions.assumptions.planned_arrival_window_min
-        window_end = evaluation_at + timedelta(minutes=window_min)
-        probability_sum = sum(
-            arrival.arrival_probability
-            for arrival in arrivals
-            if arrival.station_id == station_id
-            and arrival.arrival_id != excluded_arrival_id
-            and arrival.status == "planned"
-            and arrival.expires_at > evaluation_at
-            and evaluation_at <= arrival.eta_at < window_end
-        )
-        return probability_sum * 60 / window_min
-
-    @staticmethod
-    def _current_state_wait(
-        predicted_occupied_ports: float,
-        queue_length: int,
-        servers: int,
-        avg_session_duration_min: float,
-    ) -> float:
-        projected_available_ports = max(0.0, servers - predicted_occupied_ports)
-        required_releases = max(0.0, queue_length + 1 - projected_available_ports)
-        return required_releases * avg_session_duration_min / servers
-
-    @staticmethod
-    def _erlang_c(
-        arrival_rate_per_hour: float,
-        service_rate_per_server: float,
-        servers: int,
-    ) -> tuple[float, float]:
-        if arrival_rate_per_hour == 0:
-            return 0.0, 0.0
-        offered_load = arrival_rate_per_hour / service_rate_per_server
-        traffic_intensity = offered_load / servers
-        finite_sum = sum(
-            offered_load**customers / math.factorial(customers)
-            for customers in range(servers)
-        )
-        wait_term = offered_load**servers / (
-            math.factorial(servers) * (1 - traffic_intensity)
-        )
-        probability_wait = wait_term / (finite_sum + wait_term)
-        expected_wait_hours = probability_wait / (
-            servers * service_rate_per_server - arrival_rate_per_hour
-        )
-        return probability_wait, expected_wait_hours * 60
 
     def _result(
         self,
         status: StationStatus,
-        forecast: OccupancyForecastResult,
+        predicted_occupied_ports: float,
         evaluation_at: datetime,
-        baseline_rate: float,
-        planned_rate: float,
-        total_arrival_rate: float,
-        service_rate: float,
         *,
-        traffic_intensity: float | None,
-        probability_wait: float | None,
-        erlang_wait: float,
-        current_state_wait: float,
+        required: int,
+        free_at_arrival: int | None,
+        satisfied_at_min: float | None,
         estimated_wait: float,
         flags: tuple[str, ...],
     ) -> WaitEstimateResult:
@@ -211,18 +140,18 @@ class WaitEstimator:
             station_id=status.station_id,
             evaluation_at=evaluation_at,
             operational_ports=status.operational_ports,
-            predicted_occupied_ports=forecast.predicted_occupied_ports,
-            current_queue_length=status.queue_length,
-            avg_session_duration_min=status.avg_session_duration_min,
-            baseline_arrival_rate_per_hour=baseline_rate,
-            planned_arrival_rate_per_hour=planned_rate,
-            total_arrival_rate_per_hour=total_arrival_rate,
-            service_rate_per_server_per_hour=service_rate,
-            traffic_intensity=traffic_intensity,
-            erlang_c_probability_wait=probability_wait,
-            erlang_expected_wait_min=erlang_wait,
-            current_state_wait_min=current_state_wait,
+            predicted_occupied_ports=predicted_occupied_ports,
+            required_free_ports=required,
+            free_ports_at_arrival=free_at_arrival,
+            satisfied_at_min=satisfied_at_min,
             estimated_wait_min=estimated_wait,
-            scoring_wait_cap_min=self._scoring_wait_cap_min,
+            scoring_wait_cap_min=self._cap_min,
+            wait_distribution=(
+                self._gateway.wait_distribution(
+                    status.station_id, point_estimate_min=estimated_wait
+                )
+                if self._gateway is not None
+                else None
+            ),
             flags=flags,
         )

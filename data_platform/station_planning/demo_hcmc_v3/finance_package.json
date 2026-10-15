@@ -1,0 +1,141 @@
+{
+  "package_id": "hcmc-demo-finance-v1",
+  "version": 1,
+  "owner": "student-team",
+  "quality_status": "mixed_source_and_illustrative_assumptions",
+  "formula_version": "demo-cash-inputs-and-electricity-cost-v1",
+  "selected_tariff": {
+    "schedule_id": "tt16_reference_2025",
+    "voltage_band_id": "lt_6kv",
+    "voltage_selection_status": "illustrative_assumption_not_observed_connection_voltage"
+  },
+  "tariff_source_ref": "selected_electricity_tariffs.csv",
+  "tariff_status": "verified_historical_reference",
+  "inputs": {
+    "budget_vnd": {
+      "value": 10000000000,
+      "unit": "VND",
+      "value_status": "provided",
+      "source_type": "scenario",
+      "is_synthetic": true,
+      "source_ref": "generation_config.json#/finance/budget_vnd",
+      "legacy_value_status": "illustrative",
+      "quality_status": "provided_illustrative_assumption_not_observed_market_value"
+    },
+    "capex_per_port_vnd": {
+      "value": 250000000,
+      "unit": "VND/port",
+      "value_status": "provided",
+      "source_type": "scenario",
+      "is_synthetic": true,
+      "source_ref": "generation_config.json#/finance/capex_per_port_vnd",
+      "legacy_value_status": "illustrative",
+      "quality_status": "provided_illustrative_assumption_not_observed_market_value"
+    },
+    "site_setup_vnd": {
+      "value": 100000000,
+      "unit": "VND/site",
+      "value_status": "provided",
+      "source_type": "scenario",
+      "is_synthetic": true,
+      "source_ref": "generation_config.json#/finance/site_setup_vnd",
+      "legacy_value_status": "illustrative",
+      "quality_status": "provided_illustrative_assumption_not_observed_market_value"
+    },
+    "interconnection_vnd": {
+      "value": 80000000,
+      "unit": "VND/site",
+      "value_status": "provided",
+      "source_type": "scenario",
+      "is_synthetic": true,
+      "source_ref": "generation_config.json#/finance/interconnection_vnd",
+      "legacy_value_status": "illustrative",
+      "quality_status": "provided_illustrative_assumption_not_observed_market_value"
+    },
+    "annual_lease_vnd": {
+      "value": 120000000,
+      "unit": "VND/site/year",
+      "value_status": "provided",
+      "source_type": "scenario",
+      "is_synthetic": true,
+      "source_ref": "generation_config.json#/finance/annual_lease_vnd",
+      "legacy_value_status": "illustrative",
+      "quality_status": "provided_illustrative_assumption_not_observed_market_value"
+    },
+    "annual_fixed_opex_vnd": {
+      "value": 60000000,
+      "unit": "VND/site/year",
+      "value_status": "provided",
+      "source_type": "scenario",
+      "is_synthetic": true,
+      "source_ref": "generation_config.json#/finance/annual_fixed_opex_vnd",
+      "legacy_value_status": "illustrative",
+      "quality_status": "provided_illustrative_assumption_not_observed_market_value"
+    },
+    "maintenance_fraction_of_charger_capex": {
+      "value": 0.03,
+      "unit": "fraction/year",
+      "value_status": "provided",
+      "source_type": "scenario",
+      "is_synthetic": true,
+      "source_ref": "generation_config.json#/finance/maintenance_fraction_of_charger_capex",
+      "legacy_value_status": "illustrative",
+      "quality_status": "provided_illustrative_assumption_not_observed_market_value"
+    },
+    "revenue_vnd_per_kwh_ex_vat": {
+      "value": 6500,
+      "unit": "VND/kWh",
+      "value_status": "provided",
+      "source_type": "scenario",
+      "is_synthetic": true,
+      "source_ref": "generation_config.json#/finance/revenue_vnd_per_kwh_ex_vat",
+      "legacy_value_status": "illustrative",
+      "quality_status": "provided_illustrative_assumption_not_observed_market_value"
+    },
+    "discount_rate": {
+      "value": 0.1,
+      "unit": "fraction/year",
+      "value_status": "provided",
+      "source_type": "scenario",
+      "is_synthetic": true,
+      "source_ref": "generation_config.json#/finance/discount_rate",
+      "legacy_value_status": "illustrative",
+      "quality_status": "provided_illustrative_assumption_not_observed_market_value"
+    },
+    "payback_limit_years": {
+      "value": 7,
+      "unit": "year",
+      "value_status": "provided",
+      "source_type": "scenario",
+      "is_synthetic": true,
+      "source_ref": "generation_config.json#/finance/payback_limit_years",
+      "legacy_value_status": "illustrative",
+      "quality_status": "provided_illustrative_assumption_not_observed_market_value"
+    }
+  },
+  "reference_new_site_ports": 4,
+  "reference_configuration_status": "finance_comparison_only_not_sizing_recommendation",
+  "warnings": [
+    "Chi phí là giả định demo, không phải giá thị trường.",
+    "Lịch điện là tham chiếu lịch sử; không xác nhận hợp đồng của trạm.",
+    "Không annualize một tuần synthetic thành dự báo doanh thu năm.",
+    "Access là proxy demo; đất/điện/permit vẫn chưa được xác nhận khả thi."
+  ],
+  "source": "generation_config.json#/finance;selected_electricity_tariffs.csv",
+  "effective_from": null,
+  "effective_to": null,
+  "rules": [],
+  "units": {
+    "budget_vnd": "VND",
+    "capex_per_port_vnd": "VND/port",
+    "site_setup_vnd": "VND/site",
+    "interconnection_vnd": "VND/site",
+    "annual_lease_vnd": "VND/site/year",
+    "annual_fixed_opex_vnd": "VND/site/year",
+    "maintenance_fraction_of_charger_capex": "fraction/year",
+    "revenue_vnd_per_kwh_ex_vat": "VND/kWh",
+    "discount_rate": "fraction/year",
+    "payback_limit_years": "year"
+  },
+  "effective_date_status": "unknown_for_real_contract; synthetic_period_in_generation_config"
+}

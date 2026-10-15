@@ -1,11 +1,11 @@
-from backend.app.config import load_settings
+import pytest
+
 from backend.app.domain.phase7_models import (
     GeoPoint,
     LineStringGeometry,
     RouteResult,
     RouteWaypoint,
 )
-from backend.app.domain.repositories import load_domain_data
 from backend.app.domain.routing import (
     GoongRoutingProvider,
     RoutingService,
@@ -23,7 +23,6 @@ class StaticOsrmProvider:
         return RouteResult(
             route_id="LIVE_TEST",
             provider="osrm",
-            resolution_source="live",
             origin=origin,
             destination=destination,
             waypoints=waypoints,
@@ -64,26 +63,29 @@ class CapturingClient:
         return FakeResponse()
 
 
-def test_route_cache_returns_normalized_geometry_distance_and_duration() -> None:
-    data = load_domain_data(load_settings().data_dir)
-    service = RoutingService(data.routes, goong=None, osrm=None)
+def test_route_metrics_split_a_route_at_the_station_waypoint() -> None:
+    route = RouteResult(
+        route_id="LIVE_TEST",
+        provider="osrm",
+        origin=GeoPoint(lat=10.0, lon=106.0),
+        destination=GeoPoint(lat=10.2, lon=106.2),
+        waypoints=(RouteWaypoint(lat=10.1, lon=106.1, station_id="ST_TEST"),),
+        geometry=LineStringGeometry(
+            type="LineString",
+            coordinates=((106.0, 10.0), (106.1, 10.1), (106.2, 10.2)),
+        ),
+        distance_m=30_000,
+        duration_s=2_400,
+    )
 
-    result = service.cached_route("ROUTE_VIA_LAVIDA")
-    distance, duration = route_metrics_to_station(result, "ST_EVO_LAVIDA_Q7")
+    distance, duration = route_metrics_to_station(route, "ST_TEST")
 
-    assert result.resolution_source == "cache"
-    assert result.provider == "osrm"
-    assert result.geometry.type == "LineString"
-    assert result.distance_m > 0
-    assert result.duration_s > 0
-    assert 0 < distance < result.distance_m
-    assert 0 < duration < result.duration_s
+    assert distance == pytest.approx(15_000, rel=0.01)
+    assert duration == pytest.approx(1_200, rel=0.01)
 
 
-def test_goong_failure_uses_osrm_fallback_for_uncached_route() -> None:
-    data = load_domain_data(load_settings().data_dir)
+def test_goong_failure_uses_osrm_fallback() -> None:
     service = RoutingService(
-        data.routes,
         goong=FailingProvider(),
         osrm=StaticOsrmProvider(),
     )
@@ -95,7 +97,6 @@ def test_goong_failure_uses_osrm_fallback_for_uncached_route() -> None:
     )
 
     assert result.provider == "osrm"
-    assert result.resolution_source == "live"
     assert "GOONG_FAILED" in result.flags
     assert "OSRM_FALLBACK" in result.flags
 

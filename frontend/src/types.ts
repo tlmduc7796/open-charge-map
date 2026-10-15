@@ -20,6 +20,9 @@ export interface Station {
     connectors: StationConnector[];
     access: "public" | "customers" | "private" | "unknown";
     notes: string[];
+    source_provider?: string;
+    source_updated_at?: string | null;
+    synthetic_fields?: string[];
   };
 }
 
@@ -31,10 +34,30 @@ export interface StationStatus {
   occupied_ports: number;
   available_ports: number;
   offline_ports: number;
+  unknown_ports: number;
   occupancy_ratio: number | null;
-  queue_length: number;
-  avg_session_duration_min: number;
+  queue_length: number | null;
+  avg_session_duration_min: number | null;
   data_source: string;
+}
+
+/** Availability colour computed by the backend (thresholds come from its `app_config`). */
+export type StationColor = "green" | "yellow" | "red" | "grey";
+
+export interface AvailabilityPoint {
+  /** Minutes from now; 0 is the live reading, 5..30 are predictions. */
+  offset_min: number;
+  available_ports: number;
+  prediction_source: string;
+  flags: string[];
+}
+
+export interface StationForecast {
+  station_id: string;
+  total_ports: number;
+  operational_ports: number;
+  points: AvailabilityPoint[];
+  generated_at: string;
 }
 
 export interface Vehicle {
@@ -57,54 +80,31 @@ export interface GeoPoint {
   label?: string | null;
 }
 
-export interface DemoScenario {
-  scenario_id: string;
-  name: string;
-  vehicle_id: string;
-  initial_soc: number;
-  target_soc: number;
-  origin: GeoPoint;
-  destination: GeoPoint;
-  departure_at: string;
-  event_ids: string[];
-}
+/** Which journey endpoint the next map click will set. */
+export type PickTarget = "origin" | "destination";
 
 export interface RouteResult {
   route_id: string;
-  provider: "goong" | "osrm";
-  resolution_source: "cache" | "live";
-  origin: GeoPoint;
-  destination: GeoPoint;
+  provider: string;
   geometry: { type: "LineString"; coordinates: Coordinates[] };
   distance_m: number;
   duration_s: number;
-  flags: string[];
 }
 
 export interface RecommendationItem {
+  rank: number;
   station_id: string;
   station_name: string;
-  route_id: string;
-  route_provider: string;
+  connectors: string[];
   route: RouteResult;
-  matched_connectors: string[];
-  effective_power_kw: number;
-  route_distance_to_station_m: number;
-  route_duration_to_station_s: number;
-  detour_min: number;
-  arrival_soc: number;
-  predicted_occupied_ports: number;
-  predicted_occupancy_ratio: number | null;
+  distance_km: number;
+  travel_min: number;
+  wait_min: number;
+  charge_min: number;
+  to_dest_min: number | null;
+  total_min: number;
+  arrive_battery_pct: number;
   prediction_source: string;
-  estimated_wait_min: number;
-  estimated_charge_min: number;
-  energy_to_add_kwh: number;
-  wait_score: number;
-  detour_score: number;
-  charging_time_score: number;
-  soc_risk_score: number;
-  final_score: number;
-  rank: number;
   flags: string[];
 }
 
@@ -114,17 +114,33 @@ export interface CandidateExclusion {
 }
 
 export interface JourneyRecommendation {
-  scenario_id: string;
+  search_id: string;
+  case: "enough" | "needCharge" | "fallback";
   generated_at: string;
-  vehicle_id: string;
   direct_route: RouteResult;
+  direct_min: number;
   recommendations: RecommendationItem[];
   excluded_candidates: CandidateExclusion[];
-  active_event_ids: string[];
+  missing_km: number | null;
+  nearest_station_name: string | null;
+}
+
+/**
+ * The backend's demo "now". Every status, forecast and search is answered for this moment, and it
+ * keeps running from the moment it was set; `data_start`/`data_end` bound the loaded occupancy.
+ */
+export interface DemoClock {
+  demo_now: string;
+  wall_now: string;
+  offset_s: number;
+  is_shifted: boolean;
+  data_start: string | null;
+  data_end: string | null;
+  writable: boolean;
 }
 
 export interface ModelStatus {
-  prediction_source: "persistence" | "model";
+  prediction_source: "persistence" | "model" | "default";
   model_artifact_available: boolean;
   preprocessor_artifact_available: boolean;
   metadata_available: boolean;
@@ -133,15 +149,41 @@ export interface ModelStatus {
   flags: string[];
 }
 
-export interface JourneyRequest {
-  scenario_id: string;
-  apply_scenario_events: boolean;
-  vehicle_id: string;
-  initial_soc: number;
-  target_soc: number;
+export interface SearchRequest {
   origin: GeoPoint;
   destination: GeoPoint;
-  departure_at: string;
+  vehicle_id: string;
+  battery_pct: number;
+  /** Battery already reaches the destination: also rank stations to visit voluntarily. */
+  include_optional_stops?: boolean;
+}
+
+/** The user pressed "Chỉ đường": logged to compare the system's rank-1 pick with their choice. */
+export interface DirectionClick {
+  mode: "stations" | "route";
+  origin: GeoPoint;
+  /** Only for the route search; the station search has no end point. */
+  destination: GeoPoint | null;
+  vehicle_id: string;
+  battery_pct: number;
+  /** Rank-1 station of the search. */
+  recommended_station_id: string;
+  /** Station the user actually pressed "Chỉ đường" on. */
+  actual_station_id: string;
+}
+
+export interface SearchStationsRequest {
+  location: GeoPoint;
+  vehicle_id: string;
+  battery_pct: number;
+}
+
+export interface StationSearchResult {
+  stations: RecommendationItem[];
+  excluded_candidates: CandidateExclusion[];
+  nearest_station_name: string | null;
+  missing_km: number | null;
+  reachable_km: number;
 }
 
 export interface PlaceSuggestion {
@@ -149,21 +191,12 @@ export interface PlaceSuggestion {
   description: string;
   main_text: string;
   secondary_text: string;
-  provider: "goong" | "demo";
+  provider: "goong";
 }
 
 export interface GeocodedPlace {
   place_id: string;
   label: string;
   location: GeoPoint;
-  provider: "goong" | "demo";
-}
-
-export interface PlannedArrival {
-  arrival_id: string;
-  station_id: string;
-  vehicle_id: string | null;
-  eta_at: string;
-  route_id: string | null;
-  status: "planned" | "arrived" | "cancelled" | "expired";
+  provider: "goong";
 }

@@ -1,0 +1,57 @@
+{
+  "status": "PASS",
+  "snapshot_id": "hcmc-nine-wards-demo-v3",
+  "checks": {
+    "no_excluded_source_read": true,
+    "source_hashes_match": true,
+    "output_hashes_match": true,
+    "ids_unique_and_scope_counts": true,
+    "synthetic_and_unknown_labels": true,
+    "population_not_duplicated": true,
+    "time_series_complete": true,
+    "request_energy_and_timestamps": true,
+    "demand_reconciles_to_requests": true,
+    "operations_reconcile_ports_energy_and_queues": true,
+    "tariff_boundaries_and_cost_arithmetic": true,
+    "candidate_costs_add_up": true,
+    "period_finance_not_claimed_profit": true,
+    "access_all_pairs_all_profiles": true,
+    "access_proxy_arithmetic_and_provenance": true,
+    "constraints_unknown_not_zero_or_pass": true,
+    "constraint_eligibility_and_budget_package": true
+  },
+  "prepared_on": "2026-10-13",
+  "data_plan_contract": {
+    "status": "PASS",
+    "dataset_contract_version": "1.0",
+    "snapshot_id": "hcmc-nine-wards-demo-v3",
+    "validated_csv_rows": {
+      "existing_sites.csv": 37,
+      "candidate_sites.csv": 18,
+      "demand_observations.csv": 37296,
+      "demand_cells.csv": 9072
+    },
+    "validated_json_files": [
+      "boundary_metadata.json",
+      "scenario_config.json",
+      "finance_package.json"
+    ],
+    "checks": {
+      "power_units_and_unknowns_preserved": true,
+      "candidate_type_is_synthetic_parcel_hypothesis": true,
+      "administrative_cells_conserve_node_demand": true,
+      "node_to_administrative_cell_mapping": true,
+      "synthetic_observations_reconcile_with_operations_and_waits": true,
+      "no_fabricated_boundary_dates_or_crosswalk": true,
+      "schema_fields_types_enums_formats": true
+    }
+  },
+  "json_schema": "PASS: scenario schema 1.1, technical rules, DATA_PLAN CSV rows and metadata packages",
+  "negative_schema_checks": "PASS: missing power_kw/source_url and invalid candidate enum rejected",
+  "helper_tests": "PASS: 19 unittest cases",
+  "lint": "PASS: Ruff",
+  "reproducibility": "PASS: repeated v3 generation has identical manifest/output hashes",
+  "legacy_snapshots": "v1/v2 and reports preserved in local Git stash; excluded from published commit",
+  "numeric_conservation": "PASS: all CSV and GeoJSON output hashes unchanged by scenario schema 1.1 migration",
+  "manifest_sha256": "54d05bca49a5c41b4629582a085d8708e14781a7878b82cf62e27fe64a12a1a7"
+}

@@ -1,0 +1,492 @@
+"""General station and route search built on the existing domain services."""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
+
+from backend.app.api_v1_models import (
+    ApiPoint,
+    SearchExclusion,
+    SearchRouteRequest,
+    SearchRouteResponse,
+    SearchRouteSummary,
+    SearchStationOption,
+    SearchStationsRequest,
+    SearchStationsResponse,
+    StationSummary,
+    WaitDistributionResponse,
+)
+from backend.app.app_config_repository import AppConfigRepository
+from backend.app.domain.forecasting import OccupancyForecastService
+from backend.app.domain.models import StationStatus, WaitDistribution
+from backend.app.domain.phase7_models import (
+    GeoPoint,
+    JourneyQuery,
+    RecommendationPreference,
+)
+from backend.app.domain.recommendation import RecommendationService
+from backend.app.domain.routing import RoutingService, _haversine_m
+from backend.app.domain.runtime import RuntimeStateStore
+from backend.app.domain.services import (
+    ASSUMED_CHARGER_POWER_KW,
+    estimate_charging,
+)
+from backend.app.domain.station_hours import is_confirmed_open
+from backend.app.domain.wait_estimation import WaitEstimator
+from backend.app.search_store import SearchResultStore, SearchSnapshot
+
+
+def _wait_distribution(
+    value: WaitDistribution | None,
+) -> WaitDistributionResponse | None:
+    return (
+        WaitDistributionResponse.model_validate(value.model_dump())
+        if value is not None
+        else None
+    )
+
+
+class SearchService:
+    def __init__(
+        self,
+        recommendation: RecommendationService,
+        routing: RoutingService,
+        vehicles,
+        stations,
+        statuses,
+        runtime: RuntimeStateStore,
+        forecasting: OccupancyForecastService,
+        wait_estimator: WaitEstimator,
+        store: SearchResultStore,
+        availability_green_min: int,
+        config_repository: AppConfigRepository | None = None,
+        clock: Callable[[], datetime] | None = None,
+    ) -> None:
+        self._clock = clock or (lambda: datetime.now(UTC))
+        self._recommendation = recommendation
+        self._routing = routing
+        self._vehicles = vehicles
+        self._stations = stations
+        self._statuses = statuses
+        self._runtime = runtime
+        self._forecasting = forecasting
+        self._wait_estimator = wait_estimator
+        self._store = store
+        self._availability_green_min = availability_green_min
+        self._config_repository = config_repository
+
+    @staticmethod
+    def _point(point: ApiPoint) -> GeoPoint:
+        return GeoPoint(lat=point.lat, lon=point.lng)
+
+    @staticmethod
+    def _route_summary(route) -> SearchRouteSummary:
+        return SearchRouteSummary(
+            route_id=route.route_id,
+            provider=route.provider,
+            distance_km=route.distance_m / 1000,
+            travel_min=route.duration_s / 60,
+            geometry=route.geometry.coordinates,
+        )
+
+    def _station_summary(self, station_id: str):
+        station = self._stations.get(station_id)
+        status = self._statuses.get(station_id)
+        lon, lat = station.geometry.coordinates
+        green_min = (
+            self._config_repository.read().availability_green_min
+            if self._config_repository is not None
+            else self._availability_green_min
+        )
+        if status.total_ports == 0 or status.unknown_ports == status.total_ports:
+            color = "grey"
+        elif status.available_ports == 0:
+            color = "red"
+        elif status.available_ports < green_min:
+            color = "yellow"
+        else:
+            color = "green"
+        synthetic_fields = set(station.properties.synthetic_fields)
+        if any(item.source.endswith(":synthetic") for item in station.properties.connectors):
+            synthetic_fields.add("connectors")
+        synthetic_fields.update(status.synthetic_fields)
+        return StationSummary(
+            id=station_id,
+            name=station.properties.name,
+            address=station.properties.address,
+            location=ApiPoint(lat=lat, lng=lon),
+            color=color,
+            available_ports=status.available_ports,
+            total_ports=status.total_ports,
+            connectors=tuple(item.type for item in station.properties.connectors),
+            updated_at=status.timestamp,
+            synthetic_fields=tuple(sorted(synthetic_fields)),
+        )
+
+    def _wait_synthetic_fields(
+        self,
+        station_id: str,
+        status: StationStatus,
+    ) -> tuple[str, ...]:
+        return tuple(sorted(status.synthetic_fields))
+
+    def _nearest_station(self, origin: ApiPoint):
+        eligible = (
+            station
+            for station in self._stations.all()
+            if station.properties.access == "public"
+            and is_confirmed_open(station)
+        )
+        nearest = min(
+            eligible,
+            key=lambda station: _haversine_m(
+                origin.lat,
+                origin.lng,
+                station.geometry.coordinates[1],
+                station.geometry.coordinates[0],
+            ),
+            default=None,
+        )
+        if nearest is None:
+            return None, None
+        distance_km = _haversine_m(
+            origin.lat,
+            origin.lng,
+            nearest.geometry.coordinates[1],
+            nearest.geometry.coordinates[0],
+        ) / 1000
+        return self._station_summary(nearest.station_id), distance_km
+
+    def _query(
+        self,
+        *,
+        origin: ApiPoint,
+        destination: ApiPoint,
+        vehicle_id: str,
+        battery_pct: float,
+        departure_at: datetime,
+    ) -> JourneyQuery:
+        vehicle = self._vehicles.get(vehicle_id)
+        return JourneyQuery(
+            vehicle_id=vehicle_id,
+            initial_soc=battery_pct / 100,
+            target_soc=vehicle.default_target_soc,
+            origin=self._point(origin),
+            destination=self._point(destination),
+            departure_at=departure_at,
+            preference=RecommendationPreference(
+                wait_weight=0.25,
+                detour_weight=0.25,
+                charging_time_weight=0.25,
+                soc_risk_weight=0.25,
+            ),
+        )
+
+    def _route_options(
+        self,
+        payload: SearchRouteRequest,
+        vehicle,
+        generated_at: datetime,
+        *,
+        voluntary: bool,
+    ) -> tuple[tuple[SearchStationOption, ...], tuple[SearchExclusion, ...]]:
+        """Rank the stations on the way to the destination by total trip time.
+
+        `voluntary` controls whether optional stops are considered when the vehicle can already
+        reach the destination. Suggested stops target a full battery in either case.
+        """
+        recommendation = self._recommendation.recommend(
+            self._query(
+                origin=payload.origin,
+                destination=payload.destination,
+                vehicle_id=payload.vehicle_id,
+                battery_pct=payload.battery_pct,
+                departure_at=generated_at,
+            ),
+            require_confirmed_open=True,
+        )
+        options: list[SearchStationOption] = []
+        exclusions = [
+            SearchExclusion(
+                station_id=item.station_id,
+                reason_codes=item.reason_codes,
+            )
+            for item in recommendation.excluded_candidates
+        ]
+        for item in recommendation.recommendations:
+            travel_min = item.route_duration_to_station_s / 60
+            to_dest_min = max(0.0, item.route.duration_s / 60 - travel_min)
+            to_dest_distance_km = max(
+                0.0,
+                (item.route.distance_m - item.route_distance_to_station_m) / 1000,
+            )
+            required_soc = vehicle.reserve_soc + (
+                to_dest_distance_km * vehicle.consumption_wh_km / 1000
+                / vehicle.calculation_battery_kwh
+            )
+            if required_soc > 1:
+                exclusions.append(
+                    SearchExclusion(
+                        station_id=item.station_id,
+                        reason_codes=("DESTINATION_OUT_OF_RANGE",),
+                    )
+                )
+                continue
+            target_soc = max(required_soc, vehicle.default_target_soc)
+            if voluntary:
+                target_soc = min(1.0, max(vehicle.default_target_soc, required_soc))
+            charging = estimate_charging(
+                vehicle,
+                self._stations.get(item.station_id),
+                arrival_soc=item.arrival_soc,
+                target_soc=target_soc,
+                effective_power_kw=item.effective_power_kw,
+            )
+            total_min = (
+                travel_min
+                + item.estimated_wait_min
+                + charging.estimated_charge_min
+                + to_dest_min
+            )
+            options.append(
+                SearchStationOption(
+                    rank=1,
+                    station=self._station_summary(item.station_id),
+                    route=self._route_summary(item.route),
+                    distance_km=item.route_distance_to_station_m / 1000,
+                    travel_min=travel_min,
+                    wait_min=item.estimated_wait_min,
+                    wait_distribution=_wait_distribution(item.wait_distribution),
+                    charge_min=charging.estimated_charge_min,
+                    to_dest_min=to_dest_min,
+                    total_min=total_min,
+                    arrive_battery_pct=item.arrival_soc * 100,
+                    prediction_source=item.prediction_source,
+                    flags=item.flags,
+                    synthetic_fields=self._wait_synthetic_fields(
+                        item.station_id,
+                        self._statuses.get(item.station_id),
+                    ),
+                )
+            )
+        ordered = sorted(options, key=lambda item: (item.total_min, item.station.id))
+        ranked = tuple(
+            item.model_copy(update={"rank": index})
+            for index, item in enumerate(ordered[: payload.limit], start=1)
+        )
+        return ranked, tuple(exclusions)
+
+    def search_route(
+        self, payload: SearchRouteRequest, *, now: datetime | None = None
+    ) -> SearchRouteResponse:
+        generated_at = now or self._clock()
+        vehicle = self._vehicles.get(payload.vehicle_id)
+        direct = self._routing.route(
+            self._point(payload.origin), self._point(payload.destination)
+        )
+        direct_energy_kwh = (
+            direct.distance_m / 1000 * vehicle.consumption_wh_km / 1000
+        )
+        arrival_soc = payload.battery_pct / 100 - (
+            direct_energy_kwh / vehicle.calculation_battery_kwh
+        )
+        reachable_km = max(
+            0.0,
+            (payload.battery_pct / 100 - vehicle.reserve_soc)
+            * vehicle.calculation_battery_kwh
+            / vehicle.consumption_wh_km
+            * 1000,
+        )
+        if arrival_soc >= vehicle.reserve_soc:
+            stops: tuple[SearchStationOption, ...] = ()
+            stop_exclusions: tuple[SearchExclusion, ...] = ()
+            if payload.include_optional_stops:
+                stops, stop_exclusions = self._route_options(
+                    payload, vehicle, generated_at, voluntary=True
+                )
+            provisional = SearchRouteResponse(
+                search_id="pending",
+                case="enough",
+                direct_route=self._route_summary(direct),
+                direct_min=direct.duration_s / 60,
+                stations=stops,
+                excluded_candidates=stop_exclusions,
+                updated_at=generated_at,
+                generated_at=generated_at,
+            )
+        else:
+            ranked, exclusions = self._route_options(
+                payload, vehicle, generated_at, voluntary=False
+            )
+            nearest, nearest_km = self._nearest_station(payload.origin)
+            provisional = SearchRouteResponse(
+                search_id="pending",
+                case="needCharge" if ranked else "fallback",
+                direct_route=self._route_summary(direct),
+                direct_min=direct.duration_s / 60,
+                stations=ranked,
+                excluded_candidates=exclusions,
+                missing_km=(
+                    None if ranked or nearest_km is None
+                    else max(0.0, nearest_km - reachable_km)
+                ),
+                nearest_station=None if ranked else nearest,
+                updated_at=generated_at,
+                generated_at=generated_at,
+            )
+        search_id = self._store.put(provisional, created_at=generated_at)
+        result = provisional.model_copy(update={"search_id": search_id})
+        self._store.set(
+            search_id, SearchSnapshot(payload, result), created_at=generated_at
+        )
+        return result
+
+    def search_stations(
+        self, payload: SearchStationsRequest, *, now: datetime | None = None
+    ) -> SearchStationsResponse:
+        generated_at = now or self._clock()
+        vehicle = self._vehicles.get(payload.vehicle_id)
+        reachable_km = max(
+            0.0,
+            (payload.battery_pct / 100 - vehicle.reserve_soc)
+            * vehicle.calculation_battery_kwh
+            / vehicle.consumption_wh_km
+            * 1000,
+        )
+        self._runtime.refresh()
+        candidates = self._stations.nearby(
+            payload.origin.lng, payload.origin.lat, reachable_km * 1000
+        )
+        options: list[SearchStationOption] = []
+        exclusions: list[SearchExclusion] = []
+        for station in candidates:
+            if station.properties.access != "public":
+                exclusions.append(
+                    SearchExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("NON_PUBLIC_ACCESS",),
+                    )
+                )
+                continue
+            if not is_confirmed_open(station):
+                exclusions.append(
+                    SearchExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("OPENING_HOURS_UNVERIFIED",),
+                    )
+                )
+                continue
+            try:
+                status = self._runtime.get(station.station_id)
+            except KeyError:
+                exclusions.append(
+                    SearchExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("TELEMETRY_UNAVAILABLE",),
+                    )
+                )
+                continue
+            if status.operational_ports == 0:
+                exclusions.append(
+                    SearchExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("STATION_OFFLINE",),
+                    )
+                )
+                continue
+            lon, lat = station.geometry.coordinates
+            try:
+                route = self._routing.route(
+                    self._point(payload.origin),
+                    GeoPoint(lat=lat, lon=lon),
+                )
+            except RuntimeError:
+                exclusions.append(
+                    SearchExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("ROUTE_NOT_AVAILABLE",),
+                    )
+                )
+                continue
+            direct_energy = route.distance_m / 1000 * vehicle.consumption_wh_km / 1000
+            arrival_pct = (
+                payload.battery_pct / 100
+                - direct_energy / vehicle.calculation_battery_kwh
+            ) * 100
+            if arrival_pct < vehicle.reserve_soc * 100:
+                exclusions.append(
+                    SearchExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("INSUFFICIENT_SOC_RESERVE",),
+                    )
+                )
+                continue
+            travel_min = route.duration_s / 60
+            arrival = self._forecasting.forecast_arrival(status, arrival_min=travel_min)
+            forecast = arrival.at_arrival
+            try:
+                wait = self._wait_estimator.estimate_wait(
+                    status,
+                    arrival,
+                    evaluation_at=generated_at + timedelta(minutes=travel_min),
+                )
+            except (KeyError, ValueError):
+                exclusions.append(
+                    SearchExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("WAIT_INPUT_UNAVAILABLE",),
+                    )
+                )
+                continue
+            charging = estimate_charging(
+                vehicle,
+                station,
+                arrival_soc=arrival_pct / 100,
+                effective_power_kw=ASSUMED_CHARGER_POWER_KW,
+            )
+            total_min = travel_min + wait.estimated_wait_min + charging.estimated_charge_min
+            options.append(
+                SearchStationOption(
+                    rank=1,
+                    station=self._station_summary(station.station_id),
+                    route=self._route_summary(route),
+                    distance_km=route.distance_m / 1000,
+                    travel_min=travel_min,
+                    wait_min=wait.estimated_wait_min,
+                    wait_distribution=_wait_distribution(wait.wait_distribution),
+                    charge_min=charging.estimated_charge_min,
+                    total_min=total_min,
+                    arrive_battery_pct=arrival_pct,
+                    prediction_source=forecast.prediction_source,
+                    flags=tuple(dict.fromkeys((*forecast.flags, *wait.flags))),
+                    synthetic_fields=self._wait_synthetic_fields(
+                        station.station_id, status
+                    ),
+                )
+            )
+        ordered = sorted(options, key=lambda item: (item.total_min, item.station.id))
+        ranked = tuple(
+            item.model_copy(update={"rank": index})
+            for index, item in enumerate(ordered[: payload.limit], start=1)
+        )
+        nearest, nearest_km = self._nearest_station(payload.origin)
+        provisional = SearchStationsResponse(
+            search_id="pending",
+            reachable_km=reachable_km,
+            stations=ranked,
+            excluded_candidates=tuple(exclusions),
+            nearest_station=None if ranked else nearest,
+            missing_km=(
+                None if ranked or nearest_km is None
+                else max(0.0, nearest_km - reachable_km)
+            ),
+            updated_at=generated_at,
+            generated_at=generated_at,
+        )
+        search_id = self._store.put(provisional, created_at=generated_at)
+        result = provisional.model_copy(update={"search_id": search_id})
+        self._store.set(
+            search_id, SearchSnapshot(payload, result), created_at=generated_at
+        )
+        return result

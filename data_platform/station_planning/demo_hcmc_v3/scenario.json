@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.1",
+  "scenario_id": "hcmc-technical-opportunity-demo",
+  "scenario_version": 7,
+  "created_at": "2026-10-13T00:00:00+07:00",
+  "owner": "student-team",
+  "purpose": "technical_opportunity",
+  "study_area": {
+    "administrative_name": "Ho Chi Minh City",
+    "boundary_version": "ADMINISTRATIVE_2025",
+    "spatial_reference": "EPSG:4326",
+    "boundary_geometry_ref": "pilot_units.geojson",
+    "pilot_extent": "named_subarea",
+    "pilot_extent_label": "Nine-ward pilot: Sai Gon, Ben Thanh, Xuan Hoa, Tan Dinh, Phu Nhuan, Binh Thanh, Tan Son Hoa, Thanh My Tay, Binh Quoi; hcm_dc80kw_5wards contains 37 simulated existing sites",
+    "included_legacy_areas": [
+      "former_ho_chi_minh_city",
+      "former_binh_duong_province",
+      "former_ba_ria_vung_tau_province"
+    ]
+  },
+  "planning_horizon_years": 3,
+  "planning_horizon_status": "team_illustrative",
+  "data_profile": {
+    "mode": "mixed",
+    "source_label": "filtered collected population/POI/transport context; hcm_dc80kw_5wards existing sites; fully synthetic candidates/demand/operations; collected tariffs plus assumed costs",
+    "data_snapshot_id": "hcmc-nine-wards-demo-v3",
+    "notes": "Prepared nine-ward fixture. P7 access_matrix.csv uses scenario travel proxies. P8 technical_constraints_package.json defines gates and unknown handling; candidate_constraints.csv retains unverified physical feasibility. See manifest.json, generation_config.json and validation_report.json. No ref.kml reads. Costs and station operations are illustrative; tariff is a historical reference."
+  },
+  "demand": {
+    "scenario_profile": "hcmc_nine_wards_synthetic_low_base_high",
+    "ev_share": 0.12,
+    "home_charging_share": 0.35,
+    "fleet_share": null,
+    "tourism_multiplier": null,
+    "value_status": "illustrative",
+    "source_ref": "generation_config.json#/demand"
+  },
+  "technical_gates": {
+    "require_inside_boundary": true,
+    "unknown_site_handling": "conditional_candidate",
+    "target_access_minutes": 15,
+    "target_access_minutes_status": "team_illustrative",
+    "reject_confirmed_grid_infeasible": true,
+    "reject_confirmed_access_or_safety_infeasible": true
+  },
+  "policy": {
+    "enabled": false,
+    "owner": null,
+    "effective_date": null,
+    "rules": []
+  },
+  "finance": {
+    "enabled": false,
+    "mode": "illustrative_assumptions",
+    "owner": null,
+    "effective_date": null,
+    "currency": "VND",
+    "formula_version": "demo-cash-inputs-and-electricity-cost-v1",
+    "inputs": {
+      "budget_vnd": 10000000000,
+      "capex_per_port_vnd": 250000000,
+      "annual_opex_per_site_vnd": 210000000.0,
+      "tariff_vnd_per_kwh": null,
+      "revenue_vnd_per_kwh": 6500,
+      "discount_rate": 0.1,
+      "payback_limit_years": 7,
+      "tariff_regime_ref": "selected_electricity_tariffs.csv",
+      "assumption_range_ref": "finance_package.json"
+    },
+    "metrics": [],
+    "external_engine_ref": null
+  },
+  "scoring": {
+    "profile": "technical_opportunity",
+    "method": "weighted_sum",
+    "weight_status": "team_demo_proposal",
+    "weights": {
+      "demand_potential": 30,
+      "marginal_coverage": 25,
+      "grid_site_readiness": 20,
+      "network_segment_fit": 15,
+      "network_gap_fit": 10
+    },
+    "minimum_evidence_coverage": 0.6
+  },
+  "reproducibility": {
+    "random_seed": 20261013,
+    "algorithm_version": "site-ranking-baseline-v0"
+  }
+}

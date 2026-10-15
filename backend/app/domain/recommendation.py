@@ -1,26 +1,32 @@
-"""Phase 07 candidate filtering and fixed-threshold recommendation scoring."""
+"""Candidate filtering and fixed-threshold recommendation scoring for one journey query."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import Protocol
 
 from backend.app.domain.forecasting import OccupancyForecastService
+from backend.app.domain.models import Station, Vehicle
 from backend.app.domain.phase7_models import (
     CandidateExclusion,
-    DemoScenario,
+    JourneyQuery,
     JourneyRecommendationResult,
     RecommendationItem,
     RouteWaypoint,
 )
-from backend.app.domain.repositories import DomainData
-from backend.app.domain.routing import RoutingService, route_metrics_to_station
-from backend.app.domain.runtime import PlannedArrivalStore, RuntimeStateStore
+from backend.app.domain.routing import (
+    RoutingService,
+    _haversine_m,
+    route_metrics_to_station,
+)
+from backend.app.domain.runtime import RuntimeStateStore
 from backend.app.domain.services import (
     check_compatibility,
     estimate_charging,
     estimate_reachability,
 )
+from backend.app.domain.station_hours import is_confirmed_open
 from backend.app.domain.wait_estimation import WaitEstimator
 
 
@@ -41,84 +47,79 @@ class RecommendationThresholds:
             raise ValueError("recommendation thresholds must be positive")
 
 
+class VehicleReader(Protocol):
+    def get(self, vehicle_id: str) -> Vehicle: ...
+
+
+class StationCandidateReader(Protocol):
+    def candidates(
+        self,
+        origin_lon: float,
+        origin_lat: float,
+        destination_lon: float,
+        destination_lat: float,
+        corridor_m: float,
+    ) -> tuple[Station, ...]: ...
+
+
 class RecommendationService:
     def __init__(
         self,
-        data: DomainData,
         runtime: RuntimeStateStore,
-        planned_arrivals: PlannedArrivalStore,
         routing: RoutingService,
         forecasting: OccupancyForecastService,
         wait_estimator: WaitEstimator,
         thresholds: RecommendationThresholds,
+        *,
+        vehicle_repository: VehicleReader,
+        station_repository: StationCandidateReader,
+        candidate_corridor_m: float = 5_000,
     ) -> None:
-        self._data = data
+        if candidate_corridor_m <= 0:
+            raise ValueError("candidate corridor must be positive")
+        self._vehicles = vehicle_repository
+        self._stations = station_repository
         self._runtime = runtime
-        self._planned_arrivals = planned_arrivals
         self._routing = routing
         self._forecasting = forecasting
         self._wait_estimator = wait_estimator
         self._thresholds = thresholds
+        self._candidate_corridor_m = candidate_corridor_m
 
     def recommend(
         self,
-        scenario_id: str,
+        query: JourneyQuery,
         *,
-        apply_scenario_events: bool = False,
+        require_confirmed_open: bool = False,
     ) -> JourneyRecommendationResult:
-        scenario = self._data.demo_scenarios.get(scenario_id)
-        return self.recommend_scenario(
-            scenario, apply_scenario_events=apply_scenario_events
-        )
+        self._runtime.refresh()
 
-    def recommend_scenario(
-        self,
-        scenario: DemoScenario,
-        *,
-        apply_scenario_events: bool = False,
-    ) -> JourneyRecommendationResult:
-        if apply_scenario_events:
-            for event_id in scenario.event_ids:
-                self._runtime.apply(event_id)
-
-        vehicle = self._data.vehicles.get(scenario.vehicle_id)
-        cached_routes = tuple(
-            self._routing.cached_route(route_id) for route_id in scenario.route_ids
-        )
-        cached_direct = next(route for route in cached_routes if not route.waypoints)
-        use_scenario_cache = self._same_point(
-            cached_direct.origin, scenario.origin
-        ) and self._same_point(cached_direct.destination, scenario.destination)
-        if use_scenario_cache:
-            direct_route = cached_direct
-            routes_by_station = {
-                waypoint.station_id: route
-                for route in cached_routes
-                for waypoint in route.waypoints
-                if waypoint.station_id is not None
-            }
-        else:
-            direct_route = self._routing.route(scenario.origin, scenario.destination)
-            routes_by_station = {}
+        vehicle = self._vehicles.get(query.vehicle_id)
+        direct_route = self._routing.route(query.origin, query.destination)
 
         items: list[RecommendationItem] = []
         exclusions: list[CandidateExclusion] = []
-        for station in self._data.stations.all():
+        stations = self._stations.candidates(
+            query.origin.lon,
+            query.origin.lat,
+            query.destination.lon,
+            query.destination.lat,
+            self._candidate_corridor_m,
+        )
+        for station in stations:
+            if require_confirmed_open and not is_confirmed_open(station):
+                exclusions.append(
+                    CandidateExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("OPENING_HOURS_UNVERIFIED",),
+                    )
+                )
+                continue
             if station.properties.access != "public":
                 exclusions.append(
                     CandidateExclusion(
                         station_id=station.station_id,
                         reason_codes=("NON_PUBLIC_ACCESS",),
-                    )
-                )
-                continue
-
-            status = self._runtime.get(station.station_id)
-            if status.operational_ports == 0:
-                exclusions.append(
-                    CandidateExclusion(
-                        station_id=station.station_id,
-                        reason_codes=("STATION_OFFLINE",),
                     )
                 )
                 continue
@@ -133,25 +134,56 @@ class RecommendationService:
                 )
                 continue
 
-            route = routes_by_station.get(station.station_id)
-            if route is None and not use_scenario_cache:
-                try:
-                    lon, lat = station.geometry.coordinates
-                    route = self._routing.route(
-                        scenario.origin,
-                        scenario.destination,
-                        (
-                            RouteWaypoint(
-                                lat=lat,
-                                lon=lon,
-                                label=station.properties.name,
-                                station_id=station.station_id,
-                            ),
-                        ),
+            try:
+                status = self._runtime.get(station.station_id)
+            except KeyError:
+                exclusions.append(
+                    CandidateExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("TELEMETRY_UNAVAILABLE",),
                     )
-                except RuntimeError:
-                    route = None
-            if route is None:
+                )
+                continue
+            if status.operational_ports == 0:
+                exclusions.append(
+                    CandidateExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("STATION_OFFLINE",),
+                    )
+                )
+                continue
+
+            max_reachable_m = max(
+                0.0,
+                (query.initial_soc - vehicle.reserve_soc)
+                * vehicle.calculation_battery_kwh
+                / vehicle.consumption_wh_km
+                * 1_000_000,
+            )
+            lon, lat = station.geometry.coordinates
+            if _haversine_m(query.origin.lat, query.origin.lon, lat, lon) > max_reachable_m:
+                exclusions.append(
+                    CandidateExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("INSUFFICIENT_SOC_RESERVE",),
+                    )
+                )
+                continue
+
+            try:
+                route = self._routing.route(
+                    query.origin,
+                    query.destination,
+                    (
+                        RouteWaypoint(
+                            lat=lat,
+                            lon=lon,
+                            label=station.properties.name,
+                            station_id=station.station_id,
+                        ),
+                    ),
+                )
+            except RuntimeError:
                 exclusions.append(
                     CandidateExclusion(
                         station_id=station.station_id,
@@ -166,7 +198,7 @@ class RecommendationService:
                 vehicle,
                 station,
                 route_distance_m=distance_to_station_m,
-                initial_soc=scenario.initial_soc,
+                initial_soc=query.initial_soc,
                 route_id=route.route_id,
                 route_duration_s=duration_to_station_s,
             )
@@ -179,23 +211,30 @@ class RecommendationService:
                 )
                 continue
 
-            eta_at = scenario.departure_at + timedelta(seconds=duration_to_station_s)
-            horizon_min = max(1, round(duration_to_station_s / 60))
-            forecast = self._forecasting.forecast_occupancy(
-                status, horizon_min=horizon_min
+            eta_at = query.departure_at + timedelta(seconds=duration_to_station_s)
+            arrival = self._forecasting.forecast_arrival(
+                status, arrival_min=duration_to_station_s / 60
             )
-            wait = self._wait_estimator.estimate_wait(
-                status,
-                forecast,
-                evaluation_at=eta_at,
-                planned_arrivals=self._planned_arrivals.all(),
-                scenario_id=scenario.scenario_id,
-            )
+            forecast = arrival.at_arrival
+            try:
+                wait = self._wait_estimator.estimate_wait(
+                    status,
+                    arrival,
+                    evaluation_at=eta_at,
+                )
+            except (KeyError, ValueError):
+                exclusions.append(
+                    CandidateExclusion(
+                        station_id=station.station_id,
+                        reason_codes=("WAIT_INPUT_UNAVAILABLE",),
+                    )
+                )
+                continue
             charging = estimate_charging(
                 vehicle,
                 station,
                 arrival_soc=reachability.estimated_arrival_soc,
-                target_soc=scenario.target_soc,
+                target_soc=query.target_soc,
                 effective_power_kw=compatibility.effective_power_kw,
             )
             detour_min = max(0.0, (route.duration_s - direct_route.duration_s) / 60)
@@ -216,7 +255,7 @@ class RecommendationService:
                     / self._thresholds.soc_risk_buffer,
                 ),
             )
-            preference = scenario.preference
+            preference = query.preference
             final_score = (
                 wait_score * preference.wait_weight
                 + detour_score * preference.detour_weight
@@ -240,6 +279,7 @@ class RecommendationService:
                     predicted_occupancy_ratio=forecast.predicted_occupancy_ratio,
                     prediction_source=forecast.prediction_source,
                     estimated_wait_min=wait.estimated_wait_min,
+                    wait_distribution=wait.wait_distribution,
                     estimated_charge_min=charging.estimated_charge_min,
                     energy_to_add_kwh=charging.energy_to_add_kwh,
                     wait_score=wait_score,
@@ -251,7 +291,6 @@ class RecommendationService:
                     flags=tuple(
                         dict.fromkeys(
                             (
-                                *compatibility.reason_codes,
                                 *forecast.flags,
                                 *wait.flags,
                             )
@@ -266,19 +305,13 @@ class RecommendationService:
             for index, item in enumerate(ordered, start=1)
         )
         return JourneyRecommendationResult(
-            scenario_id=scenario.scenario_id,
-            generated_at=scenario.departure_at,
+            generated_at=query.departure_at,
             vehicle_id=vehicle.vehicle_id,
             direct_route=direct_route,
             recommendations=ranked,
             excluded_candidates=tuple(exclusions),
-            active_event_ids=self._runtime.active_event_ids(),
         )
 
     @staticmethod
     def _lower_is_better(value: float, maximum: float) -> float:
         return 1 - min(1.0, max(0.0, value) / maximum)
-
-    @staticmethod
-    def _same_point(left, right) -> bool:
-        return abs(left.lat - right.lat) < 1e-6 and abs(left.lon - right.lon) < 1e-6

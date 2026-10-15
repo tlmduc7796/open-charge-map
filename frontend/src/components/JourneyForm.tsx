@@ -1,32 +1,30 @@
-import type { DemoScenario, GeoPoint, Vehicle } from "../types";
-import { fullRangeKm, rangeKmToSoc, socToRangeKm } from "../vehicleRange";
+import type { GeoPoint, PickTarget, Vehicle } from "../types";
 import LocationInput from "./LocationInput";
 
 interface JourneyFormProps {
-  scenarios: DemoScenario[];
+  searchMode: "stations" | "route";
   vehicles: Vehicle[];
-  scenario: DemoScenario;
   vehicleId: string;
   initialSoc: number;
-  applyEvents: boolean;
   origin: GeoPoint;
   destination: GeoPoint;
   locationsValid: boolean;
   submitting: boolean;
-  onScenarioChange: (scenarioId: string) => void;
-  onVehicleChange: (vehicleId: string) => void;
+  pickTarget?: PickTarget | null;
+  onPickTargetChange?: (target: PickTarget | null) => void;
+  onSearchModeChange: (mode: "stations" | "route") => void;
   onInitialSocChange: (soc: number) => void;
-  onApplyEventsChange: (enabled: boolean) => void;
   onOriginChange: (point: GeoPoint) => void;
   onDestinationChange: (point: GeoPoint) => void;
   onOriginValidityChange: (valid: boolean) => void;
   onDestinationValidityChange: (valid: boolean) => void;
   onSubmit: () => void;
-  onReset: () => void;
 }
 
 export default function JourneyForm(props: JourneyFormProps) {
   const vehicle = props.vehicles.find((item) => item.vehicle_id === props.vehicleId) ?? props.vehicles[0];
+  const togglePick = (target: PickTarget) =>
+    props.onPickTargetChange?.(props.pickTarget === target ? null : target);
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     props.onSubmit();
@@ -36,94 +34,106 @@ export default function JourneyForm(props: JourneyFormProps) {
     <form className="journey-form" onSubmit={submit}>
       <div className="section-heading">
         <div>
-          <span className="step-label">01 · Hành trình</span>
-          <h1>Chọn trạm sạc phù hợp</h1>
+          <span className="step-label">01 · Tìm kiếm</span>
+          <h1>{props.searchMode === "stations" ? "Tìm trạm trong tầm pin" : "Tìm trạm trên hành trình"}</h1>
         </div>
-        <span className="demo-pill">Demo backend-first</span>
       </div>
 
-      <label>
-        Kịch bản
-        <select
-          value={props.scenario.scenario_id}
-          onChange={(event) => props.onScenarioChange(event.target.value)}
+      <div className="search-mode-tabs" role="tablist" aria-label="Chế độ tìm kiếm">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={props.searchMode === "stations"}
+          className={props.searchMode === "stations" ? "active" : ""}
+          onClick={() => props.onSearchModeChange("stations")}
         >
-          {props.scenarios.map((scenario) => (
-            <option key={scenario.scenario_id} value={scenario.scenario_id}>
-              {scenario.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <div className="route-inputs">
-        <LocationInput
-          key={`origin-${props.origin.lat}-${props.origin.lon}`}
-          label="Điểm đi"
-          point={props.origin}
-          disabled={props.submitting}
-          onSelect={props.onOriginChange}
-          onValidityChange={props.onOriginValidityChange}
-        />
-        <span className="route-arrow" aria-hidden="true">→</span>
-        <LocationInput
-          key={`destination-${props.destination.lat}-${props.destination.lon}`}
-          label="Điểm đến"
-          point={props.destination}
-          disabled={props.submitting}
-          onSelect={props.onDestinationChange}
-          onValidityChange={props.onDestinationValidityChange}
-        />
+          Tìm trạm
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={props.searchMode === "route"}
+          className={props.searchMode === "route" ? "active" : ""}
+          onClick={() => props.onSearchModeChange("route")}
+        >
+          Tìm đường
+        </button>
       </div>
-      <p className="field-note">Chọn gợi ý Goong để đổi địa điểm; điểm scenario vẫn dùng route cache khi API lỗi.</p>
+
+      {props.searchMode === "stations" ? (
+        <div className="station-search-location">
+          <LocationInput
+            key={`station-origin-${props.origin.lat}-${props.origin.lon}-${props.origin.label ?? ""}`}
+            label="Điểm bắt đầu"
+            point={props.origin}
+            disabled={props.submitting}
+            picking={props.pickTarget === "origin"}
+            onSelect={props.onOriginChange}
+            onValidityChange={props.onOriginValidityChange}
+            onPickOnMap={() => togglePick("origin")}
+          />
+          <p className="field-note" aria-hidden="true" />
+        </div>
+      ) : (
+        <div className="route-inputs">
+          <LocationInput
+            key={`origin-${props.origin.lat}-${props.origin.lon}-${props.origin.label ?? ""}`}
+            label="Điểm đi"
+            point={props.origin}
+            disabled={props.submitting}
+            picking={props.pickTarget === "origin"}
+            onSelect={props.onOriginChange}
+            onValidityChange={props.onOriginValidityChange}
+            onPickOnMap={() => togglePick("origin")}
+          />
+          <LocationInput
+            key={`destination-${props.destination.lat}-${props.destination.lon}-${props.destination.label ?? ""}`}
+            label="Điểm đến"
+            point={props.destination}
+            disabled={props.submitting}
+            picking={props.pickTarget === "destination"}
+            onSelect={props.onDestinationChange}
+            onValidityChange={props.onDestinationValidityChange}
+            onPickOnMap={() => togglePick("destination")}
+          />
+        </div>
+      )}
+      {props.searchMode === "route" && <p className="field-note" aria-hidden="true" />}
 
       <label>
         Xe điện
-        <select value={props.vehicleId} onChange={(event) => props.onVehicleChange(event.target.value)}>
-          {props.vehicles.map((vehicle) => (
-            <option key={vehicle.vehicle_id} value={vehicle.vehicle_id}>
-              {vehicle.make} {vehicle.model} {vehicle.variant ?? ""}
-            </option>
-          ))}
-        </select>
+        <span className="vehicle-select-wrap"><input
+          aria-label="Xe điện"
+          readOnly
+          value={vehicle ? `${vehicle.make} ${vehicle.model} ${vehicle.variant ?? ""}`.trim() : ""}
+        /><span aria-hidden="true">⌄</span></span>
       </label>
+
+      {vehicle && <div className="form-spacer" aria-hidden="true" />}
 
       {vehicle && (
         <label>
-          Quãng đường tối đa EV có thể đi
+          Phần trăm pin còn lại
           <div className="soc-input">
             <input
-              aria-label="Quãng đường tối đa EV có thể đi"
+              aria-label="Phần trăm pin còn lại"
               type="range"
               min="0"
-              max={Math.round(fullRangeKm(vehicle))}
-              value={Math.round(socToRangeKm(props.initialSoc, vehicle))}
-              onChange={(event) => props.onInitialSocChange(rangeKmToSoc(Number(event.target.value), vehicle))}
+              max="100"
+              step="1"
+              value={Math.round(props.initialSoc * 100)}
+              onChange={(event) => props.onInitialSocChange(Number(event.target.value) / 100)}
             />
-            <strong>{Math.round(socToRangeKm(props.initialSoc, vehicle))} km</strong>
+            <strong>{Math.round(props.initialSoc * 100)}%</strong>
           </div>
         </label>
       )}
 
-      <label className="event-toggle">
-        <input
-          type="checkbox"
-          checked={props.applyEvents}
-          disabled={props.scenario.event_ids.length === 0}
-          onChange={(event) => props.onApplyEventsChange(event.target.checked)}
-        />
-        <span>
-          Áp dụng event của kịch bản
-          <small>{props.scenario.event_ids.length ? props.scenario.event_ids.join(", ") : "Không có event"}</small>
-        </span>
-      </label>
+      {vehicle && <div className="form-spacer" aria-hidden="true" />}
 
       <div className="form-actions">
         <button className="primary-button" type="submit" disabled={props.submitting || !props.locationsValid}>
-          {props.submitting ? "Đang tính toán…" : "Tìm trạm phù hợp"}
-        </button>
-        <button className="secondary-button" type="button" onClick={props.onReset}>
-          Reset demo
+          {props.submitting ? "Đang tính toán…" : props.searchMode === "stations" ? "Tìm trạm" : "Tìm đường đi"}
         </button>
       </div>
     </form>

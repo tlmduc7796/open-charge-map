@@ -1,0 +1,1042 @@
+{
+  "type": "FeatureCollection",
+  "name": "Trạm sạc mô phỏng - 9 phường - DC 80kW",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "EVC-162",
+      "properties": {
+        "Tên": "EVC-162",
+        "Địa chỉ:": "Điểm sạc EVC-162, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 59 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.701775",
+        "Vĩ độ:": "10.778628",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Sài Gòn",
+        "description": "Địa chỉ:: Điểm sạc EVC-162, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 59 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.701775<br>Vĩ độ:: 10.778628<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Sài Gòn",
+        "coordinates": "106.701775,10.778628,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.701775,
+          10.778628,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-163",
+      "properties": {
+        "Tên": "EVC-163",
+        "Địa chỉ:": "Điểm sạc EVC-163, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 14 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.701744",
+        "Vĩ độ:": "10.778729",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Sài Gòn",
+        "description": "Địa chỉ:: Điểm sạc EVC-163, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 14 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.701744<br>Vĩ độ:: 10.778729<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Sài Gòn",
+        "coordinates": "106.701744,10.778729,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.701744,
+          10.778729,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-176",
+      "properties": {
+        "Tên": "EVC-176",
+        "Địa chỉ:": "Điểm sạc EVC-176, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 3 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.699974",
+        "Vĩ độ:": "10.787862",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Sài Gòn",
+        "description": "Địa chỉ:: Điểm sạc EVC-176, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 3 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.699974<br>Vĩ độ:: 10.787862<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Sài Gòn",
+        "coordinates": "106.699974,10.787862,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.699974,
+          10.787862,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-555",
+      "properties": {
+        "Tên": "EVC-555",
+        "Địa chỉ:": "Điểm sạc EVC-555, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 4 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.700569636794",
+        "Vĩ độ:": "10.7818168586808",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Sài Gòn",
+        "description": "Địa chỉ:: Điểm sạc EVC-555, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 4 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.700569636794<br>Vĩ độ:: 10.7818168586808<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Sài Gòn",
+        "coordinates": "106.700569636794,10.7818168586808,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.700569636794,
+          10.7818168586808,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-561",
+      "properties": {
+        "Tên": "EVC-561",
+        "Địa chỉ:": "Điểm sạc EVC-561, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 4 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.703693475358",
+        "Vĩ độ:": "10.7851876192925",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Sài Gòn",
+        "description": "Địa chỉ:: Điểm sạc EVC-561, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 4 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.703693475358<br>Vĩ độ:: 10.7851876192925<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Sài Gòn",
+        "coordinates": "106.703693475358,10.7851876192925,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.703693475358,
+          10.7851876192925,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-563",
+      "properties": {
+        "Tên": "EVC-563",
+        "Địa chỉ:": "Điểm sạc EVC-563, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 2 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.70452366114614",
+        "Vĩ độ:": "10.786489336094048",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Sài Gòn",
+        "description": "Địa chỉ:: Điểm sạc EVC-563, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 2 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.70452366114614<br>Vĩ độ:: 10.786489336094048<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Sài Gòn",
+        "coordinates": "106.704523661146,10.786489336094,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.704523661146,
+          10.786489336094,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-145",
+      "properties": {
+        "Tên": "EVC-145",
+        "Địa chỉ:": "Điểm sạc EVC-145, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 6 cổng sạc",
+        "Trạng thái:": "Đang bận",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.695198",
+        "Vĩ độ:": "10.77070",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Bến Thành",
+        "description": "Địa chỉ:: Điểm sạc EVC-145, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 6 cổng sạc<br>Trạng thái:: Đang bận<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.695198<br>Vĩ độ:: 10.77070<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Bến Thành",
+        "coordinates": "106.695198,10.7707,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.695198,
+          10.7707,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-147",
+      "properties": {
+        "Tên": "EVC-147",
+        "Địa chỉ:": "Điểm sạc EVC-147, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 20 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.696243",
+        "Vĩ độ:": "10.771157",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Bến Thành",
+        "description": "Địa chỉ:: Điểm sạc EVC-147, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 20 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.696243<br>Vĩ độ:: 10.771157<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Bến Thành",
+        "coordinates": "106.696243,10.771157,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.696243,
+          10.771157,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-151",
+      "properties": {
+        "Tên": "EVC-151",
+        "Địa chỉ:": "Điểm sạc EVC-151, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 10 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.694786",
+        "Vĩ độ:": "10.773301",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Bến Thành",
+        "description": "Địa chỉ:: Điểm sạc EVC-151, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 10 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.694786<br>Vĩ độ:: 10.773301<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Bến Thành",
+        "coordinates": "106.694786,10.773301,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.694786,
+          10.773301,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-160",
+      "properties": {
+        "Tên": "EVC-160",
+        "Địa chỉ:": "Điểm sạc EVC-160, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 4 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.693748",
+        "Vĩ độ:": "10.776787",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Bến Thành",
+        "description": "Địa chỉ:: Điểm sạc EVC-160, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 4 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.693748<br>Vĩ độ:: 10.776787<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Bến Thành",
+        "coordinates": "106.693748,10.776787,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.693748,
+          10.776787,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-536",
+      "properties": {
+        "Tên": "EVC-536",
+        "Địa chỉ:": "Điểm sạc EVC-536, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 2 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.692068448788",
+        "Vĩ độ:": "10.7648682702448",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Bến Thành",
+        "description": "Địa chỉ:: Điểm sạc EVC-536, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 2 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.692068448788<br>Vĩ độ:: 10.7648682702448<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Bến Thành",
+        "coordinates": "106.692068448788,10.7648682702448,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.692068448788,
+          10.7648682702448,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-171",
+      "properties": {
+        "Tên": "EVC-171",
+        "Địa chỉ:": "Điểm sạc EVC-171, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 10 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.69326",
+        "Vĩ độ:": "10.78681",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Xuân Hòa",
+        "description": "Địa chỉ:: Điểm sạc EVC-171, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 10 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.69326<br>Vĩ độ:: 10.78681<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Xuân Hòa",
+        "coordinates": "106.69326,10.78681,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.69326,
+          10.78681,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-178",
+      "properties": {
+        "Tên": "EVC-178",
+        "Địa chỉ:": "Điểm sạc EVC-178, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 2 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.685471",
+        "Vĩ độ:": "10.78867",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Xuân Hòa",
+        "description": "Địa chỉ:: Điểm sạc EVC-178, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 2 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.685471<br>Vĩ độ:: 10.78867<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Xuân Hòa",
+        "coordinates": "106.685471,10.78867,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.685471,
+          10.78867,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-545",
+      "properties": {
+        "Tên": "EVC-545",
+        "Địa chỉ:": "Điểm sạc EVC-545, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 1 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.68716764010931",
+        "Vĩ độ:": "10.774942511316752",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Xuân Hòa",
+        "description": "Địa chỉ:: Điểm sạc EVC-545, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 1 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.68716764010931<br>Vĩ độ:: 10.774942511316752<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Xuân Hòa",
+        "coordinates": "106.687167640109,10.7749425113168,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.687167640109,
+          10.7749425113168,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-556",
+      "properties": {
+        "Tên": "EVC-556",
+        "Địa chỉ:": "Điểm sạc EVC-556, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 1 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.69748569507453",
+        "Vĩ độ:": "10.783279609089599",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Xuân Hòa",
+        "description": "Địa chỉ:: Điểm sạc EVC-556, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 1 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.69748569507453<br>Vĩ độ:: 10.783279609089599<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Xuân Hòa",
+        "coordinates": "106.697485695075,10.7832796090896,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.697485695075,
+          10.7832796090896,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-560",
+      "properties": {
+        "Tên": "EVC-560",
+        "Địa chỉ:": "Điểm sạc EVC-560, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 1 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.690770915871",
+        "Vĩ độ:": "10.7849583638799",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Xuân Hòa",
+        "description": "Địa chỉ:: Điểm sạc EVC-560, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 1 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.690770915871<br>Vĩ độ:: 10.7849583638799<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Xuân Hòa",
+        "coordinates": "106.690770915871,10.7849583638799,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.690770915871,
+          10.7849583638799,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-172",
+      "properties": {
+        "Tên": "EVC-172",
+        "Địa chỉ:": "Điểm sạc EVC-172, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 2 cổng sạc",
+        "Trạng thái:": "Đang bận",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.696068",
+        "Vĩ độ:": "10.78683",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Tân Định",
+        "description": "Địa chỉ:: Điểm sạc EVC-172, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 2 cổng sạc<br>Trạng thái:: Đang bận<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.696068<br>Vĩ độ:: 10.78683<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Tân Định",
+        "coordinates": "106.696068,10.78683,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.696068,
+          10.78683,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-174",
+      "properties": {
+        "Tên": "EVC-174",
+        "Địa chỉ:": "Điểm sạc EVC-174, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 4 cổng sạc",
+        "Trạng thái:": "Đang bận",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.692787",
+        "Vĩ độ:": "10.787368",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Tân Định",
+        "description": "Địa chỉ:: Điểm sạc EVC-174, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 4 cổng sạc<br>Trạng thái:: Đang bận<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.692787<br>Vĩ độ:: 10.787368<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Tân Định",
+        "coordinates": "106.692787,10.787368,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.692787,
+          10.787368,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-568",
+      "properties": {
+        "Tên": "EVC-568",
+        "Địa chỉ:": "Điểm sạc EVC-568, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 4 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.687403853878",
+        "Vĩ độ:": "10.7936609336744",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Tân Định",
+        "description": "Địa chỉ:: Điểm sạc EVC-568, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 4 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.687403853878<br>Vĩ độ:: 10.7936609336744<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Tân Định",
+        "coordinates": "106.687403853878,10.7936609336744,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.687403853878,
+          10.7936609336744,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-191",
+      "properties": {
+        "Tên": "EVC-191",
+        "Địa chỉ:": "Điểm sạc EVC-191, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 8 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.675323",
+        "Vĩ độ:": "10.79373",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Phú Nhuận",
+        "description": "Địa chỉ:: Điểm sạc EVC-191, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 8 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.675323<br>Vĩ độ:: 10.79373<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Phú Nhuận",
+        "coordinates": "106.675323,10.79373,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.675323,
+          10.79373,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-570",
+      "properties": {
+        "Tên": "EVC-570",
+        "Địa chỉ:": "Điểm sạc EVC-570, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 2 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.672140713471",
+        "Vĩ độ:": "10.7974117144045",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Phú Nhuận",
+        "description": "Địa chỉ:: Điểm sạc EVC-570, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 2 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.672140713471<br>Vĩ độ:: 10.7974117144045<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Phú Nhuận",
+        "coordinates": "106.672140713471,10.7974117144045,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.672140713471,
+          10.7974117144045,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-235",
+      "properties": {
+        "Tên": "EVC-235",
+        "Địa chỉ:": "Điểm sạc EVC-235, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 30 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.712288",
+        "Vĩ độ:": "10.811754",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Bình Thạnh",
+        "description": "Địa chỉ:: Điểm sạc EVC-235, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 30 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.712288<br>Vĩ độ:: 10.811754<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Bình Thạnh",
+        "coordinates": "106.712288,10.811754,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.712288,
+          10.811754,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-239",
+      "properties": {
+        "Tên": "EVC-239",
+        "Địa chỉ:": "Điểm sạc EVC-239, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 20 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.710152",
+        "Vĩ độ:": "10.814146",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Bình Thạnh",
+        "description": "Địa chỉ:: Điểm sạc EVC-239, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 20 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.710152<br>Vĩ độ:: 10.814146<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Bình Thạnh",
+        "coordinates": "106.710152,10.814146,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.710152,
+          10.814146,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-203",
+      "properties": {
+        "Tên": "EVC-203",
+        "Địa chỉ:": "Điểm sạc EVC-203, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 12 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.665123",
+        "Vĩ độ:": "10.799711",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Tân Sơn Hòa",
+        "description": "Địa chỉ:: Điểm sạc EVC-203, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 12 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.665123<br>Vĩ độ:: 10.799711<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Tân Sơn Hòa",
+        "coordinates": "106.665123,10.799711,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.665123,
+          10.799711,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-207",
+      "properties": {
+        "Tên": "EVC-207",
+        "Địa chỉ:": "Điểm sạc EVC-207, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "07:00 - 22:00 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 4 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.665916",
+        "Vĩ độ:": "10.80058",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Tân Sơn Hòa",
+        "description": "Địa chỉ:: Điểm sạc EVC-207, Thành phố Hồ Chí Minh<br>Hoạt động:: 07:00 - 22:00 • Công cộng<br>Trụ sạc:: DC 80kW có 4 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.665916<br>Vĩ độ:: 10.80058<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Tân Sơn Hòa",
+        "coordinates": "106.665916,10.80058,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.665916,
+          10.80058,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-218",
+      "properties": {
+        "Tên": "EVC-218",
+        "Địa chỉ:": "Điểm sạc EVC-218, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "05:30 - 20:00 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 40 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.667511",
+        "Vĩ độ:": "10.805397",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Tân Sơn Hòa",
+        "description": "Địa chỉ:: Điểm sạc EVC-218, Thành phố Hồ Chí Minh<br>Hoạt động:: 05:30 - 20:00 • Công cộng<br>Trụ sạc:: DC 80kW có 40 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.667511<br>Vĩ độ:: 10.805397<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Tân Sơn Hòa",
+        "coordinates": "106.667511,10.805397,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.667511,
+          10.805397,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-194",
+      "properties": {
+        "Tên": "EVC-194",
+        "Địa chỉ:": "Điểm sạc EVC-194, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 8 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.720329",
+        "Vĩ độ:": "10.793915",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Thạnh Mỹ Tây",
+        "description": "Địa chỉ:: Điểm sạc EVC-194, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 8 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.720329<br>Vĩ độ:: 10.793915<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Thạnh Mỹ Tây",
+        "coordinates": "106.720329,10.793915,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.720329,
+          10.793915,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-196",
+      "properties": {
+        "Tên": "EVC-196",
+        "Địa chỉ:": "Điểm sạc EVC-196, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 8 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.722038",
+        "Vĩ độ:": "10.794848",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Thạnh Mỹ Tây",
+        "description": "Địa chỉ:: Điểm sạc EVC-196, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 8 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.722038<br>Vĩ độ:: 10.794848<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Thạnh Mỹ Tây",
+        "coordinates": "106.722038,10.794848,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.722038,
+          10.794848,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-198",
+      "properties": {
+        "Tên": "EVC-198",
+        "Địa chỉ:": "Điểm sạc EVC-198, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 12 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.722412",
+        "Vĩ độ:": "10.79518",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Thạnh Mỹ Tây",
+        "description": "Địa chỉ:: Điểm sạc EVC-198, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 12 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.722412<br>Vĩ độ:: 10.79518<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Thạnh Mỹ Tây",
+        "coordinates": "106.722412,10.79518,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.722412,
+          10.79518,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-201",
+      "properties": {
+        "Tên": "EVC-201",
+        "Địa chỉ:": "Điểm sạc EVC-201, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 36 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.721497",
+        "Vĩ độ:": "10.79693",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Thạnh Mỹ Tây",
+        "description": "Địa chỉ:: Điểm sạc EVC-201, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 36 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.721497<br>Vĩ độ:: 10.79693<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Thạnh Mỹ Tây",
+        "coordinates": "106.721497,10.79693,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.721497,
+          10.79693,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-565",
+      "properties": {
+        "Tên": "EVC-565",
+        "Địa chỉ:": "Điểm sạc EVC-565, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 1 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.708291968237",
+        "Vĩ độ:": "10.7891146275633",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Thạnh Mỹ Tây",
+        "description": "Địa chỉ:: Điểm sạc EVC-565, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 1 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.708291968237<br>Vĩ độ:: 10.7891146275633<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Thạnh Mỹ Tây",
+        "coordinates": "106.708291968237,10.7891146275633,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.708291968237,
+          10.7891146275633,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-569",
+      "properties": {
+        "Tên": "EVC-569",
+        "Địa chỉ:": "Điểm sạc EVC-569, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 2 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.71968",
+        "Vĩ độ:": "10.796318",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Thạnh Mỹ Tây",
+        "description": "Địa chỉ:: Điểm sạc EVC-569, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 2 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.71968<br>Vĩ độ:: 10.796318<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Thạnh Mỹ Tây",
+        "coordinates": "106.71968,10.796318,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.71968,
+          10.796318,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-572",
+      "properties": {
+        "Tên": "EVC-572",
+        "Địa chỉ:": "Điểm sạc EVC-572, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 3 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.717766649035",
+        "Vĩ độ:": "10.8001846764198",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Thạnh Mỹ Tây",
+        "description": "Địa chỉ:: Điểm sạc EVC-572, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 3 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.717766649035<br>Vĩ độ:: 10.8001846764198<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Thạnh Mỹ Tây",
+        "coordinates": "106.717766649035,10.8001846764198,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.717766649035,
+          10.8001846764198,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-573",
+      "properties": {
+        "Tên": "EVC-573",
+        "Địa chỉ:": "Điểm sạc EVC-573, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 3 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.71778895",
+        "Vĩ độ:": "10.80025603",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Thạnh Mỹ Tây",
+        "description": "Địa chỉ:: Điểm sạc EVC-573, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 3 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.71778895<br>Vĩ độ:: 10.80025603<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Thạnh Mỹ Tây",
+        "coordinates": "106.71778895,10.80025603,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.71778895,
+          10.80025603,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-251",
+      "properties": {
+        "Tên": "EVC-251",
+        "Địa chỉ:": "Điểm sạc EVC-251, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 15 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.732712",
+        "Vĩ độ:": "10.823867",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Bình Quới",
+        "description": "Địa chỉ:: Điểm sạc EVC-251, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 15 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.732712<br>Vĩ độ:: 10.823867<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Bình Quới",
+        "coordinates": "106.732712,10.823867,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.732712,
+          10.823867,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-263",
+      "properties": {
+        "Tên": "EVC-263",
+        "Địa chỉ:": "Điểm sạc EVC-263, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 20 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.742584",
+        "Vĩ độ:": "10.831631",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Bình Quới",
+        "description": "Địa chỉ:: Điểm sạc EVC-263, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 20 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.742584<br>Vĩ độ:: 10.831631<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Bình Quới",
+        "coordinates": "106.742584,10.831631,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.742584,
+          10.831631,
+          0.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "EVC-600",
+      "properties": {
+        "Tên": "EVC-600",
+        "Địa chỉ:": "Điểm sạc EVC-600, Thành phố Hồ Chí Minh",
+        "Hoạt động:": "24/7 • Công cộng",
+        "Trụ sạc:": "DC 80kW có 1 cổng sạc",
+        "Trạng thái:": "Đang hoạt động",
+        "Ghi chú:": "Dữ liệu mô phỏng",
+        "Kinh độ:": "106.730634965615",
+        "Vĩ độ:": "10.8231890719254",
+        "Nhãn:": "DC 80kW",
+        "Phường:": "Phường Bình Quới",
+        "description": "Địa chỉ:: Điểm sạc EVC-600, Thành phố Hồ Chí Minh<br>Hoạt động:: 24/7 • Công cộng<br>Trụ sạc:: DC 80kW có 1 cổng sạc<br>Trạng thái:: Đang hoạt động<br>Ghi chú:: Dữ liệu mô phỏng<br>Kinh độ:: 106.730634965615<br>Vĩ độ:: 10.8231890719254<br>Nhãn:: DC 80kW",
+        "styleUrl": "#evc-dc80kw",
+        "Folder": "Phường Bình Quới",
+        "coordinates": "106.730634965615,10.8231890719254,0"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.730634965615,
+          10.8231890719254,
+          0.0
+        ]
+      }
+    }
+  ]
+}

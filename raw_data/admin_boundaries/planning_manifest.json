@@ -1,0 +1,49 @@
+{
+  "source_url": "https://bando.tphcm.gov.vn/",
+  "source_layer": "ADMINISTRATIVE_2025",
+  "boundary_version": "2025",
+  "downloaded_population_at_utc": "2026-10-11T13:55:47.536413+00:00",
+  "population_field": "DANSO",
+  "population_reference_date": null,
+  "population_definition": "Not supplied in downloaded attributes",
+  "join_method": "exact source record Id, checked Title/AdminID/AdministrativeID/ParentID",
+  "features": 168,
+  "population_present": 168,
+  "population_missing": 0,
+  "population_sum_unverified": 14767344,
+  "population_min": 5180,
+  "population_max": 227817,
+  "geometry_simplified": false,
+  "city_outer_boundary_removed": true,
+  "core_fields": [
+    "unit_id",
+    "unit_name",
+    "unit_type",
+    "population",
+    "population_reference_date",
+    "population_status"
+  ],
+  "unit_id_definition": "Application ID prefixed by layer year, derived from source AdminID; not independently verified as national administrative code",
+  "files": {
+    "hcm_planning_units_2025.geojson": {
+      "bytes": 4486737,
+      "sha256": "f7560fd2e53c1865445d7812e0bb7d13ab456d51fe9bf2d7863f1d7bebad75f1"
+    },
+    "hcm_planning_units_2025.csv": {
+      "bytes": 13371,
+      "sha256": "0a86a9935b63263b40bd88f38220849560c2e237be4493109727c97b38926fad"
+    },
+    "hcm_planning_units_2025.kml": {
+      "bytes": 4308606,
+      "sha256": "4dffd23ecf28c8e6359f11ca9dd654611b12f1a1817727530adf7857e1c881a4"
+    },
+    "population_sources_2025.csv": {
+      "bytes": 40800,
+      "sha256": "9894bd992c08c88dd556e90c3d11510ca727ef41c136fe50ebd0591ed86333f6"
+    },
+    "population_source_2025.json": {
+      "bytes": 73670,
+      "sha256": "9907ccc68d6f244a46fbeb585cf2956adbbb20a87533b412927c87b5ae6ab232"
+    }
+  }
+}

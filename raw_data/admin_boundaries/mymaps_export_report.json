@@ -1,0 +1,16 @@
+{
+  "source_file": "hcm_admin_2025.kml",
+  "output_file": "hcm_admin_2025_mymaps.kml",
+  "source_bytes": 5688159,
+  "output_bytes": 3868303,
+  "source_administrative_features": 169,
+  "output_polygon_placemarks": 232,
+  "rings_preserved": 232,
+  "vertices_preserved": 159506,
+  "coordinate_decimal_places": 6,
+  "max_vertex_displacement_m": 0.07780760031157571,
+  "original_metadata_preserved": true,
+  "multigeometry_flattened": true,
+  "uploaded_to_mymaps": false,
+  "sha256": "84e68953c26ffe77e84c6a36ba0df119d291f0d809f06276c5e1abee1b93c3c5"
+}

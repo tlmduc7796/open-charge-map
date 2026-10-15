@@ -1,0 +1,114 @@
+# Danh sách DUY NHẤT của lớp SQL: thứ tự áp dụng, nhóm vai trò, số dòng kỳ vọng.
+# Mọi công cụ (apply_sql, verify, export_data, bootstrap_database) đọc file này.
+#
+# Bố cục:  schema/<group>/<bảng>.sql   DDL viết tay, nguồn sự thật của schema
+#          data/<group>/<bảng>.sql     INSERT (dữ liệu nhỏ, đọc được, sắp theo order_by)
+#          bulk/<bảng>.csv             dữ liệu lớn nạp bằng COPY (load = "csv")
+#
+# Thêm bảng mới: tạo schema/<group>/<bảng>.sql, thêm một khối [[table]] ở vị trí sau mọi bảng
+# mà nó tham chiếu, rồi chạy `python scripts/verify.py`. Không có migration: schema/ là nguồn
+# sự thật; DB đã tồn tại được tạo lại bằng bootstrap_database.py.
+
+# Áp dụng trước mọi bảng (đường dẫn tương đối trong schema/, không có .sql).
+base = ["_base/extensions", "_base/types", "_base/functions"]
+
+# Áp dụng sau mọi bảng (view phụ thuộc bảng).
+views = [
+    "views/station_capacity",
+    "views/station_status_current",
+]
+
+# Vai trò của từng nhóm (dùng trong báo cáo và README).
+[groups]
+catalog  = "Danh mục tĩnh: trạm, cổng, chuẩn cổng (hiếm khi đổi)"
+vehicles = "Hồ sơ xe và chuẩn cổng tương thích"
+runtime  = "Trạng thái hiện tại của cổng; seed chỉ tạo sẵn dòng, backend ghi giá trị"
+history  = "Lịch sử chuỗi thời gian, partition theo tháng; không seed, backend ghi dần"
+forecast = "Dự báo: seed chỉ tạo sẵn trạm × mốc, backend ghi giá trị"
+trips    = "Nhật ký bấm Chỉ đường (trạm đề xuất hạng 1 vs trạm thực sự chọn) do backend ghi"
+config   = "Cấu hình chỉnh được lúc chạy"
+
+# Mỗi [[table]]: name, group, rows (số dòng sau khi nạp), load = sql | csv | none.
+# order_by (tùy chọn): biểu thức ORDER BY khi xuất dữ liệu, bảng được đặt bí danh `t`;
+#                      mặc định là khóa chính.
+# keep_columns (tùy chọn): cột kiểm toán vẫn xuất ra. Mặc định các cột created_at, updated_at,
+#                      ingested_at KHÔNG xuất (DB tự điền now() lúc nạp) để file ổn định.
+
+[[table]]
+name = "connector_types"
+group = "catalog"
+rows = 1
+load = "sql"
+order_by = "t.code"
+
+[[table]]
+name = "stations"
+group = "catalog"
+rows = 37
+load = "sql"
+order_by = "t.code"
+
+[[table]]
+name = "ports"
+group = "catalog"
+rows = 378
+load = "sql"
+order_by = "(SELECT s.code FROM public.stations s WHERE s.id = t.station_id), t.label"
+
+[[table]]
+name = "vehicle_models"
+group = "vehicles"
+rows = 1
+load = "sql"
+order_by = "t.code"
+
+[[table]]
+name = "vehicle_connectors"
+group = "vehicles"
+rows = 1
+load = "sql"
+order_by = "(SELECT v.code FROM public.vehicle_models v WHERE v.id = t.vehicle_model_id), t.connector_code"
+
+[[table]]
+name = "port_status"
+group = "runtime"
+rows = 378
+load = "sql"
+order_by = "(SELECT s.code || '/' || p.label FROM public.ports p JOIN public.stations s ON s.id = p.station_id WHERE p.id = t.port_id)"
+
+[[table]]
+name = "port_status_history"
+group = "history"
+rows = 0
+load = "none"
+
+[[table]]
+name = "station_occupancy_5m"
+group = "history"
+rows = 0
+load = "none"
+
+[[table]]
+name = "station_occupancy_profile"
+group = "history"
+rows = 0
+load = "none"
+
+[[table]]
+name = "predictions"
+group = "forecast"
+rows = 222
+load = "sql"
+order_by = "(SELECT s.code FROM public.stations s WHERE s.id = t.station_id), t.horizon_min"
+
+[[table]]
+name = "trips"
+group = "trips"
+rows = 0
+load = "none"
+
+[[table]]
+name = "app_config"
+group = "config"
+rows = 0
+load = "none"

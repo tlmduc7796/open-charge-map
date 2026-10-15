@@ -111,15 +111,19 @@ class StationStatus(DomainModel):
     occupied_ports: int = Field(ge=0)
     available_ports: int = Field(ge=0)
     offline_ports: int = Field(ge=0)
+    unknown_ports: int = Field(default=0, ge=0)
     occupancy_ratio: float | None = Field(default=None, ge=0, le=1)
-    queue_length: int = Field(ge=0)
-    avg_session_duration_min: float = Field(gt=0)
+    queue_length: int | None = Field(default=None, ge=0)
+    avg_session_duration_min: float | None = Field(default=None, gt=0)
     data_source: str = Field(min_length=1)
+    synthetic_fields: tuple[str, ...] = ()
 
     @model_validator(mode="after")
     def validate_capacity_invariants(self) -> StationStatus:
-        if self.operational_ports + self.offline_ports != self.total_ports:
-            raise ValueError("operational_ports + offline_ports must equal total_ports")
+        if self.operational_ports + self.offline_ports + self.unknown_ports != self.total_ports:
+            raise ValueError(
+                "operational_ports + offline_ports + unknown_ports must equal total_ports"
+            )
         if self.occupied_ports + self.available_ports != self.operational_ports:
             raise ValueError("occupied_ports + available_ports must equal operational_ports")
         expected_ratio = (
@@ -172,55 +176,13 @@ class ChargingEstimateResult(DomainModel):
     data_source: Literal["derived"] = "derived"
 
 
-class PlannedArrival(DomainModel):
-    arrival_id: str = Field(min_length=1)
-    station_id: str = Field(min_length=1)
-    vehicle_id: str | None = None
-    created_at: datetime
-    eta_at: datetime
-    eta_window_start: datetime
-    eta_window_end: datetime
-    expected_energy_kwh: float = Field(ge=0)
-    expected_charge_duration_min: float = Field(gt=0)
-    arrival_probability: float = Field(ge=0, le=1)
-    expires_at: datetime
-    route_id: str | None = None
-    status: Literal["planned", "arrived", "cancelled", "expired"]
-    data_source: str = Field(min_length=1)
-
-    @model_validator(mode="after")
-    def validate_timeline(self) -> PlannedArrival:
-        timestamps = (
-            self.created_at,
-            self.eta_at,
-            self.eta_window_start,
-            self.eta_window_end,
-            self.expires_at,
-        )
-        if any(timestamp.tzinfo is None for timestamp in timestamps):
-            raise ValueError("planned arrival timestamps must include a timezone")
-        if not self.eta_window_start <= self.eta_at <= self.eta_window_end:
-            raise ValueError("eta_at must be inside its ETA window")
-        if self.expires_at <= self.created_at:
-            raise ValueError("expires_at must be after created_at")
-        return self
-
-
 class StationArrivalRate(DomainModel):
     station_id: str = Field(min_length=1)
     baseline_arrival_rate_per_hour: float = Field(ge=0)
 
 
-class ScenarioArrivalRate(DomainModel):
-    scenario_id: str = Field(min_length=1)
-    station_id: str = Field(min_length=1)
-    baseline_arrival_rate_per_hour: float = Field(ge=0)
-
-
 class QueueAssumptions(DomainModel):
-    planned_arrival_window_min: int = Field(gt=0)
     station_rates: tuple[StationArrivalRate, ...] = Field(min_length=1)
-    scenario_overrides: tuple[ScenarioArrivalRate, ...]
     data_source: Literal["synthetic"]
 
     @model_validator(mode="after")
@@ -228,23 +190,56 @@ class QueueAssumptions(DomainModel):
         station_ids = [rate.station_id for rate in self.station_rates]
         if len(station_ids) != len(set(station_ids)):
             raise ValueError("queue station rates must have unique station_id")
-        override_keys = [
-            (override.scenario_id, override.station_id)
-            for override in self.scenario_overrides
-        ]
-        if len(override_keys) != len(set(override_keys)):
-            raise ValueError("queue scenario overrides must be unique per scenario/station")
+        return self
+
+
+# Số cột tĩnh của ml.geo_features.GEO_COLUMNS (POI theo bán kính 300m, dân số phường, tác
+# động trạm lân cận) — không import ml.geo_features ở đây để models.py không cần pandas/numpy
+# chỉ để định nghĩa kiểu dữ liệu; thứ tự khớp với GEO_COLUMNS, do occupancy_history_repository
+# đảm bảo khi dựng OccupancyWindow.
+GEO_FEATURE_COUNT = 13
+
+
+class OccupancyWindow(DomainModel):
+    """The 12 most recent contiguous 5-minute occupancy ratios of one station.
+
+    `lags[0]` is the newest bucket (`lag_1` in `ml/features.py`), `lags[11]` the oldest.
+    `t_last` is the bucket start of `lags[0]`.
+
+    `geo_features` are the station's static geo columns, in `ml.geo_features.GEO_COLUMNS`
+    order. `nearest_station_occupancy` is the occupancy ratio of the nearest station
+    (`ml.geo_features.NEAREST_STATION_ID_COLUMN`) at this same `t_last`. Missing neighbor
+    observations make the model window unavailable (see `occupancy_history_repository`).
+    """
+
+    station_id: str = Field(min_length=1)
+    lags: tuple[float, ...] = Field(min_length=12, max_length=12)
+    t_last: datetime
+    total_ports: int = Field(gt=0)
+    geo_features: tuple[float, ...] = Field(
+        min_length=GEO_FEATURE_COUNT, max_length=GEO_FEATURE_COUNT
+    )
+    nearest_station_occupancy: float = Field(ge=0, le=1)
+
+    @model_validator(mode="after")
+    def validate_window(self) -> OccupancyWindow:
+        if self.t_last.tzinfo is None:
+            raise ValueError("t_last must include a timezone")
+        if any(not 0 <= value <= 1 for value in self.lags):
+            raise ValueError("occupancy ratios must be between 0 and 1")
         return self
 
 
 class OccupancyForecastResult(DomainModel):
     station_id: str
-    requested_horizon_min: int = Field(gt=0)
-    used_horizon_min: int = Field(gt=0)
+    requested_horizon_min: int = Field(ge=0)
+    # 0 is the newest observation itself (no prediction).
+    used_horizon_min: int = Field(ge=0)
     predicted_occupancy_ratio: float | None = Field(default=None, ge=0, le=1)
     predicted_occupied_ports: float = Field(ge=0)
     operational_ports: int = Field(ge=0)
-    prediction_source: Literal["model", "persistence"]
+    prediction_source: Literal["model", "model_profile", "persistence", "default"]
+    model_version: str | None = None
     flags: tuple[str, ...]
     data_source: Literal["derived"] = "derived"
 
@@ -257,22 +252,62 @@ class OccupancyForecastResult(DomainModel):
         return self
 
 
+class ArrivalForecast(DomainModel):
+    """Forecasts at the five-minute milestones around and after the arrival at a station.
+
+    All times are minutes after the newest observation (`t_last`). `milestones_min` starts at
+    the milestone at or before the arrival (`arrival_lead_min`), so `forecasts[0]` is the
+    milestone just before it (the same one when the arrival falls exactly on a milestone) and
+    `forecasts[1]` the first milestone after it.
+    """
+
+    arrival_lead_min: float = Field(ge=0)
+    milestones_min: tuple[int, ...] = Field(min_length=2)
+    forecasts: tuple[OccupancyForecastResult, ...]
+
+    @model_validator(mode="after")
+    def validate_milestones(self) -> ArrivalForecast:
+        if len(self.milestones_min) != len(self.forecasts):
+            raise ValueError("every milestone needs one forecast")
+        first = self.milestones_min[0]
+        if not first <= self.arrival_lead_min < first + 5:
+            raise ValueError("first milestone must be the one at or before the arrival")
+        if any(
+            later - earlier != 5
+            for earlier, later in zip(self.milestones_min, self.milestones_min[1:], strict=False)
+        ):
+            raise ValueError("milestones must be five minutes apart")
+        return self
+
+    @property
+    def at_arrival(self) -> OccupancyForecastResult:
+        """The forecast of the first milestone at or after the arrival."""
+        return self.forecasts[0 if self.arrival_lead_min == self.milestones_min[0] else 1]
+
+
+class WaitDistribution(DomainModel):
+    """Wait-time summary returned by the ML boundary: P(W>0), E[W] and W90."""
+
+    p_wait: float = Field(ge=0, le=1)
+    expected_wait_min: float = Field(ge=0)
+    p90_wait_min: float = Field(ge=0)
+    source: Literal["model", "default"]
+
+
 class WaitEstimateResult(DomainModel):
+    """Wait derived from forecast free ports at the milestones following the arrival."""
+
     station_id: str
     evaluation_at: datetime
     operational_ports: int = Field(ge=0)
     predicted_occupied_ports: float = Field(ge=0)
-    current_queue_length: int = Field(ge=0)
-    avg_session_duration_min: float = Field(gt=0)
-    baseline_arrival_rate_per_hour: float = Field(ge=0)
-    planned_arrival_rate_per_hour: float = Field(ge=0)
-    total_arrival_rate_per_hour: float = Field(ge=0)
-    service_rate_per_server_per_hour: float = Field(gt=0)
-    traffic_intensity: float | None = Field(default=None, ge=0)
-    erlang_c_probability_wait: float | None = Field(default=None, ge=0, le=1)
-    erlang_expected_wait_min: float = Field(ge=0)
-    current_state_wait_min: float = Field(ge=0)
+    required_free_ports: int = Field(ge=0)
+    # Free ports at the arrival (the worse of the two surrounding milestones); None = offline.
+    free_ports_at_arrival: int | None = Field(default=None, ge=0)
+    # Minutes after arrival at which the rule is met; None when it never is (wait is capped).
+    satisfied_at_min: float | None = Field(default=None, ge=0)
     estimated_wait_min: float = Field(ge=0)
     scoring_wait_cap_min: float = Field(gt=0)
+    wait_distribution: WaitDistribution | None = None
     flags: tuple[str, ...]
     data_source: Literal["derived"] = "derived"

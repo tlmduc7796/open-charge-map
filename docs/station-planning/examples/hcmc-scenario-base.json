@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.1",
+  "scenario_id": "hcmc-technical-opportunity-demo",
+  "scenario_version": 5,
+  "created_at": "2026-10-13T00:00:00+07:00",
+  "owner": "student-team",
+  "purpose": "technical_opportunity",
+  "study_area": {
+    "administrative_name": "Ho Chi Minh City",
+    "boundary_version": "ADMINISTRATIVE_2025",
+    "spatial_reference": "EPSG:4326",
+    "boundary_geometry_ref": "raw_data/admin_boundaries/hcm_planning_units_2025.geojson",
+    "pilot_extent": "named_subarea",
+    "pilot_extent_label": "Nine-ward pilot: Sai Gon, Ben Thanh, Xuan Hoa, Tan Dinh, Phu Nhuan, Binh Thanh, Tan Son Hoa, Thanh My Tay, Binh Quoi; hcm_dc80kw_5wards contains 37 simulated existing sites",
+    "included_legacy_areas": [
+      "former_ho_chi_minh_city",
+      "former_binh_duong_province",
+      "former_ba_ria_vung_tau_province"
+    ]
+  },
+  "planning_horizon_years": 3,
+  "planning_horizon_status": "team_illustrative",
+  "data_profile": {
+    "mode": "mixed",
+    "source_label": "filtered collected population/POI/transport context; hcm_dc80kw_5wards existing sites; fully synthetic candidates/demand/operations; collected tariffs plus assumed costs",
+    "data_snapshot_id": null,
+    "notes": "P7 finalized: geodesic distance * circuity 1.3; fast/normal/slow assumed speed 25/20/12 km/h; add 2 minutes; inclusive target 15 minutes. P8 finalized: technical demo gates, 4 DC ports * 80 kW, 10 billion VND scenario budget, minimum available score weight 0.6. Missing physical feasibility stays unknown/conditional, no fabricated statutory policy. See config/station_planning_demo.json for the machine-readable demo configuration. Use the prepared v3 snapshot and its access_model/technical_constraints packages. Existing sites remain 37 simulated sites in nine wards; exclude ref.kml and the 668-site dataset. Parts 4-6 remain fully synthetic; part 9 uses collected tariffs plus assumed costs. This v3 dataset has not been connected to the M2 engine/API; the finance adapter is not integrated. Coverage describes the fixture, not verified real-world shortages."
+  },
+  "demand": {
+    "scenario_profile": "hcmc_nine_wards_synthetic_low_base_high",
+    "ev_share": null,
+    "home_charging_share": null,
+    "fleet_share": null,
+    "tourism_multiplier": null,
+    "value_status": "unknown",
+    "source_ref": null
+  },
+  "technical_gates": {
+    "require_inside_boundary": true,
+    "unknown_site_handling": "conditional_candidate",
+    "target_access_minutes": 15,
+    "target_access_minutes_status": "team_illustrative",
+    "reject_confirmed_grid_infeasible": true,
+    "reject_confirmed_access_or_safety_infeasible": true
+  },
+  "policy": {
+    "enabled": false,
+    "owner": null,
+    "effective_date": null,
+    "rules": []
+  },
+  "finance": {
+    "enabled": false,
+    "mode": "illustrative_assumptions",
+    "owner": null,
+    "effective_date": null,
+    "currency": "VND",
+    "formula_version": null,
+    "inputs": {
+      "budget_vnd": null,
+      "capex_per_port_vnd": null,
+      "annual_opex_per_site_vnd": null,
+      "tariff_vnd_per_kwh": null,
+      "revenue_vnd_per_kwh": null,
+      "discount_rate": null,
+      "payback_limit_years": null,
+      "tariff_regime_ref": "raw_data/electricity_tariffs/evnspc_business_electricity_tariffs.csv",
+      "assumption_range_ref": null
+    },
+    "metrics": [],
+    "external_engine_ref": null
+  },
+  "scoring": {
+    "profile": "technical_opportunity",
+    "method": "weighted_sum",
+    "weight_status": "team_demo_proposal",
+    "weights": {
+      "demand_potential": 30,
+      "marginal_coverage": 25,
+      "grid_site_readiness": 20,
+      "network_segment_fit": 15,
+      "network_gap_fit": 10
+    },
+    "minimum_evidence_coverage": 0.6
+  },
+  "reproducibility": {
+    "random_seed": 20261012,
+    "algorithm_version": "site-ranking-baseline-v0"
+  }
+}

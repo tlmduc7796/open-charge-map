@@ -1,0 +1,34 @@
+{
+  "boundary_id": "hcm-ADMINISTRATIVE_2025-nine-wards",
+  "boundary_version": "ADMINISTRATIVE_2025",
+  "valid_from": null,
+  "valid_to": null,
+  "value_status": "unknown",
+  "field_status": {
+    "boundary_id": "provided",
+    "boundary_version": "provided",
+    "source_url": "provided",
+    "valid_from": "unknown",
+    "crosswalk_ref": "unknown",
+    "legacy_area": "unknown"
+  },
+  "source_url": "https://bando.tphcm.gov.vn/",
+  "source_ref": "raw_data/admin_boundaries/hcm_planning_units_2025.geojson",
+  "legacy_area": null,
+  "legacy_area_status": "unknown",
+  "crosswalk_ref": null,
+  "crosswalk_status": "unknown",
+  "crosswalk_required_for_this_snapshot": false,
+  "notes": "Current joins use coordinates/current unit IDs only. No historical administrative crosswalk supplied; none invented.",
+  "unit_ids": [
+    "hcm_2025_26737",
+    "hcm_2025_26740",
+    "hcm_2025_26743",
+    "hcm_2025_26911",
+    "hcm_2025_26929",
+    "hcm_2025_26956",
+    "hcm_2025_26977",
+    "hcm_2025_27073",
+    "hcm_2025_27139"
+  ]
+}
