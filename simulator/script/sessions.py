@@ -1,5 +1,5 @@
 """Mô phỏng phiên sạc: nhận các lượt xe đến (script/arrivals.py), cho xếp hàng, cấp cổng,
-sạc và rút xe bằng SimPy, rồi trả `sessions` và `ports` đúng docs/SIMULATOR_SESSION_SCHEMA.md.
+sạc và rút xe bằng SimPy, rồi ghi các đầu ra `sessions.csv` và `ports.csv`.
 
 Luồng của mỗi lượt đến:
   1. Có cổng tương thích còn trống: chọn theo port_preference (DC trước), rồi công suất cao nhất.

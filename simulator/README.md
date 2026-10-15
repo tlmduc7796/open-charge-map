@@ -46,7 +46,7 @@ Khối `advanced` (hệ số theo giờ/thứ, trễ cắm, idle, rút sớm, gi
 
 | File | Nội dung |
 |---|---|
-| `sessions.csv`, `ports.csv` | đúng `docs/SIMULATOR_SESSION_SCHEMA.md` |
+| `sessions.csv`, `ports.csv` | dữ liệu phiên/cổng; các bất biến được kiểm tra bởi `script/validate.py` |
 | `debug/arrivals.csv`, `debug/queue_log.csv` | lượt đến, hàng đợi, xe bỏ đi (chỉ để kiểm thử) |
 | `validation_report.md` | kết quả các bất biến và thống kê hàng đợi |
 | `run_manifest.json` | seed, sha256 snapshot/config/`sessions.csv`, số dòng |

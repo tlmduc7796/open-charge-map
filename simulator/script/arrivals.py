@@ -11,7 +11,7 @@ Tốc độ đến (xe/giờ) của một trạm tại thời điểm t:
 Tức là một tốc độ chung cho trạm, bằng số cổng × trung bình có trọng số của r_DC và r_AC.
 `g_trạm` là hệ số người dùng đặt cho từng trạm (`station_factor`, mặc định 1.0).
 Mọi hệ số là giả định, đặt trong config. Lượt đến, hàng đợi và thời gian chờ chỉ dùng nội bộ
-(debug), KHÔNG thuộc schema sessions (xem docs/SIMULATOR_SESSION_SCHEMA.md).
+(debug), KHÔNG thuộc các đầu ra `sessions.csv` và `ports.csv`.
 
 Dùng trong code:
 

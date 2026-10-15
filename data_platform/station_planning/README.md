@@ -2,11 +2,9 @@
 
 Snapshot hiện hành: [`demo_hcmc_v3/`](demo_hcmc_v3/), ID `hcmc-nine-wards-demo-v3`, seed `20261013`. Cấu hình sinh: [`../../config/station_planning_demo.json`](../../config/station_planning_demo.json).
 
-V1/v2 và các báo cáo kiểm tra tương ứng được lưu trong Git stash local với tên `archive station-planning demo v1-v2 before publishing v3`, không nằm trong commit hiện hành và không được push. V1 chưa có P7/P8; v2 chưa có các bổ sung chuẩn hóa DATA_PLAN của v3. V3 bổ sung cấu trúc theo DATA_PLAN; xem [bảng đối chiếu](../../docs/station-planning/DATA_PLAN_ALIGNMENT_VI.md) và `data_plan_alignment_report.json` trong snapshot.
+V1/v2 và các báo cáo kiểm tra tương ứng được lưu trong Git stash local với tên `archive station-planning demo v1-v2 before publishing v3`, không nằm trong commit hiện hành và không được push. Snapshot v3 hiện hành có ID `hcmc-nine-wards-demo-v3`, seed `20261013`; cấu hình sinh nằm tại [`config/station_planning_demo.json`](../../config/station_planning_demo.json), còn generator là [`scripts/prepare_station_planning_demo.py`](../../scripts/prepare_station_planning_demo.py). `data_plan_alignment_report.json`, `manifest.json` và `validation_report.json` trong snapshot ghi lại contract, nguồn và kết quả kiểm tra.
 
-Xem [tổng kết dữ liệu và sơ đồ luồng sử dụng](../../docs/station-planning/NORMALIZED_DATA_SUMMARY_VI.md) để đối chiếu các phần, khóa liên kết và cách đưa snapshot vào bài toán quy hoạch.
-
-Bộ dữ liệu phục vụ chuẩn bị input cho engine. Chưa chạy ranking hoặc tích hợp API/DB. Existing sites là đúng 37 trạm của `hcm_dc80kw_5wards`; không đọc `ref.kml` và không ghép bộ 668 trạm. [P7/P8 đã chốt](../../docs/station-planning/P7_P8_DECISIONS_VI.md), với access proxy và technical rule package; physical feasibility chưa xác minh vẫn unknown/conditional.
+Bộ dữ liệu chỉ chuẩn bị input cho engine; chưa chạy ranking hoặc tích hợp API/DB. Existing sites là 37 trạm mô phỏng của `hcm_dc80kw_5wards`; không đọc `ref.kml` và không ghép bộ 668 trạm. Access matrix dùng proxy khoảng cách/thời gian; technical rule package phục vụ demo. Physical feasibility chưa xác minh vẫn unknown/conditional. Các đặc tả thiết kế chi tiết được lưu ngoài repository.
 
 ## Các phần đã tạo
 

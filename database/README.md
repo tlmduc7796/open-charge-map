@@ -1,6 +1,6 @@
 # Smart EV database
 
-ERD và thống kê: [docs/DATABASE_ERD.md](../docs/DATABASE_ERD.md).
+Nguồn sự thật của schema là các file SQL trong `schema/`; thứ tự áp dụng và số dòng kỳ vọng được khai báo trong `tables.toml`. ERD và thống kê chi tiết được lưu trong kho tài liệu bên ngoài repository.
 
 Thư mục này chứa toàn bộ lớp dữ liệu của repository: schema PostgreSQL/PostGIS viết bằng SQL,
 dữ liệu seed, fixture JSON cho backend và các công cụ dựng/kiểm tra database.

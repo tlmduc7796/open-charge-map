@@ -1,8 +1,10 @@
 # M2A candidate and cell demand pipeline
 
 This package is separate from the existing five-minute station-occupancy predictor in `ml/`.
-It trains a demand model for one spatial unit and one target at a time, then emits records in the
-M2A → M2B payload shape from `docs/station-planning/modules/SHARED_CONTRACT_VI.md`.
+It trains a demand model for one spatial unit and one target at a time, then emits records for the
+M2A → M2B handoff: spatial unit, target and unit, time window, value, status and provenance, plus
+model/data version and uncertainty when available. The full design contract is archived outside
+the repository.
 
 ## Training table
 

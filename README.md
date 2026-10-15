@@ -2,12 +2,7 @@
 
 ## Station planning feature
 
-The station recommendation feature is developed on top of this shared application so it can reuse the existing React frontend, FastAPI backend, PostgreSQL/PostGIS database, station catalog, and map infrastructure. Wait-time/occupancy forecasting remains a separate existing capability.
-
-- [Station recommendation implementation plan](docs/station-planning/IMPLEMENTATION_PLAN_VI.md)
-- [Shared API/domain contract and module briefs](docs/station-planning/modules/README.md)
-- [Station planning overview](docs/station-planning/README.md)
-- [Station recommendation ML demand pipeline](docs/station-planning/ML_DEMAND_PIPELINE_VI.md)
+The station recommendation feature is developed on top of this shared application so it can reuse the existing React frontend, FastAPI backend, PostgreSQL/PostGIS database, station catalog, and map infrastructure. Wait-time/occupancy forecasting remains a separate existing capability. The current planner demo snapshot is in `data_platform/station_planning/demo_hcmc_v3/` and can be regenerated with `scripts/prepare_station_planning_demo.py`. The machine-readable scenario template and dataset schema remain under `docs/station-planning/`; design and implementation documents are archived separately from this repository.
 
 MVP đề xuất trạm sạc cho hành trình xe điện: xếp hạng trạm theo tổng thời gian (di chuyển + chờ +
 sạc) dựa trên khả năng tương thích đầu sạc, tầm với của pin và dự báo occupancy tại thời điểm tới.

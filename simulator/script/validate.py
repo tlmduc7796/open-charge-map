@@ -1,5 +1,4 @@
-"""Kiểm tra dữ liệu phiên sạc mô phỏng theo docs/SIMULATOR_SESSION_SCHEMA.md mục 7 (các bất biến)
-và dựng báo cáo tiếng Việt.
+"""Kiểm tra các bất biến của dữ liệu phiên sạc mô phỏng và dựng báo cáo tiếng Việt.
 
 Đọc lại chính các file đã ghi (`sessions.csv`, `ports.csv`, `debug/queue_log.csv`) nên kiểm
 tra đúng thứ người dùng nhận được. Chỉ dùng thư viện chuẩn.
@@ -107,7 +106,7 @@ def build_report(
         "",
         f"- Trạng thái: **{status}**",
         f"- Số phiên sạc: {len(sessions)}; số cổng: {len(ports)}; số lượt đến: {len(queue_log)}",
-        "- Nguồn kiểm tra: docs/SIMULATOR_SESSION_SCHEMA.md mục 7 (các bất biến)",
+        "- Nguồn kiểm tra: các bất biến được triển khai trong simulator/script/validate.py",
         "",
     ]
     if errors:

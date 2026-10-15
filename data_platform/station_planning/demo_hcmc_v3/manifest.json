@@ -13,7 +13,7 @@
   },
   "scenario_template": {
     "path": "docs/station-planning/examples/hcmc-scenario-base.json",
-    "sha256": "e007e1a813513137a0d4bad4bd0cb1038e93222903d65495ac345d0733eaaa28"
+    "sha256": "dbb1f38bc0392566d02a3346e89a8006ca488f357dfd059362b6a50880f39ee9"
   },
   "seed": 20261013,
   "dependencies": {
@@ -111,8 +111,8 @@
       "sha256": "0e1287e7c39b67feb727b6d5d96e617701c8fe7d730c948158e9c186a84550fc"
     },
     "data_plan_alignment_report.json": {
-      "bytes": 1901,
-      "sha256": "b251c9dc5257c23323bf3e5f2ddecb7e6e49dd99dfeb082e11e8a9585e3fb162"
+      "bytes": 1930,
+      "sha256": "3fb482469e6288c4dc48288e31a3de2d22ad2763317e175843d6f9058358f7dd"
     },
     "data_plan_contract.schema.json": {
       "bytes": 15618,

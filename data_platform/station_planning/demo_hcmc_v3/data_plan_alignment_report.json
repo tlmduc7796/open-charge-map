@@ -1,7 +1,7 @@
 {
   "status": "PASS",
   "contract_version": "1.0",
-  "basis": "docs/station-planning/DATA_PLAN_VI.md",
+  "basis": "DATA_PLAN_VI.md (design reference archived outside the repository)",
   "new_views": {
     "demand_observations.csv": 37296,
     "demand_cells.csv": 9072

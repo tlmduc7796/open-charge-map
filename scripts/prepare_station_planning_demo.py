@@ -905,7 +905,7 @@ def prepare(config_path=DEFAULT_CONFIG, output=None):
         {
             "status": "prepared_for_schema_validation",
             "contract_version": cfg["dataset_contract_version"],
-            "basis": "docs/station-planning/DATA_PLAN_VI.md",
+            "basis": "DATA_PLAN_VI.md (design reference archived outside the repository)",
             "new_views": {
                 "demand_observations.csv": len(observations),
                 "demand_cells.csv": len(cells),
