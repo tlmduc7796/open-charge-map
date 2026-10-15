@@ -25,6 +25,7 @@ declare module "@goongmaps/goong-js" {
     addImage(id: string, image: unknown, options?: Record<string, unknown>): void;
     flyTo(options: Record<string, unknown>): void;
     fitBounds(bounds: [[number, number], [number, number]], options?: Record<string, unknown>): void;
+    resize(): this;
     removeLayer(id: string): void;
     removeSource(id: string): void;
     remove(): void;

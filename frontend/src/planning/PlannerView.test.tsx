@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
 
 import { api } from "../api";
@@ -9,12 +9,18 @@ import type {
   PlanningRequest,
 } from "./types";
 import PlannerView from "./PlannerView";
+import { downloadPlannerReport } from "./plannerReport";
 
 vi.mock("../api", () => ({
   api: {
     planningDemoSnapshot: vi.fn(),
     planningRecommendations: vi.fn(),
   },
+}));
+
+vi.mock("./plannerReport", async (importOriginal) => ({
+  ...await importOriginal<typeof import("./plannerReport")>(),
+  downloadPlannerReport: vi.fn(),
 }));
 
 vi.mock("./PlannerMap", () => ({
@@ -174,6 +180,7 @@ function planningResponse(): PlanningRecommendationResponse {
 const mockedApi = vi.mocked(api);
 
 beforeEach(() => {
+  vi.mocked(downloadPlannerReport).mockClear();
   mockedApi.planningDemoSnapshot.mockResolvedValue(demoSnapshot());
   mockedApi.planningRecommendations.mockResolvedValue(planningResponse());
 });
@@ -181,7 +188,7 @@ beforeEach(() => {
 test("runs the selected planner scenario and shows map, ranking, explanation and comparison", async () => {
   render(<PlannerView onModeChange={vi.fn()} />);
 
-  expect(await screen.findByText("hcmc-nine-wards-demo-v3")).toBeInTheDocument();
+  await waitFor(() => expect(screen.getByTestId("planner-map")).toHaveAttribute("data-candidate-count", "3"));
   expect(await screen.findByTestId("planner-map")).toHaveAttribute("data-candidate-count", "3");
   expect(screen.getByTestId("planner-map")).toHaveAttribute("data-existing-site-count", "1");
   expect(screen.getByTestId("planner-map")).toHaveAttribute("data-demand-node-count", "1");
@@ -191,7 +198,7 @@ test("runs the selected planner scenario and shows map, ranking, explanation and
   expect(screen.getByTestId("planner-map")).toHaveAttribute("data-demand-scenario", "low");
   expect(mockedApi.planningRecommendations).not.toHaveBeenCalled();
   fireEvent.change(screen.getByLabelText(/Thời gian đến trạm tối đa/), { target: { value: "5" } });
-  fireEvent.click(screen.getByRole("button", { name: "Đánh giá địa điểm" }));
+  fireEvent.click(screen.getByRole("button", { name: /Đánh giá địa điểm/ }));
 
   await waitFor(() => expect(mockedApi.planningRecommendations).toHaveBeenCalledTimes(1));
   const request = mockedApi.planningRecommendations.mock.calls[0][0] as PlanningRequest;
@@ -202,16 +209,18 @@ test("runs the selected planner scenario and shows map, ranking, explanation and
   expect(request.candidate_source.candidate_ids).toEqual(candidateIds);
   expect(request.technical).toEqual(expect.objectContaining({ coverage_minutes: 5, budget_vnd: null }));
 
-  expect(await screen.findByText("run-test-1")).toBeInTheDocument();
-  expect(screen.getByText("Hoàn tất, còn thiếu dữ liệu")).toBeInTheDocument();
-  expect(screen.getByRole("status")).toHaveTextContent("Dữ liệu mô phỏng cho 9 phường");
-  const explanation = screen.getByRole("region", { name: `Giải thích ${candidateIds[0]}` });
-  expect(explanation).toHaveTextContent("Mô phỏng");
-  expect(within(explanation).getByText("Nguồn điện")).toBeInTheDocument();
-  expect(explanation).toHaveTextContent("Chưa chấm: điều kiện mặt bằng và nguồn điện");
-  expect(explanation).not.toHaveTextContent("No source-backed");
-  expect(explanation).not.toHaveTextContent("demand-1");
-  expect(explanation).not.toHaveTextContent("Rủi ro quá tải");
+  expect(await screen.findByText("Đã đánh giá")).toBeInTheDocument();
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  expect(screen.queryByText(/Cần xác minh|Chưa chấm|No source-backed|Chưa có dữ liệu đấu nối/)).not.toBeInTheDocument();
+  expect(screen.getByRole("region", { name: `Giải thích ${candidateIds[0]}` })).toHaveTextContent("Điểm đánh giá");
+  fireEvent.click(screen.getByRole("button", { name: "Tải báo cáo" }));
+  const [markdown, reportId] = vi.mocked(downloadPlannerReport).mock.calls.at(-1)!;
+  expect(reportId).toBe("run-test-1");
+  expect(markdown).toContain("Grid feasibility is unknown.");
+  expect(markdown).toContain("No source-backed");
+  expect(markdown).toContain("Chưa có dữ liệu đấu nối.");
+  expect(markdown).toContain("demand-1");
+  expect(markdown).toContain('"coverage_minutes": 5');
 
   const compareButtons = screen.getAllByRole("button", { name: "So sánh" });
   fireEvent.click(compareButtons[0]);
@@ -224,7 +233,7 @@ test("shows a recoverable error when a planning run fails", async () => {
   mockedApi.planningRecommendations.mockRejectedValueOnce(new Error("Planning API unavailable"));
   render(<PlannerView onModeChange={vi.fn()} />);
 
-  fireEvent.click(await screen.findByRole("button", { name: "Đánh giá địa điểm" }));
+  fireEvent.click(await screen.findByRole("button", { name: /Đánh giá địa điểm/ }));
 
   expect(await screen.findByRole("alert")).toHaveTextContent("Planning API unavailable");
   expect(screen.queryByText("run-test-1")).not.toBeInTheDocument();
@@ -247,17 +256,43 @@ test("shows excluded candidates when the scenario has no feasible option", async
   });
   render(<PlannerView onModeChange={vi.fn()} />);
 
-  expect(await screen.findByText("hcmc-nine-wards-demo-v3")).toBeInTheDocument();
+  await waitFor(() => expect(screen.getByTestId("planner-map")).toHaveAttribute("data-candidate-count", "3"));
   fireEvent.change(screen.getByLabelText(/Chi phí xây mỗi trạm tối đa/), { target: { value: "1" } });
-  fireEvent.click(await screen.findByRole("button", { name: "Đánh giá địa điểm" }));
+  fireEvent.click(await screen.findByRole("button", { name: /Đánh giá địa điểm/ }));
 
-  const result = await screen.findByText("run-no-feasible");
-  expect(result).toBeInTheDocument();
-  expect(screen.getAllByText("Không có địa điểm phù hợp")).toHaveLength(2);
-  const exclusions = screen.getByText("Không đáp ứng điều kiện · 3").closest("details");
-  expect(exclusions).toHaveTextContent("Ngân sách xây trạm: không đạt");
-  for (const candidateId of candidateIds) expect(exclusions).toHaveTextContent(candidateId);
+  expect(await screen.findByText("Không có kết quả với thiết lập này")).toBeInTheDocument();
+  expect(screen.queryByText("Không đáp ứng điều kiện · 3")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Tải báo cáo" }));
+  const [markdown] = vi.mocked(downloadPlannerReport).mock.calls.at(-1)!;
+  expect(markdown).toContain("CAPEX giả định vượt ngân sách kịch bản đã nhập.");
+  for (const candidateId of candidateIds) expect(markdown).toContain(candidateId);
 
   const request = mockedApi.planningRecommendations.mock.calls.at(-1)?.[0] as PlanningRequest;
   expect(request.technical.budget_vnd).toBe(1);
+});
+
+
+test("map focus mode preserves input state and can be closed with Escape", async () => {
+  render(<PlannerView onModeChange={vi.fn()} />);
+  await waitFor(() => expect(screen.getByTestId("planner-map")).toHaveAttribute("data-candidate-count", "3"));
+  fireEvent.change(screen.getByLabelText(/Thời gian đến trạm tối đa/), { target: { value: "5" } });
+  fireEvent.click(screen.getByRole("button", { name: "Phóng to bản đồ" }));
+  expect(screen.getByRole("button", { name: "Thu gọn bản đồ" })).toHaveAttribute("aria-pressed", "true");
+  fireEvent.keyDown(window, { key: "Escape" });
+  expect(screen.getByRole("button", { name: "Phóng to bản đồ" })).toHaveAttribute("aria-pressed", "false");
+  expect(screen.getByLabelText(/Thời gian đến trạm tối đa/)).toHaveValue(5);
+});
+
+test("searching candidates does not clear the existing selection", async () => {
+  const snapshot = demoSnapshot();
+  snapshot.candidates[0].label = "Khách sạn Bình Minh";
+  mockedApi.planningDemoSnapshot.mockResolvedValueOnce(snapshot);
+  render(<PlannerView onModeChange={vi.fn()} />);
+  await waitFor(() => expect(screen.getByTestId("planner-map")).toHaveAttribute("data-candidate-count", "3"));
+  fireEvent.change(screen.getByRole("searchbox", { name: "Tìm địa điểm" }), { target: { value: "khach san binh minh" } });
+  expect(screen.getAllByRole("checkbox")).toHaveLength(1);
+  expect(screen.getByRole("checkbox", { name: "Khách sạn Bình Minh" })).toBeChecked();
+  fireEvent.click(screen.getByRole("button", { name: /Đánh giá địa điểm/ }));
+  await waitFor(() => expect(mockedApi.planningRecommendations).toHaveBeenCalled());
+  expect(mockedApi.planningRecommendations.mock.calls.at(-1)?.[0].candidate_source.candidate_ids).toEqual(candidateIds);
 });

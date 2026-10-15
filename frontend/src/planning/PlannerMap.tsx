@@ -116,7 +116,7 @@ function PlannerMapLegendAndEmpty({
       <div className="planner-map-legend" aria-label="Chú giải bản đồ">
         <span><i className="planner-map-dot station" />Trạm hiện hữu</span>
         <span><i className="planner-map-dot ranked" />Đã có thứ hạng</span>
-        <span><i className="planner-map-dot selected" />Ứng viên đang chọn · cần xác minh</span>
+        <span><i className="planner-map-dot selected" />Đang chọn</span>
         <span><i className="planner-map-dot unselected" />Ứng viên chưa chọn</span>
       </div>
       {!isEmpty && (
@@ -127,15 +127,13 @@ function PlannerMapLegendAndEmpty({
               <span key={label}><i style={{ background: DEMAND_COLORS[index] }} /><b>{label}</b></span>
             ))}
           </div>
-          <p>{access.missingDemand === 0 ? `Tổng ${format(access.total)} lượt dự kiến/tuần` : "Dữ liệu nhu cầu chưa đầy đủ"}</p>
-          <span className="planner-heatmap-access-key">Ngoài {coverageMinutes} phút đến trạm hiện hữu: <b>{access.outsidePercent === null ? "chưa xác định" : `${format(access.outsidePercent)}% nhu cầu có dữ liệu`}</b></span>
+          <p>{access.missingDemand === 0 ? `${format(access.total)} lượt dự kiến/tuần` : "— lượt/tuần"}</p>
+          <span className="planner-heatmap-access-key">Ngoài {coverageMinutes} phút: <b>{access.outsidePercent === null ? "—" : `${format(access.outsidePercent)}% nhu cầu`}</b></span>
           <label className="planner-heatmap-filter">
             <input type="checkbox" checked={onlyUncovered} onChange={onToggleUncovered} />
             Chỉ xem vùng xa trạm (&gt; {coverageMinutes} phút)
           </label>
-          {onlyUncovered && access.outside === 0 && <p>Không có nhu cầu xa trạm được xác định ở ngưỡng này.</p>}
-          {access.unknownAccessDemand > 0 && <small>Một phần nhu cầu chưa có thời gian tiếp cận.</small>}
-          <small>Mô phỏng · thời gian ước tính · màu thể hiện mức tập trung tương đối</small>
+          {onlyUncovered && access.outside === 0 && <p className="planner-filter-empty">Không có vùng nhu cầu ngoài ngưỡng đang chọn.</p>}
         </div>
       )}
     </>
@@ -195,6 +193,11 @@ function FitMapItems({
 }: Pick<PlannerMapProps, "candidates" | "existingSites" | "demandNodes">) {
   const map = useMap();
   useEffect(() => {
+    const observer = new ResizeObserver(() => map.invalidateSize({ pan: false, debounceMoveend: true }));
+    observer.observe(map.getContainer());
+    return () => observer.disconnect();
+  }, [map]);
+  useEffect(() => {
     const points = [
       ...candidates.map(({ location }) => [location.lat, location.lon] as [number, number]),
       ...existingSites.map(({ location }) => [location.lat, location.lon] as [number, number]),
@@ -249,7 +252,6 @@ function OsmPlannerMap({
             <Popup>
               <strong>Trạm hiện hữu · {site.site_id}</strong>
               <br />{site.charger_type} · {site.port_count ?? "?"} cổng · {site.power_kw ?? "Chưa rõ"} kW
-              <br />Dữ liệu tổng hợp · {site.source_ref ?? "nguồn chưa rõ"}
             </Popup>
           </CircleMarker>
         ))}
@@ -271,9 +273,7 @@ function OsmPlannerMap({
             >
               <Popup>
                 <strong>{item ? `#${item.rank} · ` : "Ứng viên · "}{candidate.label}</strong>
-                <br />{candidate.candidate_id} · {candidate.candidate_type}
                 {item && <><br />Điểm kỹ thuật: {item.technical_score.toFixed(1)}/100</>}
-                <br />Vị trí mô phỏng · cần xác minh địa điểm thực tế
               </Popup>
             </CircleMarker>
           );
@@ -337,7 +337,15 @@ function GoongPlannerMap({
       hideGoongPoiLayers(instance);
       setMap(instance);
     });
+    let resizeFrame = 0;
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => instance.resize());
+    });
+    observer.observe(containerRef.current);
     return () => {
+      observer.disconnect();
+      cancelAnimationFrame(resizeFrame);
       setMap(null);
       instance.remove();
     };
@@ -465,8 +473,7 @@ function GoongPlannerMap({
       openPopup(
         event.lngLat,
         `<strong>Trạm hiện hữu · ${props.site_id}</strong><br/>` +
-          `${props.charger_type} · ${props.port_count ?? "?"} cổng · ${props.power_kw ?? "Chưa rõ"} kW<br/>` +
-          `Dữ liệu tổng hợp · ${props.source_ref ?? "nguồn chưa rõ"}`,
+          `${props.charger_type} · ${props.port_count ?? "—"} cổng · ${props.power_kw ?? "—"} kW`,
       );
     };
     const handleCandidateClick = (event: GoongLayerClickEvent) => {
@@ -478,9 +485,7 @@ function GoongPlannerMap({
       openPopup(
         event.lngLat,
         `<strong>${ranked ? `#${props.rank} · ` : "Ứng viên · "}${props.label}</strong><br/>` +
-          `${candidateId} · ${props.candidate_type}` +
-          (ranked ? `<br/>Điểm kỹ thuật: ${Number(props.technical_score).toFixed(1)}/100` : "") +
-          `<br/>Vị trí mô phỏng · cần xác minh địa điểm thực tế`,
+          (ranked ? `Điểm kỹ thuật: ${Number(props.technical_score).toFixed(1)}/100` : "Địa điểm ứng viên"),
       );
     };
     const pointerEnter = () => { canvas.style.cursor = "pointer"; };
