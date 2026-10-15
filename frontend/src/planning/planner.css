@@ -56,6 +56,7 @@
 .planner-form .planner-candidate-select-list label { display: flex; align-items: center; gap: 9px; margin: 0; padding: 9px; border: 1px solid #e8eee9; border-radius: 8px; color: #526e60; background: #fff; cursor: pointer; line-height: 1.4; }
 .planner-form .planner-candidate-select-list label.is-selected { border-color: #cedef6; background: #f1f6ff; color: #244e89; }
 .planner-candidate-select-list input[type="checkbox"] { flex: 0 0 auto; width: 15px; min-height: 15px; margin: 0; padding: 0; accent-color: #2563eb; }
+.planner-candidate-select-list small { display: block; margin-top: 2px; color: #7d8e83; font-size: 10px; }
 .planner-field-error { display: block; margin-top: 9px; color: #a1473b; font-size: 11px; }
 .planner-muted { color: #7b8e83; font-size: 11px; }
 .planner-form-actions { flex: 0 0 auto; padding-top: 12px; border-top: 1px solid #e8eee9; background: #fff; }
@@ -81,16 +82,30 @@
 .planner-map-actions a { color: #41755c; font-size: 11px; text-decoration: none; }
 .planner-map-actions a:hover { text-decoration: underline; }
 .planner-map-shell { position: relative; display: flex; flex-direction: column; min-height: 0; overflow: hidden; border: 1px solid #d5e0d8; border-radius: 15px; background: #fff; }
+.planner-load-panel { flex: 0 0 auto; margin-bottom: 10px; padding: 11px 13px; border: 1px solid #dce5de; border-radius: 10px; background: #fff; color: #4b6656; font-size: 11px; }
+.planner-load-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.planner-load-heading strong { color: #31523e; font-size: 12px; }
+.planner-load-heading small { color: #7b8e80; font-size: 10px; font-weight: 500; }
+.planner-load-modes { display: flex; gap: 3px; }
+.planner-load-modes button { padding: 5px 8px; border: 1px solid #dce5de; border-radius: 6px; background: #fff; color: #50705c; font: inherit; cursor: pointer; }
+.planner-load-modes button[aria-pressed="true"] { border-color: #93b29f; color: #1f5e41; background: #edf6f0; font-weight: 700; }
+.planner-load-modes button:disabled { opacity: .45; cursor: default; }
+.planner-load-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 9px; font-size: 10px; }
+.planner-load-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.planner-load-legend i { width: 7px; height: 7px; border-radius: 50%; }
+.planner-load-legend b { font-weight: 500; color: #819187; }
+.planner-load-panel p { margin: 8px 0 0; font-size: 10px; line-height: 1.5; }
 .planner-map { flex: 0 0 auto; width: 100%; height: clamp(420px, 66dvh, 900px); background: #e8efea; }
 .planner-map-empty { position: absolute; z-index: 500; top: 32%; left: 50%; width: min(280px, calc(100% - 50px)); transform: translate(-50%, -50%); padding: 16px; border-radius: 12px; color: #5a7164; background: #fffffff2; font-size: 12px; text-align: center; pointer-events: none; }
 .planner-map-empty strong, .planner-map-empty span { display: block; }
 .planner-map-empty span { margin-top: 6px; }
 .planner-map-legend { position: absolute; z-index: 500; top: 12px; left: 12px; display: flex; flex-wrap: wrap; gap: 8px 13px; max-width: calc(100% - 90px); box-sizing: border-box; padding: 8px 10px; border: 1px solid #e2e9e1; border-radius: 9px; color: #54715e; background: #ffffffed; font-size: 10px; pointer-events: none; }
 .planner-map-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.planner-station-toggle { display: inline-flex; align-items: center; gap: 5px; margin: 0; cursor: pointer; pointer-events: auto; }
+.planner-station-toggle input { width: 13px; height: 13px; margin: 0; accent-color: #16a34a; cursor: pointer; }
 .planner-map-dot { width: 8px; height: 8px; border: 1px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px #b0beb5; }
 .planner-map-dot.ranked { background: #7c3aed; }
 .planner-map-dot.selected { background: #2563eb; }
-.planner-map-dot.unselected { background: #94a3b8; }
 .planner-map-dot.station { background: #16a34a; }
 .planner-heatmap-legend { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(170px, 1fr) auto; gap: 6px 18px; padding: 13px 16px; border-top: 1px solid #e5ece7; color: #637b6a; background: #fff; }
 .planner-heatmap-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; grid-column: 1; grid-row: 1; font-size: 11px; }

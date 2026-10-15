@@ -252,6 +252,8 @@ class PlanningDemoLocation(PlanningModel):
 
 class PlanningDemoCandidate(PlanningModel):
     candidate_id: str = Field(min_length=1)
+    unit_id: str | None = None
+    unit_name: str | None = None
     label: str = Field(min_length=1)
     candidate_type: str = Field(min_length=1)
     eligibility: Literal["eligible", "conditional"]
@@ -262,6 +264,8 @@ class PlanningDemoCandidate(PlanningModel):
 
 class PlanningDemoSite(PlanningModel):
     site_id: str = Field(min_length=1)
+    unit_id: str | None = None
+    unit_name: str | None = None
     label: str = Field(min_length=1)
     site_type: str = Field(min_length=1)
     charger_type: str = Field(min_length=1)
@@ -287,6 +291,30 @@ class PlanningDemoDemandNode(PlanningModel):
     weekly_expected_sessions: PlanningDemoWeeklyDemand
 
 
+class PlanningDemoPeakLoad(PlanningModel):
+    interval_start: datetime
+    sessions_by_node: dict[str, float]
+
+    @field_validator("interval_start", mode="before")
+    @classmethod
+    def parse_interval_start(cls, value: Any) -> Any:
+        return _parse_iso_datetime(value)
+
+
+class PlanningDemoLoadSimulation(PlanningModel):
+    version: Literal["peak-load-demo-v1"]
+    interval_minutes: float = Field(gt=0)
+    nearby_drive_minutes: float = Field(gt=0)
+    circuity_factor: float = Field(gt=0)
+    speed_kmh: float = Field(gt=0)
+    fixed_access_minutes: float = Field(ge=0)
+    energy_per_session_kwh: float = Field(gt=0)
+    grid_delivery_efficiency: float = Field(gt=0, le=1)
+    minimum_service_minutes: float = Field(gt=0)
+    comfortable_utilization: float = Field(gt=0, le=1)
+    peak_by_scenario: dict[Literal["low", "base", "high"], PlanningDemoPeakLoad]
+
+
 class PlanningDemoSnapshotResponse(PlanningModel):
     contract_version: Literal["0.1"]
     study_area: StudyAreaInput
@@ -295,4 +323,5 @@ class PlanningDemoSnapshotResponse(PlanningModel):
     candidates: list[PlanningDemoCandidate]
     existing_sites: list[PlanningDemoSite]
     demand_nodes: list[PlanningDemoDemandNode]
+    load_simulation: PlanningDemoLoadSimulation | None = None
     warnings: list[str]

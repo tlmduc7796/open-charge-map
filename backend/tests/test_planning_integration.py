@@ -57,6 +57,9 @@ def test_planning_demo_snapshot_uses_pinned_seed_and_separate_budget_scopes() ->
     assert len(catalog["candidates"]) == 18
     assert len(catalog["existing_sites"]) == 37
     assert len(catalog["demand_nodes"]) == 27
+    node_wards = {node["unit_id"] for node in catalog["demand_nodes"]}
+    assert all(site["unit_id"] in node_wards and site["unit_name"]
+               for site in [*catalog["candidates"], *catalog["existing_sites"]])
     assert catalog["defaults"]["budget_vnd"] is None
     assert catalog["defaults"]["portfolio_budget_vnd"] == 10_000_000_000
 
@@ -192,3 +195,27 @@ def test_heatmap_weekly_values_match_the_pinned_demand_intervals() -> None:
         for profile, value in values.items():
             assert value == pytest.approx(totals[(node["demand_node_id"], profile)], abs=1e-6)
     assert len(totals) == len(nodes) * 3
+
+
+def test_load_simulation_uses_one_simultaneous_peak_from_the_fixture() -> None:
+    path = (Path(__file__).resolve().parents[2] / "data_platform" / "station_planning"
+            / "demo_hcmc_v3" / "demand_intervals.csv")
+    by_interval = {}
+    with path.open(encoding="utf-8-sig", newline="") as stream:
+        for row in csv.DictReader(stream):
+            key = (row["scenario_profile"], row["interval_start"])
+            by_interval.setdefault(key, {})[row["demand_node_id"]] = float(row["expected_sessions"])
+    with TestClient(app) as client:
+        catalog = client.get("/api/v1/planning/demo-snapshot").json()
+    inputs = catalog["load_simulation"]
+    assert inputs["nearby_drive_minutes"] == 2
+    assert inputs["fixed_access_minutes"] == 2
+    assert inputs["minimum_service_minutes"] == inputs["interval_minutes"] == 30
+    assert inputs["energy_per_session_kwh"] == 26
+    for profile, peak in inputs["peak_by_scenario"].items():
+        selected = by_interval[(profile, peak["interval_start"])]
+        assert len(selected) == 27
+        assert peak["sessions_by_node"] == selected
+        assert sum(selected.values()) == max(
+            sum(values.values()) for (source, _), values in by_interval.items() if source == profile
+        )

@@ -1,4 +1,5 @@
 import type { PlanningDemoSnapshotResponse, PlanningRecommendationResponse, PlanningRequest } from "./types";
+import { loadPercent, simulateStationLoad } from "./stationLoad";
 
 interface PlannerReportInput {
   demo: PlanningDemoSnapshotResponse;
@@ -54,6 +55,29 @@ export function buildPlannerReport({ demo, request, response }: PlannerReportInp
     ...(response.excluded_candidates.length ? [] : ["Không có."]), "",
     "## Thông số đầu vào để đối chiếu", "", "```json", JSON.stringify(request, null, 2), "```", "",
   );
+  const simulation = simulateStationLoad({ demo, scenario: request.run.demand_scenario,
+    coverageMinutes: request.technical.coverage_minutes, recommendations: response.recommendations,
+    chargerOption: request.technical.charger_options[0] });
+  if (simulation) {
+    lines.push("## Mô phỏng tải trước và sau bổ sung", "",
+      `Phiên bản mô hình: ${simulation.modelVersion}; đầu vào: ${simulation.inputs.version}. Khung cao điểm: ${simulation.intervalStart}; ${simulation.inputs.interval_minutes} phút.`, "",
+      "Giả sử đồng thời mở tất cả ứng viên có thứ hạng bằng cấu hình cổng của request. Đây là so sánh mạng giả định, không phải tối ưu danh mục ngân sách, dự báo lựa chọn tài xế hay bằng chứng quá tải thực tế. Điểm xếp hạng không được dùng để nhân giảm nhu cầu.", "",
+      "Hiện trạng: ưu tiên trạm trong 2 phút di chuyển, bỏ riêng 2 phút vào trạm khỏi mốc này. Ngoài nhóm gần, dùng các trạm trong ngưỡng tiếp cận. Trọng số = năng lực phục vụ / (phút di chuyển + 0,5)^2. Tổng nhu cầu được phân bổ đúng một lần; không cắt phần vượt công suất.", "",
+      "Sau bổ sung: chỉ chuyển tải sang ứng viên có cùng unit_id với trạm hiện hữu đang nhường tải, đồng thời thỏa ngưỡng tổng thời gian tiếp cận trên form từ node nhu cầu gốc. Không áp trần 2 phút ở bước giảm tải theo phường. Nhu cầu chưa phân bổ dùng phường của node gốc để xét ứng viên; phần này là tăng độ phủ, không ghi thành giảm tải trạm cũ. Thiếu mã phường thì không chuyển, không đoán phường theo tên hay mã trạm.", "",
+      "Ưu tiên nhu cầu chưa phân bổ, sau đó phần tải vượt ngưỡng 80% của trạm cũ. Xét trạm cũ chịu tải cao trước, tiếp theo là đường di chuyển ngắn; hạng chỉ phá hòa. Trạm mới chỉ nhận tới 80% năng lực. Đây là phương án điều phối tham lam, không dự báo khách tự chuyển trạm, không bảo đảm tối ưu toàn cục. Phần chưa chuyển được giữ ở trạm cũ.", "",
+      `Tổng nhu cầu: ${simulation.baseline.totalDemand.toFixed(4)} lượt/khung. Chưa phân bổ: ${simulation.baseline.unassigned.toFixed(4)} → ${simulation.proposed.unassigned.toFixed(4)}.`,
+      `Trạm hiện hữu quá tải: ${simulation.baseline.existingOverloaded} → ${simulation.proposed.existingOverloaded}.`,
+      `Nhu cầu vượt công suất toàn mạng (gồm trạm mới): ${simulation.baseline.totalExcess.toFixed(4)} → ${simulation.proposed.totalExcess.toFixed(4)} lượt/khung.`, "",
+      "| Trạm | Loại | Tải trước | Tải sau | Lượt sau / khung | Năng lực / khung |",
+      "|---|---|---|---|---|---|",
+      ...Object.values(simulation.proposed.stations).map((site) => `| ${site.id} | ${site.kind} | ${loadPercent(simulation.baseline.stations[site.id]?.utilization ?? null)} | ${loadPercent(site.utilization)} | ${site.sessions.toFixed(4)} | ${site.capacity?.toFixed(4) ?? "Chưa xác định"} |`), "",
+      "### Luồng chuyển tải thực sự được chấp nhận", "",
+      "| Phường chung | Node nhu cầu gốc | Trạm cũ | Ứng viên nhận tải | Phút di chuyển từ node | Lượt/khung |",
+      "|---|---|---|---|---|---|",
+      ...simulation.proposed.transfers.map((flow) => `| ${flow.wardId} | ${flow.nodeId} | ${flow.fromSiteId ?? "Chưa phân bổ"} | ${flow.toCandidateId} | ${flow.driveMinutes.toFixed(4)} | ${flow.sessions.toFixed(4)} |`), "",
+      "Thiếu số cổng/công suất: tải giữ chưa xác định; trạm đó không tham gia chia nhu cầu. Giả định hoạt động toàn bộ cổng, mở cửa và không có sự cố tại khung cao điểm. Nhu cầu chờ từ khung trước không được mô phỏng.", "",
+      "### Tham số và nhu cầu cao điểm dùng để tái lập", "", "```json", JSON.stringify(simulation.inputs, null, 2), "```", "");
+  }
   return lines.join("\n");
 }
 

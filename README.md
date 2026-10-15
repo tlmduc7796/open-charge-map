@@ -6,6 +6,8 @@ The station recommendation feature is developed on top of this shared applicatio
 
 Báo cáo cập nhật giao diện: [Bố cục và UX Planner](docs/station-planning/PLANNER_UI_LAYOUT_UPDATE_VI.md).
 
+Quy tắc demo bản đồ: [Mô phỏng tải trạm trước và sau bổ sung ứng viên](docs/station-planning/PLANNER_LOAD_SIMULATION_VI.md).
+
 MVP đề xuất trạm sạc cho hành trình xe điện: xếp hạng trạm theo tổng thời gian (di chuyển + chờ +
 sạc) dựa trên khả năng tương thích đầu sạc, tầm với của pin và dự báo occupancy tại thời điểm tới.
 Phạm vi: TP.HCM.

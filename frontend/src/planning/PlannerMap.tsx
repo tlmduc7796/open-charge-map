@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import goongjs from "@goongmaps/goong-js";
 import "@goongmaps/goong-js/dist/goong-js.css";
-import { latLngBounds } from "leaflet";
+import { latLngBounds, type CircleMarker as LeafletCircleMarker } from "leaflet";
 import { CircleMarker, GeoJSON, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
 
 import { hideGoongPoiLayers } from "../goongMapStyle";
@@ -10,6 +10,8 @@ import {
   demandAccessSummary, demandScale, visibleDemandNodes, weeklyDemand, type DemandScenario,
 } from "./demandHeatmap";
 import type { PlanningDemoSnapshotResponse, PlanningRecommendation } from "./types";
+import StationLoadPanel from "./StationLoadPanel";
+import { LOAD_STYLES, loadPercent, type LoadSimulation, type StationLoad } from "./stationLoad";
 
 type Candidate = PlanningDemoSnapshotResponse["candidates"][number];
 type ExistingSite = PlanningDemoSnapshotResponse["existing_sites"][number];
@@ -22,6 +24,8 @@ interface GoongLayerClickEvent {
 }
 
 interface PlannerMapProps {
+  loadSimulation?: LoadSimulation | null;
+  loadRunId?: string | null;
   recommendations: PlanningRecommendation[];
   candidates: Candidate[];
   existingSites: ExistingSite[];
@@ -35,55 +39,67 @@ interface PlannerMapProps {
 }
 
 interface PlannerMapDisplayProps extends PlannerMapProps {
+  stationLoads: Record<string, StationLoad>;
   onlyUncovered: boolean;
   onToggleUncovered: () => void;
+  showExistingSites: boolean;
+  onToggleExistingSites: () => void;
 }
 
 const HCMC_CENTER: [number, number] = [106.7009, 10.7769];
 const BOUNDARY_SOURCE = "planner-boundary";
 const BOUNDARY_FILL_LAYER = "planner-boundary-fill";
-const BOUNDARY_LINE_LAYER = "planner-boundary-line";
 const DEMAND_SOURCE = "planner-demand";
 const DEMAND_HEAT_LAYER = "planner-demand-heatmap";
 const SITES_SOURCE = "planner-sites";
 const SITES_LAYER = "planner-sites-layer";
 const CANDIDATES_SOURCE = "planner-candidates";
 const CANDIDATES_LAYER = "planner-candidates-layer";
-const MARKER_COLORS = { station: "#16a34a", selected: "#2563eb", ranked: "#7c3aed", unselected: "#94a3b8" };
+const MARKER_COLORS = { station: "#16a34a", selected: "#2563eb", ranked: "#7c3aed" };
+const EMPTY_STATION_LOADS: Record<string, StationLoad> = {};
 
-function candidateColor(ranked: boolean, focused: boolean, included: boolean) {
+function candidateColor(ranked: boolean, focused: boolean) {
   if (focused) return MARKER_COLORS.selected;
   if (ranked) return MARKER_COLORS.ranked;
-  return included ? MARKER_COLORS.selected : MARKER_COLORS.unselected;
+  return MARKER_COLORS.selected;
 }
 
-function existingSiteFeature(site: ExistingSite) {
+function existingSiteFeature(site: ExistingSite, load: StationLoad | undefined) {
   return {
     type: "Feature" as const,
     geometry: { type: "Point" as const, coordinates: [site.location.lon, site.location.lat] },
     properties: {
       site_id: site.site_id,
+      unit_name: site.unit_name ?? "",
       charger_type: site.charger_type,
       port_count: site.port_count,
       power_kw: site.power_kw,
       source_ref: site.source_ref,
+      marker_color: load ? LOAD_STYLES[load.level].color : MARKER_COLORS.station,
+      marker_radius: load?.utilization !== null && load?.utilization !== undefined && load.utilization > 1 ? 7 : 5,
+      load_text: load ? `${loadPercent(load.utilization)} · ${LOAD_STYLES[load.level].label}` : "",
+      load_sessions: load?.sessions ?? null,
+      load_capacity: load?.capacity ?? null,
     },
   };
 }
 
-function candidateFeature(candidate: Candidate, item: PlanningRecommendation | undefined, selected: boolean, included: boolean) {
+function candidateFeature(candidate: Candidate, item: PlanningRecommendation | undefined, selected: boolean, load?: StationLoad) {
   return {
     type: "Feature" as const,
     geometry: { type: "Point" as const, coordinates: [candidate.location.lon, candidate.location.lat] },
     properties: {
       candidate_id: candidate.candidate_id,
       label: candidate.label,
+      unit_name: candidate.unit_name ?? "",
       candidate_type: candidate.candidate_type,
       ranked: Boolean(item),
-      marker_color: candidateColor(Boolean(item), selected, included),
+      marker_color: candidateColor(Boolean(item), selected),
       rank: item?.rank ?? null,
       technical_score: item?.technical_score ?? null,
       selected,
+      marker_radius: selected ? 10 : item ? 8 : 7,
+      load_text: load ? `${loadPercent(load.utilization)} · ${LOAD_STYLES[load.level].label}` : "",
     },
   };
 }
@@ -95,6 +111,8 @@ function PlannerMapLegendAndEmpty({
   coverageMinutes,
   onlyUncovered,
   onToggleUncovered,
+  showExistingSites,
+  onToggleExistingSites,
 }: {
   isEmpty: boolean;
   demandNodes: DemandNode[];
@@ -102,6 +120,8 @@ function PlannerMapLegendAndEmpty({
   coverageMinutes: number;
   onlyUncovered: boolean;
   onToggleUncovered: () => void;
+  showExistingSites: boolean;
+  onToggleExistingSites: () => void;
 }) {
   const format = (value: number) => value.toLocaleString("vi-VN", { maximumFractionDigits: 0 });
   const access = demandAccessSummary(demandNodes, demandScenario, coverageMinutes);
@@ -114,10 +134,12 @@ function PlannerMapLegendAndEmpty({
         </div>
       )}
       <div className="planner-map-legend" aria-label="Chú giải bản đồ">
-        <span><i className="planner-map-dot station" />Trạm hiện hữu</span>
+        <label className="planner-station-toggle">
+          <input type="checkbox" checked={showExistingSites} onChange={onToggleExistingSites} />
+          <i className="planner-map-dot station" />Trạm hiện hữu
+        </label>
         <span><i className="planner-map-dot ranked" />Đã có thứ hạng</span>
         <span><i className="planner-map-dot selected" />Đang chọn</span>
-        <span><i className="planner-map-dot unselected" />Ứng viên chưa chọn</span>
       </div>
       {!isEmpty && (
         <div className="planner-heatmap-legend" aria-label="Chú giải nhu cầu">
@@ -221,8 +243,18 @@ function OsmPlannerMap({
   onSelect,
   onlyUncovered,
   onToggleUncovered,
+  showExistingSites,
+  onToggleExistingSites,
+  stationLoads,
 }: PlannerMapDisplayProps) {
   const byCandidateId = new Map(recommendations.map((item) => [item.candidate_id, item]));
+  const siteMarkers = useRef(new Map<string, LeafletCircleMarker>());
+  const candidateMarkers = useRef(new Map<string, LeafletCircleMarker>());
+  useEffect(() => {
+    // Keep selected candidates above existing stations.
+    for (const marker of siteMarkers.current.values()) marker.bringToFront();
+    for (const marker of candidateMarkers.current.values()) marker.bringToFront();
+  }, [candidates, existingSites, recommendations, selectedCandidateId, selectedCandidateIds, showExistingSites]);
   const boundaryFeature = boundaryGeometry
     ? { type: "Feature" as const, properties: {}, geometry: boundaryGeometry }
     : null;
@@ -239,41 +271,49 @@ function OsmPlannerMap({
         {boundaryFeature && (
           <GeoJSON
             data={boundaryFeature as GeoJSON.GeoJsonObject}
-            style={() => ({ color: "#28614f", weight: 2, fillColor: "#b9dfcd", fillOpacity: 0.12 })}
+            interactive={false}
+            style={() => ({ stroke: false, fillColor: "#b9dfcd", fillOpacity: 0.12 })}
           />
         )}
-        {existingSites.map((site) => (
+        {showExistingSites && existingSites.map((site) => (
           <CircleMarker
             key={`site-${site.site_id}`}
+            ref={(marker) => { if (marker) siteMarkers.current.set(site.site_id, marker); else siteMarkers.current.delete(site.site_id); }}
             center={[site.location.lat, site.location.lon]}
-            radius={5}
-            pathOptions={{ color: "#ffffff", weight: 1.2, fillColor: MARKER_COLORS.station, fillOpacity: 0.9 }}
+            radius={(stationLoads[site.site_id]?.utilization ?? 0) > 1 ? 7 : 5}
+            pathOptions={{ color: "#ffffff", weight: 1.2,
+              fillColor: stationLoads[site.site_id] ? LOAD_STYLES[stationLoads[site.site_id].level].color : MARKER_COLORS.station, fillOpacity: 0.9 }}
           >
             <Popup>
               <strong>Trạm hiện hữu · {site.site_id}</strong>
+              {site.unit_name && <><br />{site.unit_name}</>}
               <br />{site.charger_type} · {site.port_count ?? "?"} cổng · {site.power_kw ?? "Chưa rõ"} kW
+              {stationLoads[site.site_id] && <><br />Mức tải: {loadPercent(stationLoads[site.site_id].utilization)} · {LOAD_STYLES[stationLoads[site.site_id].level].label}</>}
             </Popup>
           </CircleMarker>
         ))}
-        {candidates.map((candidate) => {
+        {candidates.filter((candidate) => selectedCandidateIds.includes(candidate.candidate_id)).map((candidate) => {
           const item = byCandidateId.get(candidate.candidate_id);
           const selected = candidate.candidate_id === selectedCandidateId;
           return (
             <CircleMarker
               key={candidate.candidate_id}
+              ref={(marker) => { if (marker) candidateMarkers.current.set(candidate.candidate_id, marker); else candidateMarkers.current.delete(candidate.candidate_id); }}
               center={[candidate.location.lat, candidate.location.lon]}
-              radius={selected ? 10 : item ? 8 : 6}
+              radius={selected ? 10 : item ? 8 : 7}
               pathOptions={{
                 color: selected ? "#1e3a8a" : "#ffffff",
                 weight: selected ? 3.5 : 1.5,
-                fillColor: candidateColor(Boolean(item), selected, selectedCandidateIds.includes(candidate.candidate_id)),
+                fillColor: candidateColor(Boolean(item), selected),
                 fillOpacity: 0.95,
               }}
               eventHandlers={{ click: () => onSelect(candidate.candidate_id) }}
             >
               <Popup>
                 <strong>{item ? `#${item.rank} · ` : "Ứng viên · "}{candidate.label}</strong>
+                {candidate.unit_name && <><br />{candidate.unit_name}</>}
                 {item && <><br />Điểm kỹ thuật: {item.technical_score.toFixed(1)}/100</>}
+                {stationLoads[candidate.candidate_id] && <><br />Mức tải khi bổ sung: {loadPercent(stationLoads[candidate.candidate_id].utilization)}</>}
               </Popup>
             </CircleMarker>
           );
@@ -283,6 +323,7 @@ function OsmPlannerMap({
         isEmpty={candidates.length === 0 && existingSites.length === 0 && demandNodes.length === 0}
         demandNodes={demandNodes} demandScenario={demandScenario}
         coverageMinutes={coverageMinutes} onlyUncovered={onlyUncovered} onToggleUncovered={onToggleUncovered}
+        showExistingSites={showExistingSites} onToggleExistingSites={onToggleExistingSites}
       />
     </div>
   );
@@ -302,10 +343,15 @@ function GoongPlannerMap({
   onFailure,
   onlyUncovered,
   onToggleUncovered,
+  showExistingSites,
+  onToggleExistingSites,
+  stationLoads,
 }: PlannerMapDisplayProps & { onFailure: () => void }) {
   const scale = useMemo(() => demandScale(demandNodes), [demandNodes]);
   const containerRef = useRef<HTMLDivElement>(null);
   const activePopup = useRef<InstanceType<typeof goongjs.Popup> | null>(null);
+  const activePopupIsSite = useRef(false);
+  const activePopupCandidateId = useRef<string | null>(null);
   const [map, setMap] = useState<InstanceType<typeof goongjs.Map> | null>(null);
   const mapToken = import.meta.env.VITE_GOONG_MAPTILES_KEY;
 
@@ -367,13 +413,7 @@ function GoongPlannerMap({
       id: BOUNDARY_FILL_LAYER,
       type: "fill",
       source: BOUNDARY_SOURCE,
-      paint: { "fill-color": "#b9dfcd", "fill-opacity": 0.12 },
-    });
-    map.addLayer({
-      id: BOUNDARY_LINE_LAYER,
-      type: "line",
-      source: BOUNDARY_SOURCE,
-      paint: { "line-color": "#28614f", "line-width": 2 },
+      paint: { "fill-color": "#b9dfcd", "fill-opacity": 0.12, "fill-antialias": false },
     });
   }, [map, boundaryGeometry]);
 
@@ -405,7 +445,7 @@ function GoongPlannerMap({
 
   useEffect(() => {
     if (!map) return;
-    const data = { type: "FeatureCollection" as const, features: existingSites.map(existingSiteFeature) };
+    const data = { type: "FeatureCollection" as const, features: existingSites.map((site) => existingSiteFeature(site, stationLoads[site.site_id])) };
     const source = map.getSource(SITES_SOURCE);
     if (source) {
       source.setData(data);
@@ -417,22 +457,44 @@ function GoongPlannerMap({
       type: "circle",
       source: SITES_SOURCE,
       paint: {
-        "circle-radius": 5,
-        "circle-color": MARKER_COLORS.station,
+        "circle-radius": ["get", "marker_radius"],
+        "circle-color": ["get", "marker_color"],
         "circle-stroke-width": 1.2,
         "circle-stroke-color": "#ffffff",
         "circle-opacity": 0.9,
       },
     });
-  }, [map, existingSites]);
+  }, [map, existingSites, stationLoads]);
+
+  useEffect(() => {
+    // Popups must not retain numbers from the other comparison mode.
+    activePopup.current?.remove();
+    activePopup.current = null;
+    activePopupCandidateId.current = null;
+  }, [stationLoads]);
+
+  useEffect(() => {
+    if (!map || !map.getLayer(SITES_LAYER)) return;
+    map.setLayoutProperty(SITES_LAYER, "visibility", showExistingSites ? "visible" : "none");
+    if (!showExistingSites && activePopupIsSite.current) {
+      activePopup.current?.remove();
+      activePopup.current = null;
+      activePopupIsSite.current = false;
+    }
+  }, [map, showExistingSites]);
 
   useEffect(() => {
     if (!map) return;
+    if (activePopupCandidateId.current && !selectedCandidateIds.includes(activePopupCandidateId.current)) {
+      activePopup.current?.remove();
+      activePopup.current = null;
+      activePopupCandidateId.current = null;
+    }
     const byCandidateId = new Map(recommendations.map((item) => [item.candidate_id, item]));
     const data = {
       type: "FeatureCollection" as const,
-      features: candidates.map((candidate) =>
-        candidateFeature(candidate, byCandidateId.get(candidate.candidate_id), candidate.candidate_id === selectedCandidateId, selectedCandidateIds.includes(candidate.candidate_id)),
+      features: candidates.filter((candidate) => selectedCandidateIds.includes(candidate.candidate_id)).map((candidate) =>
+        candidateFeature(candidate, byCandidateId.get(candidate.candidate_id), candidate.candidate_id === selectedCandidateId, stationLoads[candidate.candidate_id]),
       ),
     };
     const source = map.getSource(CANDIDATES_SOURCE);
@@ -446,22 +508,24 @@ function GoongPlannerMap({
       type: "circle",
       source: CANDIDATES_SOURCE,
       paint: {
-        "circle-radius": ["case", ["get", "selected"], 10, ["get", "ranked"], 8, 6],
+        "circle-radius": ["get", "marker_radius"],
         "circle-color": ["get", "marker_color"],
         "circle-stroke-color": ["case", ["get", "selected"], "#1e3a8a", "#ffffff"],
         "circle-stroke-width": ["case", ["get", "selected"], 3.5, 1.5],
         "circle-opacity": 0.95,
       },
     });
-  }, [map, candidates, recommendations, selectedCandidateIds, selectedCandidateId]);
+  }, [map, candidates, recommendations, selectedCandidateIds, selectedCandidateId, stationLoads]);
 
   // Click/hover handlers are registered once: layer ids are stable, so this never re-runs
   // while panning/zooming or when the underlying data changes (setData above is enough).
   useEffect(() => {
     if (!map) return;
     const canvas = map.getCanvas();
-    const openPopup = (lngLat: { lat: number; lng: number }, html: string) => {
+    const openPopup = (lngLat: { lat: number; lng: number }, html: string, isSite = false) => {
       activePopup.current?.remove();
+      activePopupIsSite.current = isSite;
+      activePopupCandidateId.current = null;
       activePopup.current = new goongjs.Popup({ offset: 10 })
         .setLngLat([lngLat.lng, lngLat.lat])
         .setHTML(html)
@@ -473,7 +537,10 @@ function GoongPlannerMap({
       openPopup(
         event.lngLat,
         `<strong>Trạm hiện hữu · ${props.site_id}</strong><br/>` +
-          `${props.charger_type} · ${props.port_count ?? "—"} cổng · ${props.power_kw ?? "—"} kW`,
+          (props.unit_name ? `${props.unit_name}<br/>` : "") +
+          `${props.charger_type} · ${props.port_count ?? "—"} cổng · ${props.power_kw ?? "—"} kW` +
+          (props.load_text ? `<br/>Mức tải: ${props.load_text}` : ""),
+        true,
       );
     };
     const handleCandidateClick = (event: GoongLayerClickEvent) => {
@@ -485,8 +552,11 @@ function GoongPlannerMap({
       openPopup(
         event.lngLat,
         `<strong>${ranked ? `#${props.rank} · ` : "Ứng viên · "}${props.label}</strong><br/>` +
-          (ranked ? `Điểm kỹ thuật: ${Number(props.technical_score).toFixed(1)}/100` : "Địa điểm ứng viên"),
+          (props.unit_name ? `${props.unit_name}<br/>` : "") +
+          (ranked ? `Điểm kỹ thuật: ${Number(props.technical_score).toFixed(1)}/100` : "Địa điểm ứng viên") +
+          (props.load_text ? `<br/>Mức tải khi bổ sung: ${props.load_text}` : ""),
       );
+      activePopupCandidateId.current = candidateId;
     };
     const pointerEnter = () => { canvas.style.cursor = "pointer"; };
     const pointerLeave = () => { canvas.style.cursor = ""; };
@@ -536,6 +606,7 @@ function GoongPlannerMap({
         isEmpty={candidates.length === 0 && existingSites.length === 0 && demandNodes.length === 0}
         demandNodes={demandNodes} demandScenario={demandScenario}
         coverageMinutes={coverageMinutes} onlyUncovered={onlyUncovered} onToggleUncovered={onToggleUncovered}
+        showExistingSites={showExistingSites} onToggleExistingSites={onToggleExistingSites}
       />
     </div>
   );
@@ -545,9 +616,20 @@ export default function PlannerMap(props: PlannerMapProps) {
   const hasGoongKey = Boolean(import.meta.env.VITE_GOONG_MAPTILES_KEY);
   const [useFallback, setUseFallback] = useState(!hasGoongKey);
   const [onlyUncovered, setOnlyUncovered] = useState(false);
+  const [showExistingSites, setShowExistingSites] = useState(true);
+  const [baselineRunId, setBaselineRunId] = useState<string | null>(null);
+  const showBaseline = Boolean(props.loadRunId && baselineRunId === props.loadRunId);
   const handleFailure = useCallback(() => setUseFallback(true), []);
-  const displayProps = { ...props, onlyUncovered, onToggleUncovered: () => setOnlyUncovered((value) => !value) };
+  const displayProps = {
+    ...props,
+    onlyUncovered, onToggleUncovered: () => setOnlyUncovered((value) => !value),
+    showExistingSites, onToggleExistingSites: () => setShowExistingSites((value) => !value),
+    stationLoads: (showBaseline ? props.loadSimulation?.baseline : props.loadSimulation?.proposed)?.stations ?? EMPTY_STATION_LOADS,
+  };
 
-  if (useFallback) return <OsmPlannerMap {...displayProps} />;
-  return <GoongPlannerMap {...displayProps} onFailure={handleFailure} />;
+  return <>
+    {props.loadSimulation && <StationLoadPanel simulation={props.loadSimulation} showBaseline={showBaseline}
+      onBaselineChange={(value) => setBaselineRunId(value ? props.loadRunId ?? null : null)} />}
+    {useFallback ? <OsmPlannerMap {...displayProps} /> : <GoongPlannerMap {...displayProps} onFailure={handleFailure} />}
+  </>;
 }

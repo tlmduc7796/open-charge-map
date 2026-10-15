@@ -68,11 +68,13 @@ class FilePlanningDataRepository:
             )
 
         names = (
+            "generation_config.json",
             "scenario_config.json",
             "boundary_metadata.json",
             "technical_constraints_package.json",
             "access_model.json",
             "pilot_extent.geojson",
+            "pilot_units.geojson",
             "candidate_sites.csv",
             "candidate_constraints.csv",
             "candidate_cost_assumptions.csv",
@@ -224,12 +226,18 @@ class FilePlanningDataRepository:
             "M1 demand intervals do not contain one complete week for every demand node.",
         )
 
+        unit_names = {
+            feature["properties"]["unit_id"]: feature["properties"].get("unit_name")
+            for feature in json_data["pilot_units.geojson"]["features"]
+        }
         candidates_for_catalog = []
         for candidate_id, row in candidates.items():
             self._valid_point(row, f"candidate {candidate_id}")
             candidates_for_catalog.append(
                 {
                     "candidate_id": candidate_id,
+                    "unit_id": row.get("unit_id"),
+                    "unit_name": unit_names.get(row.get("unit_id")),
                     "label": row.get("context_name") or candidate_id,
                     "candidate_type": row.get("candidate_type") or "unknown",
                     "eligibility": eligibility[candidate_id].get("eligibility", "conditional"),
@@ -244,6 +252,8 @@ class FilePlanningDataRepository:
             existing_for_catalog.append(
                 {
                     "site_id": site_id,
+                    "unit_id": row.get("unit_id"),
+                    "unit_name": unit_names.get(row.get("unit_id")),
                     "label": site_id,
                     "site_type": row.get("site_type") or "unknown",
                     "charger_type": row.get("charger_type") or "unknown",
@@ -318,6 +328,9 @@ class FilePlanningDataRepository:
             "candidates": candidates_for_catalog,
             "existing_sites": existing_for_catalog,
             "demand_nodes": nodes_for_catalog,
+            "load_simulation": self._load_simulation_inputs(
+                intervals_by_profile, json_data["generation_config.json"], access_model, package
+            ),
             "warnings": [
                 "Đây là pilot 9 phường, không đại diện toàn TP.HCM.",
                 (
@@ -349,6 +362,34 @@ class FilePlanningDataRepository:
             "nearest_existing": nearest_existing,
             "demand_intervals": intervals_by_profile,
             "demo_catalog": demo_catalog,
+        }
+
+    @staticmethod
+    def _load_simulation_inputs(intervals, generation, access, package) -> dict[str, Any]:
+        """Use one simultaneous peak interval, never a sum of per-node maxima."""
+        peaks = {}
+        for profile, rows in intervals.items():
+            by_time: dict[str, dict[str, float]] = {}
+            for row in rows:
+                by_time.setdefault(row["interval_start"], {})[
+                    row.get("demand_node_id") or row["cell_id"]
+                ] = float(row["expected_sessions"])
+            # Sorted timestamps make ties reproducible.
+            peak = max(sorted(by_time), key=lambda stamp: sum(by_time[stamp].values()))
+            peaks[profile] = {"interval_start": peak, "sessions_by_node": by_time[peak]}
+        return {
+            "version": "peak-load-demo-v1",
+            "interval_minutes": generation["calendar"]["interval_minutes"],
+            "nearby_drive_minutes": 2,
+            "circuity_factor": access["circuity_factor"],
+            "speed_kmh": access["speed_kmh_by_profile"][access["baseline_profile"]],
+            "fixed_access_minutes": access["fixed_access_minutes"],
+            "energy_per_session_kwh": generation["demand"]["energy_per_session_mean_kwh"],
+            "grid_delivery_efficiency": generation["operations"]["grid_delivery_efficiency"],
+            # Match the fixture's one request per port per 30-minute slot assumption.
+            "minimum_service_minutes": generation["calendar"]["interval_minutes"],
+            "comfortable_utilization": package["capacity_target"]["maximum_utilization"],
+            "peak_by_scenario": peaks,
         }
 
     def _build_dataset(

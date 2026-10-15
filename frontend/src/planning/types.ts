@@ -125,7 +125,25 @@ export interface PlanningRecommendationResponse {
   warnings: string[];
 }
 
+export interface PlanningLoadInputs {
+  version: "peak-load-demo-v1";
+  interval_minutes: number;
+  nearby_drive_minutes: number;
+  circuity_factor: number;
+  speed_kmh: number;
+  fixed_access_minutes: number;
+  energy_per_session_kwh: number;
+  grid_delivery_efficiency: number;
+  minimum_service_minutes: number;
+  comfortable_utilization: number;
+  peak_by_scenario: Record<"low" | "base" | "high", {
+    interval_start: string;
+    sessions_by_node: Record<string, number>;
+  }>;
+}
+
 export interface PlanningDemoSnapshotResponse {
+  load_simulation?: PlanningLoadInputs | null;
   contract_version: "0.1";
   study_area: {
     city_id: string;
@@ -159,6 +177,8 @@ export interface PlanningDemoSnapshotResponse {
   };
   candidates: {
     candidate_id: string;
+    unit_id?: string | null;
+    unit_name?: string | null;
     label: string;
     candidate_type: string;
     eligibility: "eligible" | "conditional";
@@ -168,6 +188,8 @@ export interface PlanningDemoSnapshotResponse {
   }[];
   existing_sites: {
     site_id: string;
+    unit_id?: string | null;
+    unit_name?: string | null;
     label: string;
     site_type: string;
     charger_type: string;

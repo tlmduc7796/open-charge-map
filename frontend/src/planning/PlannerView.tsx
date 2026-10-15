@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { api } from "../api";
 import AppModeSwitch, { type AppMode } from "./AppModeSwitch";
 import PlannerMap from "./PlannerMap";
+import { simulateStationLoad } from "./stationLoad";
 import { buildPlannerReport, downloadPlannerReport } from "./plannerReport";
 import type {
   PlanningDemoSnapshotResponse,
@@ -226,9 +227,14 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
   const [controlsOpen, setControlsOpen] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(false);
   const resultsHeadingRef = useRef<HTMLHeadingElement>(null);
-  const visibleCandidates = useMemo(() => (demo?.candidates ?? []).filter((candidate) => searchable(candidate.label).includes(searchable(candidateQuery))), [demo, candidateQuery]);
+  const visibleCandidates = useMemo(() => (demo?.candidates ?? []).filter((candidate) => searchable(`${candidate.label} ${candidate.unit_name ?? ""}`).includes(searchable(candidateQuery))), [demo, candidateQuery]);
   const [busy, setBusy] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
+  const loadSimulation = useMemo(() => demo ? simulateStationLoad({
+    demo, scenario: demandScenario, coverageMinutes,
+    recommendations: response?.recommendations ?? [],
+    chargerOption: { charger_type: chargerType, port_count: portCount, power_kw_per_port: powerKw },
+  }) : null, [demo, demandScenario, coverageMinutes, response, chargerType, portCount, powerKw]);
 
   const selectedCandidate = useMemo(
     () => response?.recommendations.find((item) => item.candidate_id === selectedCandidateId) ?? null,
@@ -391,7 +397,7 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
               {demo && (
                 <section className="planner-form-section">
                   <div className="planner-section-heading"><span>02</span><h2>Chọn địa điểm</h2><b>{selectedCandidateIds.length}/{demo.candidates.length}</b></div>
-                  <input className="planner-candidate-search" type="search" aria-label="Tìm địa điểm" placeholder="Tìm tên địa điểm…" value={candidateQuery} onChange={(event) => setCandidateQuery(event.target.value)} />
+                  <input className="planner-candidate-search" type="search" aria-label="Tìm địa điểm" placeholder="Tìm tên hoặc phường…" value={candidateQuery} onChange={(event) => setCandidateQuery(event.target.value)} />
                   <div className="planner-candidate-select-actions">
                     <span>{selectedCandidateIds.length} đã chọn</span>
                     <button type="button" onClick={() => { clearResultsForInputChange(); setSelectedCandidateIds((current) => [...new Set([...current, ...visibleCandidates.map((item) => item.candidate_id)])]); }}>{candidateQuery ? "Chọn kết quả" : "Chọn tất cả"}</button>
@@ -401,7 +407,7 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
                     {visibleCandidates.map((candidate) => (
                       <label key={candidate.candidate_id} className={selectedCandidateIds.includes(candidate.candidate_id) ? "is-selected" : ""}>
                         <input type="checkbox" checked={selectedCandidateIds.includes(candidate.candidate_id)} onChange={() => toggleCandidate(candidate.candidate_id)} />
-                        <span>{candidate.label}</span>
+                        <span>{candidate.label}{candidate.unit_name && <small>{candidate.unit_name}</small>}</span>
                       </label>
                     ))}
                     {visibleCandidates.length === 0 && <p className="planner-muted">Không tìm thấy địa điểm.</p>}
@@ -438,6 +444,7 @@ export default function PlannerView({ onModeChange }: PlannerViewProps) {
               </div>
             </div>
             <PlannerMap recommendations={response?.recommendations ?? []} candidates={demo?.candidates ?? []} existingSites={demo?.existing_sites ?? []}
+              loadSimulation={loadSimulation} loadRunId={response?.run_id ?? null}
               demandNodes={demo?.demand_nodes ?? []} boundaryGeometry={demo?.snapshot.geometry ?? null} coverageMinutes={coverageMinutes}
               demandScenario={demandScenario} selectedCandidateIds={selectedCandidateIds} selectedCandidateId={selectedCandidateId} onSelect={setSelectedCandidateId} />
           </div>
