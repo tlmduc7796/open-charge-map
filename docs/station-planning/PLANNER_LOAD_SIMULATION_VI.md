@@ -200,13 +200,13 @@ Ngưỡng tiếp cận 15 phút, mỗi trạm mới 4 cổng DC × 80 kW. Ba ứ
 |---|---|---|---|
 | Ba điểm mặc định | Thông thường | 1 → 1 | 2,9183 → 2,9183 lượt/30 phút |
 | Ba điểm mặc định | Cao | 3 → 3 | 5,5702 → 5,5702 lượt/30 phút |
-| Khách Sạn Ngọc Ngọc Linh | Cao | 3 → 3 | 5,5702 → 2,3702 lượt/30 phút |
+| Vị trí ứng viên A – Thạnh Mỹ Tây | Cao | 3 → 3 | 5,5702 → 2,3702 lượt/30 phút |
 | Hai ứng viên phường Thạnh Mỹ Tây | Cao | 3 → 2 | 5,5702 → 0,3010 lượt/30 phút |
 | Cả 18 ứng viên | Cao | 3 → 0 | 5,5702 → 0 lượt/30 phút |
 
 Ba trạm hiện hữu bị quá tải trong kịch bản Cao thuộc các phường: `EVC-565` ở **Thạnh Mỹ Tây**, `EVC-178` ở **Xuân Hòa**, `EVC-568` ở **Tân Định**. Ba ứng viên mặc định nằm ở các phường khác nên không nhận chuyển tải của ba trạm này trong mô hình v3.
 
-Hai ứng viên Thạnh Mỹ Tây là `cand-hcm_2025_26956-01` (**Khách Sạn Ngọc Ngọc Linh**) và `cand-hcm_2025_26956-02` (**Khách Sạn Đức Hạ**). Cùng mở hai điểm này giúp tải của `EVC-565` giảm từ khoảng **627% xuống 80%**, còn hai trạm quá tải ở phường khác vẫn giữ tải cũ. Chỉ mở Ngọc Ngọc Linh thì EVC-565 còn khoảng **307%** vì một trạm mới nhận tối đa 3,2 phiên/30 phút theo ngưỡng 80%.
+Hai ứng viên Thạnh Mỹ Tây là `cand-hcm_2025_26956-01` (**Vị trí ứng viên A – Thạnh Mỹ Tây**) và `cand-hcm_2025_26956-02` (**Vị trí ứng viên B – Thạnh Mỹ Tây**). Cùng mở hai điểm này giúp tải của `EVC-565` giảm từ khoảng **627% xuống 80%**, còn hai trạm quá tải ở phường khác vẫn giữ tải cũ. Chỉ mở ứng viên A thì EVC-565 còn khoảng **307%** vì một trạm mới nhận tối đa 3,2 phiên/30 phút theo ngưỡng 80%.
 
 ### Tính từng bước cho EVC-565
 
@@ -215,14 +215,14 @@ Hai ứng viên Thạnh Mỹ Tây là `cand-hcm_2025_26956-01` (**Khách Sạn N
 1. `EVC-565` có **1 cổng, tổng 80 kW**, nên `C_cũ = 1` lượt/30 phút. Sau khi cộng phân bổ từ các node, `Q_cũ ≈ 6,269229` lượt/khung; tải là `6,269229 / 1 × 100 ≈ 626,92%`, hiển thị **627%**.
 2. Mục tiêu tại trạm cũ là `0,8 × 1 = 0,8` lượt. Phần có thể nhường là `R = 6,269229 - 0,8 = 5,469229` lượt.
 3. Mỗi ứng viên có 4 cổng × 80 kW, `C_mới = 4`. Giới hạn nhận là `0,8 × 4 = 3,2` lượt/khung.
-4. Các luồng được chuyển trong ví dụ này xuất phát từ node `demand-hcm_2025_26956-02`, có `F = 6,164919` lượt ban đầu đang phân bổ cho EVC-565. Ngọc Ngọc Linh cách node khoảng **3,16 phút di chuyển + 2 phút vào trạm = 5,16 phút**; Đức Hạ khoảng **5,31 + 2 = 7,31 phút**. Cả hai cùng phường với EVC-565 và dưới 15 phút, nên đều đủ điều kiện dù cách node hơn 2 phút di chuyển.
-5. Ngọc Ngọc Linh gần hơn nên nhận trước `min(6,164919; 5,469229; 3,2) = 3,2` lượt. Luồng từ node còn `2,964919`, phần trạm cũ cần nhường còn `2,269229`; Đức Hạ nhận tiếp `min(2,964919; 2,269229; 3,2) = 2,269229` lượt.
+4. Các luồng được chuyển trong ví dụ này xuất phát từ node `demand-hcm_2025_26956-02`, có `F = 6,164919` lượt ban đầu đang phân bổ cho EVC-565. Ứng viên A cách node khoảng **3,16 phút di chuyển + 2 phút vào trạm = 5,16 phút**; ứng viên B khoảng **5,31 + 2 = 7,31 phút**. Cả hai cùng phường với EVC-565 và dưới 15 phút, nên đều đủ điều kiện dù cách node hơn 2 phút di chuyển.
+5. Ứng viên A gần hơn nên nhận trước `min(6,164919; 5,469229; 3,2) = 3,2` lượt. Luồng từ node còn `2,964919`, phần trạm cũ cần nhường còn `2,269229`; ứng viên B nhận tiếp `min(2,964919; 2,269229; 3,2) = 2,269229` lượt.
 
 | Trạm | Nhu cầu trước | Nhận/nhường | Nhu cầu sau | Năng lực `C` | Tải sau |
 |---|---|---|---|---|---|
 | EVC-565 | 6,269229 | Nhường 5,469229 | 0,8 | 1 | 80%, xanh lá |
-| Ngọc Ngọc Linh, giả sử mở | Chưa có trong mạng | Nhận 3,2 | 3,2 | 4 | 80%; marker vẫn giữ màu trạng thái ứng viên |
-| Đức Hạ, giả sử mở | Chưa có trong mạng | Nhận 2,269229 | 2,269229 | 4 | Khoảng 56,73%; marker vẫn giữ màu trạng thái ứng viên |
+| Vị trí ứng viên A – Thạnh Mỹ Tây, giả sử mở | Chưa có trong mạng | Nhận 3,2 | 3,2 | 4 | 80%; marker vẫn giữ màu trạng thái ứng viên |
+| Vị trí ứng viên B – Thạnh Mỹ Tây, giả sử mở | Chưa có trong mạng | Nhận 2,269229 | 2,269229 | 4 | Khoảng 56,73%; marker vẫn giữ màu trạng thái ứng viên |
 
 Kiểm tra tổng: `0,8 + 3,2 + 2,269229 = 6,269229` lượt/khung. Không tạo thêm hoặc xóa khách để đổi màu.
 

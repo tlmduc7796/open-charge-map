@@ -231,14 +231,20 @@ class FilePlanningDataRepository:
             for feature in json_data["pilot_units.geojson"]["features"]
         }
         candidates_for_catalog = []
-        for candidate_id, row in candidates.items():
+        candidate_counts: dict[str | None, int] = {}
+        # Assign letters from the full snapshot's stable IDs, independently of UI order or rank.
+        for candidate_id, row in sorted(candidates.items()):
             self._valid_point(row, f"candidate {candidate_id}")
+            unit_id = row.get("unit_id")
+            unit_name = unit_names.get(unit_id) or "Chưa xác định phường"
+            letter = chr(ord("A") + candidate_counts.get(unit_id, 0))
+            candidate_counts[unit_id] = candidate_counts.get(unit_id, 0) + 1
             candidates_for_catalog.append(
                 {
                     "candidate_id": candidate_id,
-                    "unit_id": row.get("unit_id"),
-                    "unit_name": unit_names.get(row.get("unit_id")),
-                    "label": row.get("context_name") or candidate_id,
+                    "unit_id": unit_id,
+                    "unit_name": unit_name,
+                    "label": f"Vị trí ứng viên {letter} – {unit_name.removeprefix('Phường ')}",
                     "candidate_type": row.get("candidate_type") or "unknown",
                     "eligibility": eligibility[candidate_id].get("eligibility", "conditional"),
                     "is_synthetic": self._as_bool(row.get("is_synthetic")),

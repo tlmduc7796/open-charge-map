@@ -41,6 +41,7 @@ Báo cáo gắn với request đã tạo ra kết quả, không lấy lại các
 - Thiết lập chính gồm mức nhu cầu, ngưỡng thời gian tiếp cận và giới hạn chi phí mỗi trạm.
 - Cấu hình loại sạc, số cổng và công suất được thu gọn trong một mục có dòng tóm tắt.
 - Danh sách địa điểm dùng tên dễ đọc, bỏ mã nội bộ lặp lại.
+- Tên ứng viên demo dùng **Vị trí ứng viên A/B – Tên phường**. Chữ A/B gắn với thứ tự ID trong từng phường của toàn bộ snapshot, giữ nguyên khi lọc hoặc đổi thứ hạng. Danh sách, popup bản đồ, kết quả, bảng so sánh và báo cáo cùng dùng nhãn từ API catalog.
 - Thêm tìm kiếm tên không dấu. Tìm kiếm chỉ lọc danh sách, không làm mất các địa điểm đang chọn.
 - Khi có bộ lọc tìm kiếm, chọn/bỏ chọn áp dụng cho các kết quả đang hiện; số địa điểm được chọn luôn hiển thị trên nút đánh giá.
 - Nút đánh giá nằm ở chân bảng thiết lập, dễ tiếp cận khi cuộn nội dung.

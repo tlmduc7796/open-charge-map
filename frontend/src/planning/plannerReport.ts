@@ -13,6 +13,7 @@ function cell(value: unknown): string {
 
 export function buildPlannerReport({ demo, request, response }: PlannerReportInput): string {
   const labels = new Map(demo.candidates.map((candidate) => [candidate.candidate_id, candidate.label]));
+  const siteLabel = (id: string) => labels.has(id) ? `${labels.get(id)} (${id})` : id;
   const warnings = [...new Set([...demo.warnings, ...response.warnings])];
   const lines = [
     "# Báo cáo đánh giá địa điểm trạm sạc", "",
@@ -70,11 +71,11 @@ export function buildPlannerReport({ demo, request, response }: PlannerReportInp
       `Nhu cầu vượt công suất toàn mạng (gồm trạm mới): ${simulation.baseline.totalExcess.toFixed(4)} → ${simulation.proposed.totalExcess.toFixed(4)} lượt/khung.`, "",
       "| Trạm | Loại | Tải trước | Tải sau | Lượt sau / khung | Năng lực / khung |",
       "|---|---|---|---|---|---|",
-      ...Object.values(simulation.proposed.stations).map((site) => `| ${site.id} | ${site.kind} | ${loadPercent(simulation.baseline.stations[site.id]?.utilization ?? null)} | ${loadPercent(site.utilization)} | ${site.sessions.toFixed(4)} | ${site.capacity?.toFixed(4) ?? "Chưa xác định"} |`), "",
+      ...Object.values(simulation.proposed.stations).map((site) => `| ${cell(siteLabel(site.id))} | ${site.kind} | ${loadPercent(simulation.baseline.stations[site.id]?.utilization ?? null)} | ${loadPercent(site.utilization)} | ${site.sessions.toFixed(4)} | ${site.capacity?.toFixed(4) ?? "Chưa xác định"} |`), "",
       "### Luồng chuyển tải thực sự được chấp nhận", "",
       "| Phường chung | Node nhu cầu gốc | Trạm cũ | Ứng viên nhận tải | Phút di chuyển từ node | Lượt/khung |",
       "|---|---|---|---|---|---|",
-      ...simulation.proposed.transfers.map((flow) => `| ${flow.wardId} | ${flow.nodeId} | ${flow.fromSiteId ?? "Chưa phân bổ"} | ${flow.toCandidateId} | ${flow.driveMinutes.toFixed(4)} | ${flow.sessions.toFixed(4)} |`), "",
+      ...simulation.proposed.transfers.map((flow) => `| ${flow.wardId} | ${flow.nodeId} | ${flow.fromSiteId ?? "Chưa phân bổ"} | ${cell(siteLabel(flow.toCandidateId))} | ${flow.driveMinutes.toFixed(4)} | ${flow.sessions.toFixed(4)} |`), "",
       "Thiếu số cổng/công suất: tải giữ chưa xác định; trạm đó không tham gia chia nhu cầu. Giả định hoạt động toàn bộ cổng, mở cửa và không có sự cố tại khung cao điểm. Nhu cầu chờ từ khung trước không được mô phỏng.", "",
       "### Tham số và nhu cầu cao điểm dùng để tái lập", "", "```json", JSON.stringify(simulation.inputs, null, 2), "```", "");
   }

@@ -285,13 +285,13 @@ test("map focus mode preserves input state and can be closed with Escape", async
 
 test("searching candidates does not clear the existing selection", async () => {
   const snapshot = demoSnapshot();
-  snapshot.candidates[0].label = "Khách sạn Bình Minh";
+  snapshot.candidates[0].label = "Vị trí ứng viên A – Thạnh Mỹ Tây";
   mockedApi.planningDemoSnapshot.mockResolvedValueOnce(snapshot);
   render(<PlannerView onModeChange={vi.fn()} />);
   await waitFor(() => expect(screen.getByTestId("planner-map")).toHaveAttribute("data-candidate-count", "3"));
-  fireEvent.change(screen.getByRole("searchbox", { name: "Tìm địa điểm" }), { target: { value: "khach san binh minh" } });
+  fireEvent.change(screen.getByRole("searchbox", { name: "Tìm địa điểm" }), { target: { value: "thanh my tay" } });
   expect(screen.getAllByRole("checkbox")).toHaveLength(1);
-  expect(screen.getByRole("checkbox", { name: "Khách sạn Bình Minh" })).toBeChecked();
+  expect(screen.getByRole("checkbox", { name: "Vị trí ứng viên A – Thạnh Mỹ Tây" })).toBeChecked();
   fireEvent.click(screen.getByRole("button", { name: /Đánh giá địa điểm/ }));
   await waitFor(() => expect(mockedApi.planningRecommendations).toHaveBeenCalled());
   expect(mockedApi.planningRecommendations.mock.calls.at(-1)?.[0].candidate_source.candidate_ids).toEqual(candidateIds);
