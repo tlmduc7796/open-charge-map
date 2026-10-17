@@ -1,0 +1,95 @@
+{
+  "snapshot_id": "hcm-planner-v2-2026-10-17-traffic-condition-v1",
+  "created_at": "2026-10-17T12:48:46+07:00",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "crs": "EPSG:4326",
+  "is_simulation_snapshot": true,
+  "data_classification": "historical_traffic_condition_not_vehicle_volume",
+  "datasets": [
+    {
+      "dataset_id": "boundaries",
+      "file": "boundaries.geojson",
+      "sha256": "efdd64640a29dd21cd85417c575973bb28a5009e764f4cefb59a94643cfaee8e",
+      "row_or_feature_count": 9,
+      "source_ids": [
+        "src-hcm-administrative-2025"
+      ],
+      "min_observed_at": null,
+      "max_observed_at": null
+    },
+    {
+      "dataset_id": "traffic_segments",
+      "file": "traffic_segments.geojson",
+      "sha256": "ec48aa17fe338fb60a3994ae2f3bd3af4e39017e6f66aaf49505cf55b6b65e0b",
+      "row_or_feature_count": 5390,
+      "source_ids": [
+        "src-kaggle-hcm-traffic-2026-10-17"
+      ],
+      "min_observed_at": null,
+      "max_observed_at": null
+    },
+    {
+      "dataset_id": "traffic_observations",
+      "file": "traffic_observations.csv",
+      "sha256": "d1a2906f0cda1b3ad7ed3f2653417e1c98191990a0d8dbba12ea706270ce8ed9",
+      "row_or_feature_count": 7509,
+      "source_ids": [
+        "src-kaggle-hcm-traffic-2026-10-17"
+      ],
+      "min_observed_at": "2020-07-12T03:04:51.275000+07:00",
+      "max_observed_at": "2021-04-22T13:53:27.300000+07:00"
+    },
+    {
+      "dataset_id": "source_registry",
+      "file": "source_registry.csv",
+      "sha256": "952c685e6aede5f3ec34bcc4518f3bd5180a20b1c984936b962c4b9682d7d427",
+      "row_or_feature_count": 2,
+      "source_ids": [
+        "src-kaggle-hcm-traffic-2026-10-17",
+        "src-hcm-administrative-2025"
+      ],
+      "min_observed_at": null,
+      "max_observed_at": null
+    },
+    {
+      "dataset_id": "traffic_condition_daily",
+      "file": "traffic_condition_daily_9_wards.json",
+      "sha256": "3d4cb6925501ae7016369f94b45424d86d5f9d91527b69679d1bd3cc72c39c6b",
+      "row_or_feature_count": 2565,
+      "source_ids": [
+        "src-kaggle-hcm-traffic-2026-10-17"
+      ],
+      "min_observed_at": null,
+      "max_observed_at": null
+    },
+    {
+      "dataset_id": "traffic_condition_weekly",
+      "file": "traffic_condition_weekly_9_wards.json",
+      "sha256": "c8906fc9a31dae3d6839fee6581d8462a27ebb099c6c9e0c4286b28bdabad82f",
+      "row_or_feature_count": 378,
+      "source_ids": [
+        "src-kaggle-hcm-traffic-2026-10-17"
+      ],
+      "min_observed_at": null,
+      "max_observed_at": null
+    },
+    {
+      "dataset_id": "traffic_condition_monthly",
+      "file": "traffic_condition_monthly_9_wards.json",
+      "sha256": "8ea9a050554099ef1b1b4cd0b89f2e4486b0ffea13f87431f0e4dbfde3d2f74c",
+      "row_or_feature_count": 90,
+      "source_ids": [
+        "src-kaggle-hcm-traffic-2026-10-17"
+      ],
+      "min_observed_at": null,
+      "max_observed_at": null
+    }
+  ],
+  "warnings": [
+    "traffic_observations.csv contains historical segment velocity, not vehicle counts.",
+    "vehicle_count and vehicle_volume_vph are blank by design; empty is unknown, never zero.",
+    "source_type and quality_status are unknown because the dataset files do not document the measurement method required to claim measured vehicle volume.",
+    "The 2020–2021 source timeline is spatially harmonized against the 2025 ward boundary snapshot using segment midpoints.",
+    "This snapshot is separate from demo_hcmc_v3 and is not automatically loaded by the existing Planner/API/UI."
+  ]
+}
