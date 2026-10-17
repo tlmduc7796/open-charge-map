@@ -4,6 +4,7 @@ import { api } from "./api";
 import { demoMsAt, type ClockAnchor } from "./demoClock";
 import { resolvePlaceLabel } from "./location";
 import { COLOR_LABEL } from "./stationColor";
+import { stationsOnRoute } from "./stationsOnRoute";
 import DemoClockControl from "./components/DemoClockControl";
 import JourneyForm from "./components/JourneyForm";
 import MapView from "./components/MapView";
@@ -11,7 +12,7 @@ import RecommendationList from "./components/RecommendationList";
 import StationDetails, { type ForecastState } from "./components/StationDetails";
 import StatusBar from "./components/StatusBar";
 import AppModeSwitch, { type AppMode } from "./planning/AppModeSwitch";
-import PlannerView from "./planning/PlannerView";
+import GapView from "./planning/gap/GapView";
 import type {
   CandidateExclusion,
   DemoClock,
@@ -81,7 +82,7 @@ async function settle<T>(call: () => Promise<T>): Promise<T | null> {
 
 export default function App() {
   const [appMode, setAppMode] = useState<AppMode>("driver");
-  const [hasVisitedPlanner, setHasVisitedPlanner] = useState(false);
+  const [hasVisitedGap, setHasVisitedGap] = useState(false);
   const [currentTime, setCurrentTime] = useState(() => new Date());
   // The server's demo clock, and the local time at which it was read (see demoMsAt).
   const [demoClock, setDemoClock] = useState<DemoClock | null>(null);
@@ -122,7 +123,6 @@ export default function App() {
   const [formOpen, setFormOpen] = useState(true);
   const [hoveredStationId, setHoveredStationId] = useState<string | null>(null);
   const [pickTarget, setPickTarget] = useState<PickTarget | null>(null);
-  const [sortBy, setSortBy] = useState<"fastest" | "nearest" | "available">("fastest");
   const [debugMode] = useState(() => new URLSearchParams(window.location.search).get("debug") === "1");
 
   useEffect(() => {
@@ -399,11 +399,12 @@ export default function App() {
   // Arrival/wait/charge times exist only for stations the current search actually recommended.
   const selectedRecommendation =
     activeItems.find((item) => item.station_id === selectedStationId) ?? null;
-  const orderedItems = useMemo(() => [...activeItems].sort((a, b) => {
-    if (sortBy === "nearest") return a.distance_km - b.distance_km;
-    if (sortBy === "available") return (statuses[b.station_id]?.available_ports ?? 0) - (statuses[a.station_id]?.available_ports ?? 0);
-    return a.total_min - b.total_min;
-  }), [activeItems, sortBy, statuses]);
+  // On a journey the map shows only the stations along the drawn route; before a route exists
+  // (and in "find stations" mode, where the route is just the leg to one pick) all of them show.
+  const mapStations = useMemo(
+    () => (searchMode === "route" && route ? stationsOnRoute(stations, route, selectedStationId) : stations),
+    [searchMode, route, stations, selectedStationId],
+  );
   const notice = useMemo(() => {
     if (!freshRecommendation) return null;
     if (freshRecommendation.case === "enough") {
@@ -522,7 +523,7 @@ export default function App() {
   );
 
   const handleModeChange = useCallback((mode: AppMode) => {
-    if (mode === "planner") setHasVisitedPlanner(true);
+    if (mode === "gap") setHasVisitedGap(true);
     setAppMode(mode);
   }, []);
 
@@ -628,19 +629,17 @@ export default function App() {
             statuses={statuses}
             hoveredStationId={hoveredStationId}
             onHover={setHoveredStationId}
-            onSortChange={setSortBy}
           />
         </section>
 
         <section className="map-column">
           <div className="map-frame">
             <MapView
-              stations={stations}
+              stations={mapStations}
               colors={colors}
               route={route}
               selectedStationId={selectedStationId}
               hoveredStationId={hoveredStationId}
-              items={orderedItems}
               origin={journeyMarkersVisible ? origin : undefined}
               destination={journeyMarkersVisible && searchMode === "route" ? destination : undefined}
               pickTarget={pickTarget}
@@ -702,9 +701,9 @@ export default function App() {
   return (
     <>
       <div hidden={appMode !== "driver"}>{driverContent}</div>
-      {hasVisitedPlanner && (
-        <div hidden={appMode !== "planner"}>
-          <PlannerView onModeChange={handleModeChange} />
+      {hasVisitedGap && (
+        <div hidden={appMode !== "gap"}>
+          <GapView onModeChange={handleModeChange} />
         </div>
       )}
     </>

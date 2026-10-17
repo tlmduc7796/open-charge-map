@@ -3,8 +3,9 @@ declare module "@goongmaps/goong-js" {
     setData(data: unknown): void;
   }
 
-  interface GoongMapLayerMouseEvent {
+  export interface GoongMapLayerMouseEvent {
     lngLat: { lat: number; lng: number };
+    point: unknown;
     features?: Array<{ properties: Record<string, unknown> }>;
   }
 
@@ -14,9 +15,10 @@ declare module "@goongmaps/goong-js" {
     off(event: string, handler: (event?: unknown) => void): void;
     off(event: string, layerId: string, handler: (event: GoongMapLayerMouseEvent) => void): void;
     getCanvas(): HTMLCanvasElement;
+    queryRenderedFeatures(point: unknown, options?: Record<string, unknown>): unknown[];
     addControl(control: unknown, position?: string): void;
     addSource(id: string, source: unknown): void;
-    addLayer(layer: unknown): void;
+    addLayer(layer: unknown, beforeId?: string): void;
     getSource(id: string): GoongSource | undefined;
     getLayer(id: string): unknown;
     getStyle(): { layers?: Array<{ id: string }> } | undefined;

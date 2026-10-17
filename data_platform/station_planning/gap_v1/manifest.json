@@ -1,0 +1,57 @@
+{
+  "snapshot_id": "hcmc-nine-wards-gap-v1",
+  "generator_version": "1.0",
+  "prepared_on": "2026-10-17",
+  "seed": 20261017,
+  "counts": {
+    "wards": 9,
+    "cells": 291,
+    "route_blocks": 488,
+    "stations": 16,
+    "port_groups": 20
+  },
+  "data_labels": {
+    "poi": "observed_collected_official_source (hcm_poi_official + transport layers)",
+    "flow": "synthetic: simulated from distance to centre, traffic-infrastructure density and smooth noise; not measured vehicle counts",
+    "road_flow": "synthetic: simulated per road from distance to centre, road class, traffic-infrastructure density and noise; not measured vehicle counts",
+    "rent": "synthetic: simulated from distance to centre and POI density; not real listings",
+    "stations": "synthetic: simulated own network and competitors; not real inventory",
+    "roads": "observed: street network from OpenStreetMap (c) OpenStreetMap contributors, ODbL; blocks are the land left between the roads",
+    "legal": "unknown for every cell: no legal evidence is collected or simulated"
+  },
+  "sources": {
+    "pilot_units": {
+      "path": "data_platform/station_planning/demo_hcmc_v3/pilot_units.geojson",
+      "sha256": "a7efa1d179efb11bbb5f2b4d54f52138fd7282c767b1b2777b1a10cb276ee0ea"
+    },
+    "poi": {
+      "path": "data_platform/station_planning/demo_hcmc_v3/context_poi.geojson",
+      "sha256": "be33042e620a20459b81be78cf9aeb04fd721d1bc399f7c155c424321724d29f"
+    },
+    "poi_weights": {
+      "path": "data_platform/station_planning/demo_hcmc_v3/poi_model_weights.csv",
+      "sha256": "f28eb40a80e07299c7944a43421eb304792ea70ac322db0b0b663cd43e3dafb8"
+    },
+    "transport": {
+      "path": "data_platform/station_planning/demo_hcmc_v3/context_transport.geojson",
+      "sha256": "4020860b609bd58e2622d96d11a3ecace66a41447cb03d9f0d56c13494d69c75"
+    },
+    "osm_roads": {
+      "path": "raw_data/osm_roads/hcm_nine_wards_roads.geojson",
+      "sha256": "ecea0d6b60c9fcba1a526dba660dea46a103745585c6607f3c157138881369c7"
+    }
+  },
+  "config": {
+    "path": "config/gap_analysis_demo.json",
+    "sha256": "af0f1faca63cbe102ccc5494ab1aa497e1ba472051b294e38e33763f9bc1b034"
+  },
+  "files": {
+    "grid_cells.csv": "66b5074bfb7d3b5ce32d10c63889fbc6f1d9d3f46c339b132cd4071bb6029ac5",
+    "route_blocks.csv": "32abec8ba9e953c439e9d31a0a3613e5b4afc6bf57648d0391806fdfd4c6c593",
+    "route_roads.csv": "f28b3b510d23d01a7475cd6db36df4040fa42f52ef19aefc18cd02ba22f5cf11",
+    "gap_stations.csv": "3a864b2df15f5790fe10bd25b7452dfe5bc9d6d39d073f7a470a023e97fd85e2",
+    "gap_station_ports.csv": "c144f14510cbe367e387ba8e660ccd1a6280f25d6136e94f538acbbc47dc51dd",
+    "station_summary.json": "a050bd6c738b5bbe78d09df625e20299af4344cc69c15621948723ea20eb7ceb",
+    "analysis_defaults.json": "a37590d6980da06f112133afb3b9b5ef2388a102a3dc9001e33db79aa8981cb2"
+  }
+}

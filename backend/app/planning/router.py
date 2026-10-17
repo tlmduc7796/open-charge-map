@@ -11,6 +11,12 @@ from backend.app.planning.api_models import (
     PlanningRecommendationResponse,
 )
 from backend.app.planning.domain import PlanningDataError, PlanningInfrastructureError
+from backend.app.planning.gap_api_models import (
+    GapDivision,
+    GapRunRequest,
+    GapRunResponse,
+    GapSnapshotResponse,
+)
 
 router = APIRouter(prefix="/api/v1/planning", tags=["station-planning"])
 
@@ -57,4 +63,41 @@ def planning_demo_snapshot(request: Request) -> PlanningDemoSnapshotResponse:
         raise HTTPException(
             status_code=503,
             detail={"code": "PLANNING_SNAPSHOT_UNAVAILABLE", "message": str(exc)},
+        ) from exc
+
+
+@router.get(
+    "/gap/snapshot",
+    response_model=GapSnapshotResponse,
+    responses={503: {"model": ApiErrorResponse, "description": "Gap snapshot unavailable"}},
+)
+def gap_snapshot(
+    request: Request, division: GapDivision = "route"
+) -> GapSnapshotResponse:
+    """Road segments or grid cells (POI, simulated flow/rent) and the simulated stations."""
+    try:
+        return request.app.state.gap_service.snapshot(division)
+    except PlanningDataError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "GAP_SNAPSHOT_UNAVAILABLE", "message": str(exc)},
+        ) from exc
+
+
+@router.post(
+    "/gap/run",
+    response_model=GapRunResponse,
+    responses={
+        422: {"model": ApiErrorResponse, "description": "Request validation error"},
+        503: {"model": ApiErrorResponse, "description": "Gap snapshot unavailable"},
+    },
+)
+def gap_run(payload: GapRunRequest, request: Request) -> GapRunResponse:
+    """Run the gap screening (demand, supply, gap, rent, own-network flag) for one parameter set."""
+    try:
+        return request.app.state.gap_service.run(payload)
+    except PlanningDataError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "GAP_SNAPSHOT_UNAVAILABLE", "message": str(exc)},
         ) from exc

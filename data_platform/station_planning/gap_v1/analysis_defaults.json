@@ -1,0 +1,16 @@
+{
+  "w_flow": 0.5,
+  "lambda_m": 1000,
+  "normalization": "minmax",
+  "rent_mode": "divide",
+  "rent_max_kvnd": 600,
+  "epsilon": 0.1,
+  "own_min_distance_m": 500,
+  "own_mode": "flag",
+  "top_n": 5,
+  "min_separation_m": 1000,
+  "supply_basis": "ports",
+  "reference_power_kw": 60,
+  "min_demand": 0.1,
+  "division": "route"
+}

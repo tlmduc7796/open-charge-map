@@ -26,11 +26,16 @@ vi.mock("./api", () => ({
 }));
 
 vi.mock("./components/MapView", () => ({
-  default: ({ route, onStationSelect }: {
+  default: ({ route, stations, onStationSelect }: {
     route: { route_id: string } | null;
+    stations: Array<{ properties: { station_id: string } }>;
     onStationSelect: (id: string) => void;
   }) => (
-    <div aria-label="mock map" data-route={route?.route_id ?? ""}>
+    <div
+      aria-label="mock map"
+      data-route={route?.route_id ?? ""}
+      data-stations={stations.map((item) => item.properties.station_id).join(",")}
+    >
       <button type="button" onClick={() => onStationSelect(station.properties.station_id)}>
         marker
       </button>
@@ -38,23 +43,7 @@ vi.mock("./components/MapView", () => ({
   ),
 }));
 
-vi.mock("./planning/PlannerView", async () => {
-  const { useState } = await import("react");
-  function MockPlannerView({ onModeChange }: { onModeChange: (mode: "driver" | "planner") => void }) {
-    const [count, setCount] = useState(0);
-    return (
-      <section>
-        <output>Planner local state: {count}</output>
-        <button type="button" onClick={() => setCount((value) => value + 1)}>Change planner state</button>
-        <button type="button" onClick={() => onModeChange("driver")}>Return to driver</button>
-      </section>
-    );
-  }
-
-  return {
-    default: MockPlannerView,
-  };
-});
+vi.mock("./planning/gap/GapView", () => ({ default: () => null }));
 
 const mockedApi = vi.mocked(api);
 
@@ -172,18 +161,28 @@ test("going back to real time calls the reset endpoint", async () => {
   expect(await screen.findByText("Giờ thật")).toBeInTheDocument();
 });
 
-test("keeps planner state when switching to driver and back", async () => {
+test("offers no Planner tab", async () => {
   render(<App />);
 
   await screen.findByRole("button", { name: "Tìm đường đi" });
-  fireEvent.click(screen.getByRole("button", { name: "Planner" }));
-  expect(await screen.findByText("Planner local state: 0")).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Change planner state" }));
-  expect(screen.getByText("Planner local state: 1")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Tài xế" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Khoảng trống" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Planner" })).not.toBeInTheDocument();
+});
 
-  fireEvent.click(screen.getByRole("button", { name: "Return to driver" }));
-  expect(await screen.findByRole("button", { name: "Tìm đường đi" })).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Planner" }));
+test("a route search leaves only the stations along the route on the map", async () => {
+  const offRoute = {
+    ...station,
+    geometry: { ...station.geometry, coordinates: [106.75, 10.9] as [number, number] },
+    properties: { ...station.properties, station_id: "ST_OFF_ROUTE" },
+  };
+  mockedApi.stations.mockResolvedValue([station, offRoute]);
+  render(<App />);
 
-  expect(await screen.findByText("Planner local state: 1")).toBeInTheDocument();
+  const map = await screen.findByLabelText("mock map");
+  await waitFor(() => expect(map).toHaveAttribute("data-stations", `${station.properties.station_id},ST_OFF_ROUTE`));
+
+  fireEvent.click(await screen.findByRole("button", { name: "Tìm đường đi" }));
+  await waitFor(() => expect(map).toHaveAttribute("data-route", "ROUTE_TEST"));
+  expect(map).toHaveAttribute("data-stations", station.properties.station_id);
 });

@@ -7,6 +7,7 @@ import { demoClock, modelStatus, recommendation, station, status, vehicle } from
 import type { Station, StationForecast } from "./types";
 
 vi.mock("./planning/PlannerView", () => ({ default: () => null }));
+vi.mock("./planning/gap/GapView", () => ({ default: () => null }));
 
 vi.mock("./api", () => ({
   api: {

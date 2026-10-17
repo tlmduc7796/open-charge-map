@@ -1,0 +1,61 @@
+{
+  "stations": 16,
+  "ports": 84,
+  "total_power_kw": 5262.0,
+  "by_operator": {
+    "OWN": {
+      "operator_name": "Mạng của mình",
+      "relationship": "OWNED",
+      "stations": 5,
+      "ports": 22,
+      "dc_ports": 18,
+      "ac_ports": 4,
+      "total_power_kw": 1364.0
+    },
+    "CMP-A": {
+      "operator_name": "Đối thủ A",
+      "relationship": "OTHER_NETWORK",
+      "stations": 5,
+      "ports": 24,
+      "dc_ports": 24,
+      "ac_ports": 0,
+      "total_power_kw": 3120.0
+    },
+    "CMP-B": {
+      "operator_name": "Đối thủ B",
+      "relationship": "OTHER_NETWORK",
+      "stations": 3,
+      "ports": 16,
+      "dc_ports": 7,
+      "ac_ports": 9,
+      "total_power_kw": 498.0
+    },
+    "CMP-C": {
+      "operator_name": "Đối thủ C",
+      "relationship": "OTHER_NETWORK",
+      "stations": 3,
+      "ports": 22,
+      "dc_ports": 2,
+      "ac_ports": 20,
+      "total_power_kw": 280.0
+    }
+  },
+  "ports_by_power_class": {
+    "AC 11 kW": 24,
+    "AC 22 kW": 9,
+    "DC 120 kW": 16,
+    "DC 180 kW": 8,
+    "DC 30 kW": 6,
+    "DC 60 kW": 21
+  },
+  "stations_by_ward": {
+    "Phường Bến Thành": 7,
+    "Phường Sài Gòn": 3,
+    "Phường Tân Định": 1,
+    "Phường Thạnh Mỹ Tây": 1,
+    "Phường Xuân Hòa": 1,
+    "Phường Tân Sơn Hòa": 1,
+    "Phường Bình Thạnh": 1,
+    "Phường Bình Quới": 1
+  }
+}

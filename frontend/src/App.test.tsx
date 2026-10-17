@@ -15,6 +15,7 @@ import {
 
 // PlannerView has its own component tests; the driver suite does not load WebGL maps.
 vi.mock("./planning/PlannerView", () => ({ default: () => null }));
+vi.mock("./planning/gap/GapView", () => ({ default: () => null }));
 
 vi.mock("./api", () => ({
   api: {

@@ -9,12 +9,15 @@ from backend.app.api_v1_models import (
     SearchRouteRequest,
     SearchStationsRequest,
 )
+from backend.app.domain import search as search_module
 from backend.app.domain.routing import RoutingService
 from backend.app.main import app
 from backend.app.search_store import SearchResultStore
 
 ORIGIN = ApiPoint(lat=10.7075, lng=106.705)
 DESTINATION = ApiPoint(lat=10.806, lng=106.687)
+# Central District 1: the station search only looks 3 km around the driver.
+STATION_ORIGIN = ApiPoint(lat=10.7819, lng=106.7006)
 NOW = datetime(2026, 10, 9, 10, 0, tzinfo=UTC)
 
 
@@ -119,7 +122,7 @@ def test_optional_stops_flag_does_not_change_the_need_charge_case() -> None:
 def test_station_search_ranks_by_total_minutes_and_exposes_source() -> None:
     result = app.state.search_service.search_stations(
         SearchStationsRequest(
-            origin=ORIGIN,
+            origin=STATION_ORIGIN,
             vehicle_id="EV_VF7_ECO",
             battery_pct=55,
             limit=5,
@@ -135,6 +138,39 @@ def test_station_search_ranks_by_total_minutes_and_exposes_source() -> None:
         item.total_min for item in result.stations
     )
     assert all(item.prediction_source == "default" for item in result.stations)
+
+
+def test_station_search_radius_is_capped_at_3km_and_by_battery_range(monkeypatch) -> None:
+    from backend.app.domain.routing import _haversine_m
+
+    def reach(battery_pct: int):
+        return app.state.search_service.search_stations(
+            SearchStationsRequest(
+                origin=STATION_ORIGIN, vehicle_id="EV_VF7_ECO", battery_pct=battery_pct, limit=25
+            ),
+            now=NOW,
+        )
+
+    def distance_m(station_id: str) -> float:
+        lon, lat = app.state.search_service._stations.get(station_id).geometry.coordinates
+        return _haversine_m(STATION_ORIGIN.lat, STATION_ORIGIN.lng, lat, lon)
+
+    full = reach(100)
+    assert full.reachable_km > 3
+    assert all(distance_m(item.station.id) <= 3000 for item in full.stations)
+
+    # With the 3 km cap lifted, only the battery range limits the search.
+    monkeypatch.setattr(search_module, "STATION_SEARCH_MAX_RADIUS_KM", 1000.0)
+    def candidates(result) -> set[str]:
+        return {item.station.id for item in result.stations} | {
+            item.station_id for item in result.excluded_candidates
+        }
+
+    wide = reach(100)
+    low = reach(11)
+    assert 3 < low.reachable_km < 6
+    assert any(distance_m(station_id) > 6000 for station_id in candidates(wide))
+    assert all(distance_m(station_id) <= low.reachable_km * 1000 for station_id in candidates(low))
 
 
 def test_route_search_with_low_battery_ranks_charge_stops_by_total_minutes() -> None:
@@ -176,7 +212,7 @@ def test_route_search_fallback_includes_nearest_station_and_missing_range() -> N
 def test_station_search_reports_exclusion_reasons() -> None:
     result = app.state.search_service.search_stations(
         SearchStationsRequest(
-            origin=ORIGIN,
+            origin=STATION_ORIGIN,
             vehicle_id="EV_VF7_ECO",
             battery_pct=55,
         ),
@@ -210,7 +246,7 @@ def test_search_reports_offline_station_when_ports_are_unavailable(monkeypatch) 
 
     result = app.state.search_service.search_stations(
         SearchStationsRequest(
-            origin=ORIGIN,
+            origin=STATION_ORIGIN,
             vehicle_id="EV_VF7_ECO",
             battery_pct=55,
         ),

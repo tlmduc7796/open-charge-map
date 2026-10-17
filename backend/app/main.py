@@ -50,6 +50,7 @@ from backend.app.occupancy_history_repository import (
     DatabaseOccupancyHistoryRepository,
     DatabaseOccupancyRange,
 )
+from backend.app.planning.gap_service import GapAnalysisService
 from backend.app.planning.recommendation_engine import TechnicalOpportunityEngine
 from backend.app.planning.repository import FilePlanningDataRepository
 from backend.app.planning.router import router as planning_router
@@ -252,6 +253,7 @@ app.state.trip_repository = (
 app.state.planning_service = PlanningApplicationService(
     FilePlanningDataRepository(), engine=TechnicalOpportunityEngine()
 )
+app.state.gap_service = GapAnalysisService()
 app.include_router(router)
 app.include_router(v1_router)
 app.include_router(planning_router)

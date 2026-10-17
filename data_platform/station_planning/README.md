@@ -6,6 +6,8 @@ V1/v2 và các báo cáo kiểm tra tương ứng được lưu trong Git stash 
 
 Bộ dữ liệu chỉ chuẩn bị input cho engine; chưa chạy ranking hoặc tích hợp API/DB. Existing sites là 37 trạm mô phỏng của `hcm_dc80kw_5wards`; không đọc `ref.kml` và không ghép bộ 668 trạm. Access matrix dùng proxy khoảng cách/thời gian; technical rule package phục vụ demo. Physical feasibility chưa xác minh vẫn unknown/conditional. Các đặc tả thiết kế chi tiết được lưu ngoài repository.
 
+Phân tích khoảng trống (lưới 300 m, lưu lượng/giá thuê/trạm của mình và đối thủ mô phỏng, POI từ dữ liệu thu thập) có snapshot riêng [`gap_v1/`](gap_v1/), sinh bởi `scripts/prepare_gap_analysis_demo.py`; xem [`docs/station-planning/GAP_ANALYSIS_VI.md`](../../docs/station-planning/GAP_ANALYSIS_VI.md).
+
 ## Các phần đã tạo
 
 | Phần | File | Nội dung |

@@ -1,0 +1,17 @@
+﻿station_id,operator_id,operator_name,relationship,unit_id,unit_name,cell_id,lat,lon,site_type,opening_hours,port_count,dc_port_count,ac_port_count,total_power_kw,max_port_power_kw,source_type,is_synthetic,quality_status
+OWN-01,OWN,Mạng của mình,OWNED,hcm_2025_26743,Phường Bến Thành,G0068,10.772314,106.696017,parking,24/7,4,4,0,240.0,60.0,synthetic,True,simulated_not_real_inventory
+OWN-02,OWN,Mạng của mình,OWNED,hcm_2025_26743,Phường Bến Thành,G0062,10.770012,106.692331,hotel,24/7,4,4,0,240.0,60.0,synthetic,True,simulated_not_real_inventory
+OWN-03,OWN,Mạng của mình,OWNED,hcm_2025_26740,Phường Sài Gòn,G0029,10.779736,106.702655,hospital,24/7,4,2,2,142.0,60.0,synthetic,True,simulated_not_real_inventory
+OWN-04,OWN,Mạng của mình,OWNED,hcm_2025_26737,Phường Tân Định,G0005,10.788775,106.69618,supermarket,08:00-22:00,6,4,2,502.0,120.0,synthetic,True,simulated_not_real_inventory
+OWN-05,OWN,Mạng của mình,OWNED,hcm_2025_26956,Phường Thạnh Mỹ Tây,G0208,10.800583,106.720978,hotel,24/7,4,4,0,240.0,60.0,synthetic,True,simulated_not_real_inventory
+CMP-A-01,CMP-A,Đối thủ A,OTHER_NETWORK,hcm_2025_26743,Phường Bến Thành,G0056,10.767497,106.691198,hotel,24/7,4,4,0,240.0,60.0,synthetic,True,simulated_not_real_inventory
+CMP-A-02,CMP-A,Đối thủ A,OTHER_NETWORK,hcm_2025_26743,Phường Bến Thành,G0069,10.773229,106.700318,mall,08:00-22:00,4,4,0,720.0,180.0,synthetic,True,simulated_not_real_inventory
+CMP-A-03,CMP-A,Đối thủ A,OTHER_NETWORK,hcm_2025_26740,Phường Sài Gòn,G0035,10.782632,106.705993,campus,24/7,6,6,0,720.0,120.0,synthetic,True,simulated_not_real_inventory
+CMP-A-04,CMP-A,Đối thủ A,OTHER_NETWORK,hcm_2025_27139,Phường Xuân Hòa,G0281,10.783401,106.689178,hotel,24/7,4,4,0,720.0,180.0,synthetic,True,simulated_not_real_inventory
+CMP-B-01,CMP-B,Đối thủ B,OTHER_NETWORK,hcm_2025_26740,Phường Sài Gòn,G0024,10.775852,106.70329,hotel,24/7,4,4,0,120.0,30.0,synthetic,True,simulated_not_real_inventory
+CMP-B-02,CMP-B,Đối thủ B,OTHER_NETWORK,hcm_2025_26977,Phường Tân Sơn Hòa,G0247,10.814743,106.670595,hotel,24/7,6,3,3,246.0,60.0,synthetic,True,simulated_not_real_inventory
+CMP-B-03,CMP-B,Đối thủ B,OTHER_NETWORK,hcm_2025_26929,Phường Bình Thạnh,G0160,10.811095,106.713638,hotel,24/7,6,0,6,132.0,22.0,synthetic,True,simulated_not_real_inventory
+CMP-C-01,CMP-C,Đối thủ C,OTHER_NETWORK,hcm_2025_26743,Phường Bến Thành,G0055,10.766906,106.68844,transit,24/7,6,2,4,104.0,30.0,synthetic,True,simulated_not_real_inventory
+CMP-C-02,CMP-C,Đối thủ C,OTHER_NETWORK,hcm_2025_26743,Phường Bến Thành,G0057,10.767461,106.693942,hotel,24/7,8,0,8,88.0,11.0,synthetic,True,simulated_not_real_inventory
+CMP-C-03,CMP-C,Đối thủ C,OTHER_NETWORK,hcm_2025_26743,Phường Bến Thành,G0071,10.775469,106.696672,hospital,24/7,8,0,8,88.0,11.0,synthetic,True,simulated_not_real_inventory
+CMP-A-05,CMP-A,Đối thủ A,OTHER_NETWORK,hcm_2025_26911,Phường Bình Quới,G0111,10.82273,106.73518,other,24/7,6,6,0,720.0,120.0,synthetic,True,simulated_not_real_inventory

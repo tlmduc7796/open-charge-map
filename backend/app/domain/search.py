@@ -36,6 +36,10 @@ from backend.app.domain.station_hours import is_confirmed_open
 from backend.app.domain.wait_estimation import WaitEstimator
 from backend.app.search_store import SearchResultStore, SearchSnapshot
 
+# "Tìm trạm" looks around the driver, not along a route: never farther than this, and never
+# farther than the battery can take the vehicle (reachable_km).
+STATION_SEARCH_MAX_RADIUS_KM = 3.0
+
 
 def _wait_distribution(
     value: WaitDistribution | None,
@@ -356,7 +360,9 @@ class SearchService:
         )
         self._runtime.refresh()
         candidates = self._stations.nearby(
-            payload.origin.lng, payload.origin.lat, reachable_km * 1000
+            payload.origin.lng,
+            payload.origin.lat,
+            min(STATION_SEARCH_MAX_RADIUS_KM, reachable_km) * 1000,
         )
         options: list[SearchStationOption] = []
         exclusions: list[SearchExclusion] = []

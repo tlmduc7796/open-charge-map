@@ -1,0 +1,27 @@
+{
+  "source": "OpenStreetMap via Overpass API",
+  "licence": "ODbL 1.0, (c) OpenStreetMap contributors",
+  "fetched_at": "2026-10-17T06:08:19+00:00",
+  "bbox_south_west_north_east": [
+    10.763474710536,
+    106.659158408094,
+    10.835622430057,
+    106.751441237552
+  ],
+  "highway_filter": "^(motorway|trunk|primary|secondary|tertiary|unclassified|residential)(_link)?$",
+  "ways": 9854,
+  "ways_by_highway": {
+    "motorway_link": 7,
+    "primary": 1153,
+    "primary_link": 301,
+    "residential": 6329,
+    "secondary": 648,
+    "secondary_link": 75,
+    "tertiary": 973,
+    "tertiary_link": 55,
+    "trunk": 241,
+    "trunk_link": 61,
+    "unclassified": 11
+  },
+  "sha256": "ecea0d6b60c9fcba1a526dba660dea46a103745585c6607f3c157138881369c7"
+}

@@ -1,0 +1,606 @@
+{
+  "supplement_id": "hcmc-nine-wards-price-supplement-20261017-v1",
+  "dataset_contract_version": "1.0",
+  "by_unit": {
+    "hcm_2025_26737": {
+      "unit_id": "hcm_2025_26737",
+      "unit_name": "Phường Tân Định",
+      "lease": {
+        "value": 488888.888889,
+        "unit": "VND/m2/month",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/0",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "R01"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/cho-thue-nha-mat-pho-pho-dang-dung-phuong-tan-dinh-2-53/cho-bang-ang-quan-1-gan-cho-inh-dt-15x30m-tien-ngang-15m-pr46175482"
+        ],
+        "sample_count": 1,
+        "eligible_sample_count": 1,
+        "asset_classes": [
+          "commercial_ground"
+        ],
+        "sample_min": 488888.888889,
+        "sample_max": 488888.888889,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      },
+      "sale": {
+        "value": 197421434.327156,
+        "unit": "VND/m2",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/20",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "S01"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/ban-dat-phuong-tan-dinh-2"
+        ],
+        "sample_count": 1,
+        "eligible_sample_count": 2,
+        "asset_classes": [
+          "vacant_land"
+        ],
+        "sample_min": 197421434.327156,
+        "sample_max": 197421434.327156,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      }
+    },
+    "hcm_2025_26740": {
+      "unit_id": "hcm_2025_26740",
+      "unit_name": "Phường Sài Gòn",
+      "lease": {
+        "value": 733333.333333,
+        "unit": "VND/m2/month",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/2",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "R03"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/cho-thue-nha-mat-pho-duong-nguyen-hue-phuong-ben-nghe/cho-bang-quan-1-dt-6x25m-pr44602475"
+        ],
+        "sample_count": 1,
+        "eligible_sample_count": 1,
+        "asset_classes": [
+          "commercial_area_unspecified"
+        ],
+        "sample_min": 733333.333333,
+        "sample_max": 733333.333333,
+        "area_basis": "advertised_commercial_area_not_confirmed_ground_area",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      },
+      "sale": {
+        "value": 240601503.759398,
+        "unit": "VND/m2",
+        "value_status": "estimated",
+        "source_type": "scenario",
+        "status": "scenario",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/22",
+        "is_synthetic": true,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "explicit_ben_thanh_to_sai_gon_donor_assumption_v1",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "No accepted direct land-only sample. Copy Ben Thanh reference without adjustment for demo; not a Sai Gon market observation.",
+        "source_record_ids": [
+          "S03"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/ban-dat-phuong-ben-thanh"
+        ],
+        "sample_count": 0,
+        "eligible_sample_count": 0,
+        "asset_classes": [
+          "land_offering"
+        ],
+        "sample_min": 240601503.759398,
+        "sample_max": 240601503.759398,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "very_low_cross_ward_assumption",
+        "borrowed_from_unit_id": "hcm_2025_26743",
+        "donor_sample_count": 1
+      }
+    },
+    "hcm_2025_26743": {
+      "unit_id": "hcm_2025_26743",
+      "unit_name": "Phường Bến Thành",
+      "lease": {
+        "value": 200000.0,
+        "unit": "VND/m2/month",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/4",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "R05"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/cho-thue-kho-nha-xuong-dat-duong-suong-nguyet-anh-phuong-ben-thanh-tp-ho-chi-minh/cho-68-70-72-74-quan-1-dien-tich-45-x-40m-1600m-pr43561080"
+        ],
+        "sample_count": 1,
+        "eligible_sample_count": 1,
+        "asset_classes": [
+          "vacant_land"
+        ],
+        "sample_min": 200000.0,
+        "sample_max": 200000.0,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      },
+      "sale": {
+        "value": 240601503.759398,
+        "unit": "VND/m2",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/22",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "S03"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/ban-dat-phuong-ben-thanh"
+        ],
+        "sample_count": 1,
+        "eligible_sample_count": 1,
+        "asset_classes": [
+          "land_offering"
+        ],
+        "sample_min": 240601503.759398,
+        "sample_max": 240601503.759398,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      }
+    },
+    "hcm_2025_26911": {
+      "unit_id": "hcm_2025_26911",
+      "unit_name": "Phường Bình Quới",
+      "lease": {
+        "value": 91666.666667,
+        "unit": "VND/m2/month",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/9",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "R10"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/cho-thue-kho-nha-xuong-dat-duong-binh-quoi-66"
+        ],
+        "sample_count": 1,
+        "eligible_sample_count": 2,
+        "asset_classes": [
+          "land_offering"
+        ],
+        "sample_min": 91666.666667,
+        "sample_max": 91666.666667,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      },
+      "sale": {
+        "value": 55062500.0,
+        "unit": "VND/m2",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/26;raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/27",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "S07",
+          "S08"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/ban-dat-duong-binh-quoi-66",
+          "https://batdongsan.com.vn/ban-dat-phuong-binh-quoi-tp-ho-chi-minh/dt-tu-150m2-den-200m2"
+        ],
+        "sample_count": 2,
+        "eligible_sample_count": 2,
+        "asset_classes": [
+          "land_offering"
+        ],
+        "sample_min": 53125000.0,
+        "sample_max": 57000000.0,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      }
+    },
+    "hcm_2025_26929": {
+      "unit_id": "hcm_2025_26929",
+      "unit_name": "Phường Bình Thạnh",
+      "lease": {
+        "value": 150000.0,
+        "unit": "VND/m2/month",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/10",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "R11"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/cho-thue-nha-mat-pho-duong-chu-van-an-phuong-binh-thanh-tp-ho-chi-minh/cho-bang-tien-5x20m-1-tret-15tr-tl-pr45993144"
+        ],
+        "sample_count": 1,
+        "eligible_sample_count": 1,
+        "asset_classes": [
+          "commercial_ground"
+        ],
+        "sample_min": 150000.0,
+        "sample_max": 150000.0,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      },
+      "sale": {
+        "value": 120104166.666667,
+        "unit": "VND/m2",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/28;raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/29",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "S09",
+          "S10"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/ban-dat-duong-quoc-lo-13-phuong-binh-thanh-tp-ho-chi-minh"
+        ],
+        "sample_count": 2,
+        "eligible_sample_count": 2,
+        "asset_classes": [
+          "land_offering"
+        ],
+        "sample_min": 110000000.0,
+        "sample_max": 130208333.333333,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      }
+    },
+    "hcm_2025_26956": {
+      "unit_id": "hcm_2025_26956",
+      "unit_name": "Phường Thạnh Mỹ Tây",
+      "lease": {
+        "value": 210000.0,
+        "unit": "VND/m2/month",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/13",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "R14"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/cho-thue-kho-nha-xuong-dat-duong-ung-van-khiem-phuong-thanh-my-tay-tp-ho-chi-minh/cho-mat-bang-1-000m-139-minh-pr46302802"
+        ],
+        "sample_count": 1,
+        "eligible_sample_count": 1,
+        "asset_classes": [
+          "vacant_land"
+        ],
+        "sample_min": 210000.0,
+        "sample_max": 210000.0,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      },
+      "sale": {
+        "value": 105666666.666667,
+        "unit": "VND/m2",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/30;raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/31",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "S11",
+          "S12"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/ban-dat-duong-ngo-tat-to-phuong-thanh-my-tay-tp-ho-chi-minh",
+          "https://batdongsan.com.vn/ban-dat-dat-nen-phuong-thanh-my-tay-tp-ho-chi-minh/dt-tu-200m2-den-250m2"
+        ],
+        "sample_count": 2,
+        "eligible_sample_count": 2,
+        "asset_classes": [
+          "land_offering"
+        ],
+        "sample_min": 83333333.333333,
+        "sample_max": 128000000.0,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      }
+    },
+    "hcm_2025_26977": {
+      "unit_id": "hcm_2025_26977",
+      "unit_name": "Phường Tân Sơn Hòa",
+      "lease": {
+        "value": 184615.384615,
+        "unit": "VND/m2/month",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/14",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "R15"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/cho-thue-nha-mat-pho-duong-bach-dang-phuong-tan-son-hoa-tp-ho-chi-minh/chinh-chu-cho-bang-tien-uong-ang-gan-san-bay-qt-nhat-pr45209849"
+        ],
+        "sample_count": 1,
+        "eligible_sample_count": 1,
+        "asset_classes": [
+          "commercial_ground"
+        ],
+        "sample_min": 184615.384615,
+        "sample_max": 184615.384615,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      },
+      "sale": {
+        "value": 139442231.075697,
+        "unit": "VND/m2",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/32",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "S13"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/ban-dat-duong-nguyen-thanh-tuyen-69"
+        ],
+        "sample_count": 1,
+        "eligible_sample_count": 1,
+        "asset_classes": [
+          "vacant_land"
+        ],
+        "sample_min": 139442231.075697,
+        "sample_max": 139442231.075697,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      }
+    },
+    "hcm_2025_27073": {
+      "unit_id": "hcm_2025_27073",
+      "unit_name": "Phường Phú Nhuận",
+      "lease": {
+        "value": 333333.333333,
+        "unit": "VND/m2/month",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/16",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "R17"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/cho-thue-sang-nhuong-cua-hang-ki-ot-duong-nguyen-dinh-chinh-phuong-14-9-68/cho-mat-bang-trong-tai-inh-100-trieu-300m2-pr45308708"
+        ],
+        "sample_count": 1,
+        "eligible_sample_count": 1,
+        "asset_classes": [
+          "commercial_area_unspecified"
+        ],
+        "sample_min": 333333.333333,
+        "sample_max": 333333.333333,
+        "area_basis": "advertised_commercial_area_not_confirmed_ground_area",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      },
+      "sale": {
+        "value": 120588235.294118,
+        "unit": "VND/m2",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/33",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "S14"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/nha-dat-ban-duong-nguyen-kiem-phuong-phu-nhuan-tp-ho-chi-minh"
+        ],
+        "sample_count": 1,
+        "eligible_sample_count": 1,
+        "asset_classes": [
+          "vacant_land"
+        ],
+        "sample_min": 120588235.294118,
+        "sample_max": 120588235.294118,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      }
+    },
+    "hcm_2025_27139": {
+      "unit_id": "hcm_2025_27139",
+      "unit_name": "Phường Xuân Hòa",
+      "lease": {
+        "value": 833333.333333,
+        "unit": "VND/m2/month",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/18",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "R19"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/cho-thue-sang-nhuong-cua-hang-ki-ot-quan-3"
+        ],
+        "sample_count": 1,
+        "eligible_sample_count": 2,
+        "asset_classes": [
+          "commercial_ground"
+        ],
+        "sample_min": 833333.333333,
+        "sample_max": 833333.333333,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      },
+      "sale": {
+        "value": 655555555.555556,
+        "unit": "VND/m2",
+        "value_status": "estimated",
+        "source_type": "proxy",
+        "status": "proxy",
+        "source_ref": "raw_data/property_prices/pilot9_batdongsan_20261017/collected_samples.json#/records/24",
+        "is_synthetic": false,
+        "observed_at": null,
+        "reference_period": "mixed_2026_listing_references_not_a_current_market_quote",
+        "prepared_on": "2026-10-17",
+        "method_version": "median_of_best_comparable_class_in_curated_sample",
+        "quality_status": "sparse_demo_reference_not_a_verified_property_quote",
+        "note": "Sparse sample; no time adjustment; no verified transaction or site-specific offer.",
+        "source_record_ids": [
+          "S05"
+        ],
+        "source_urls": [
+          "https://batdongsan.com.vn/ban-dat-quan-3"
+        ],
+        "sample_count": 1,
+        "eligible_sample_count": 2,
+        "asset_classes": [
+          "vacant_land"
+        ],
+        "sample_min": 655555555.555556,
+        "sample_max": 655555555.555556,
+        "area_basis": "advertised_plot_or_ground_space",
+        "reliability": "low_sparse_sample",
+        "borrowed_from_unit_id": null
+      }
+    }
+  }
+}

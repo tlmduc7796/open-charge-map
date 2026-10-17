@@ -14,6 +14,7 @@ import {
 import type { Station } from "./types";
 
 vi.mock("./planning/PlannerView", () => ({ default: () => null }));
+vi.mock("./planning/gap/GapView", () => ({ default: () => null }));
 
 vi.mock("./api", () => ({
   api: {

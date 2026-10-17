@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-import type { RecommendationItem } from "../types";
 import { route, station } from "../test/fixtures";
 
 const STATION_SOURCE = "station-markers";
@@ -133,7 +132,7 @@ vi.mock("react-leaflet", () => ({
 import MapView from "./MapView";
 
 interface StationFeature {
-  properties: { stationId: string; color: string; rank: number | null; selected: boolean; hovered: boolean };
+  properties: { stationId: string; color: string; selected: boolean; hovered: boolean };
 }
 
 function stationFeatures(map: InstanceType<typeof goong.FakeMap>): StationFeature[] {
@@ -172,7 +171,6 @@ test("keeps the Goong station layer in sync with hover and selection changes", a
   // Data props keep their identity across renders, as they do in App; only callbacks are fresh.
   const stations = [station];
   const colors = {};
-  const items: RecommendationItem[] = [];
   const view = (selectedStationId: string | null, hoveredStationId: string | null) => (
     <MapView
       stations={stations}
@@ -180,7 +178,6 @@ test("keeps the Goong station layer in sync with hover and selection changes", a
       route={null}
       selectedStationId={selectedStationId}
       hoveredStationId={hoveredStationId}
-      items={items}
       // Fresh callbacks on every render, like an inline handler in the parent.
       onStationSelect={() => undefined}
       onStationHover={() => undefined}
@@ -208,7 +205,7 @@ test("keeps the Goong station layer in sync with hover and selection changes", a
   expect(map.flyTo).toHaveBeenCalledTimes(1);
 
   // The GL layer is created once; later updates go through setData, not addLayer again.
-  expect(map.addLayer).toHaveBeenCalledTimes(3);
+  expect(map.addLayer).toHaveBeenCalledTimes(2);
   expect(goong.instances).toHaveLength(1);
   expect(map.remove).not.toHaveBeenCalled();
 });
@@ -251,7 +248,11 @@ test("draws the route on the existing Goong map", async () => {
 
   rerender(<MapView {...props} route={route} />);
   expect(map.addSource).toHaveBeenCalledWith("journey-route", expect.anything());
-  expect(map.addLayer).toHaveBeenCalledWith(expect.objectContaining({ id: "journey-route-line" }));
+  // Below the station markers, so the line never covers them.
+  expect(map.addLayer).toHaveBeenCalledWith(
+    expect.objectContaining({ id: "journey-route-line" }),
+    STATION_DOT_LAYER,
+  );
   expect(goong.instances).toHaveLength(1);
 });
 

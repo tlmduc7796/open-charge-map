@@ -5,7 +5,7 @@ import { CircleMarker, MapContainer, Polyline, Popup, TileLayer, useMap, useMapE
 
 import { hideGoongPoiLayers, loadSdfIcon } from "../goongMapStyle";
 import { COLOR_HEX } from "../stationColor";
-import type { GeoPoint, PickTarget, RecommendationItem, RouteResult, Station, StationColor } from "../types";
+import type { GeoPoint, PickTarget, RouteResult, Station, StationColor } from "../types";
 
 // MDI "ev-station" glyph (https://pictogrammers.com/library/mdi/icon/ev-station/).
 const STATION_ICON_PATH =
@@ -14,7 +14,6 @@ const STATION_ICON_ID = "ev-station-icon";
 const STATION_SOURCE = "station-markers";
 const STATION_DOT_LAYER = "station-markers-dot";
 const STATION_ICON_LAYER = "station-markers-icon";
-const STATION_RANK_LAYER = "station-markers-rank";
 
 interface MapViewProps {
   stations: Station[];
@@ -23,7 +22,6 @@ interface MapViewProps {
   route: RouteResult | null;
   selectedStationId: string | null;
   hoveredStationId?: string | null;
-  items?: RecommendationItem[];
   /** Journey start (route start, or the single point of a station search). */
   origin?: GeoPoint;
   destination?: GeoPoint;
@@ -36,18 +34,15 @@ interface MapViewProps {
 }
 
 const HCMC_CENTER: [number, number] = [106.7009, 10.7769];
-const EMPTY_ITEMS: RecommendationItem[] = [];
 const ROUTE_SOURCE = "journey-route";
 const ROUTE_LAYER = "journey-route-line";
 
 function stationFeatureCollection(
   stations: Station[],
   colors: Record<string, StationColor>,
-  items: RecommendationItem[],
   selectedStationId: string | null,
   hoveredStationId: string | null | undefined,
 ) {
-  const ranks = new Map(items.map((item, index) => [item.station_id, index + 1]));
   return {
     type: "FeatureCollection" as const,
     features: stations.map((station) => {
@@ -58,7 +53,6 @@ function stationFeatureCollection(
         properties: {
           stationId,
           color: colors[stationId] ?? "grey",
-          rank: ranks.get(stationId) ?? null,
           selected: stationId === selectedStationId,
           hovered: stationId === hoveredStationId,
         },
@@ -73,7 +67,6 @@ function GoongMap({
   route,
   selectedStationId,
   hoveredStationId,
-  items = EMPTY_ITEMS,
   origin,
   destination,
   pickTarget,
@@ -151,7 +144,7 @@ function GoongMap({
   // of points), matching the pattern PlannerMap.tsx already uses for its GL layers.
   useEffect(() => {
     if (!map) return;
-    const data = stationFeatureCollection(stations, colors, items, selectedStationId, hoveredStationId);
+    const data = stationFeatureCollection(stations, colors, selectedStationId, hoveredStationId);
     const source = map.getSource(STATION_SOURCE);
     if (source) {
       source.setData(data);
@@ -188,30 +181,11 @@ function GoongMap({
       },
       paint: { "icon-color": "#ffffff" },
     });
-    map.addLayer({
-      id: STATION_RANK_LAYER,
-      type: "symbol",
-      source: STATION_SOURCE,
-      filter: ["!=", ["get", "rank"], null],
-      layout: {
-        "text-field": ["to-string", ["get", "rank"]],
-        "text-font": ["Roboto Medium"],
-        "text-size": 10,
-        "text-offset": [0.95, -1.1],
-        "text-allow-overlap": true,
-        "text-ignore-placement": true,
-      },
-      paint: {
-        "text-color": "#ffffff",
-        "text-halo-color": "#123d35",
-        "text-halo-width": 1.5,
-      },
-    });
     // The icon registers asynchronously; a symbol layer with no image yet for its
     // "icon-image" just skips drawing icons until addImage resolves, so this doesn't
     // need to block (or gate) the addLayer calls above.
     loadSdfIcon(map, STATION_ICON_ID, STATION_ICON_PATH).catch(() => undefined);
-  }, [map, stations, colors, items, selectedStationId, hoveredStationId]);
+  }, [map, stations, colors, selectedStationId, hoveredStationId]);
 
   // Click/hover are bound once to the stable layer id rather than rebuilding per
   // station-data change (mirrors the layer click/hover wiring in PlannerMap.tsx).
@@ -307,25 +281,34 @@ function GoongMap({
       return;
     }
     map.addSource(ROUTE_SOURCE, { type: "geojson", data });
-    map.addLayer({
-      id: ROUTE_LAYER,
-      type: "line",
-      source: ROUTE_SOURCE,
-      layout: { "line-join": "round", "line-cap": "round" },
-      paint: { "line-color": "#14b8a6", "line-width": 6, "line-opacity": 0.9 },
-    });
+    // Inserted below the station layers so the route never paints over a marker.
+    map.addLayer(
+      {
+        id: ROUTE_LAYER,
+        type: "line",
+        source: ROUTE_SOURCE,
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: { "line-color": "#14b8a6", "line-width": 6, "line-opacity": 0.9 },
+      },
+      map.getLayer(STATION_DOT_LAYER) ? STATION_DOT_LAYER : undefined,
+    );
   }, [map, route]);
 
+  // Keyed on the selected station's coordinates, not the `stations` array: the parent narrows that
+  // list to the route, and a new list with the same selection must not re-centre the map.
+  const selectedCoordinates = stations.find(
+    (item) => item.properties.station_id === selectedStationId,
+  )?.geometry.coordinates;
+  const selectedLon = selectedCoordinates?.[0];
+  const selectedLat = selectedCoordinates?.[1];
   useEffect(() => {
-    if (!map || !selectedStationId) return;
-    const selected = stations.find((item) => item.properties.station_id === selectedStationId);
-    if (!selected) return;
+    if (!map || selectedLon === undefined || selectedLat === undefined) return;
     map.flyTo({
-      center: selected.geometry.coordinates,
+      center: [selectedLon, selectedLat],
       zoom: 14,
       padding: { top: 70, bottom: 250, left: 60, right: 60 },
     });
-  }, [map, selectedStationId, stations]);
+  }, [map, selectedStationId, selectedLon, selectedLat]);
 
   return <div className="map-canvas" ref={containerRef} aria-label="Bản đồ Goong" />;
 }
@@ -336,7 +319,6 @@ function OsmMap({
   route,
   selectedStationId,
   hoveredStationId,
-  items,
   origin,
   destination,
   pickTarget,
@@ -344,9 +326,7 @@ function OsmMap({
   onStationSelect,
   onStationHover,
 }: Omit<MapViewProps, "onProviderChange">) {
-  const rankedItems = items ?? [];
   const reportHover = onStationHover ?? (() => undefined);
-  const ranks = new Map(rankedItems.map((item, index) => [item.station_id, index + 1]));
   const selectedStation = stations.find((station) => station.properties.station_id === selectedStationId);
   const selectedPosition = useMemo(
     () => selectedStation ? [selectedStation.geometry.coordinates[1], selectedStation.geometry.coordinates[0]] as [number, number] : null,
@@ -381,7 +361,7 @@ function OsmMap({
             pathOptions={{ color: "#ffffff", weight: 3, fillColor: COLOR_HEX[colors[stationId] ?? "grey"], fillOpacity: 1 }}
             eventHandlers={{ click: () => { if (!pickTarget) onStationSelect(stationId); }, mouseover: () => reportHover(stationId), mouseout: () => reportHover(null) }}
           >
-            <Popup>#{ranks.get(stationId) ?? "•"} · {station.properties.name}</Popup>
+            <Popup>{station.properties.name}</Popup>
           </CircleMarker>
         );
       })}

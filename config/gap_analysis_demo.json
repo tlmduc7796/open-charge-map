@@ -1,0 +1,192 @@
+{
+  "snapshot_id": "hcmc-nine-wards-gap-v1",
+  "generator_version": "1.0",
+  "prepared_on": "2026-10-17",
+  "seed": 20261017,
+  "output_directory": "data_platform/station_planning/gap_v1",
+  "sources": {
+    "pilot_units": "data_platform/station_planning/demo_hcmc_v3/pilot_units.geojson",
+    "poi": "data_platform/station_planning/demo_hcmc_v3/context_poi.geojson",
+    "poi_weights": "data_platform/station_planning/demo_hcmc_v3/poi_model_weights.csv",
+    "transport": "data_platform/station_planning/demo_hcmc_v3/context_transport.geojson",
+    "osm_roads": "raw_data/osm_roads/hcm_nine_wards_roads.geojson"
+  },
+  "grid": {
+    "cell_size_m": 300,
+    "reference_latitude": 10.78,
+    "reference_longitude": 106.69,
+    "city_center": {"lat": 10.7725, "lon": 106.698, "label": "Chợ Bến Thành (mốc giả định cho mô phỏng)"}
+  },
+  "poi": {
+    "default_category_weight": 0.3,
+    "category_weights": {
+      "Trung tâm thương mại": 5.0,
+      "Bãi xe": 4.0,
+      "Siêu thị": 3.0,
+      "Khu du lịch": 3.0,
+      "Trung tâm hội nghị": 3.0,
+      "Khách sạn": 2.5,
+      "Bệnh viện": 2.0,
+      "Đại học": 2.0,
+      "Bến xe, trạm dừng": 2.0,
+      "Trạm xăng": 1.5,
+      "Công sở": 1.5,
+      "Doanh nghiệp tư nhân": 1.5,
+      "Chợ": 1.5,
+      "Cao đẳng": 1.0,
+      "Công viên": 1.0,
+      "Bảo tàng, khu di tích": 1.0,
+      "Phòng khám": 1.0,
+      "Ngân hàng": 0.8,
+      "Nhà hàng, quán ăn": 0.6,
+      "Cửa hàng tiện lợi": 0.5,
+      "Trường học (dữ liệu tích hợp)": 0.4,
+      "Nhà thờ": 0.1,
+      "Chùa": 0.1,
+      "Công an": 0.1,
+      "Nhà vệ sinh": 0.0
+    },
+    "transport_poi_categories": ["Bãi xe", "Bến xe, trạm dừng", "Trạm xăng"]
+  },
+  "flow_simulation": {
+    "status": "synthetic",
+    "unit": "vehicles_per_hour_peak",
+    "min_vph": 250,
+    "max_vph": 4250,
+    "radial_scale_m": 3500,
+    "weights": {"radial": 0.45, "infrastructure": 0.35, "smooth_noise": 0.20},
+    "infrastructure_weights": {
+      "Đèn tín hiệu": 1.0,
+      "Trạm xe buýt": 0.6,
+      "Nhà ga MRT": 3.0,
+      "Bến xe, trạm dừng": 2.0,
+      "road_vertex": 0.15
+    },
+    "lognormal_sigma": 0.12
+  },
+  "road_flow_simulation": {
+    "status": "synthetic",
+    "unit": "vehicles_per_hour_peak",
+    "weights": {"radial": 0.35, "capacity": 0.40, "infrastructure": 0.15, "smooth_noise": 0.10},
+    "noise_frequency_range": [0.002, 0.007],
+    "exponent": 1.3,
+    "lognormal_sigma": 0.12
+  },
+  "route_division": {
+    "road_half_width_m": {
+      "motorway": 10, "trunk": 10, "primary": 9, "secondary": 7, "tertiary": 6,
+      "unclassified": 4, "residential": 4
+    },
+    "alley_name_prefixes": ["hẻm", "ngõ", "ngách", "kiệt"],
+    "road_class_labels": {
+      "motorway": "Đường cao tốc", "trunk": "Đường trục chính", "primary": "Đường chính",
+      "secondary": "Đường liên khu vực", "tertiary": "Đường khu vực",
+      "unclassified": "Đường nội khu", "residential": "Đường nội khu"
+    },
+    "min_block_m2": 1500,
+    "max_block_m2": 300000,
+    "adjacent_road_m": 15,
+    "min_adjacent_m": 10,
+    "nearest_block_m": 60,
+    "simplify_m": 1.0,
+    "flow_weights": {"radial": 0.40, "capacity": 0.35, "infrastructure": 0.15, "smooth_noise": 0.10}
+  },
+  "rent_simulation": {
+    "status": "synthetic",
+    "unit": "nghin_dong_per_m2_per_month",
+    "base_kvnd": 100,
+    "central_premium_kvnd": 650,
+    "radial_scale_m": 2800,
+    "poi_premium_kvnd": 120,
+    "lognormal_sigma": 0.15,
+    "min_kvnd": 100,
+    "max_kvnd": 1100
+  },
+  "station_simulation": {
+    "status": "synthetic",
+    "minimum_spacing_m": 300,
+    "host_categories": {
+      "Trung tâm thương mại": "mall",
+      "Siêu thị": "supermarket",
+      "Bãi xe": "parking",
+      "Khách sạn": "hotel",
+      "Bến xe, trạm dừng": "transit",
+      "Trạm xăng": "fuel_station",
+      "Bệnh viện": "hospital",
+      "Đại học": "campus",
+      "Khu du lịch": "tourism"
+    },
+    "manual_stations": [
+      {
+        "operator_id": "CMP-A", "lat": 10.82273, "lon": 106.73518, "site_type": "other",
+        "opening_hours": "24/7", "groups": [["DC", "CCS2", 6, 120]]
+      }
+    ],
+    "operators": [
+      {
+        "operator_id": "OWN",
+        "operator_name": "Mạng của mình",
+        "relationship": "OWNED",
+        "station_count": 5,
+        "demand_exponent": 1.0,
+        "templates": [
+          {"name": "hub", "probability": 0.3, "groups": [["DC", "CCS2", 4, 120], ["AC", "TYPE2", 2, 11]]},
+          {"name": "standard", "probability": 0.4, "groups": [["DC", "CCS2", 4, 60]]},
+          {"name": "light", "probability": 0.3, "groups": [["DC", "CCS2", 2, 60], ["AC", "TYPE2", 2, 11]]}
+        ]
+      },
+      {
+        "operator_id": "CMP-A",
+        "operator_name": "Đối thủ A",
+        "relationship": "OTHER_NETWORK",
+        "station_count": 4,
+        "demand_exponent": 1.5,
+        "templates": [
+          {"name": "ultra", "probability": 0.3, "groups": [["DC", "CCS2", 4, 180]]},
+          {"name": "fast", "probability": 0.4, "groups": [["DC", "CCS2", 6, 120]]},
+          {"name": "standard", "probability": 0.3, "groups": [["DC", "CCS2", 4, 60]]}
+        ]
+      },
+      {
+        "operator_id": "CMP-B",
+        "operator_name": "Đối thủ B",
+        "relationship": "OTHER_NETWORK",
+        "station_count": 3,
+        "demand_exponent": 1.5,
+        "templates": [
+          {"name": "mixed", "probability": 0.5, "groups": [["DC", "CCS2", 3, 60], ["AC", "TYPE2", 3, 22]]},
+          {"name": "dc30", "probability": 0.3, "groups": [["DC", "CCS2", 4, 30]]},
+          {"name": "ac22", "probability": 0.2, "groups": [["AC", "TYPE2", 6, 22]]}
+        ]
+      },
+      {
+        "operator_id": "CMP-C",
+        "operator_name": "Đối thủ C",
+        "relationship": "OTHER_NETWORK",
+        "station_count": 3,
+        "demand_exponent": 1.2,
+        "templates": [
+          {"name": "ac11", "probability": 0.4, "groups": [["AC", "TYPE2", 8, 11]]},
+          {"name": "ac7", "probability": 0.3, "groups": [["AC", "TYPE2", 10, 7.4]]},
+          {"name": "mixed", "probability": 0.3, "groups": [["AC", "TYPE2", 4, 11], ["DC", "CCS2", 2, 30]]}
+        ]
+      }
+    ]
+  },
+  "analysis_defaults": {
+    "w_flow": 0.5,
+    "lambda_m": 1000,
+    "normalization": "minmax",
+    "rent_mode": "divide",
+    "rent_max_kvnd": 600,
+    "epsilon": 0.1,
+    "own_min_distance_m": 500,
+    "own_mode": "flag",
+    "top_n": 5,
+    "min_separation_m": 1000,
+    "supply_basis": "ports",
+    "reference_power_kw": 60,
+    "min_demand": 0.1,
+    "division": "route"
+  }
+}
